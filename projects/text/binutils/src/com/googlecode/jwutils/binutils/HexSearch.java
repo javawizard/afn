@@ -17,8 +17,7 @@ public class HexSearch
         int[] pattern = new int[hexcode.length() / 2];
         for (int i = 0; i < pattern.length; i++)
         {
-            String toTranslate = hexcode.substring(i * 2, (i * 2) + 1);
-            toTranslate = "0x" + toTranslate;
+            String toTranslate = hexcode.substring(i * 2, (i * 2) + 2);
             pattern[i] = Integer.parseInt(toTranslate, 16);
         }
         int index = 0;
