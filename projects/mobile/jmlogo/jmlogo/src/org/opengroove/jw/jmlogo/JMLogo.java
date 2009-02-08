@@ -18,6 +18,7 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.List;
+import javax.microedition.lcdui.Screen;
 import javax.microedition.lcdui.StringItem;
 import javax.microedition.lcdui.TextBox;
 import javax.microedition.lcdui.TextField;
@@ -351,11 +352,11 @@ public class JMLogo extends MIDlet
         }
     }
     
-    private void showMessageAlert(Form form, String message)
+    private void showMessageAlert(Displayable screen, String message)
     {
         Alert alert = new Alert("JMLogo", message, null, AlertType.INFO);
         alert.setTimeout(Alert.FOREVER);
-        Display.getDisplay(midlet).setCurrent(alert, form);
+        Display.getDisplay(midlet).setCurrent(alert, screen);
     }
     
     protected void openProgram(final String programName)
@@ -582,12 +583,63 @@ public class JMLogo extends MIDlet
         Display.getDisplay(midlet).setCurrent(list);
     }
     
-    protected void showConfirmDeleteForm(String selection)
+    protected void showConfirmDeleteForm(final String selection)
     {
         Form form = new Form("Are you sure?");
         form.append("Are you sure you want to delete the procedure " + selection + "?");
         form.addCommand(new Command("Yes", Command.OK, 2));
         form.addCommand(new Command("No", Command.CANCEL, 1));
+        form.setCommandListener(new CommandListener()
+        {
+            
+            public void commandAction(Command c, Displayable d)
+            {
+                if (c.getCommandType() == Command.CANCEL)
+                {
+                    Display.getDisplay(midlet).setCurrent(canvas);
+                }
+                else
+                {
+                    deleteProcedure(selection);
+                    showMessageAlert(canvas, "The procedure was deleted.");
+                }
+            }
+        });
+    }
+    
+    protected void deleteProcedure(String selection)
+    {
+        final char[] chars = selection.toCharArray();
+        try
+        {
+            RecordEnumeration e = programStore.enumerateRecords(new RecordFilter()
+            {
+                public boolean matches(byte[] c)
+                {
+                    if (c.length < (2 + chars.length))
+                        return false;
+                    if (c[0] != 'p')
+                        return false;
+                    if (c[1] != chars.length)
+                        return false;
+                    for (int i = 0; i < chars.length; i++)
+                    {
+                        if (c[i + 2] != chars[i])
+                            return false;
+                    }
+                    return true;
+                }
+            }, null, false);
+            while (e.hasNextElement())
+            {
+                programStore.deleteRecord(e.nextRecordId());
+            }
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("deleting procedure");
+        }
+        
     }
     
     protected void showChooseEditProcList()
