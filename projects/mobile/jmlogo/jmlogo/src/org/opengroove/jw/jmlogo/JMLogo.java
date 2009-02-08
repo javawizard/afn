@@ -561,6 +561,12 @@ public class JMLogo extends MIDlet
     protected void showChooseEditProcList()
     {
         List list = new List("Choose a procedure to edit", List.IMPLICIT);
+        String[] procedureNames = listProgramProcedures();
+        for (int i = 0; i < procedureNames.length; i++)
+        {
+            list.append("  " + procedureNames[i], null);
+        }
+        
         final Command chooseCommand = new Command("Edit", Command.ITEM, 1);
         list.addCommand(new Command("Cancel", Command.SCREEN, 2));
         list.setSelectCommand(chooseCommand);
@@ -607,6 +613,9 @@ public class JMLogo extends MIDlet
                 names.addElement(nameBuffer.toString());
             }
             e.destroy();
+            String[] result = new String[names.size()];
+            names.copyInto(result);
+            return result;
         }
         catch (Exception e)
         {
