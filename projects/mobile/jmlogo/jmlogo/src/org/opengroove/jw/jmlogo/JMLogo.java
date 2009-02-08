@@ -16,6 +16,7 @@ import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.List;
 import javax.microedition.lcdui.StringItem;
 import javax.microedition.lcdui.TextBox;
@@ -554,19 +555,11 @@ public class JMLogo extends MIDlet
     
     protected void showChooseDeleteProcList()
     {
-        // TODO Auto-generated method stub
-        
-    }
-    
-    protected void showChooseEditProcList()
-    {
-        List list = new List("Choose a procedure to edit", List.IMPLICIT);
-        String[] procedureNames = listProgramProcedures();
-        for (int i = 0; i < procedureNames.length; i++)
-        {
-            list.append("  " + procedureNames[i], null);
-        }
-        
+        String[] procedures = listProgramProcedures();
+        Image[] nullImages = new Image[procedures.length];
+        final List list =
+            new List("Choose a procedure to delete", List.IMPLICIT, procedures,
+                nullImages);
         final Command chooseCommand = new Command("Edit", Command.ITEM, 1);
         list.addCommand(new Command("Cancel", Command.SCREEN, 2));
         list.setSelectCommand(chooseCommand);
@@ -577,7 +570,8 @@ public class JMLogo extends MIDlet
             {
                 if (c == chooseCommand)
                 {
-                    
+                    String selection = list.getString(list.getSelectedIndex());
+                    showConfirmDeleteForm(selection);
                 }
                 else
                 {
@@ -585,6 +579,90 @@ public class JMLogo extends MIDlet
                 }
             }
         });
+        Display.getDisplay(midlet).setCurrent(list);
+    }
+    
+    protected void showConfirmDeleteForm(String selection)
+    {
+        Form form = new Form("Are you sure?");
+        form.append("Are you sure you want to delete the procedure " + selection + "?");
+        form.addCommand(new Command("Yes", Command.OK, 2));
+        form.addCommand(new Command("No", Command.CANCEL, 1));
+    }
+    
+    protected void showChooseEditProcList()
+    {
+        final List list = new List("Choose a procedure to edit", List.IMPLICIT);
+        String[] procedureNames = listProgramProcedures();
+        for (int i = 0; i < procedureNames.length; i++)
+        {
+            list.append("  " + procedureNames[i], null);
+        }
+        list.append("New procedure", null);
+        final Command chooseCommand = new Command("Edit", Command.ITEM, 1);
+        list.addCommand(new Command("Cancel", Command.SCREEN, 2));
+        list.setSelectCommand(chooseCommand);
+        list.setCommandListener(new CommandListener()
+        {
+            
+            public void commandAction(Command c, Displayable d)
+            {
+                if (c == chooseCommand)
+                {
+                    String selection = list.getString(list.getSelectedIndex());
+                    if (selection.startsWith("  "))
+                    {
+                        openProcedureEditor(selection.substring(2));
+                    }
+                    else
+                    {
+                        showCreateProcedureForm();
+                    }
+                }
+                else
+                {
+                    Display.getDisplay(midlet).setCurrent(canvas);
+                }
+            }
+        });
+        Display.getDisplay(midlet).setCurrent(list);
+    }
+    
+    protected void showCreateProcedureForm()
+    {
+        final Form form = new Form("New Procedure");
+        final TextField nameField =
+            new TextField("Name", "", 30, TextField.ANY | TextField.NON_PREDICTIVE);
+        form.append(nameField);
+        form.append("You can enter the procedure's arguments later.");
+        form.addCommand(new Command("OK", Command.OK, 1));
+        form.addCommand(new Command("Cancel", Command.CANCEL, 2));
+        form.setCommandListener(new CommandListener()
+        {
+            
+            public void commandAction(Command c, Displayable d)
+            {
+                if (c.getCommandType() == Command.CANCEL)
+                {
+                    Display.getDisplay(midlet).setCurrent(canvas);
+                    return;
+                }
+                doCreateProcedure(form, nameField.getString());
+            }
+        });
+        Display.getDisplay(midlet).setCurrent(form);
+    }
+    
+    protected void doCreateProcedure(Form form, String string)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    protected void openProcedureEditor(String substring)
+    {
+        // TODO Auto-generated method stub
+        
     }
     
     public static String[] listProgramProcedures()
