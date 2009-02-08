@@ -22,6 +22,8 @@ import javax.microedition.lcdui.TextBox;
 import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
+import javax.microedition.rms.RecordEnumeration;
+import javax.microedition.rms.RecordFilter;
 import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 import javax.microedition.rms.RecordStoreNotFoundException;
@@ -526,11 +528,62 @@ public class JMLogo extends MIDlet
         });
     }
     
-    protected void loadProceduresIntoInterpreter(RecordStore libraryStore2,
-        Interpreter interpreter2)
+    /**
+     * Loads the procedures in the record store specified into the interpreter
+     * specified.
+     * 
+     * @param store
+     *            The store to load from. All records that start with a "p" will
+     *            be loaded. The byte after "p" is the length of the name of the
+     *            procedure. That many bytes are then present, which make up the
+     *            name. The byte after is the number of chars in the argument
+     *            string. The argument string then follows. The rest of the
+     *            record is the contents of the procedure itself. This should
+     *            not end with "end".
+     * @param it
+     *            The interpreter to load the records into
+     */
+    protected static void loadProceduresIntoInterpreter(RecordStore store,
+        Interpreter it)
     {
-        // TODO Auto-generated method stub
-        
+        try
+        {
+            RecordEnumeration e = store.enumerateRecords(new RecordFilter()
+            {
+                
+                public boolean matches(byte[] candidate)
+                {
+                    return candidate.length > 0 && candidate[0] == 'p';
+                }
+            }, null, false);
+            while (e.hasNextElement())
+            {
+                loadProcedureIntoInterpreter(e.nextRecord(), it);
+            }
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(
+                "while loading rms procedures or similar, not open");
+        }
+    }
+    
+    public static void loadProcedureIntoInterpreter(byte[] bytes, Interpreter it)
+    {
+        // skip the first byte, which should be "p"
+        int bytesInName = bytes[1];
+        int index = 2;
+        StringBuffer nameBuffer = new StringBuffer();
+        for (int i = 0; i < bytesInName; i++)
+        {
+            nameBuffer.append((char) bytes[index++]);
+        }
+        int bytesInVarDef = bytes[index++];
+        StringBuffer varDefBuffer = new StringBuffer();
+        for (int i = 0; i < bytesInVarDef; i++)
+        {
+            nameBuffer.append((char) bytes[index++]);
+        }
     }
     
     private Font getSmallFont()
