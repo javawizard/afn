@@ -520,12 +520,98 @@ public class JMLogo extends MIDlet
             
             public void commandAction(Command c, Displayable d)
             {
-                if (c == canvasCommands[0])
+                if (c == canvasCommands[0])// Run
                 {
                     Display.getDisplay(midlet).setCurrent(commander);
                 }
+                else if (c == canvasCommands[1])// Close
+                {
+                    
+                }
+                else if (c == canvasCommands[2])// Edit
+                {
+                    showChooseEditProcList();
+                }
+                else if (c == canvasCommands[3])// Copy from
+                {
+                    
+                }
+                else if (c == canvasCommands[4])// Set screencolor
+                {
+                    
+                }
+                else if (c == canvasCommands[5])// Set pencolor
+                {
+                    
+                }
+                else if (c == canvasCommands[6])// Delete procedure
+                {
+                    showChooseDeleteProcList();
+                }
             }
         });
+    }
+    
+    protected void showChooseDeleteProcList()
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    protected void showChooseEditProcList()
+    {
+        List list = new List("Choose a procedure to edit", List.IMPLICIT);
+        final Command chooseCommand = new Command("Edit", Command.ITEM, 1);
+        list.addCommand(new Command("Cancel", Command.SCREEN, 2));
+        list.setSelectCommand(chooseCommand);
+        list.setCommandListener(new CommandListener()
+        {
+            
+            public void commandAction(Command c, Displayable d)
+            {
+                if (c == chooseCommand)
+                {
+                    
+                }
+                else
+                {
+                    Display.getDisplay(midlet).setCurrent(canvas);
+                }
+            }
+        });
+    }
+    
+    public static String[] listProgramProcedures()
+    {
+        try
+        {
+            RecordEnumeration e = programStore.enumerateRecords(new RecordFilter()
+            {
+                
+                public boolean matches(byte[] candidate)
+                {
+                    return candidate.length > 0 && candidate[0] == 'p';
+                }
+            }, null, false);
+            Vector names = new Vector();
+            while (e.hasNextElement())
+            {
+                byte[] bytes = e.nextRecord();
+                int bytesInName = bytes[1];
+                int index = 2;
+                StringBuffer nameBuffer = new StringBuffer();
+                for (int i = 0; i < bytesInName; i++)
+                {
+                    nameBuffer.append((char) bytes[index++]);
+                }
+                names.addElement(nameBuffer.toString());
+            }
+            e.destroy();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("while listing records in listProgramProcedures");
+        }
     }
     
     /**
@@ -560,6 +646,7 @@ public class JMLogo extends MIDlet
             {
                 loadProcedureIntoInterpreter(e.nextRecord(), it);
             }
+            e.destroy();
         }
         catch (Exception e)
         {
@@ -568,6 +655,14 @@ public class JMLogo extends MIDlet
         }
     }
     
+    /**
+     * Loads the procedure specified.
+     * 
+     * TODO: macros are not supported by this yet. Add support for them.
+     * 
+     * @param bytes
+     * @param it
+     */
     public static void loadProcedureIntoInterpreter(byte[] bytes, Interpreter it)
     {
         // skip the first byte, which should be "p"
@@ -582,8 +677,12 @@ public class JMLogo extends MIDlet
         StringBuffer varDefBuffer = new StringBuffer();
         for (int i = 0; i < bytesInVarDef; i++)
         {
-            nameBuffer.append((char) bytes[index++]);
+            varDefBuffer.append((char) bytes[index++]);
         }
+        String content = new String(bytes, index, bytes.length - index);
+        String name = nameBuffer.toString();
+        String varDef = varDefBuffer.toString();
+        it.define(name + " " + varDef, content, false);
     }
     
     private Font getSmallFont()
