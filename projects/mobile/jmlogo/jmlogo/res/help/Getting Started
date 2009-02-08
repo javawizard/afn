@@ -1,0 +1,7 @@
+Welcome to JMLogo! If this is your first time using JMLogo, then you've come to the right place.
+
+If you're instructed to view a help page in a format that looks like help/a/b/c, then this means that you'll open help, go to folder A, go to folder B within that, and go to help page C within that one. In the help page list, folders have a "/" character at the end of their name, while help pages do not.
+
+Anyway, let's get started. If you've never programmed in the Logo programming language before, then you might want to take a look at help/tutorials/logo/Introduction to Logo. If you've programmed in the Logo programming language before, but you haven't used commands related to the turtle (or you have no idea what the turtle is), then you should probably visit help/tutorials/logo/turtle/The turtle. If you've programmed in Logo and used the turtle, but you'd like to learn how to use JMLogo, visit help/tutorials/jmlogo/Using JMLogo.
+
+A list of all of the commands that are built into JMLogo is available at help/commands/built-in. JMLogo also includes some library commands, which are documented at help/commands/library. Built-in commands are those that are part of JMLogo. Library commands are written in Logo themselves, and you can actually edit and change these.

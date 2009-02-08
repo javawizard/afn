@@ -1,0 +1,36 @@
+package org.opengroove.jw.jmlogo.lang;
+
+import org.opengroove.jw.jmlogo.lang.commands.MakeCommand;
+import org.opengroove.jw.jmlogo.lang.commands.PrintCommand;
+import org.opengroove.jw.jmlogo.lang.commands.RepcountCommand;
+import org.opengroove.jw.jmlogo.lang.commands.RepeatCommand;
+import org.opengroove.jw.jmlogo.lang.commands.math.SumCommand;
+
+public class TestInterpreter
+{
+    
+    /**
+     * @param args
+     */
+    public static void main(String[] args)
+    {
+        String toInterpret = "";
+        for (int i = 0; i < args.length; i++)
+        {
+            if (i != 0)
+                toInterpret += " ";
+            toInterpret += args[i];
+        }
+        Interpreter it = new Interpreter();
+        it.addCommand(new PrintCommand());
+        it.addCommand(new SumCommand());
+        it.addCommand(new MakeCommand());
+        it.addCommand(new RepeatCommand());
+        it.addCommand(new RepcountCommand());
+        StringStream s = new StringStream("[" + toInterpret + "]");
+        ListToken tk = it.parseToList(s);
+        InterpreterContext context = new InterpreterContext(it, null);
+        it.evaluate(new TokenIterator(tk), context);
+    }
+    
+}

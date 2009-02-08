@@ -1,0 +1,3 @@
+A procedure (and a command string too) is parsed into a list token before execution. Execution then operates on list tokens only. Command subclasses can be specified. Primitives each have a class that is a subclass of Command, that runs the primitive. There is also a command subclass for running procedures, and a subclass of Command for running macros. Commands can have access to where they're being executed, so that commands, for example, can replace themselves with other text for that parsing only. Macros would do this. It essentially causes the interpreter to re-evaluate a given statement in the context of the caller.
+
+Arrays are not supported for now. Only lists are supported.
