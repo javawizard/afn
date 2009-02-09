@@ -737,13 +737,12 @@ public class JMLogo extends MIDlet
             return;
         }
         loadProcedureIntoInterpreter(bytes, interpreter);
-        openProcedureEditor("p" + name);
+        openProcedureEditor(name);
     }
     
-    protected void openProcedureEditor(String substring)
+    protected void openProcedureEditor(String proc)
     {
-        // TODO Auto-generated method stub
-        
+        int recordId = getRecordStartingWith(proc);
     }
     
     public static String[] listProgramProcedures()
