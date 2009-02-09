@@ -58,6 +58,8 @@ public class Procedure extends Command
             e.addStackFrame(frame);
             throw e;
         }
+        if(output == null)
+            return null;
         if (output.getType() == Result.TYPE_IN_LINE)
             throw new InterpreterException("You don't say what to do with "
                 + context.getInterpreter().toReadable(output.getValue(), 64));
