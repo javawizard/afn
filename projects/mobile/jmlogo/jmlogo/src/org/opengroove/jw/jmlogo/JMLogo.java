@@ -740,12 +740,6 @@ public class JMLogo extends MIDlet
         openProcedureEditor(name);
     }
     
-    public static final Command[] procedureEditorCommands =
-        new Command[] { new Command("Symbol", Command.SCREEN, 1),
-            new Command("Newline", Command.SCREEN, 2),
-            new Command("Save", Command.SCREEN, 3),
-            new Command("Cancel", Command.CANCEL, 4) };
-    
     protected void openProcedureEditor(String proc)
     {
         int recordId = getProcedureRecordId(proc);
@@ -778,6 +772,40 @@ public class JMLogo extends MIDlet
             String name = nameBuffer.toString();
             String varDef = varDefBuffer.toString();
             editor.setString("to " + name + " " + varDef + "\n" + content + "\nend");
+            Command[] commands =
+                new Command[] { new Command("Symbol", Command.SCREEN, 1),
+                    new Command("Newline", Command.SCREEN, 2),
+                    new Command("Save", Command.SCREEN, 3),
+                    new Command("Cancel", Command.CANCEL, 4) };
+            for (int i = 0; i < commands.length; i++)
+            {
+                editor.addCommand(commands[i]);
+            }
+            editor.setCommandListener(new CommandListener()
+            {
+                
+                public void commandAction(Command c, Displayable d)
+                {
+                    if (c.getLabel().equalsIgnoreCase("Symbol"))
+                    {
+                        SymbolUtils.showSymbolForm(commander);
+                    }
+                    else if (c.getLabel().equalsIgnoreCase("Cancel"))
+                    {
+                        Display.getDisplay(midlet).setCurrent(canvas);
+                    }
+                    else if (c.getLabel().equalsIgnoreCase("Save"))
+                    {
+                        
+                    }
+                    else
+                    // if (c.getLabel().equalsIgnoreCase("Newline"))
+                    {
+                        commander.insert(new char[] { '\n' }, 0, 1, commander
+                            .getCaretPosition());
+                    }
+                }
+            });
         }
         catch (Exception e)
         {
