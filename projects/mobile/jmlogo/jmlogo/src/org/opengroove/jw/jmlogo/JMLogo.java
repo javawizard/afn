@@ -1015,7 +1015,11 @@ public class JMLogo extends MIDlet
         bytes[0] = 'p';
         bytes[1] = (byte) nameBytes.length;
         System.arraycopy(nameBytes, 0, bytes, 2, nameBytes.length);
-        bytes[2+nameBytes.length] = (byte) paramBytes.length;
+        bytes[2 + nameBytes.length] = (byte) paramBytes.length;
+        System.arraycopy(paramBytes, 0, bytes, 3 + nameBytes.length, paramBytes.length);
+        System.arraycopy(remainderBytes, 0, bytes, 3 + nameBytes.length
+            + paramBytes.length, remainderBytes.length);
+        return bytes;
     }
     
     public static void error(Throwable e, String info)
