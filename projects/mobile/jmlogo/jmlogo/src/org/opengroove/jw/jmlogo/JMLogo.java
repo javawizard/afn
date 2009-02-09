@@ -748,7 +748,9 @@ public class JMLogo extends MIDlet
             error(new Exception(), "proc " + proc + " doesn't exist");
             return;
         }
-        
+        TextBox editor =
+            new TextBox("Editing " + proc, "", 4096, TextField.ANY
+                | TextField.NON_PREDICTIVE);
     }
     
     private int getProcedureRecordId(String proc)
