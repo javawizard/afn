@@ -1006,6 +1006,12 @@ public class JMLogo extends MIDlet
                 paramBuffer.deleteCharAt(i + 1);
             }
         }
+        byte[] bytes =
+            new byte[2 + procedureName.length() + paramBuffer.length()
+                + remainder.length()];
+        byte[] nameBytes = procedureName.getBytes();
+        byte[] paramBytes = paramBuffer.toString().getBytes();
+        byte[] remainderBytes = remainder.getBytes();
     }
     
     public static void error(Throwable e, String info)
