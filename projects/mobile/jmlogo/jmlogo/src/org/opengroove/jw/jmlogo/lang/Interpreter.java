@@ -132,6 +132,7 @@ public class Interpreter
     
     public void define(String line, String contents, boolean isMacro)
     {
+        System.out.println("defining with line " + line);
         addCommand(createProcedure(line, contents, isMacro));
     }
     
@@ -641,12 +642,12 @@ public class Interpreter
     {
         commands.put(alias, commands.get(command));
     }
-
+    
     public InterpreterOutputSink getOutputSink()
     {
         return outputSink;
     }
-
+    
     public void setOutputSink(InterpreterOutputSink outputSink)
     {
         this.outputSink = outputSink;

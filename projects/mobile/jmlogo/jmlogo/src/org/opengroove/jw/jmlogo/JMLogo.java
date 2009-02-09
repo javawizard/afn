@@ -833,6 +833,7 @@ public class JMLogo extends MIDlet
         System.out.println("loading procedure with length " + bytes.length);
         System.out.println("first byte is " + ((char) bytes[0]));
         int bytesInName = bytes[1];
+        System.out.println("name byte count " + bytesInName);
         int index = 2;
         StringBuffer nameBuffer = new StringBuffer();
         for (int i = 0; i < bytesInName; i++)
@@ -974,6 +975,7 @@ public class JMLogo extends MIDlet
         if (newlineIndex == -1)
             newlineIndex = text.length();
         String firstLine = text.substring(0, newlineIndex);
+        System.out.println("parse first line " + firstLine);
         String remainder;
         if (newlineIndex < text.length())
         {
@@ -990,6 +992,7 @@ public class JMLogo extends MIDlet
         if (firstLine.startsWith("to"))
             firstLine = firstLine.substring(3);
         firstLine = firstLine.trim();
+        System.out.println("parse new first line " + firstLine);
         int firstLineSpaceIndex = firstLine.indexOf(" ");
         String procedureName;
         String paramString;
@@ -1003,6 +1006,8 @@ public class JMLogo extends MIDlet
             procedureName = firstLine.substring(0, firstLineSpaceIndex);
             paramString = firstLine.substring(firstLineSpaceIndex + 1).trim();
         }
+        System.out.println("parse proc name " + procedureName + " params "
+            + paramString);
         if (expectedName != null)
         {
             if (!procedureName.equals(expectedName))
@@ -1020,6 +1025,7 @@ public class JMLogo extends MIDlet
                 paramBuffer.deleteCharAt(i + 1);
             }
         }
+        System.out.println("parse new params " + paramBuffer);
         byte[] bytes =
             new byte[3 + procedureName.length() + paramBuffer.length()
                 + remainder.length()];
