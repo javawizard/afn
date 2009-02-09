@@ -748,6 +748,7 @@ public class JMLogo extends MIDlet
             error(new Exception(), "proc " + proc + " doesn't exist");
             return;
         }
+        
     }
     
     private int getProcedureRecordId(String proc)
