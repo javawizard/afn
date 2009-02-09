@@ -936,16 +936,8 @@ public class JMLogo extends MIDlet
     {
         try
         {
-            RecordEnumeration e = programStore.enumerateRecords(new RecordFilter()
-            {
-                
-                public boolean matches(byte[] candidate)
-                {
-                    if(candidate == null)
-                        return false;
-                    return candidate.length > 0 && candidate[0] == 'p';
-                }
-            }, null, false);
+            RecordEnumeration e =
+                programStore.enumerateRecords(new ProcedureRecordFilter(), null, false);
             Vector names = new Vector();
             while (e.hasNextElement())
             {
