@@ -792,7 +792,9 @@ public class JMLogo extends MIDlet
                     }
                     else if (c.getLabel().equalsIgnoreCase("Cancel"))
                     {
-                        Display.getDisplay(midlet).setCurrent(canvas);
+                        showYesNoFormSplit(
+                            "Are you sure you want to discard all changes?", canvas,
+                            editor);
                     }
                     else if (c.getLabel().equalsIgnoreCase("Save"))
                     {
@@ -813,6 +815,31 @@ public class JMLogo extends MIDlet
             error(e, "while trying to open the procedure editor and reading");
             return;
         }
+    }
+    
+    protected void showYesNoFormSplit(String message, final LogoCanvas ifYes,
+        final TextBox ifNo)
+    {
+        Form form = new Form("JMLogo");
+        form.append(message);
+        form.addCommand(new Command("Yes", Command.OK, 1));
+        form.addCommand(new Command("No", Command.CANCEL, 2));
+        form.setCommandListener(new CommandListener()
+        {
+            
+            public void commandAction(Command c, Displayable d)
+            {
+                if (c.getCommandType() == Command.OK)
+                {
+                    Display.getDisplay(midlet).setCurrent(ifYes);
+                }
+                else
+                {
+                    Display.getDisplay(midlet).setCurrent(ifNo);
+                }
+            }
+        });
+        Display.getDisplay(midlet).setCurrent(form);
     }
     
     protected void doSaveProcedureEditor(TextBox editor, String proc)
