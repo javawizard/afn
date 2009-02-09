@@ -973,8 +973,39 @@ public class JMLogo extends MIDlet
         if (remainder.endsWith("end"))
             remainder = remainder.substring(0, remainder.length() - 3);
         firstLine = firstLine.trim();
-        if(firstLine.startsWith("to"))
+        if (firstLine.startsWith("to"))
+            firstLine = firstLine.substring(3);
+        firstLine = firstLine.trim();
         int firstLineSpaceIndex = firstLine.indexOf(" ");
+        String procedureName;
+        String paramString;
+        if (firstLineSpaceIndex == -1)
+        {
+            procedureName = firstLine;
+            paramString = "";
+        }
+        else
+        {
+            procedureName = firstLine.substring(0, firstLineSpaceIndex);
+            paramString = firstLine.substring(firstLineSpaceIndex + 1).trim();
+        }
+        if (expectedName != null)
+        {
+            if (!procedureName.equals(expectedName))
+            {
+                throw new RuntimeException("The name you selected (" + procedureName
+                    + ") does not match the required name (" + expectedName + ").");
+            }
+        }
+        StringBuffer paramBuffer = new StringBuffer(paramString);
+        for (int i = 0; i < paramBuffer.length(); i++)
+        {
+            if (paramBuffer.charAt(i) == ' ' && (i + 1) < paramBuffer.length()
+                && paramBuffer.charAt(i + 1) == ' ')
+            {
+                paramBuffer.deleteCharAt(i + 1);
+            }
+        }
     }
     
     public static void error(Throwable e, String info)
