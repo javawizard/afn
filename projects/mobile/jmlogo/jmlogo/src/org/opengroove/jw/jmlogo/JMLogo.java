@@ -742,7 +742,48 @@ public class JMLogo extends MIDlet
     
     protected void openProcedureEditor(String proc)
     {
-        int recordId = getRecordStartingWith(proc);
+        int recordId = getProcedureRecordId(proc);
+        if (recordId == -1)
+        {
+            error(new Exception(), "proc " + proc + " doesn't exist");
+            return;
+        }
+    }
+    
+    private int getProcedureRecordId(String proc)
+    {
+        final char[] chars = proc.toCharArray();
+        try
+        {
+            RecordEnumeration e = programStore.enumerateRecords(new RecordFilter()
+            {
+                public boolean matches(byte[] c)
+                {
+                    if (c.length < (2 + chars.length))
+                        return false;
+                    if (c[0] != 'p')
+                        return false;
+                    if (c[1] != chars.length)
+                        return false;
+                    for (int i = 0; i < chars.length; i++)
+                    {
+                        if (c[i + 2] != chars[i])
+                            return false;
+                    }
+                    return true;
+                }
+            }, null, false);
+            if (e.hasNextElement())
+                return e.nextRecordId();
+            return -1;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new RuntimeException("exception while getting proc record id, "
+                + e.getClass().getName() + " " + e.getMessage());
+        }
+        
     }
     
     public static String[] listProgramProcedures()
