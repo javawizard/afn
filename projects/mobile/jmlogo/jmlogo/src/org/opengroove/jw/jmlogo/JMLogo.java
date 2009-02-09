@@ -831,6 +831,7 @@ public class JMLogo extends MIDlet
     {
         // skip the first byte, which should be "p"
         System.out.println("loading procedure with length " + bytes.length);
+        System.out.println("first byte is " + ((char) bytes[0]));
         int bytesInName = bytes[1];
         int index = 2;
         StringBuffer nameBuffer = new StringBuffer();
@@ -951,6 +952,12 @@ public class JMLogo extends MIDlet
         {
             error(e, "While in beginFirstTimeSetup");
         }
+    }
+    
+    public static byte[] parseLogoFormatProcedure(String text, String expectedName)
+    {
+        if (text.indexOf('\n') == -1)
+            throw new RuntimeException("No newline in text; one must be present");
     }
     
     public static void error(Throwable e, String info)
