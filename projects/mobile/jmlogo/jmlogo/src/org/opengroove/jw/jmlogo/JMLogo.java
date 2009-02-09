@@ -705,10 +705,27 @@ public class JMLogo extends MIDlet
         Display.getDisplay(midlet).setCurrent(form);
     }
     
-    protected void doCreateProcedure(Form form, String string)
+    protected void doCreateProcedure(Form form, String name)
     {
-        // TODO Auto-generated method stub
-        
+        String[] procedureNames = listProgramProcedures();
+        boolean nameUsed = false;
+        for (int i = 0; i < procedureNames.length; i++)
+        {
+            if (procedureNames[i].equalsIgnoreCase(name))
+            {
+                nameUsed = true;
+                break;
+            }
+        }
+        if (nameUsed)
+        {
+            showMessageAlert(form, "The name you chose is already used by a procedure.");
+            return;
+        }
+        byte[] bytes = new byte[name.length() + 2];
+        bytes[0] = (byte) name.length();
+        byte[] nameBytes = name.getBytes();
+        System.arraycopy(nameBytes, 0, bytes, 1, nameBytes.length);
     }
     
     protected void openProcedureEditor(String substring)
