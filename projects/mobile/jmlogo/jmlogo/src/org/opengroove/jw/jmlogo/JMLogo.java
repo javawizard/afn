@@ -802,7 +802,8 @@ public class JMLogo extends MIDlet
     {
         try
         {
-            RecordEnumeration e = store.enumerateRecords(new ProcedureRecordFilter(), null, false);
+            RecordEnumeration e =
+                store.enumerateRecords(new ProcedureRecordFilter(), null, false);
             while (e.hasNextElement())
             {
                 loadProcedureIntoInterpreter(e.nextRecord(), it);
@@ -829,6 +830,7 @@ public class JMLogo extends MIDlet
     public static void loadProcedureIntoInterpreter(byte[] bytes, Interpreter it)
     {
         // skip the first byte, which should be "p"
+        System.out.println("loading procedure with length " + bytes.length);
         int bytesInName = bytes[1];
         int index = 2;
         StringBuffer nameBuffer = new StringBuffer();
