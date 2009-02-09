@@ -713,7 +713,6 @@ public class JMLogo extends MIDlet
             showMessageAlert(form, "The procedure name can't contain spaces.");
             return;
         }
-        name = "p" + name;
         String[] procedureNames = listProgramProcedures();
         boolean nameUsed = false;
         for (int i = 0; i < procedureNames.length; i++)
