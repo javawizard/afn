@@ -818,8 +818,10 @@ public class JMLogo extends MIDlet
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             throw new RuntimeException(
-                "while loading rms procedures or similar, not open");
+                "while loading rms procedures or similar, not open, "
+                    + e.getClass().getName() + " " + e.getMessage());
         }
     }
     
