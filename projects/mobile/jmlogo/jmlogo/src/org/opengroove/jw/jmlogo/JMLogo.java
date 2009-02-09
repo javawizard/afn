@@ -732,6 +732,16 @@ public class JMLogo extends MIDlet
         byte[] bytes = parseLogoFormatProcedure("to " + name + " \nend", null);
         try
         {
+            loadProcedureIntoInterpreter(bytes, interpreter);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            error(e, "while creating a procedure and loading it into the interpreter");
+            return;
+        }
+        try
+        {
             programStore.addRecord(bytes, 0, bytes.length);
         }
         catch (Exception e)
@@ -739,7 +749,6 @@ public class JMLogo extends MIDlet
             error(e, "while creating a procedure's new record");
             return;
         }
-        loadProcedureIntoInterpreter(bytes, interpreter);
         openProcedureEditor(name);
     }
     
