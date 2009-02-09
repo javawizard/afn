@@ -960,7 +960,12 @@ public class JMLogo extends MIDlet
      * store. This includes the identifying leading "p" character.
      * 
      * @param text
+     *            The text to parse
      * @param expectedName
+     *            The name that the procedure defined by <tt>text</tt> is
+     *            expected to have, or null if it can be named anything. If this
+     *            is not null, and the expectation is not met, a
+     *            RuntimeException will be thrown.
      * @return
      */
     public static byte[] parseLogoFormatProcedure(String text, String expectedName)
