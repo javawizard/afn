@@ -867,7 +867,8 @@ public class JMLogo extends MIDlet
         }
         catch (Exception e)
         {
-            System.out.println("error while loading proc, " + e.getClass().getName() + " : " + e.getMessage())
+            System.out.println("error while loading proc, " + e.getClass().getName()
+                + " : " + e.getMessage());
             interpreter.eraseCommand(proc);
             if (oldProc != null)
             {
@@ -940,6 +941,8 @@ public class JMLogo extends MIDlet
                 
                 public boolean matches(byte[] candidate)
                 {
+                    if(candidate == null)
+                        return false;
                     return candidate.length > 0 && candidate[0] == 'p';
                 }
             }, null, false);
@@ -963,7 +966,10 @@ public class JMLogo extends MIDlet
         }
         catch (Exception e)
         {
-            throw new RuntimeException("while listing records in listProgramProcedures");
+            e.printStackTrace();
+            throw new RuntimeException(
+                "while listing records in listProgramProcedures, "
+                    + e.getClass().getName() + " " + e.getMessage());
         }
     }
     
