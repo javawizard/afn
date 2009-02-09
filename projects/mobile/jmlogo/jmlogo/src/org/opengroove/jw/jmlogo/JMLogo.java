@@ -740,7 +740,7 @@ public class JMLogo extends MIDlet
         openProcedureEditor(name);
     }
     
-    protected void openProcedureEditor(String proc)
+    protected void openProcedureEditor(final String proc)
     {
         int recordId = getProcedureRecordId(proc);
         if (recordId == -1)
@@ -748,7 +748,7 @@ public class JMLogo extends MIDlet
             error(new Exception(), "proc " + proc + " doesn't exist");
             return;
         }
-        TextBox editor =
+        final TextBox editor =
             new TextBox("Editing " + proc, "", 4096, TextField.ANY
                 | TextField.NON_PREDICTIVE);
         try
@@ -788,7 +788,7 @@ public class JMLogo extends MIDlet
                 {
                     if (c.getLabel().equalsIgnoreCase("Symbol"))
                     {
-                        SymbolUtils.showSymbolForm(commander);
+                        SymbolUtils.showSymbolForm(editor);
                     }
                     else if (c.getLabel().equalsIgnoreCase("Cancel"))
                     {
@@ -796,7 +796,7 @@ public class JMLogo extends MIDlet
                     }
                     else if (c.getLabel().equalsIgnoreCase("Save"))
                     {
-                        
+                        doSaveProcedureEditor(editor, proc);
                     }
                     else
                     // if (c.getLabel().equalsIgnoreCase("Newline"))
@@ -806,12 +806,43 @@ public class JMLogo extends MIDlet
                     }
                 }
             });
+            Display.getDisplay(midlet).setCurrent(editor);
         }
         catch (Exception e)
         {
             error(e, "while trying to open the procedure editor and reading");
             return;
         }
+    }
+    
+    protected void doSaveProcedureEditor(TextBox editor, String proc)
+    {
+        byte[] bytes;
+        try
+        {
+            bytes = parseLogoFormatProcedure(editor.getString(), proc);
+        }
+        catch (Exception e)
+        {
+            showMessageAlert(editor, e.getMessage());
+            return;
+        }
+        int recordId = getProcedureRecordId(proc);
+        if (recordId == -1)
+        {
+            error(new Exception(), "trying to save a proc that doesn't exist, " + proc);
+            return;
+        }
+        try
+        {
+            programStore.setRecord(recordId, bytes, 0, bytes.length);
+        }
+        catch (Exception e)
+        {
+            error(e, "while saving a procedure from the editor");
+            return;
+        }
+        Display.getDisplay(midlet).setCurrent(canvas);
     }
     
     private int getProcedureRecordId(String proc)
