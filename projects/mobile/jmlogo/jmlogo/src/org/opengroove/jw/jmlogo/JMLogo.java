@@ -956,8 +956,25 @@ public class JMLogo extends MIDlet
     
     public static byte[] parseLogoFormatProcedure(String text, String expectedName)
     {
-        if (text.indexOf('\n') == -1)
-            throw new RuntimeException("No newline in text; one must be present");
+        int newlineIndex = text.indexOf('\n');
+        if (newlineIndex == -1)
+            newlineIndex = text.length();
+        String firstLine = text.substring(0, newlineIndex);
+        String remainder;
+        if (newlineIndex < text.length())
+        {
+            remainder = text.substring(newlineIndex + 1);
+        }
+        else
+        {
+            remainder = "";
+        }
+        remainder = remainder.trim();
+        if (remainder.endsWith("end"))
+            remainder = remainder.substring(0, remainder.length() - 3);
+        firstLine = firstLine.trim();
+        if(firstLine.startsWith("to"))
+        int firstLineSpaceIndex = firstLine.indexOf(" ");
     }
     
     public static void error(Throwable e, String info)
