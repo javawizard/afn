@@ -867,6 +867,7 @@ public class JMLogo extends MIDlet
         }
         catch (Exception e)
         {
+            System.out.println("error while loading proc, " + e.getClass().getName() + " : " + e.getMessage())
             interpreter.eraseCommand(proc);
             if (oldProc != null)
             {
