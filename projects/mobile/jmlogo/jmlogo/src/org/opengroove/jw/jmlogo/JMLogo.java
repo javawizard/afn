@@ -802,14 +802,7 @@ public class JMLogo extends MIDlet
     {
         try
         {
-            RecordEnumeration e = store.enumerateRecords(new RecordFilter()
-            {
-                
-                public boolean matches(byte[] candidate)
-                {
-                    return candidate.length > 0 && candidate[0] == 'p';
-                }
-            }, null, false);
+            RecordEnumeration e = store.enumerateRecords(new ProcedureRecordFilter(), null, false);
             while (e.hasNextElement())
             {
                 loadProcedureIntoInterpreter(e.nextRecord(), it);
