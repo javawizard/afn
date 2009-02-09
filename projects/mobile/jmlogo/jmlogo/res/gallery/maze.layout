@@ -1,0 +1,3 @@
+to maze.layout
+repeat :width [repeat :height [maze.cell penup forward :pathsize] back product :pathsize :height right 90 forward :pathsize left 90]
+right 90 back product :pathsize :width left 90
