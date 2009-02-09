@@ -928,10 +928,10 @@ public class JMLogo extends MIDlet
                     System.out.println("loading library function " + name);
                     InputStream in = getClass().getResourceAsStream("/library/" + name);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    baos.write('p');
                     copy(in, baos);
                     in.close();
                     byte[] bytes = baos.toByteArray();
+                    bytes = parseLogoFormatProcedure(new String(bytes), null);
                     System.out.println("writing library function to record store");
                     localLibraryStore.addRecord(bytes, 0, bytes.length);
                 }
