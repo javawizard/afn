@@ -954,6 +954,15 @@ public class JMLogo extends MIDlet
         }
     }
     
+    /**
+     * Parses a logo function in the standard to...end (.macro is not supported
+     * right now) format into a byte array suitable for storing in the record
+     * store. This includes the identifying leading "p" character.
+     * 
+     * @param text
+     * @param expectedName
+     * @return
+     */
     public static byte[] parseLogoFormatProcedure(String text, String expectedName)
     {
         int newlineIndex = text.indexOf('\n');
