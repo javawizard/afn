@@ -707,6 +707,7 @@ public class JMLogo extends MIDlet
     
     protected void doCreateProcedure(Form form, String name)
     {
+        name = "p" + name;
         String[] procedureNames = listProgramProcedures();
         boolean nameUsed = false;
         for (int i = 0; i < procedureNames.length; i++)
@@ -726,6 +727,17 @@ public class JMLogo extends MIDlet
         bytes[0] = (byte) name.length();
         byte[] nameBytes = name.getBytes();
         System.arraycopy(nameBytes, 0, bytes, 1, nameBytes.length);
+        try
+        {
+            programStore.addRecord(bytes, 0, bytes.length);
+        }
+        catch (Exception e)
+        {
+            error(e, "while creating a procedure's new record");
+            return;
+        }
+        loadProcedureIntoInterpreter(bytes, interpreter);
+        openProcedureEditor("p" + name);
     }
     
     protected void openProcedureEditor(String substring)
