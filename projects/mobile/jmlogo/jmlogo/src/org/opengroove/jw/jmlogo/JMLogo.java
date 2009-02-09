@@ -740,6 +740,12 @@ public class JMLogo extends MIDlet
         openProcedureEditor(name);
     }
     
+    public static final Command[] procedureEditorCommands =
+        new Command[] { new Command("Symbol", Command.SCREEN, 1),
+            new Command("Newline", Command.SCREEN, 2),
+            new Command("Save", Command.SCREEN, 3),
+            new Command("Cancel", Command.CANCEL, 4) };
+    
     protected void openProcedureEditor(String proc)
     {
         int recordId = getProcedureRecordId(proc);
