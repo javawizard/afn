@@ -708,6 +708,11 @@ public class JMLogo extends MIDlet
     
     protected void doCreateProcedure(Form form, String name)
     {
+        if (name.indexOf(" ") != -1 || name.indexOf("\n") != -1)
+        {
+            showMessageAlert(form, "The procedure name can't contain spaces.");
+            return;
+        }
         name = "p" + name;
         String[] procedureNames = listProgramProcedures();
         boolean nameUsed = false;
@@ -724,10 +729,7 @@ public class JMLogo extends MIDlet
             showMessageAlert(form, "The name you chose is already used by a procedure.");
             return;
         }
-        byte[] bytes = new byte[name.length() + 2];
-        bytes[0] = (byte) name.length();
-        byte[] nameBytes = name.getBytes();
-        System.arraycopy(nameBytes, 0, bytes, 1, nameBytes.length);
+        byte[] bytes = parseLogoFormatProcedure("to " + name + " \nend", null);
         try
         {
             programStore.addRecord(bytes, 0, bytes.length);
