@@ -916,6 +916,8 @@ public class JMLogo extends MIDlet
             {
                 public boolean matches(byte[] c)
                 {
+                    if(c == null)
+                        return false;
                     if (c.length < (2 + chars.length))
                         return false;
                     if (c[0] != 'p')
