@@ -373,7 +373,7 @@ public class Interpreter
         return true;
     }
     
-    private Command getCommand(String commandName)
+    public Command getCommand(String commandName)
     {
         return (Command) commands.get(commandName.toLowerCase());
     }

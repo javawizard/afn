@@ -35,6 +35,7 @@ import org.opengroove.jw.jmlogo.lang.Interpreter;
 import org.opengroove.jw.jmlogo.lang.InterpreterContext;
 import org.opengroove.jw.jmlogo.lang.InterpreterException;
 import org.opengroove.jw.jmlogo.lang.ListToken;
+import org.opengroove.jw.jmlogo.lang.Procedure;
 import org.opengroove.jw.jmlogo.lang.Result;
 import org.opengroove.jw.jmlogo.lang.StringStream;
 import org.opengroove.jw.jmlogo.lang.TokenIterator;
@@ -803,7 +804,7 @@ public class JMLogo extends MIDlet
                     else
                     // if (c.getLabel().equalsIgnoreCase("Newline"))
                     {
-                        commander.insert(new char[] { '\n' }, 0, 1, commander
+                        editor.insert(new char[] { '\n' }, 0, 1, commander
                             .getCaretPosition());
                     }
                 }
@@ -852,6 +853,27 @@ public class JMLogo extends MIDlet
         catch (Exception e)
         {
             showMessageAlert(editor, e.getMessage());
+            return;
+        }
+        /*
+         * We'll try to load the new procedure now, and we'll track the old one
+         * in case the new one is malformed
+         */
+        Procedure oldProc = (Procedure) interpreter.getCommand(proc);
+        try
+        {
+            interpreter.eraseCommand(proc);
+            loadProcedureIntoInterpreter(bytes, interpreter);
+        }
+        catch (Exception e)
+        {
+            interpreter.eraseCommand(proc);
+            if (oldProc != null)
+            {
+                interpreter.addCommand(oldProc);
+            }
+            showMessageAlert(editor, "Problem with the procedure: "
+                + e.getClass().getName() + " : " + e.getMessage());
             return;
         }
         int recordId = getProcedureRecordId(proc);
