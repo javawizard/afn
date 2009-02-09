@@ -751,6 +751,33 @@ public class JMLogo extends MIDlet
         TextBox editor =
             new TextBox("Editing " + proc, "", 4096, TextField.ANY
                 | TextField.NON_PREDICTIVE);
+        try
+        {
+            byte[] bytes = programStore.getRecord(recordId);
+            int bytesInName = bytes[1];
+            System.out.println("name byte count " + bytesInName);
+            int index = 2;
+            StringBuffer nameBuffer = new StringBuffer();
+            for (int i = 0; i < bytesInName; i++)
+            {
+                nameBuffer.append((char) bytes[index++]);
+            }
+            int bytesInVarDef = bytes[index++];
+            StringBuffer varDefBuffer = new StringBuffer();
+            for (int i = 0; i < bytesInVarDef; i++)
+            {
+                varDefBuffer.append((char) bytes[index++]);
+            }
+            String content = new String(bytes, index, bytes.length - index);
+            String name = nameBuffer.toString();
+            String varDef = varDefBuffer.toString();
+            editor.setString("to " + name + " " + varDef + "\n" + content + "\nend");
+        }
+        catch (Exception e)
+        {
+            error(e, "while trying to open the procedure editor and reading");
+            return;
+        }
     }
     
     private int getProcedureRecordId(String proc)
