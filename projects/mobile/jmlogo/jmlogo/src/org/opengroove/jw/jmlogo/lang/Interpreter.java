@@ -247,7 +247,7 @@ public class Interpreter
              * to see if it's a command, and if it is, we'll run it. If it's
              * not, we'll throw an exception.
              */
-            if (getCommand(tokenValue) != null)
+            if (tokenValue.equals("(") || getCommand(tokenValue) != null)
             {
                 /*
                  * This token is a command. We'll begin parsing arguments for
@@ -271,10 +271,22 @@ public class Interpreter
                  * given, and we execute the given instructions.
                  */
                 int startParseIndex = iterator.getIndex();
+                boolean isParenEnclosed = tokenValue.equals("(");
+                if (isParenEnclosed)
+                {
+                    Token t2 = iterator.read();
+                    if (!(t2 instanceof ListToken))
+                        throw new InterpreterException(
+                            "Too many parens, I have nothing to do with "
+                                + toReadable(t2, 64));
+                    WordToken wt2 = (WordToken) t2;
+                    tokenValue = wt2.getValue();
+                }
                 Command command = getCommand(tokenValue);
-                int argcount = command.getArgumentCount();
-                Token[] commandArgs = new Token[argcount];
-                for (int i = 0; i < argcount; i++)
+                int minArgs = command.getMinArgs();
+                int maxArgs = command.getMaxArgs();
+                Vector commandArgs = new Vector();
+                for (int i = 0; i < minArgs; i++)
                 {
                     Result argumentResult = evaluate(iterator, context);
                     if (argumentResult == null
@@ -284,13 +296,52 @@ public class Interpreter
                     /*
                      * We have the value for this argument now
                      */
-                    commandArgs[i] = argumentResult.getValue();
+                    commandArgs.addElement(argumentResult.getValue());
+                }
+                if (isParenEnclosed)
+                {
+                    /*
+                     * There are parenthesis around this function call. For each
+                     * additional argument, up to maxArgs, allowed by this
+                     * command, we'll check to see if the current token is a
+                     * close parenthesis. If it is, we'll drop out of this loop.
+                     * If it isn't, we'll push it back, re-evaluate, and add the
+                     * result as an argument.
+                     */
+                    for (int i = 0; i < maxArgs - minArgs; i++)
+                    {
+                        Token nextToken = iterator.read();
+                        if ((nextToken instanceof WordToken)
+                            && ((WordToken) nextToken).getValue().equals(")"))
+                        {
+                            /*
+                             * Close-paren encountered. We've hit the end of the
+                             * function call.
+                             */
+                            break;
+                        }
+                        else
+                        {
+                            Result argumentResult = evaluate(iterator, context);
+                            if (argumentResult == null
+                                || argumentResult.getType() != Result.TYPE_IN_LINE)
+                                throw new InterpreterException(
+                                    tokenValue
+                                        + " was expecting an input, but output wasn't provided");
+                            /*
+                             * We have the value for this argument now
+                             */
+                            commandArgs.addElement(argumentResult.getValue());
+                        }
+                    }
                 }
                 /*
                  * We've collected the arguments for the function. Now we'll
                  * actually call it.
                  */
-                Token commandOutput = command.run(context, commandArgs);
+                Token[] commandArgsArray = new Token[commandArgs.size()];
+                commandArgs.copyInto(commandArgsArray);
+                Token commandOutput = command.run(context, commandArgsArray);
                 if (commandOutput != null)
                 {
                     context.requestedToStop = false;
@@ -351,6 +402,9 @@ public class Interpreter
                 }
                 continue;
             }
+            /*
+             * This token isn't anything coherent, so we'll throw an exception.
+             */
             throw new InterpreterException("I don't know how to " + tokenValue);
         }
         /*
@@ -435,9 +489,9 @@ public class Interpreter
                 s.rollback();
                 tokens.addElement(parseToList(s));
             }
-            else if(SINGLETON_LIST_COMPONENTS.indexOf(n) != -1)
+            else if (SINGLETON_LIST_COMPONENTS.indexOf(n) != -1)
             {
-                tokens.addElement(new WordToken(new String(new char[]{(char)n})));
+                tokens.addElement(new WordToken(new String(new char[] { (char) n })));
             }
             else
             {
