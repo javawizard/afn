@@ -10,7 +10,13 @@ import org.opengroove.jw.jmlogo.lang.Token;
  * arguments it accepts, and a name for itself. It then accepts that many
  * arguments, and turns them into a list. Once support for variable number of
  * parameters is added to the interpreter, then this will be replaced by the
- * logo standard "list" command.
+ * logo standard "list" command.<br/><br/>
+ * 
+ * For example, this class could be used to add a command by the name of
+ * "listthree", which accepts three arguments, and turns them into a list.<br/><br/>
+ * 
+ * UPDATE: As of 2009.02.10, JMLogo now supports variable numbers of arguments to a function. This
+ * command is now obsolete.
  * 
  * @author Alexander Boyd
  * 
