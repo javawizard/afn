@@ -814,7 +814,7 @@ public class JMLogo extends MIDlet
                     else
                     // if (c.getLabel().equalsIgnoreCase("Newline"))
                     {
-                        editor.insert(new char[] { '\n' }, 0, 1, commander
+                        editor.insert(new char[] { '\n' }, 0, 1, editor
                             .getCaretPosition());
                     }
                 }
