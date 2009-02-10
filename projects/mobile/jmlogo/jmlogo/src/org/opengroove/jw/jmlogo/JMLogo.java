@@ -1297,7 +1297,15 @@ public class JMLogo extends MIDlet
         public void run()
         {
             System.gc();
-            
+            showMessageAlert(canvas, "Successfully garbage collected.");
+        }
+    }, new Action("show memory")
+    {
+        
+        public void run()
+        {
+            showMessageAlert(canvas, "Free: " + Runtime.getRuntime().freeMemory()
+                + " \nTotal: " + Runtime.getRuntime().totalMemory());
         }
     } };
     
