@@ -1,6 +1,6 @@
 package org.opengroove.jw.jmlogo.lang;
 
-public class NamedCommand extends Command
+public abstract class NamedCommand extends Command
 {
     private String name;
     private int minArgs;
@@ -11,22 +11,19 @@ public class NamedCommand extends Command
         
     }
     
-    public int getArgumentCount()
+    public int getMinArgs()
     {
-        // TODO Auto-generated method stub
-        return 0;
+        return minArgs;
+    }
+    
+    public int getMaxArgs()
+    {
+        return maxArgs;
     }
     
     public String getName()
     {
-        // TODO Auto-generated method stub
-        return null;
-    }
-    
-    public Token run(InterpreterContext context, Token[] arguments)
-    {
-        // TODO Auto-generated method stub
-        return null;
+        return name;
     }
     
 }

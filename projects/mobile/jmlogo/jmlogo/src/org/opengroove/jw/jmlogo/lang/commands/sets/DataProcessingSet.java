@@ -14,8 +14,14 @@ public class DataProcessingSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                ListToken token = new ListToken(arguments);
-                return token;
+                return new ListToken(arguments);
+            }
+        }, new NamedCommand("wraplist", 1, 1)
+        {
+
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                return new ListToken(arguments);
             }
         } };
 }
