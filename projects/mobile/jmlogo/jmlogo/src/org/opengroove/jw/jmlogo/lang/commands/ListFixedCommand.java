@@ -15,8 +15,8 @@ import org.opengroove.jw.jmlogo.lang.Token;
  * For example, this class could be used to add a command by the name of
  * "listthree", which accepts three arguments, and turns them into a list.<br/><br/>
  * 
- * UPDATE: As of 2009.02.10, JMLogo now supports variable numbers of arguments to a function. This
- * command is now obsolete.
+ * UPDATE: As of 2009.02.10, JMLogo now supports variable numbers of arguments
+ * to a function. This command is now obsolete.
  * 
  * @author Alexander Boyd
  * 
