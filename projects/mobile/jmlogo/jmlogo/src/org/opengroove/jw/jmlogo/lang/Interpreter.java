@@ -652,4 +652,6 @@ public class Interpreter
     {
         this.outputSink = outputSink;
     }
+    
+    public void addCommands(Command[] commands);
 }
