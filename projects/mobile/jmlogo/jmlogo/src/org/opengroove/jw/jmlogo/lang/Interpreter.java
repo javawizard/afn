@@ -47,9 +47,10 @@ import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
  */
 public class Interpreter
 {
-    private static final String LIST_DELIMITERS = " []\n";
+    private static final String LIST_DELIMITERS = "() []\n";
     private static final String WORD_TERMINATORS = " []()\n";
     private static final String WHITE_SPACE = " \n";
+    private static final String SINGLETON_LIST_COMPONENTS = "()";
     /**
      * Hashtable<String,Variable>
      */
@@ -401,7 +402,9 @@ public class Interpreter
          */
         removeWhitespace(s);
         if (s.read() != '[')
-            throw new InterpreterException("Missing open bracket on list construct");
+            throw new InterpreterException(
+                "Missing open bracket on list construct. The input "
+                    + "to parseToList must start with a [ and end with a ].");
         /*
          * Tokens within a list are either words or lists. If the first
          * character of a token is an open-bracket, then it's a list, and we'll
@@ -431,6 +434,10 @@ public class Interpreter
             {
                 s.rollback();
                 tokens.addElement(parseToList(s));
+            }
+            else if(SINGLETON_LIST_COMPONENTS.indexOf(n) != -1)
+            {
+                tokens.addElement(new WordToken(new String(new char[]{(char)n})));
             }
             else
             {
