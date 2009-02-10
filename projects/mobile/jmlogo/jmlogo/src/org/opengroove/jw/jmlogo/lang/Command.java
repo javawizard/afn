@@ -8,14 +8,11 @@ package org.opengroove.jw.jmlogo.lang;
  * 
  */
 public abstract class Command
+
 {
-    /**
-     * Returns the number of arguments that this command takes. Support for
-     * variable argument sizes is not present yet; use a list instead.
-     * 
-     * @return
-     */
-    public abstract int getArgumentCount();
+    public abstract int getMinArgs();
+    
+    public abstract int getMaxArgs();
     
     /**
      * Returns this command's name as logo programs should use to call the
