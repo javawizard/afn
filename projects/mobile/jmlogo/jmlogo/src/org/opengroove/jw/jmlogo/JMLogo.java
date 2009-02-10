@@ -1291,23 +1291,32 @@ public class JMLogo extends MIDlet
         Display.getDisplay(midlet).setCurrent(form);
     }
     
-    public static final Action[] advancedActions = new Action[] { new Action("gc")
-    {
-        
-        public void run()
+    public static final Action[] advancedActions =
+        new Action[] { new Action("garbage collect")
         {
-            System.gc();
-            showMessageAlert(canvas, "Successfully garbage collected.");
-        }
-    }, new Action("show memory")
-    {
-        
-        public void run()
+            
+            public void run()
+            {
+                System.gc();
+                showMessageAlert(canvas, "Successfully garbage collected.");
+            }
+        }, new Action("show memory")
         {
-            showMessageAlert(canvas, "Free: " + Runtime.getRuntime().freeMemory()
-                + " \nTotal: " + Runtime.getRuntime().totalMemory());
-        }
-    } };
+            
+            public void run()
+            {
+                showMessageAlert(canvas, "Free: " + Runtime.getRuntime().freeMemory()
+                    + " \nTotal: " + Runtime.getRuntime().totalMemory());
+            }
+        }, new Action("show interpreter commands")
+        {
+            
+            public void run()
+            {
+                StringBuffer buf = new StringBuffer();
+                Command[] commands = interpreter.getCommands();
+            }
+        } };
     
     public static void showAdvancedActionList()
     {

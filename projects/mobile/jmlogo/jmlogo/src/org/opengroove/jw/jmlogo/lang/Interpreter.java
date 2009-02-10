@@ -1,5 +1,6 @@
 package org.opengroove.jw.jmlogo.lang;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -724,5 +725,19 @@ public class Interpreter
         {
             addCommand(commands[i]);
         }
+    }
+    
+    public Command[] getCommands()
+    {
+        Vector commandList = new Vector();
+        Enumeration keySet = commands.keys();
+        while (keySet.hasMoreElements())
+        {
+            Object key = keySet.nextElement();
+            commandList.addElement(commands.get(key));
+        }
+        Command[] commandArray = new Command[commandList.size()];
+        commandList.copyInto(commandArray);
+        return commandArray;
     }
 }
