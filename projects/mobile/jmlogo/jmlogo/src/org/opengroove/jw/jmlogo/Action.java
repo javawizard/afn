@@ -3,6 +3,7 @@ package org.opengroove.jw.jmlogo;
 public abstract class Action
 {
     private String name;
+    
     public String getName()
     {
         return name;
@@ -13,8 +14,5 @@ public abstract class Action
         this.name = name;
     }
     
-    public abstract void run()
-    {
-        
-    }
+    public abstract void run();
 }
