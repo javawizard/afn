@@ -419,6 +419,7 @@ public class JMLogo extends MIDlet
                 }
                 else if (c.getLabel().equalsIgnoreCase("Cancel"))
                 {
+                    addCanvasCommands();
                     Display.getDisplay(midlet).setCurrent(canvas);
                 }
                 else if (c.getLabel().equalsIgnoreCase("Run"))
@@ -510,7 +511,7 @@ public class JMLogo extends MIDlet
     
     protected void loadCanvasCommands()
     {
-        canvasCommands = new Command[7];
+        canvasCommands = new Command[8];
         canvasCommands[0] = new Command("Run", Command.SCREEN, 1);
         canvasCommands[1] = new Command("Close", Command.SCREEN, 2);
         canvasCommands[2] = new Command("Edit", Command.SCREEN, 3);
@@ -518,6 +519,7 @@ public class JMLogo extends MIDlet
         canvasCommands[4] = new Command("Set screencolor", Command.SCREEN, 5);
         canvasCommands[5] = new Command("Set pencolor", Command.SCREEN, 6);
         canvasCommands[6] = new Command("Delete procedure", Command.SCREEN, 7);
+        canvasCommands[7] = new Command("Advanced actions", Command.SCREEN, 8);
         canvas.setCommandListener(new CommandListener()
         {
             
@@ -550,6 +552,10 @@ public class JMLogo extends MIDlet
                 else if (c == canvasCommands[6])// Delete procedure
                 {
                     showChooseDeleteProcList();
+                }
+                else if (c == canvasCommands[7])// Advanced actions
+                {
+                    showAdvancedActionList();
                 }
             }
         });
@@ -915,7 +921,7 @@ public class JMLogo extends MIDlet
             {
                 public boolean matches(byte[] c)
                 {
-                    if(c == null)
+                    if (c == null)
                         return false;
                     if (c.length < (2 + chars.length))
                         return false;
@@ -1283,6 +1289,40 @@ public class JMLogo extends MIDlet
         Form form = new Form("JMLogo");
         form.append(message);
         Display.getDisplay(midlet).setCurrent(form);
+    }
+    
+    public static final Action[] advancedActions = new Action[] {};
+    
+    public static void showAdvancedActionList()
+    {
+        if (programStore == null)
+        {
+            error(new Exception(),
+                "showAdvancedActionList called, but no program is open");
+            return;
+        }
+        final List list = new List("Choose an advanced action", List.IMPLICIT);
+        for (int i = 0; i < advancedActions.length; i++)
+        {
+            list.append(advancedActions[i].getName(), null);
+        }
+        list.setSelectCommand(new Command("Select", Command.ITEM, 1));
+        list.addCommand(new Command("Cancel", Command.CANCEL, 2));
+        list.setCommandListener(new CommandListener()
+        {
+            
+            public void commandAction(Command c, Displayable d)
+            {
+                if (c.getCommandType() == Command.CANCEL)
+                {
+                    Display.getDisplay(midlet).setCurrent(canvas);
+                    return;
+                }
+                advancedActions[list.getSelectedIndex()].run();
+                return;
+            }
+        });
+        Display.getDisplay(midlet).setCurrent(list);
     }
     
 }
