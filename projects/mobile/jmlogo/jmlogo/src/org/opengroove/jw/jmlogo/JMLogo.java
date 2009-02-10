@@ -1314,7 +1314,14 @@ public class JMLogo extends MIDlet
             public void run()
             {
                 StringBuffer buf = new StringBuffer();
-                Command[] commands = interpreter.getCommands();
+                org.opengroove.jw.jmlogo.lang.Command[] commands =
+                    interpreter.getCommands();
+                for (int i = 0; i < commands.length; i++)
+                {
+                    buf.append(commands[i].getName());
+                    buf.append("\n");
+                }
+                showMessageAlert(canvas, buf.toString());
             }
         } };
     
