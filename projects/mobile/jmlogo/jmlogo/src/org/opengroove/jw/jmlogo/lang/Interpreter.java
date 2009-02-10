@@ -653,5 +653,11 @@ public class Interpreter
         this.outputSink = outputSink;
     }
     
-    public void addCommands(Command[] commands);
+    public void addCommands(Command[] commands)
+    {
+        for (int i = 0; i < commands.length; i++)
+        {
+            addCommand(commands[i]);
+        }
+    }
 }

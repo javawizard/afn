@@ -10,9 +10,24 @@ package org.opengroove.jw.jmlogo.lang;
 public abstract class Command
 
 {
-    public abstract int getMinArgs();
     
-    public abstract int getMaxArgs();
+    public int getMinArgs()
+    {
+        return getArgumentCount();
+    }
+    
+    public int getMaxArgs()
+    {
+        return getArgumentCount();
+    }
+    
+    public int getArgumentCount()
+    {
+        throw new InterpreterException("The command " + getName()
+            + " does not override getMinArgs and getMaxArgs, "
+            + "or getArgumentCount. It needs to override either "
+            + "the first two methods, or the last one.");
+    }
     
     /**
      * Returns this command's name as logo programs should use to call the
