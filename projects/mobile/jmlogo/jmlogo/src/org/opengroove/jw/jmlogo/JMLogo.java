@@ -353,7 +353,7 @@ public class JMLogo extends MIDlet
         }
     }
     
-    private void showMessageAlert(Displayable screen, String message)
+    public static void showMessageAlert(Displayable screen, String message)
     {
         Alert alert = new Alert("JMLogo", message, null, AlertType.INFO);
         alert.setTimeout(Alert.FOREVER);
@@ -1291,7 +1291,15 @@ public class JMLogo extends MIDlet
         Display.getDisplay(midlet).setCurrent(form);
     }
     
-    public static final Action[] advancedActions = new Action[] {};
+    public static final Action[] advancedActions = new Action[] { new Action("gc")
+    {
+        
+        public void run()
+        {
+            System.gc();
+            
+        }
+    } };
     
     public static void showAdvancedActionList()
     {
