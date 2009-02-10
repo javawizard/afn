@@ -5,7 +5,9 @@ import java.util.Vector;
 
 import org.opengroove.jw.jmlogo.LogoScreen;
 import org.opengroove.jw.jmlogo.lang.commands.*;
+import org.opengroove.jw.jmlogo.lang.commands.math.DifferenceCommand;
 import org.opengroove.jw.jmlogo.lang.commands.math.ProductCommand;
+import org.opengroove.jw.jmlogo.lang.commands.math.QuotientCommand;
 import org.opengroove.jw.jmlogo.lang.commands.math.SumCommand;
 import org.opengroove.jw.jmlogo.lang.commands.turtle.*;
 import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
@@ -668,6 +670,8 @@ public class Interpreter
         addCommand(new RepeatCommand());
         addCommand(new RunCommand());
         addCommand(new SumCommand());
+        addCommand(new DifferenceCommand());
+        addCommand(new QuotientCommand());
         addCommand(new ListFixedCommand("listtwo", 2));
         addCommand(new ListFixedCommand("listthree", 3));
         addCommand(new ListFixedCommand("listfour", 4));
