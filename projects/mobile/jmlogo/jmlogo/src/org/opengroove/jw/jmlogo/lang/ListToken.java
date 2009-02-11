@@ -10,7 +10,8 @@ public class ListToken extends Token
         int result = 1;
         for (int index = 0; index < array.length; index++)
         {
-            result = prime * result + (array[index] == null ? 0 : array[index].hashCode());
+            result =
+                prime * result + (array[index] == null ? 0 : array[index].hashCode());
         }
         return result;
     }
@@ -76,6 +77,26 @@ public class ListToken extends Token
         Token[] tokens = new Token[sourceTokens.length + 1];
         tokens[tokens.length - 1] = token;
         System.arraycopy(sourceTokens, 0, tokens, 0, sourceTokens.length);
+        return new ListToken(tokens);
+    }
+    
+    public ListToken butFirst()
+    {
+        if (members.length < 1)
+            throw new InterpreterException("You can't get the butFirst of a list "
+                + "that doesn't have any elements");
+        Token[] tokens = new Token[members.length - 1];
+        System.arraycopy(members, 1, tokens, 0, tokens.length);
+        return new ListToken(tokens);
+    }
+    
+    public ListToken butLast()
+    {
+        if (members.length < 1)
+            throw new InterpreterException("You can't get the butLast of a list "
+                + "that doesn't have any elements");
+        Token[] tokens = new Token[members.length - 1];
+        System.arraycopy(members, 0, tokens, 0, tokens.length);
         return new ListToken(tokens);
     }
 }
