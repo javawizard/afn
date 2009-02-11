@@ -85,8 +85,7 @@ public class DataProcessingSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                // TODO Auto-generated method stub
-                return null;
+                
             }
         } };
 }
