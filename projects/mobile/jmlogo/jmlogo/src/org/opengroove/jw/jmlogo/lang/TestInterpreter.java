@@ -22,11 +22,7 @@ public class TestInterpreter
             toInterpret += args[i];
         }
         Interpreter it = new Interpreter();
-        it.addCommand(new PrintCommand());
-        it.addCommand(new SumCommand());
-        it.addCommand(new MakeCommand());
-        it.addCommand(new RepeatCommand());
-        it.addCommand(new RepcountCommand());
+        it.installDefaultCommands();
         StringStream s = new StringStream("[" + toInterpret + "]");
         ListToken tk = it.parseToList(s);
         InterpreterContext context = new InterpreterContext(it, null);

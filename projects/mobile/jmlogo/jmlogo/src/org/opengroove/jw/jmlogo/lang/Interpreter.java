@@ -10,6 +10,9 @@ import org.opengroove.jw.jmlogo.lang.commands.math.DifferenceCommand;
 import org.opengroove.jw.jmlogo.lang.commands.math.ProductCommand;
 import org.opengroove.jw.jmlogo.lang.commands.math.QuotientCommand;
 import org.opengroove.jw.jmlogo.lang.commands.math.SumCommand;
+import org.opengroove.jw.jmlogo.lang.commands.sets.BlockSet;
+import org.opengroove.jw.jmlogo.lang.commands.sets.DataProcessingSet;
+import org.opengroove.jw.jmlogo.lang.commands.sets.LogicSet;
 import org.opengroove.jw.jmlogo.lang.commands.turtle.*;
 import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
 
@@ -676,6 +679,9 @@ public class Interpreter
         addCommand(new ListFixedCommand("listtwo", 2));
         addCommand(new ListFixedCommand("listthree", 3));
         addCommand(new ListFixedCommand("listfour", 4));
+        addCommands(DataProcessingSet.set);
+        addCommands(BlockSet.set);
+        addCommands(LogicSet.set);
     }
     
     public void installTurtleCommands(LogoScreen screen)
