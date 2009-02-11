@@ -100,7 +100,8 @@ public class DataProcessingSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                return null;
+                verifyWord(arguments[0]);
+                WordToken itemPosWord = arguments[0];
             }
         } };
 }

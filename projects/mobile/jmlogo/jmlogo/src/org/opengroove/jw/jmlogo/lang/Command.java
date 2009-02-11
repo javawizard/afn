@@ -55,4 +55,14 @@ public abstract class Command
         if (!(token instanceof ListToken))
             throw new InterpreterException("Token was not a list");
     }
+    
+    protected void verifyWord(Token token)
+    {
+        validateWord(token);
+    }
+    
+    protected void verifyList(Token token)
+    {
+        validateList(token);
+    }
 }
