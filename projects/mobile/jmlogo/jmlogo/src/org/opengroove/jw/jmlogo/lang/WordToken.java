@@ -10,6 +10,22 @@ public class WordToken extends Token
         this.value = value;
     }
     
+    public WordToken(boolean value)
+    {
+        this(value ? "true" : "false");
+    }
+    
+    public boolean getBool()
+    {
+        if (value.equalsIgnoreCase("true"))
+            return true;
+        else if (value.equalsIgnoreCase("false"))
+            return false;
+        else
+            throw new InterpreterException("The word " + value
+                + " needed a boolean value, but didn't have one");
+    }
+    
     public WordToken(double d)
     {
         if (Math.floor(d) == Math.ceil(d))
