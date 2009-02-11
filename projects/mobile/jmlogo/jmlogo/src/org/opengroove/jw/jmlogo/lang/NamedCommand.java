@@ -8,7 +8,9 @@ public abstract class NamedCommand extends Command
     
     protected NamedCommand(String name, int minArgs, int maxArgs)
     {
-        
+        this.name = name;
+        this.minArgs = minArgs;
+        this.maxArgs = maxArgs;
     }
     
     public int getMinArgs()
