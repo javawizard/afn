@@ -26,7 +26,12 @@ public class TestInterpreter
         StringStream s = new StringStream("[" + toInterpret + "]");
         ListToken tk = it.parseToList(s);
         InterpreterContext context = new InterpreterContext(it, null);
-        it.evaluate(new TokenIterator(tk), context);
+        Result result = it.evaluate(new TokenIterator(tk), context);
+        if (result.getType() == Result.TYPE_IN_LINE)
+            throw new InterpreterException("I don't know what to do with "
+                + it.toReadable(result.getValue(), 64));
+        else if (result.getType() == Result.TYPE_OUTPUT)
+            throw new InterpreterException("You can only use output inside a procedure");
     }
     
 }
