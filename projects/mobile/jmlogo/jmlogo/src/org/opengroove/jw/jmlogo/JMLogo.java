@@ -37,13 +37,14 @@ import org.opengroove.jw.jmlogo.lang.InterpreterException;
 import org.opengroove.jw.jmlogo.lang.ListToken;
 import org.opengroove.jw.jmlogo.lang.Procedure;
 import org.opengroove.jw.jmlogo.lang.Result;
+import org.opengroove.jw.jmlogo.lang.StackFrame;
 import org.opengroove.jw.jmlogo.lang.StringStream;
 import org.opengroove.jw.jmlogo.lang.TokenIterator;
 import org.opengroove.jw.jmlogo.utils.Properties;
 
 public class JMLogo extends MIDlet
 {
-    protected static final int MAX_COMMANDER_HISTORY = 20;
+    protected static final int MAX_COMMANDER_HISTORY = 30;
     /**
      * The commander history. This stores the last 20 commands run in the
      * commander.
@@ -455,10 +456,30 @@ public class JMLogo extends MIDlet
                 }
                 catch (InterpreterException e)
                 {
-                    Alert alert =
-                        new Alert("JMLogo", "Logo error: " + e.getMessage(), null,
-                            AlertType.ERROR);
-                    Display.getDisplay(midlet).setCurrent(alert, commander);
+                    StringBuffer message = new StringBuffer();
+                    message.append("Logo error: \n");
+                    message.append(e.getMessage());
+                    message.append("\n");
+                    message.append("\n");
+                    StackFrame[] stack = e.getStackFrames();
+                    for (int i = 0; i < stack.length; i++)
+                    {
+                        message.append("  at ");
+                        message.append(stack[i].getProcedure());
+                        message.append(" \n");
+                    }
+                    showMessageAlert(commander, message.toString());
+                    /*
+                     * We might want to consider adding line numbers in the
+                     * future, although this might be somewhat difficult to do,
+                     * since the instructions are parsed into a list token
+                     * before being executed. What we might want to do, then, is
+                     * include a method that parses some tokens into an
+                     * executable form, which includes line numbers for each
+                     * command as additional information on the list token.
+                     * 
+                     * Then again, maybe this isn't necessary.
+                     */
                 }
                 catch (Exception e)
                 {

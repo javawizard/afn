@@ -95,5 +95,12 @@ public class DataProcessingSet
                 context.setVariable(tokenValue, newToken);
                 return null;
             }
+        }, new NamedCommand("item", 2, 2)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                return null;
+            }
         } };
 }
