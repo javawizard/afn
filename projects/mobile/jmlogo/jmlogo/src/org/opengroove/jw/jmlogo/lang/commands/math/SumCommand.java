@@ -1,11 +1,16 @@
 package org.opengroove.jw.jmlogo.lang.commands.math;
 
-public class SumCommand extends TwoArgMathCommand
+public class SumCommand extends MultiArgMathCommand
 {
     
-    public double compute(double v1, double v2)
+    public double compute(double[] values)
     {
-        return v1 + v2;
+        double result = 0;
+        for (int i = 0; i < values.length; i++)
+        {
+            result += values[i];
+        }
+        return result;
     }
     
     public String getName()
