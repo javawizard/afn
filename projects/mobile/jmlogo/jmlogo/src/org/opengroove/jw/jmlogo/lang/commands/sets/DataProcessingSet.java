@@ -47,11 +47,7 @@ public class DataProcessingSet
             {
                 validateList(arguments[1]);
                 ListToken source = (ListToken) arguments[1];
-                Token[] sourceTokens = source.getMembers();
-                Token[] tokens = new Token[sourceTokens.length + 1];
-                tokens[0] = arguments[0];
-                System.arraycopy(sourceTokens, 0, tokens, 1, sourceTokens.length);
-                return new ListToken(tokens);
+                return source.fput(arguments[0]);
             }
         }, new NamedCommand("lput", 2, 2)
         {
@@ -60,11 +56,7 @@ public class DataProcessingSet
             {
                 validateList(arguments[1]);
                 ListToken source = (ListToken) arguments[1];
-                Token[] sourceTokens = source.getMembers();
-                Token[] tokens = new Token[sourceTokens.length + 1];
-                tokens[tokens.length - 1] = arguments[0];
-                System.arraycopy(sourceTokens, 0, tokens, 0, sourceTokens.length);
-                return new ListToken(tokens);
+                return source.lput(arguments[1]);
             }
         }, new NamedCommand("pop", 1, 1)
         {
@@ -77,7 +69,16 @@ public class DataProcessingSet
                 Token list = context.getVariable(tokenValue);
                 validateList(list);
                 ListToken listToken = (ListToken) list;
-                
+                if (listToken.getMembers().length < 1)
+                    throw new InterpreterException(
+                        "You can't pop from a stack that doesn't have anything on it");
+                Token value = listToken.getMembers()[0];
+                Token[] newTokens = new Token[listToken.getMembers().length];
+                System.arraycopy(listToken.getMembers(), 1, newTokens, 0,
+                    newTokens.length);
+                ListToken newList = new ListToken(newTokens);
+                context.setVariable(tokenValue, newList);
+                return value;
             }
         }, new NamedCommand("push", 2, 2)
         {

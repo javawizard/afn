@@ -58,4 +58,24 @@ public class ListToken extends Token
         }
         return true;
     }
+    
+    public ListToken fput(Token token)
+    {
+        ListToken source = this;
+        Token[] sourceTokens = source.getMembers();
+        Token[] tokens = new Token[sourceTokens.length + 1];
+        tokens[0] = token;
+        System.arraycopy(sourceTokens, 0, tokens, 1, sourceTokens.length);
+        return new ListToken(tokens);
+    }
+    
+    public ListToken lput(Token token)
+    {
+        ListToken source = this;
+        Token[] sourceTokens = source.getMembers();
+        Token[] tokens = new Token[sourceTokens.length + 1];
+        tokens[tokens.length - 1] = token;
+        System.arraycopy(sourceTokens, 0, tokens, 0, sourceTokens.length);
+        return new ListToken(tokens);
+    }
 }
