@@ -66,5 +66,26 @@ public class DataProcessingSet
                 System.arraycopy(sourceTokens, 0, tokens, 0, sourceTokens.length);
                 return new ListToken(tokens);
             }
+        }, new NamedCommand("pop", 1, 1)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                validateWord(arguments[0]);
+                WordToken token = (WordToken) arguments[0];
+                String tokenValue = token.getValue();
+                Token list = context.getVariable(tokenValue);
+                validateList(list);
+                ListToken listToken = (ListToken) list;
+                
+            }
+        }, new NamedCommand("push", 2, 2)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                // TODO Auto-generated method stub
+                return null;
+            }
         } };
 }
