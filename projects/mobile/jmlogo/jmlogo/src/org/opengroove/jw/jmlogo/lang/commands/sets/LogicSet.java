@@ -4,5 +4,5 @@ import org.opengroove.jw.jmlogo.lang.Command;
 
 public class LogicSet
 {
-    public static final Command[] set = new Command[] {};
+    public static final Command[] set = new Command[] {new NamedCommand()};
 }
