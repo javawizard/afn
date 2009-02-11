@@ -8,7 +8,7 @@ public class Math2
      * @param value
      * @return
      */
-    public double round(double value)
+    public static double round(double value)
     {
        double floor = Math.floor(value);
        double diff = value - floor;
@@ -24,7 +24,7 @@ public class Math2
      * @param value
      * @return
      */
-    public int ri(double value)
+    public static int ri(double value)
     {
         return (int) round(value);
     }

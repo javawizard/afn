@@ -9,6 +9,7 @@ import org.opengroove.jw.jmlogo.lang.NamedCommand;
 import org.opengroove.jw.jmlogo.lang.Token;
 import org.opengroove.jw.jmlogo.lang.WordToken;
 import org.opengroove.jw.jmlogo.lang.InterpreterException;
+import org.opengroove.jw.jmlogo.utils.Math2;
 
 public class DataProcessingSet
 {
@@ -104,7 +105,7 @@ public class DataProcessingSet
             {
                 verifyWord(arguments[0]);
                 WordToken itemPosWord = (WordToken) arguments[0];
-                
+                int index = Math2.ri(itemPosWord.getNumeric());
             }
         } };
 }
