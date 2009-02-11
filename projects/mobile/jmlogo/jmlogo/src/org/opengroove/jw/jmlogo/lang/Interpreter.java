@@ -281,7 +281,7 @@ public class Interpreter
                 if (isParenEnclosed)
                 {
                     Token t2 = iterator.read();
-                    if (!(t2 instanceof ListToken))
+                    if (!(t2 instanceof WordToken))
                         throw new InterpreterException(
                             "Too many parens, I have nothing to do with "
                                 + toReadable(t2, 64));
