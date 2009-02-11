@@ -26,6 +26,6 @@ public class Math2
      */
     public int ri(double value)
     {
-        return round(value);
+        return (int) round(value);
     }
 }

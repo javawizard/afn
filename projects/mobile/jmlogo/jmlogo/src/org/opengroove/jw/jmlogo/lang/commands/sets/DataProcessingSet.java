@@ -1,5 +1,7 @@
 package org.opengroove.jw.jmlogo.lang.commands.sets;
 
+import henson.midp.Float11;
+
 import org.opengroove.jw.jmlogo.lang.Command;
 import org.opengroove.jw.jmlogo.lang.InterpreterContext;
 import org.opengroove.jw.jmlogo.lang.ListToken;
@@ -101,7 +103,8 @@ public class DataProcessingSet
             public Token run(InterpreterContext context, Token[] arguments)
             {
                 verifyWord(arguments[0]);
-                WordToken itemPosWord = arguments[0];
+                WordToken itemPosWord = (WordToken) arguments[0];
+                
             }
         } };
 }
