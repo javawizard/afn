@@ -685,6 +685,7 @@ public class Interpreter
             addCommand(new TurtleCommandSet(screen, i));
         }
         alias("forward", "fw");
+        alias("forward", "fd");
         alias("right", "rt");
         alias("left", "lt");
         alias("back", "bk");
