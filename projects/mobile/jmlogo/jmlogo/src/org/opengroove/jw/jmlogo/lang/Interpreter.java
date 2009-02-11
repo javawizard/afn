@@ -683,6 +683,19 @@ public class Interpreter
         addCommands(DataProcessingSet.set);
         addCommands(BlockSet.set);
         addCommands(LogicSet.set);
+        addTildeCommand();
+    }
+    
+    private void addTildeCommand()
+    {
+        addCommand(new NamedCommand("~", 0, 0)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                return null;
+            }
+        });
     }
     
     public void installTurtleCommands(LogoScreen screen)
