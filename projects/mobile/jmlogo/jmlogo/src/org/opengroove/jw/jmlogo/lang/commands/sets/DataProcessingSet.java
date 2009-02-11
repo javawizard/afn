@@ -85,7 +85,15 @@ public class DataProcessingSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                
+                validateWord(arguments[0]);
+                WordToken token = (WordToken) arguments[0];
+                String tokenValue = token.getValue();
+                Token list = context.getVariable(tokenValue);
+                validateList(list);
+                ListToken listToken = (ListToken) list;
+                ListToken newToken = listToken.fput(arguments[1]);
+                context.setVariable(tokenValue, newToken);
+                return null;
             }
         } };
 }
