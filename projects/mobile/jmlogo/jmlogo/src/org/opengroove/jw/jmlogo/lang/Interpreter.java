@@ -328,6 +328,7 @@ public class Interpreter
                         }
                         else
                         {
+                            iterator.rollback();
                             Result argumentResult = evaluate(iterator, context);
                             if (argumentResult == null
                                 || argumentResult.getType() != Result.TYPE_IN_LINE)
