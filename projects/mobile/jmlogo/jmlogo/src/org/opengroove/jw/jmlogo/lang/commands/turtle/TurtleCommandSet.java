@@ -1,6 +1,7 @@
 package org.opengroove.jw.jmlogo.lang.commands.turtle;
 
 import org.opengroove.jw.jmlogo.LogoScreen;
+import org.opengroove.jw.jmlogo.Point;
 import org.opengroove.jw.jmlogo.lang.InterpreterContext;
 import org.opengroove.jw.jmlogo.lang.InterpreterException;
 import org.opengroove.jw.jmlogo.lang.ListToken;
@@ -29,16 +30,17 @@ public class TurtleCommandSet extends ScreenCommand
     public static final int GET_SCREEN_COLOR = 17;
     public static final int GET_HEADING = 18;
     public static final int SET_HEADING = 19;
+    public static final int TOWARDS = 20;
     
     private int[] argcounts =
-        new int[] { 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 };
+        new int[] { 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
     private String[] commandNames =
         new String[] { "getpos", "hideturtle", "showturtle", "setpos", "pendown",
             "penup", "setpencolor", "setscreencolor", "forward", "right", "left",
             "back", "home", "clean", "clearscreen", "pendownp", "getpencolor",
-            "getscreencolor", "getheading", "setheading" };
+            "getscreencolor", "getheading", "setheading", "towards" };
     
-    public static final int NUMBER_OF_COMMANDS = 20;
+    public static final int NUMBER_OF_COMMANDS = 21;
     
     private int command;
     
@@ -66,6 +68,13 @@ public class TurtleCommandSet extends ScreenCommand
     
     public Token run(InterpreterContext context, Token[] arguments)
     {
+        if (command == GET_POS)
+        {
+            Point p = screen.getPos();
+            double x = p.x;
+            double y = p.y;
+            return new ListToken(new Token[] { new WordToken(x), new WordToken(y) });
+        }
         if (command == HIDE_TURTLE)
         {
             screen.hideTurtle();
@@ -73,6 +82,20 @@ public class TurtleCommandSet extends ScreenCommand
         else if (command == SHOW_TURTLE)
         {
             screen.showTurtle();
+        }
+        else if (command == SET_POS)
+        {
+            validateList(arguments[0]);
+            ListToken list = (ListToken) arguments[0];
+            if (list.getMembers().length != 2)
+                throw new InterpreterException("A list of 2 elements was expected");
+            validateWord(list.getMembers()[0]);
+            validateWord(list.getMembers()[1]);
+            WordToken l1 = (WordToken) list.getMembers()[0];
+            WordToken l2 = (WordToken) list.getMembers()[1];
+            double x = l1.getNumeric();
+            double y = l2.getNumeric();
+            screen.setPos(x, y);
         }
         else if (command == PEN_UP)
         {
@@ -170,6 +193,21 @@ public class TurtleCommandSet extends ScreenCommand
         {
             validateWord(arguments[0]);
             screen.setHeading(((WordToken) arguments[0]).getNumeric());
+        }
+        else if (command == TOWARDS)
+        {
+            validateList(arguments[0]);
+            ListToken list = (ListToken) arguments[0];
+            if (list.getMembers().length != 2)
+                throw new InterpreterException("A list of 2 elements was expected");
+            validateWord(list.getMembers()[0]);
+            validateWord(list.getMembers()[1]);
+            WordToken l1 = (WordToken) list.getMembers()[0];
+            WordToken l2 = (WordToken) list.getMembers()[1];
+            double x = l1.getNumeric();
+            double y = l2.getNumeric();
+            double angle = screen.towards(x, y);
+            return new WordToken(angle);
         }
         else
         {

@@ -51,4 +51,6 @@ public interface LogoScreen
     public double getHeading();
     
     public void setHeading(double heading);
+    
+    public double towards(double x, double y);
 }

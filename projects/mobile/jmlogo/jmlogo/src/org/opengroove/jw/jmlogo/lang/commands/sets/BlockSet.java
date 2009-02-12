@@ -115,5 +115,13 @@ public class BlockSet
             }
             return null;
         }
+    }, new NamedCommand("while", 2, 2)
+    {
+        
+        public Token run(InterpreterContext context, Token[] arguments)
+        {
+            // TODO Auto-generated method stub
+            return null;
+        }
     } };
 }
