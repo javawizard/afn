@@ -9,6 +9,8 @@ import org.opengroove.jw.jmlogo.lang.commands.math.OneArgMathCommand;
 import org.opengroove.jw.jmlogo.lang.commands.math.TwoArgMathCommand;
 import org.opengroove.jw.jmlogo.utils.Math2;
 
+import henson.midp.*;
+
 public class MathSet
 {
     public static Command[] commands = new Command[] { new OneArgMathCommand()
@@ -34,6 +36,18 @@ public class MathSet
         public String getName()
         {
             return "round";
+        }
+    }, new OneArgMathCommand()
+    {
+        
+        public double compute(double v)
+        {
+            return 0;
+        }
+        
+        public String getName()
+        {
+            return "sign";
         }
     }, new OneArgMathCommand()
     {
