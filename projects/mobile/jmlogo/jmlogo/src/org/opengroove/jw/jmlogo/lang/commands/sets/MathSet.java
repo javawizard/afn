@@ -6,6 +6,7 @@ import org.opengroove.jw.jmlogo.lang.NamedCommand;
 import org.opengroove.jw.jmlogo.lang.Token;
 import org.opengroove.jw.jmlogo.lang.WordToken;
 import org.opengroove.jw.jmlogo.lang.commands.math.OneArgMathCommand;
+import org.opengroove.jw.jmlogo.lang.commands.math.TwoArgMathCommand;
 import org.opengroove.jw.jmlogo.utils.Math2;
 
 public class MathSet
@@ -93,8 +94,7 @@ public class MathSet
         
         public double compute(double v1, double v2)
         {
-            // TODO Auto-generated method stub
-            return 0;
+            return Float11.atan2(v1, v2);
         }
         
         public String getName()
