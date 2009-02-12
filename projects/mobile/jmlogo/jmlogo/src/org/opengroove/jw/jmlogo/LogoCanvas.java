@@ -1,5 +1,7 @@
 package org.opengroove.jw.jmlogo;
 
+import henson.midp.Float11;
+
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
@@ -313,6 +315,16 @@ public class LogoCanvas extends Canvas implements LogoScreen
         turtleHeading = heading;
         roundTurtleHeading();
         repaint();
+    }
+    
+    public double towards(double x, double y)
+    {
+        /*
+         * X and Y are intentionally reversed as arguments to Float11.atan2,
+         * since they are exactly swapped in logo coordinate space from
+         * mathematical coordinate space.
+         */
+        return Float11.atan2(x, y);
     }
     
 }
