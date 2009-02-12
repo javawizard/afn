@@ -106,6 +106,27 @@ public class DataProcessingSet
                 verifyWord(arguments[0]);
                 WordToken itemPosWord = (WordToken) arguments[0];
                 int index = Math2.ri(itemPosWord.getNumeric());
+                if (index < 1)
+                    throw new InterpreterException("The index passed to the item "
+                        + "command can't be less than 1");
+                if (arguments[1] instanceof WordToken)
+                {
+                    WordToken word = (WordToken) arguments[1];
+                    String v = word.getValue();
+                    if (v.length() < index)
+                        throw new InterpreterException("The index " + index
+                            + " was greater than the size " + v.length() + " in item");
+                    return new WordToken("" + v.charAt(index));
+                }
+                else
+                {
+                    ListToken word = (ListToken) arguments[1];
+                    Token[] v = word.getMembers();
+                    if (v.length < index)
+                        throw new InterpreterException("The index " + index
+                            + " was greater than the size " + v.length + " in item");
+                    return v[index];
+                }
             }
         } };
 }
