@@ -4,6 +4,7 @@ import java.util.Vector;
 
 import org.opengroove.jw.jmlogo.lang.Command;
 import org.opengroove.jw.jmlogo.lang.InterpreterContext;
+import org.opengroove.jw.jmlogo.lang.ListToken;
 import org.opengroove.jw.jmlogo.lang.NamedCommand;
 import org.opengroove.jw.jmlogo.lang.Token;
 import org.opengroove.jw.jmlogo.lang.WordToken;
@@ -52,8 +53,16 @@ public class LogicSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                // TODO Auto-generated method stub
-                return null;
+                if (arguments[0] instanceof WordToken)
+                {
+                    WordToken w = (WordToken) arguments[0];
+                    return new WordToken(w.getValue().length() == 0);
+                }
+                else
+                {
+                    ListToken l = (ListToken) arguments[0];
+                    return new WordToken(l.getMembers().length == 0);
+                }
             }
         });
         list.addElement(new NamedCommand("equalp", 2, 2)
