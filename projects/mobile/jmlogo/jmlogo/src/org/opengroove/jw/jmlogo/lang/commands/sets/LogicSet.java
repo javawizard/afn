@@ -30,11 +30,24 @@ public class LogicSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                // TODO Auto-generated method stub
-                return null;
+                verifyWords(arguments, 0, 2);
+                WordToken w1 = (WordToken) arguments[0];
+                WordToken w2 = (WordToken) arguments[1];
+                return new WordToken(w1.getNumeric() < w2.getNumeric());
             }
         });
         list.addElement(new NamedCommand("greaterp", 2, 2)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                verifyWords(arguments, 0, 2);
+                WordToken w1 = (WordToken) arguments[0];
+                WordToken w2 = (WordToken) arguments[1];
+                return new WordToken(w1.getNumeric() > w2.getNumeric());
+            }
+        });
+        list.addElement(new NamedCommand("emptyp", 1, 1)
         {
             
             public Token run(InterpreterContext context, Token[] arguments)
@@ -43,38 +56,33 @@ public class LogicSet
                 return null;
             }
         });
-        list.addElement(new NamedCommand("emptyp", 1, 1)
-        {
-
-            public Token run(InterpreterContext context, Token[] arguments)
-            {
-                // TODO Auto-generated method stub
-                return null;
-            }
-        });
         list.addElement(new NamedCommand("equalp", 2, 2)
         {
-
+            
             public Token run(InterpreterContext context, Token[] arguments)
             {
                 // TODO Auto-generated method stub
                 return null;
             }
         });
-        list.addElement(new NamedCommand("and", 2, 1024){
-
+        list.addElement(new NamedCommand("and", 2, 1024)
+        {
+            
             public Token run(InterpreterContext context, Token[] arguments)
             {
                 // TODO Auto-generated method stub
                 return null;
-            }});
-        list.addElement(new NamedCommand("or", 2, 1024){
-
+            }
+        });
+        list.addElement(new NamedCommand("or", 2, 1024)
+        {
+            
             public Token run(InterpreterContext context, Token[] arguments)
             {
                 // TODO Auto-generated method stub
                 return null;
-            }})
+            }
+        });
         Command[] them = new Command[list.size()];
         list.copyInto(them);
         return them;

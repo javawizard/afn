@@ -65,4 +65,10 @@ public abstract class Command
     {
         validateList(token);
     }
+    
+    public void verifyWords(Token[] tokens, int offset, int limit)
+    {
+        for (int i = offset; i < offset + limit; i++)
+            verifyWord(tokens[i]);
+    }
 }
