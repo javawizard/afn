@@ -13,13 +13,16 @@ import org.opengroove.jw.jmlogo.lang.commands.math.SumCommand;
 import org.opengroove.jw.jmlogo.lang.commands.sets.BlockSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.DataProcessingSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.LogicSet;
+import org.opengroove.jw.jmlogo.lang.commands.sets.MathSet;
 import org.opengroove.jw.jmlogo.lang.commands.turtle.*;
 import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
 
 /**
- * A logo programming language interpreter.<br/><br/>
+ * A logo programming language interpreter.<br/>
+ * <br/>
  * 
- * This interpreter is currently not thread-safe.<br/><br/>
+ * This interpreter is currently not thread-safe.<br/>
+ * <br/>
  * 
  * Here's an example of how to use the interpreter to calculate the sum of 2, 3,
  * and 4, and the product of 4 and 5:<br/>
@@ -74,11 +77,12 @@ public class Interpreter
     
     /**
      * Creates a procedure that uses the inputs and name specified by
-     * <tt>line</tt> (which can start with "to" or ".macro" but doesn't have
-     * to) and the contents specified by <tt>contents</tt>. if
-     * <tt>isMacro</tt> is true, then any output provided by the procedure
-     * will be executed in the context of the caller of this command. Otherwise,
-     * output will function as normal.<br/><br/>
+     * <tt>line</tt> (which can start with "to" or ".macro" but doesn't have to)
+     * and the contents specified by <tt>contents</tt>. if <tt>isMacro</tt> is
+     * true, then any output provided by the procedure will be executed in the
+     * context of the caller of this command. Otherwise, output will function as
+     * normal.<br/>
+     * <br/>
      * 
      * This method doesn't actually make the procedure available to the
      * interpreter. Use {@link #addCommand(Command)} to actually add the
@@ -156,12 +160,14 @@ public class Interpreter
      * interpreter.evaluate(iterator, context);
      * </pre>
      * 
-     * <br/>An interpreter context represents a given procedure. This means that
+     * <br/>
+     * An interpreter context represents a given procedure. This means that
      * you'll typically want to create a new interpreter context for each time
      * you evaluate something, or subsequent evaluations will act like they are
      * in the same procedure. For example, local variables are stored on the
      * context, so creating a new one will clear local variables, which is what
-     * should usually happen.<br/><br/>
+     * should usually happen.<br/>
+     * <br/>
      * 
      * You'll always want to create a new token iterator, but you can re-use the
      * list token without problems.
@@ -444,7 +450,8 @@ public class Interpreter
      * Parses the specified token into a list. The input should still have
      * brackets surrounding it; the closing bracket for the list will be parsed
      * but no further. If the open bracket is dangling, or if it is missing, an
-     * InterpreterException will be thrown.<br/><br/>
+     * InterpreterException will be thrown.<br/>
+     * <br/>
      * 
      * Currently newlines are interpreted the same way as spaces, unless
      * escaped. This essentially means that you don't have to have a tilde at
@@ -585,7 +592,8 @@ public class Interpreter
     /**
      * Creates a variable, adds it to the list of globals, and returns it. It's
      * value will initially be null, which can really mess things up, so it
-     * should be set to a value before anything else is done.<br/><br/>
+     * should be set to a value before anything else is done.<br/>
+     * <br/>
      * 
      * If the variable already exists, an IllegalStateException is thrown.
      * 
@@ -682,7 +690,10 @@ public class Interpreter
         addCommand(new ListFixedCommand("listfour", 4));
         addCommands(DataProcessingSet.set);
         addCommands(BlockSet.set);
-        addCommands(LogicSet.set);
+        addCommands(LogicSet.commands);
+        addCommands(MathSet.commands);
+        alias("arctan2", "jmlogo_arctan2");
+        alias("arctan", "jmlogo_arctan");
         addTildeCommand();
     }
     
@@ -718,7 +729,11 @@ public class Interpreter
     
     /**
      * Creates an alias for the command specified. This can be used to provide
-     * multiple names under which a command can be executed.
+     * multiple names under which a command can be executed.<br/>
+     * <br/>
+     * 
+     * If the original command is later redefined, the alias will continue to
+     * hold the old command.
      * 
      * @param command
      *            The command to alias
