@@ -6,6 +6,8 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
+import org.opengroove.jw.jmlogo.utils.Math2;
+
 public class LogoCanvas extends Canvas implements LogoScreen
 {
     private double turtleX = 0;
@@ -141,6 +143,11 @@ public class LogoCanvas extends Canvas implements LogoScreen
         turtleX = futureX;
         turtleY = futureY;
         repaint();
+    }
+    
+    private static int ri(double d)
+    {
+        return Math2.ri(d);
     }
     
     /**
@@ -324,7 +331,7 @@ public class LogoCanvas extends Canvas implements LogoScreen
          * since they are exactly swapped in logo coordinate space from
          * mathematical coordinate space.
          */
-        return Float11.atan2(x, y);
+        return Math.toDegrees(Float11.atan2(x, y));
     }
     
 }

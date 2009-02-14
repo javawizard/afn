@@ -2,10 +2,18 @@ package org.opengroove.jw.jmlogo;
 
 /**
  * Represents a logo screen, a device that logo commands can draw onto. Right
- * now, methods are only provided for interacting with one turtle.<br/><br/>
+ * now, methods are only provided for interacting with one turtle.<br/>
+ * <br/>
  * 
  * Typically, there is one method for each logo command that interacts with the
- * turtle.
+ * turtle.<br/>
+ * <br/>
+ * 
+ * If you're looking to implement your own LogoScreen, but you don't want to
+ * have to add all of the mathematics behind all of the methods, you could take
+ * a look at the source for {@link LogoCanvas}. LogoCanvas is an implementation
+ * of LogoScreen for mobile phones, and you could probably get most of the
+ * mathematics and turtle tracking functionality from that class.
  * 
  * @author Alexander Boyd
  * 
