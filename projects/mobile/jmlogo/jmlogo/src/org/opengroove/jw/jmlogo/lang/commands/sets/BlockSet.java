@@ -11,9 +11,11 @@ import org.opengroove.jw.jmlogo.lang.TokenIterator;
 import org.opengroove.jw.jmlogo.lang.WordToken;
 
 /**
- * A set of commands that generally operate on blocks of instructions.<br/><br/>
+ * A set of commands that generally operate on blocks of instructions.<br/>
+ * <br/>
  * 
- * This command set includes the following commands:<br/><br/>
+ * This command set includes the following commands:<br/>
+ * <br/>
  * 
  * <ul>
  * <li>if</li>
@@ -113,14 +115,6 @@ public class BlockSet
                     return null;
                 }
             }
-            return null;
-        }
-    }, new NamedCommand("while", 2, 2)
-    {
-        
-        public Token run(InterpreterContext context, Token[] arguments)
-        {
-            // TODO Auto-generated method stub
             return null;
         }
     } };

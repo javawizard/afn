@@ -34,7 +34,27 @@ public class DataProcessingSet2 extends BaseCommandSet
                         throw new InterpreterException(
                             "The list specified is empty, so you "
                                 + "can't run the first command on it");
-                    
+                    return t.getMembers()[0];
+                }
+            }
+        });
+        addCommand(new NamedCommand("butfirst", 1, 1)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                if (arguments[0] instanceof WordToken)
+                {
+                    WordToken t = (WordToken) arguments[0];
+                    if (t.getValue().length() < 1)
+                        throw new InterpreterException(
+                            "empty word specified to butfirst");
+                    return new WordToken(t.getValue().substring(1));
+                }
+                else
+                {
+                    ListToken t = (ListToken) arguments[0];
+                    return t.butFirst();
                 }
             }
         });
