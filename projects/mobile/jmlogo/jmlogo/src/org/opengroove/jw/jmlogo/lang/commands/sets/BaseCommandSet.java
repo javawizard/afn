@@ -25,4 +25,9 @@ public abstract class BaseCommandSet
     }
     
     protected abstract void loadCommands();
+    
+    protected void addCommand(Command command)
+    {
+        tempCommandList.addElement(command);
+    }
 }
