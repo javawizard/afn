@@ -78,8 +78,14 @@ public class LogicSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                // TODO Auto-generated method stub
-                return null;
+                verifyWords(arguments, 0, arguments.length);
+                for (int i = 0; i < arguments.length; i++)
+                {
+                    WordToken w = (WordToken) arguments[i];
+                    if (!w.getBool())
+                        return new WordToken(false);
+                }
+                return new WordToken(true);
             }
         });
         list.addElement(new NamedCommand("or", 2, 1024)
@@ -87,8 +93,14 @@ public class LogicSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                // TODO Auto-generated method stub
-                return null;
+                verifyWords(arguments, 0, arguments.length);
+                for (int i = 0; i < arguments.length; i++)
+                {
+                    WordToken w = (WordToken) arguments[i];
+                    if (w.getBool())
+                        return new WordToken(true);
+                }
+                return new WordToken(false);
             }
         });
         Command[] them = new Command[list.size()];
