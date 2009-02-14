@@ -35,10 +35,10 @@ public class TurtleCommandSet extends ScreenCommand
     private int[] argcounts =
         new int[] { 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
     private String[] commandNames =
-        new String[] { "getpos", "hideturtle", "showturtle", "setpos", "pendown",
+        new String[] { "pos", "hideturtle", "showturtle", "setpos", "pendown",
             "penup", "setpencolor", "setscreencolor", "forward", "right", "left",
-            "back", "home", "clean", "clearscreen", "pendownp", "getpencolor",
-            "getscreencolor", "getheading", "setheading", "towards" };
+            "back", "home", "clean", "clearscreen", "pendownp", "pencolor",
+            "screencolor", "heading", "setheading", "towards" };
     
     public static final int NUMBER_OF_COMMANDS = 21;
     
