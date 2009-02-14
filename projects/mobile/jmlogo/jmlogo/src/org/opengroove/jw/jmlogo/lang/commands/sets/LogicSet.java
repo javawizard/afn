@@ -70,8 +70,7 @@ public class LogicSet
             
             public Token run(InterpreterContext context, Token[] arguments)
             {
-                // TODO Auto-generated method stub
-                return null;
+                return new WordToken(arguments[0].equals(arguments[1]));
             }
         });
         list.addElement(new NamedCommand("and", 2, 1024)
