@@ -75,6 +75,19 @@ public class DataProcessingSet2 extends BaseCommandSet
                 }
             }
         });
-        
+        addCommand(new NamedCommand("thing", 1, 1)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                verifyWord(arguments[0]);
+                WordToken w = (WordToken) arguments[0];
+                Token v = context.getVariable(w.getValue());
+                if (v == null)
+                    throw new InterpreterException("" + w.getValue()
+                        + " has no value, passed to the thing command");
+                return v;
+            }
+        });
     }
 }
