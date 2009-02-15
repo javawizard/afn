@@ -1,0 +1,3 @@
+to maze.cellname :x :y
+output (word "cellx :x "y :y)
+end

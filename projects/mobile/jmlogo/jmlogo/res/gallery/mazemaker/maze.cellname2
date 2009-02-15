@@ -1,0 +1,3 @@
+to maze.cellname2 :v
+output maze.cellname first :v last :v
+end

@@ -1,0 +1,13 @@
+to maze.choosecell :v
+local "fx local "fy
+make "fx first :v make "fy last :v
+local "potential make "potential []
+push "potential list :fx sum :fy 1
+push "potential list sum :fx 1 :fy
+push "potential list :fx difference :fy 1
+push "potential list difference :fx 1 :fy
+local "choices make "choices []
+repeat 4 [local "choice make "choice pop "potential if and namep maze.cellname2 :choice not memberp :choice :visited [push "choices :choice]]
+if emptyp :choices [output []]
+output pick :choices
+end
