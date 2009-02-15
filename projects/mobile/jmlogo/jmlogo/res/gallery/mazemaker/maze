@@ -1,0 +1,31 @@
+to maze :width :height :pathsize
+local "ph make "ph heading
+local "halfsize make "halfsize quotient :pathsize 2
+ignore [draw all of the cells now]
+local "x local "y
+repeat :width [make "x repcount ~
+ repeat :height [make "y repcount make maze.cellname :x :y pos ~
+ maze.cell penup forward :pathsize pendown] ~
+ penup back product :pathsize :height right 90 forward :pathsize left 90]
+right 90 back product :pathsize :width left 90
+ignore [Cells are drawn, and we have their positions. Now we'll start at the first cell, with the first cell]
+ignore [in the pushback loop, and perform a while loop, where we walk in a random direction that hasn't had]
+ignore [that cell already walked until we can't do that anymore, then we go back in the pushback loop until]
+ignore [we can advance again. When the pushback loop is empty, the maze has been drawn.]
+local "pushloop
+local "visited
+local "next
+local "current
+make "current [1 1]
+make "pushloop []
+make "visited []
+push "pushloop [1 1]
+push "visited [1 1]
+while [not emptyp :pushloop] [make "next maze.choosecell :current ~
+ ifelse emptyp :next [ignore pop "pushloop if not emptyp :pushloop [make "current first :pushloop]] [ ~
+ penup setpos thing maze.cellname2 :current setheading towards thing maze.cellname2 :next ~
+ maze.carve make "current :next push "pushloop :current push "visited :current]]
+setpos thing maze.cellname 1 1
+repeat :width [make "x repcount repeat :height [make "y repcount ern maze.cellname :x :y]]
+setheading :ph
+end
