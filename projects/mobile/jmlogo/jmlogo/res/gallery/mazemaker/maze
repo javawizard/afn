@@ -1,5 +1,6 @@
 to maze :width :height :pathsize
-local "ph make "ph heading
+local "ph make "ph 0
+ignore [ph should be heading but it wont work]
 local "halfsize make "halfsize quotient :pathsize 2
 local "x local "y
 repeat :width [make "x repcount ~

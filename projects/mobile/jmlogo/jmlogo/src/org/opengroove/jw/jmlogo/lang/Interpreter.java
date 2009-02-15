@@ -423,7 +423,7 @@ public class Interpreter
              */
             boolean wasCommand = getCommand(tokenValue) != null;
             throw new InterpreterException("2: I don't know how to \"" + tokenValue
-                + "\" and wascommand " + wasCommand);
+                + "\" \nwascommand " + wasCommand + " \ncmdcount " + commands.size());
         }
         /*
          * All tokens were parsed, with no return statement being executed. This
