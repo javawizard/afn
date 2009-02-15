@@ -532,7 +532,7 @@ public class JMLogo extends MIDlet
     
     protected void loadCanvasCommands()
     {
-        canvasCommands = new Command[8];
+        canvasCommands = new Command[9];
         canvasCommands[0] = new Command("Run", Command.SCREEN, 1);
         canvasCommands[1] = new Command("Close", Command.SCREEN, 2);
         canvasCommands[2] = new Command("Edit", Command.SCREEN, 3);
@@ -541,6 +541,7 @@ public class JMLogo extends MIDlet
         canvasCommands[5] = new Command("Set pencolor", Command.SCREEN, 6);
         canvasCommands[6] = new Command("Delete procedure", Command.SCREEN, 7);
         canvasCommands[7] = new Command("Advanced actions", Command.SCREEN, 8);
+        canvasCommands[8] = new Command("Gallery", Command.SCREEN, 9);
         canvas.setCommandListener(new CommandListener()
         {
             
@@ -577,6 +578,10 @@ public class JMLogo extends MIDlet
                 else if (c == canvasCommands[7])// Advanced actions
                 {
                     showAdvancedActionList();
+                }
+                else if (c == canvasCommands[8])// Gallery
+                {
+                    showGalleryList();
                 }
             }
         });
