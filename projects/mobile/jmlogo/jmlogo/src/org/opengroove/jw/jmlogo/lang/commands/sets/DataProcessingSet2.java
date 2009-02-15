@@ -89,5 +89,19 @@ public class DataProcessingSet2 extends BaseCommandSet
                 return v;
             }
         });
+        addCommand(new NamedCommand("ern", 1, 1000)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                verifyWords(arguments, 0, arguments.length);
+                for (int i = 0; i < arguments.length; i++)
+                {
+                    context.eraseVariable(((WordToken) arguments[i]).getValue());
+                }
+                return null;
+            }
+            
+        });
     }
 }
