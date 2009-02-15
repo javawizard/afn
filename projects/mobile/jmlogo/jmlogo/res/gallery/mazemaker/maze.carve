@@ -1,0 +1,6 @@
+to maze.carve
+penup
+forward :halfsize right 90 back :halfsize forward 1
+pendown setpc [255 255 255] forward difference :pathsize 1 penup forward 1 setpc [0 0 0]
+back :pathsize forward :halfsize left 90 back :halfsize
+end
