@@ -12,8 +12,11 @@ import org.opengroove.jw.jmlogo.lang.commands.math.QuotientCommand;
 import org.opengroove.jw.jmlogo.lang.commands.math.SumCommand;
 import org.opengroove.jw.jmlogo.lang.commands.sets.BlockSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.DataProcessingSet;
+import org.opengroove.jw.jmlogo.lang.commands.sets.DataProcessingSet2;
+import org.opengroove.jw.jmlogo.lang.commands.sets.EntropyCommandSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.LogicSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.MathSet;
+import org.opengroove.jw.jmlogo.lang.commands.sets.PredicateDataSet;
 import org.opengroove.jw.jmlogo.lang.commands.turtle.*;
 import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
 
@@ -138,7 +141,7 @@ public class Interpreter
     
     public void addCommand(Command command)
     {
-        commands.put(command.getName(), command);
+        commands.put(command.getName().toLowerCase().trim(), command);
     }
     
     public void define(String line, String contents, boolean isMacro)
@@ -418,7 +421,9 @@ public class Interpreter
             /*
              * This token isn't anything coherent, so we'll throw an exception.
              */
-            throw new InterpreterException("I don't know how to " + tokenValue);
+            boolean wasCommand = getCommand(tokenValue) != null;
+            throw new InterpreterException("2: I don't know how to \"" + tokenValue
+                + "\" and wascommand " + wasCommand);
         }
         /*
          * All tokens were parsed, with no return statement being executed. This
@@ -689,9 +694,12 @@ public class Interpreter
         addCommand(new ListFixedCommand("listthree", 3));
         addCommand(new ListFixedCommand("listfour", 4));
         addCommands(DataProcessingSet.set);
+        addCommands(DataProcessingSet2.set.getCommands());
         addCommands(BlockSet.set);
         addCommands(LogicSet.commands);
         addCommands(MathSet.commands);
+        addCommands(EntropyCommandSet.set.getCommands());
+        addCommands(PredicateDataSet.set);
         alias("arctan2", "jmlogo_arctan2");
         alias("arctan", "jmlogo_arctan");
         addTildeCommand();

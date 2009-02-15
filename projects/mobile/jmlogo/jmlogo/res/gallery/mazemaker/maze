@@ -17,7 +17,7 @@ make "visited []
 push "pushloop [1 1]
 push "visited [1 1]
 while [not emptyp :pushloop] [make "next maze.choosecell :current ~
- ifelse emptyp :next [ignore pop "pushloop if not emptyp :pushloop [make "current first :pushloop]] [ ~
+ ifelse emptyp :next [ignore pop "pushloop ifelse not emptyp :pushloop [make "current first :pushloop] []] [ ~
  penup setpos thing maze.cellname2 :current setheading towards thing maze.cellname2 :next ~
  maze.carve make "current :next push "pushloop :current push "visited :current]]
 setpos thing maze.cellname 1 1
