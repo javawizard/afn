@@ -1,8 +1,0 @@
-to maze :width :height :pathsize
-local "halfsize make "halfsize quotient :pathsize 2
-ignore [draw all of the cells now]
-local "x
-repeat :width [make "x repcount repeat :height [maze.cell local ... penup forward :pathsize] back product :pathsize :height right 90 forward :pathsize left 90]
-right 90 back product :pathsize :width left 90
-ignore [cells are drawn. 
-end

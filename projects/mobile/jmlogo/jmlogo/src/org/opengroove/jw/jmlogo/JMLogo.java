@@ -1112,6 +1112,42 @@ public class JMLogo extends MIDlet
         Display.getDisplay(this).setCurrent(form);
     }
     
+    public static void loadResourceToProgram(RecordStore localLibraryStore,
+        String folderPath) throws IOException, RecordStoreException
+    {
+        DataInputStream lListIn =
+            new DataInputStream(JMLogo.class.getResourceAsStream(folderPath
+                + "files.list"));
+        System.out.println("loading library into record store");
+        while (true)
+        {
+            try
+            {
+                String name = lListIn.readUTF();
+                if (name == null)
+                    break;
+                if (name.endsWith("/"))
+                    /*
+                     * Shouldn't happen, but we'll be careful anyway
+                     */
+                    continue;
+                System.out.println("loading library function " + name);
+                InputStream in = JMLogo.class.getResourceAsStream(folderPath + name);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                copy(in, baos);
+                in.close();
+                byte[] bytes = baos.toByteArray();
+                bytes = parseLogoFormatProcedure(new String(bytes), null);
+                System.out.println("writing library function to record store");
+                localLibraryStore.addRecord(bytes, 0, bytes.length);
+            }
+            catch (EOFException e)
+            {
+                break;
+            }
+        }
+    }
+    
     protected void beginFirstTimeSetup()
     {
         try
@@ -1175,6 +1211,117 @@ public class JMLogo extends MIDlet
         {
             error(e, "While in beginFirstTimeSetup");
         }
+    }
+    
+    /**
+     * Shows the gallery list.
+     * 
+     * The gallery works something like this. The user opens a program. They
+     * then open the gallery (via a menu option). They then choose a gallery
+     * program. All of the procedures are then loaded into the program from the
+     * gallery, unless one of them's name conflicts, in which case they won't be
+     * imported until the user renames the existing one.
+     * 
+     * This method doesn't check for cases where the procedure defined in the
+     * gallery file is not the procedure that the file is named. In these cases,
+     * the results are undefined.
+     */
+    public static void showGalleryList()
+    {
+        DataInputStream lListIn =
+            new DataInputStream(JMLogo.class.getResourceAsStream("/gallery/files.list"));
+        System.out.println("loading library into record store");
+        final List list = new List("Choose a gallery program to import", List.IMPLICIT);
+        while (true)
+        {
+            try
+            {
+                String name = lListIn.readUTF();
+                if (name == null)
+                    break;
+                list.append(name, null);
+            }
+            catch (EOFException e)
+            {
+                break;
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                error(e, "while showing the gallery list");
+                return;
+            }
+        }
+        list.addCommand(new Command("Cancel", Command.CANCEL, 2));
+        list.setSelectCommand(new Command("Import", Command.OK, 1));
+        list.setCommandListener(new CommandListener()
+        {
+            
+            public void commandAction(Command c, Displayable d)
+            {
+                if (c.getCommandType() == Command.CANCEL)
+                {
+                    Display.getDisplay(midlet).setCurrent(canvas);
+                }
+                else
+                {
+                    String toImport = list.getString(list.getSelectedIndex());
+                    DataInputStream lList2 =
+                        new DataInputStream(
+                            JMLogo.class.getResourceAsStream("/gallery/" + toImport
+                                + "/files.list"));
+                    String[] existingProcedures = listProgramProcedures();
+                    while (true)
+                    {
+                        try
+                        {
+                            String name = lList2.readUTF();
+                            for (int i = 0; i < existingProcedures.length; i++)
+                            {
+                                if (name.equalsIgnoreCase(existingProcedures[i]))
+                                {
+                                    showMessageAlert(
+                                        canvas,
+                                        "The program that's open already has a procedure named "
+                                            + name
+                                            + ". The gallery program you're trying to import also "
+                                            + "has a procedure with the same name. You'll need to rename "
+                                            + "the procedure in your program because you can import "
+                                            + "this gallery program.");
+                                    return;
+                                }
+                            }
+                        }
+                        catch (EOFException e)
+                        {
+                            break;
+                        }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                            error(e,
+                                "while actually importing from gallery, and checking for pre-existing");
+                        }
+                    }
+                    try
+                    {
+                        loadResourceToProgram(programStore, "/gallery/" + toImport
+                            + "/");
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                        error(e, "while importing records from a gallery program");
+                        return;
+                    }
+                    showMessageAlert(
+                        canvas,
+                        "You have successfully imported this gallery program. "
+                            + "You'll need to restart JMLogo for changes to take effect.");
+                }
+            }
+        });
+        Display.getDisplay(midlet).setCurrent(list);
     }
     
     /**

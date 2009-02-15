@@ -1,6 +1,0 @@
-to maze.cell
-penup forward :halfsize right 90 back :halfsize
-pendown
-repeat 4 [forward :pathsize right 90]
-penup forward :halfsize left 90 back :halfsize
-end
