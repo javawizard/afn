@@ -22,6 +22,7 @@ while [not emptyp :pushloop] [make "next maze.choosecell :current ~
  penup setpos thing maze.cellname2 :current setheading towards thing maze.cellname2 :next ~
  maze.carve make "current :next push "pushloop :current make maze.visitedname2 :current "true]]
 setpos thing maze.cellname 1 1
-repeat :width [make "x repcount repeat :height [make "y repcount ern maze.cellname :x :y]]
+repeat :width [make "x repcount repeat :height [make "y repcount ~
+ ern maze.cellname :x :y ern maze.visitedname :x :y]]
 setheading :ph
 end
