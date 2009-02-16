@@ -448,6 +448,8 @@ public class Interpreter
     
     public Command getCommand(String commandName)
     {
+        System.out.println("getting command for command name "
+            + commandName.toLowerCase());
         return (Command) commands.get(commandName.toLowerCase());
     }
     
