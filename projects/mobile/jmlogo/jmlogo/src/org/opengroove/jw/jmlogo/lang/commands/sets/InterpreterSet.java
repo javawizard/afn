@@ -28,5 +28,13 @@ public class InterpreterSet extends BaseCommandSet
                 return null;
             }
         });
+        addCommand(new NamedCommand("listmode", 1, 1)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                return null;
+            }
+        });
     }
 }
