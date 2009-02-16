@@ -150,5 +150,31 @@ public class DataProcessingSet2 extends BaseCommandSet
             }
             
         });
+        addCommand(new NamedCommand("namep", 1, 1)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                verifyWord(arguments[0]);
+                Token v = context.getVariable(((WordToken) arguments[0]).getValue());
+                return new WordToken(v != null);
+            }
+        });
+        addCommand(new NamedCommand("memberp", 2, 2)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                verifyList(arguments[1]);
+                ListToken list = (ListToken) arguments[1];
+                Token[] members = list.getMembers();
+                for (int i = 0; i < members.length; i++)
+                {
+                    if (members[i].equals(arguments[0]))
+                        return new WordToken(true);
+                }
+                return new WordToken(false);
+            }
+        });
     }
 }
