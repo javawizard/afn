@@ -61,8 +61,16 @@ public class Interpreter
 {
     private static final String LIST_DELIMITERS = "() []\n";
     private static final String WORD_TERMINATORS = " []()\n";
-    private static final String WHITE_SPACE = " \n";
+    private static final String WHITE_SPACE = " \n\r\t";
     private static final String SINGLETON_LIST_COMPONENTS = "()";
+    private static final Command EMPTY_COMMAND = new NamedCommand("", 0, 0)
+    {
+        
+        public Token run(InterpreterContext context, Token[] arguments)
+        {
+            return null;
+        }
+    };
     /**
      * Hashtable<String,Variable>
      */
@@ -141,7 +149,9 @@ public class Interpreter
     
     public void addCommand(Command command)
     {
-        commands.put(command.getName().toLowerCase().trim(), command);
+        String name = command.getName().toLowerCase().trim();
+        System.out.println("adding command " + name);
+        commands.put(name, command);
     }
     
     public void define(String line, String contents, boolean isMacro)
@@ -450,6 +460,8 @@ public class Interpreter
     {
         System.out.println("getting command for command name "
             + commandName.toLowerCase());
+        if (commandName.trim().equals(""))
+            return EMPTY_COMMAND;
         return (Command) commands.get(commandName.toLowerCase());
     }
     
@@ -629,6 +641,7 @@ public class Interpreter
      */
     public void eraseCommand(String name)
     {
+        System.out.println("removing command " + name);
         commands.remove(name);
     }
     
@@ -780,7 +793,10 @@ public class Interpreter
         while (keySet.hasMoreElements())
         {
             Object key = keySet.nextElement();
-            commandList.addElement(commands.get(key));
+            Command cmd = (Command) commands.get(key);
+            System.out.println("key \"" + key + "\" maps to command \"" + cmd.getName()
+                + "\"");
+            commandList.addElement(cmd);
         }
         Command[] commandArray = new Command[commandList.size()];
         commandList.copyInto(commandArray);
