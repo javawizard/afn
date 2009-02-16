@@ -14,6 +14,7 @@ import org.opengroove.jw.jmlogo.lang.commands.sets.BlockSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.DataProcessingSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.DataProcessingSet2;
 import org.opengroove.jw.jmlogo.lang.commands.sets.EntropyCommandSet;
+import org.opengroove.jw.jmlogo.lang.commands.sets.InterpreterSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.LogicSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.MathSet;
 import org.opengroove.jw.jmlogo.lang.commands.sets.PredicateDataSet;
@@ -725,6 +726,7 @@ public class Interpreter
         addCommands(MathSet.commands);
         addCommands(EntropyCommandSet.set.getCommands());
         addCommands(PredicateDataSet.set);
+        addCommands(InterpreterSet.set.getCommands());
         alias("arctan2", "jmlogo_arctan2");
         alias("arctan", "jmlogo_arctan");
         addTildeCommand();
