@@ -8,6 +8,6 @@ push "potential list :fx difference :fy 1
 push "potential list difference :fx 1 :fy
 local "choices make "choices []
 repeat 4 [local "choice make "choice pop "potential if and namep maze.cellname2 :choice not memberp :choice :visited [push "choices :choice]]
-if emptyp :choices [output []]
+ifelse emptyp :choices [output []] []
 output pick :choices
 end
