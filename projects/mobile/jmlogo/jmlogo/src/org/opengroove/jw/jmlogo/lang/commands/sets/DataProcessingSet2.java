@@ -58,6 +58,53 @@ public class DataProcessingSet2 extends BaseCommandSet
                 }
             }
         });
+        addCommand(new NamedCommand("last", 1, 1)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                if (arguments[0] instanceof WordToken)
+                {
+                    WordToken w = (WordToken) arguments[0];
+                    if (w.getValue().length() < 1)
+                        throw new InterpreterException(
+                            "The word specified is empty, so you "
+                                + "can't run the last command on it");
+                    return new WordToken(""
+                        + w.getValue().charAt(w.getValue().length() - 1));
+                }
+                else
+                {
+                    ListToken t = (ListToken) arguments[0];
+                    if (t.getMembers().length < 1)
+                        throw new InterpreterException(
+                            "The list specified is empty, so you "
+                                + "can't run the last command on it");
+                    return t.getMembers()[t.getMembers().length - 1];
+                }
+            }
+        });
+        addCommand(new NamedCommand("butlast", 1, 1)
+        {
+            
+            public Token run(InterpreterContext context, Token[] arguments)
+            {
+                if (arguments[0] instanceof WordToken)
+                {
+                    WordToken t = (WordToken) arguments[0];
+                    if (t.getValue().length() < 1)
+                        throw new InterpreterException(
+                            "empty word specified to butlast");
+                    return new WordToken(t.getValue().substring(0,
+                        t.getValue().length() - 1));
+                }
+                else
+                {
+                    ListToken t = (ListToken) arguments[0];
+                    return t.butLast();
+                }
+            }
+        });
         addCommand(new NamedCommand("count", 1, 1)
         {
             

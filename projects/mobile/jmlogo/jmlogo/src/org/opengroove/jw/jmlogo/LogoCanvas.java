@@ -87,12 +87,12 @@ public class LogoCanvas extends Canvas implements LogoScreen
         double turtleLeftX = gx(turtleResult.x);
         double turtleLeftY = gy(turtleResult.y);
         cg.setColor(turtleColor);
-        cg.drawLine((int) turtleLeftX, (int) turtleLeftY, (int) turtleRightX,
-            (int) turtleRightY);
-        cg.drawLine((int) turtleLeftX, (int) turtleLeftY, (int) turtleFrontX,
-            (int) turtleFrontY);
-        cg.drawLine((int) turtleRightX, (int) turtleRightY, (int) turtleFrontX,
-            (int) turtleFrontY);
+        cg.drawLine(ri( turtleLeftX), ri( turtleLeftY), ri( turtleRightX),
+            ri( turtleRightY));
+        cg.drawLine(ri( turtleLeftX), ri( turtleLeftY), ri( turtleFrontX),
+            ri( turtleFrontY));
+        cg.drawLine(ri( turtleRightX), ri( turtleRightY), ri( turtleFrontX),
+            ri( turtleFrontY));
     }
     
     /**
@@ -137,8 +137,8 @@ public class LogoCanvas extends Canvas implements LogoScreen
         System.out.println("fx:" + futureX + ",fy:" + futureY);
         if (isPenDown)
         {
-            graphics.drawLine((int) gx(turtleX), (int) gy(turtleY), (int) gx(futureX),
-                (int) gy(futureY));
+            graphics.drawLine(ri( gx(turtleX)), ri( gy(turtleY)), ri( gx(futureX)),
+                ri( gy(futureY)));
         }
         turtleX = futureX;
         turtleY = futureY;
@@ -286,8 +286,8 @@ public class LogoCanvas extends Canvas implements LogoScreen
     {
         if (isPenDown)
         {
-            graphics.drawLine((int) gx(0), (int) gy(0), (int) gx(turtleX),
-                (int) gy(turtleY));
+            graphics.drawLine(ri( gx(0)), ri( gy(0)), ri( gx(turtleX)),
+                ri( gy(turtleY)));
         }
         turtleX = 0;
         turtleY = 0;
