@@ -330,6 +330,8 @@ public class LogoCanvas extends Canvas implements LogoScreen
          * since they are exactly swapped in logo coordinate space from
          * mathematical coordinate space.
          */
+        x -= turtleX;
+        y -= turtleY;
         return Math.toDegrees(Float11.atan2(x, y));
     }
     
