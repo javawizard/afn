@@ -6,6 +6,7 @@ make "pathsize product :halfsize 2
 local "x local "y
 repeat :width [make "x repcount ~
  repeat :height [make "y repcount make maze.cellname :x :y (list round first pos round last pos) ~
+ make  ~
  maze.cell penup forward :pathsize setpos (list round first pos round last pos) pendown] ~
  penup back product :pathsize :height right 90 forward :pathsize left 90 setpos (list round first pos round last pos)]
 right 90 back product :pathsize :width left 90
