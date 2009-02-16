@@ -129,12 +129,13 @@ public class LogoCanvas extends Canvas implements LogoScreen
     
     public void forward(double length)
     {
-        System.out.println("moving forward, cx:" + turtleX + ",cy:" + turtleY + ",l:"
-            + length + ",h:" + turtleHeading);
+        // System.out.println("moving forward, cx:" + turtleX + ",cy:" + turtleY
+        // + ",l:"
+        // + length + ",h:" + turtleHeading);
         turtleAnglePoint(length, futurePoint);
         double futureX = futurePoint.x;
         double futureY = futurePoint.y;
-        System.out.println("fx:" + futureX + ",fy:" + futureY);
+        // System.out.println("fx:" + futureX + ",fy:" + futureY);
         if (isPenDown)
         {
             graphics.drawLine(ri(gx(turtleX)), ri(gy(turtleY)), ri(gx(futureX)),
