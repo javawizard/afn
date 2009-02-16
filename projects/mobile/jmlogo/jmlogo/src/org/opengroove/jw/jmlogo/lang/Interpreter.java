@@ -59,8 +59,8 @@ import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
  */
 public class Interpreter
 {
-    private static final String LIST_DELIMITERS = "() []\n";
-    private static final String WORD_TERMINATORS = " []()\n";
+    private static final String LIST_DELIMITERS = "() []\n\r\t";
+    private static final String WORD_TERMINATORS = " []()\n\r\t";
     private static final String WHITE_SPACE = " \n\r\t";
     private static final String SINGLETON_LIST_COMPONENTS = "()";
     private static final Command EMPTY_COMMAND = new NamedCommand("", 0, 0)
@@ -460,6 +460,16 @@ public class Interpreter
     {
         System.out.println("getting command for command name "
             + commandName.toLowerCase());
+        if (commandName.startsWith("~"))
+        {
+            System.out.print("command chars: ");
+            for (int i = 0; i < commandName.length(); i++)
+            {
+                System.out.print((int) commandName.charAt(i));
+                System.out.print(" ");
+            }
+            System.out.println();
+        }
         if (commandName.trim().equals(""))
             return EMPTY_COMMAND;
         return (Command) commands.get(commandName.toLowerCase());
