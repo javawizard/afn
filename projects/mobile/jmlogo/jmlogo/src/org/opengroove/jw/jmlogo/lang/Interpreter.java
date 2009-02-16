@@ -478,18 +478,6 @@ public class Interpreter
     
     public Command getCommand(String commandName)
     {
-        System.out.println("getting command for command name "
-            + commandName.toLowerCase());
-        if (commandName.startsWith("~"))
-        {
-            System.out.print("command chars: ");
-            for (int i = 0; i < commandName.length(); i++)
-            {
-                System.out.print((int) commandName.charAt(i));
-                System.out.print(" ");
-            }
-            System.out.println();
-        }
         if (commandName.trim().equals(""))
             return EMPTY_COMMAND;
         return (Command) commands.get(commandName.toLowerCase());
