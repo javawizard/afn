@@ -76,7 +76,7 @@ public class DataProcessingSet
                     throw new InterpreterException(
                         "You can't pop from a stack that doesn't have anything on it");
                 Token value = listToken.getMembers()[0];
-                Token[] newTokens = new Token[listToken.getMembers().length];
+                Token[] newTokens = new Token[listToken.getMembers().length - 1];
                 System.arraycopy(listToken.getMembers(), 1, newTokens, 0,
                     newTokens.length);
                 ListToken newList = new ListToken(newTokens);
