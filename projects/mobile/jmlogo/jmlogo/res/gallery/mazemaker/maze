@@ -4,7 +4,7 @@ ignore [ph should be heading but it wont work]
 local "halfsize make "halfsize quotient :pathsize 2
 local "x local "y
 repeat :width [make "x repcount ~
- repeat :height [make "y repcount make maze.cellname :x :y pos ~
+ repeat :height [make "y repcount make maze.cellname :x :y (list round first pos round last pos) ~
  maze.cell penup forward :pathsize pendown] ~
  penup back product :pathsize :height right 90 forward :pathsize left 90]
 right 90 back product :pathsize :width left 90
