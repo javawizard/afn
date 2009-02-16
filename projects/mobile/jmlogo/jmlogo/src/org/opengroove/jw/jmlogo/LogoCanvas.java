@@ -87,12 +87,12 @@ public class LogoCanvas extends Canvas implements LogoScreen
         double turtleLeftX = gx(turtleResult.x);
         double turtleLeftY = gy(turtleResult.y);
         cg.setColor(turtleColor);
-        cg.drawLine(ri( turtleLeftX), ri( turtleLeftY), ri( turtleRightX),
-            ri( turtleRightY));
-        cg.drawLine(ri( turtleLeftX), ri( turtleLeftY), ri( turtleFrontX),
-            ri( turtleFrontY));
-        cg.drawLine(ri( turtleRightX), ri( turtleRightY), ri( turtleFrontX),
-            ri( turtleFrontY));
+        cg.drawLine(ri(turtleLeftX), ri(turtleLeftY), ri(turtleRightX),
+            ri(turtleRightY));
+        cg.drawLine(ri(turtleLeftX), ri(turtleLeftY), ri(turtleFrontX),
+            ri(turtleFrontY));
+        cg.drawLine(ri(turtleRightX), ri(turtleRightY), ri(turtleFrontX),
+            ri(turtleFrontY));
     }
     
     /**
@@ -130,15 +130,15 @@ public class LogoCanvas extends Canvas implements LogoScreen
     public void forward(double length)
     {
         System.out.println("moving forward, cx:" + turtleX + ",cy:" + turtleY + ",l:"
-            + length);
+            + length + ",h:" + turtleHeading);
         turtleAnglePoint(length, futurePoint);
         double futureX = futurePoint.x;
         double futureY = futurePoint.y;
         System.out.println("fx:" + futureX + ",fy:" + futureY);
         if (isPenDown)
         {
-            graphics.drawLine(ri( gx(turtleX)), ri( gy(turtleY)), ri( gx(futureX)),
-                ri( gy(futureY)));
+            graphics.drawLine(ri(gx(turtleX)), ri(gy(turtleY)), ri(gx(futureX)),
+                ri(gy(futureY)));
         }
         turtleX = futureX;
         turtleY = futureY;
@@ -286,8 +286,7 @@ public class LogoCanvas extends Canvas implements LogoScreen
     {
         if (isPenDown)
         {
-            graphics.drawLine(ri( gx(0)), ri( gy(0)), ri( gx(turtleX)),
-                ri( gy(turtleY)));
+            graphics.drawLine(ri(gx(0)), ri(gy(0)), ri(gx(turtleX)), ri(gy(turtleY)));
         }
         turtleX = 0;
         turtleY = 0;
