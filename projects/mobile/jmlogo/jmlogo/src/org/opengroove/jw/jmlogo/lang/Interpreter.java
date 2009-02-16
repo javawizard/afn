@@ -368,7 +368,26 @@ public class Interpreter
                  */
                 Token[] commandArgsArray = new Token[commandArgs.size()];
                 commandArgs.copyInto(commandArgsArray);
-                Token commandOutput = command.run(context, commandArgsArray);
+                Token commandOutput;
+                try
+                {
+                    commandOutput = command.run(context, commandArgsArray);
+                }
+                catch (InterpreterException e)
+                {
+                    throw e;
+                }
+                catch (Exception e)
+                {
+                    System.err.println("Error while executing command "
+                        + command.getName());
+                    throw new InterpreterException(
+                        "An internal error occured while interpreting. "
+                            + "The command " + command.getName()
+                            + " threw an exception while running. "
+                            + "The stack trace has been printed to stdout. "
+                            + "Contact support@opengroove.org for help.");
+                }
                 if (commandOutput != null)
                 {
                     context.requestedToStop = false;
