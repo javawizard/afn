@@ -1418,6 +1418,7 @@ public class JMLogo extends MIDlet
     
     public static void error(Throwable e, String info)
     {
+        e.printStackTrace();
         Form f = new Form("JMLogo Error");
         f.append("An error has occured in JMLogo "
             + "(scroll down for contact info)...\n");
@@ -1480,6 +1481,26 @@ public class JMLogo extends MIDlet
             {
                 showMessageAlert(canvas, "Free: " + Runtime.getRuntime().freeMemory()
                     + " \nTotal: " + Runtime.getRuntime().totalMemory());
+            }
+        }, new Action("show program rms space")
+        {
+            
+            public void run()
+            {
+                try
+                {
+                    showMessageAlert(canvas, "Program record count: "
+                        + programStore.getNumRecords() + " \nLibrary record count: "
+                        + libraryStore.getNumRecords() + " \nProgram used space: "
+                        + programStore.getSize() + " \nLibrary used space: "
+                        + libraryStore.getSize() + " \nProgram free space: "
+                        + programStore.getSizeAvailable() + " \nLibrary free space: "
+                        + libraryStore.getSizeAvailable());
+                }
+                catch (Exception e)
+                {
+                    error(e, "while showing rms statistics from advanced options");
+                }
             }
         }, new Action("show interpreter commands")
         {
