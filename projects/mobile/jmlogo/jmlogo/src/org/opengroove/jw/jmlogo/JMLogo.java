@@ -792,7 +792,7 @@ public class JMLogo extends MIDlet
             return;
         }
         final TextBox editor =
-            new TextBox("Editing " + proc, "", 4096, TextField.ANY
+            new TextBox("Editing " + proc, "", 8192, TextField.ANY
                 | TextField.NON_PREDICTIVE);
         try
         {
