@@ -1,0 +1,52 @@
+to submaze :origin :w :h :pathsize :upheading
+ifelse or equalp :w 1 equalp :h 1 [stop] []
+setpc [0 0 0]
+penup setpos :origin setheading :upheading
+local "rwx make "rwx randomrange 1 difference :w 1
+local "rwy make "rwy randomrange 1 difference :h 1
+local "rdx1 make "rdx1 randomrange 1 :rwy
+local "rdx2 make "rdx2 randomrange sum :rwy 1 :h
+local "rdy1 make "rdy1 randomrange 1 :rwx
+local "rdy2 make "rdy2 randomrange sum :rwx 1 :w
+local "rdomit make "rdomit randomrange 1 4
+local "xquadpos
+local "yquadpos
+local "xyquadpos
+right 90
+
+forward product :rwx :pathsize left 90 make "xquadpos pos
+pendown forward product :h :pathsize back product :h :pathsize penup
+
+forward product :pathsize difference :rdx1 1
+setpc [255 255 255]
+forward 1 ifelse equalp :rdomit 1 [][pendown]
+forward difference :pathsize 1 penup back product :pathsize :rdx1
+
+forward product :pathsize difference :rdx2 1
+forward 1 ifelse equalp :rdomit 2 [][pendown]
+forward difference :pathsize 1 penup back product :pathsize :rdx2
+
+right 90 back product :rwx :pathsize left 90
+
+forward product :rwy :pathsize right 90 make "yquadpos pos
+setpc [0 0 0]
+pendown forward product :w :pathsize back product :w :pathsize penup
+
+forward product :pathsize difference :rdy1 1
+setpc [255 255 255]
+forward 1 ifelse equalp :rdomit 3 [][pendown]
+forward difference :pathsize 1 penup back product :pathsize :rdy1
+
+forward product :pathsize difference :rdy2 1
+forward 1 ifelse equalp :rdomit 4 [][pendown]
+forward difference :pathsize 1 penup back product :pathsize :rdy2
+
+penup forward product :rwx :pathsize make "xyquadpos pos back product :rwx :pathsize
+left 90 back product :rwy :pathsize
+
+submaze :origin :rwx :rwy :pathsize :upheading
+submaze :xquadpos difference :w :rwx :rwy :pathsize :upheading
+submaze :yquadpos :rwx difference :h :rwy :pathsize :upheading
+submaze :xyquadpos difference :w :rwx difference :h :rwy :pathsize :upheading
+
+end

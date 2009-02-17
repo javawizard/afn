@@ -1,0 +1,4 @@
+to randomrange :lower :upper
+local "v make "v random sum 1 difference :upper :lower
+output sum :lower :v
+end
