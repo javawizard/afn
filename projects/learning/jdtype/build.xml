@@ -1,0 +1,16 @@
+<project name="JDType" default="compile">
+    <target name="compile">
+        <mkdir dir="${basedir}/classes" />
+        <javac fork="false"
+               srcdir="${basedir}/src"
+               destdir="${basedir}/classes"
+               debug="on"
+               debuglevel="lines,vars,source"
+               nowarn="true"
+               encoding="UTF8">
+            <classpath>
+                <fileset dir="${basedir}/lib" />
+            </classpath>
+        </javac>
+    </target>
+</project>
