@@ -1,5 +1,7 @@
 package com.googlecode.jwutils.jdtype;
 
+import java.awt.Font;
+
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
@@ -16,8 +18,9 @@ public class JDType
         frame.setLocationRelativeTo(null);
         JLabel label =
             new JLabel("<html><div style='align: center; font-size: 24px'>"
-                + "Welcome to JDType.</div><br/>More to come soon!"
-                + " -- javawizard2539");
+                + "<b>Welcome to JDType.</b></div><br/>More to come soon!"
+                + " -- javawizard2539<br/>&nbsp;<br/>&nbsp;<br/>&nbsp;<br/>&nbsp;");
+        label.setFont(Font.decode(null));
         label.setHorizontalAlignment(JLabel.CENTER);
         frame.getContentPane().add(label);
         frame.show();

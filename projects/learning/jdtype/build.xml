@@ -1,7 +1,7 @@
 <project name="JDType" default="compile">
     <target name="compile">
         <mkdir dir="${basedir}/classes" />
-        <javac fork="false"
+        <javac fork="true"
                srcdir="${basedir}/src"
                destdir="${basedir}/classes"
                debug="on"
