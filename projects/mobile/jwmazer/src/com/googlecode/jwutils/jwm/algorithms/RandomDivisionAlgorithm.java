@@ -55,6 +55,10 @@ public class RandomDivisionAlgorithm implements Algorithm
             etchSegment(g, true, yquadx, yquady, rdy2, pathsize);
         int xyquadx = xquadx;
         int xyquady = yquady;
+        submaze(canvas, ox, oy, rwx, rwy, pathsize, random);
+        submaze(canvas, xquadx, xquady, w - rwx, rwy, pathsize, random);
+        submaze(canvas, yquadx, yquady, rwx, h - rwy, pathsize, random);
+        submaze(canvas, xyquadx, xyquady, w - rwx, h - rwy, pathsize, random);
     }
     
     private void etchSegment(Graphics g, boolean horizontal, int ox, int oy,
