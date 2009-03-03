@@ -18,7 +18,7 @@ public class JDType
         frame.setLocationRelativeTo(null);
         JLabel label =
             new JLabel(
-                "<html><table border='0' cellspacing='0' cellpadding='3'>"
+                "<html><table border='0' cellspacing='0' cellpadding='8'>"
                     + "<tr><td style='font-size: 24px' align='center'><b>"
                     + "Welcome to JMLogo.</b></td></tr>"
                     + "<tr><td align='center'>More to come soon!"
