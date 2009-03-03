@@ -48,10 +48,11 @@ public class RandomDivisionAlgorithm implements Algorithm
             etchSegment(g, false, xquadx, xquady, rdx2, pathsize);
         int yquadx = ox;
         int yquady = oy + (rwy * pathsize);
+        g.setColor(0x000000);
         g.drawLine(yquadx, yquady, yquadx + (w * pathsize), yquady);
-        if (rdomit != 1)
+        if (rdomit != 3)
             etchSegment(g, true, yquadx, yquady, rdy1, pathsize);
-        if (rdomit != 2)
+        if (rdomit != 4)
             etchSegment(g, true, yquadx, yquady, rdy2, pathsize);
         int xyquadx = xquadx;
         int xyquady = yquady;
@@ -67,9 +68,9 @@ public class RandomDivisionAlgorithm implements Algorithm
         boolean vertical = !horizontal;
         int pixelOffset = (offset - 1) * pathsize;
         g.setColor(0xFFFFFF);
-        int x1 = horizontal ? ox + pixelOffset + 1 : ox;
-        int y1 = vertical ? oy + pixelOffset + 1 : oy;
-        int x2 = horizontal ? (ox + pixelOffset + pathsize) - 1 : oy;
+        int x1 = horizontal ? (ox + pixelOffset + 1) : ox;
+        int y1 = vertical ? (oy + pixelOffset + 1) : oy;
+        int x2 = horizontal ? (ox + pixelOffset + pathsize) - 1 : ox;
         int y2 = vertical ? (oy + pixelOffset + pathsize) - 1 : oy;
         g.drawLine(x1, y1, x2, y2);
         g.setColor(0x000000);
