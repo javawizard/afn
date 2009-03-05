@@ -37,8 +37,8 @@ import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
  * interpreter.installDefaultCommands();
  * // this is done once for any given string that is to be interpreted.
  * // the token can be stored and re-used when executing the command in the future.
- * StringStream ss = new StringStream(&quot;[print sum 2 3 4 print product 4 5]&quot;);
- * ListToken token = parseToList(ss);
+ * StringStream ss = new StringStream(&quot;[print (sum 2 3 4) print product 4 5]&quot;);
+ * ListToken token = interpreter.parseToList(ss);
  * // this needs to be done once every time the command is executed.
  * InterpreterContext context = new InterpreterContext(interpreter, null);
  * TokenIterator iterator = new TokenIterator(token);
