@@ -10,7 +10,9 @@ import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
 import org.opengroove.jzbot.commands.JoinCommand;
+import org.opengroove.jzbot.commands.OpCommand;
 import org.opengroove.jzbot.commands.RouletteCommand;
+import org.opengroove.jzbot.commands.SuperopCommand;
 import org.opengroove.jzbot.storage.*;
 
 /**
@@ -37,6 +39,8 @@ public class JZBot extends PircBot
     {
         loadCommand(new RouletteCommand());
         loadCommand(new JoinCommand());
+        loadCommand(new OpCommand());
+        loadCommand(new SuperopCommand());
     }
     
     private static void loadCommand(Command command)
