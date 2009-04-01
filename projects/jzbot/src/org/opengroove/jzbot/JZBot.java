@@ -82,14 +82,37 @@ public class JZBot extends PircBot
     protected void onMessage(String channel, String sender, String login,
         String hostname, String message)
     {
-        // TODO Auto-generated method stub
-        super.onMessage(channel, sender, login, hostname, message);
+        Channel chan = storage.getChannel(channel);
+        if (chan == null)
+            return;
+        String trigger = chan.getTrigger();
+        if (trigger != null && message.startsWith(trigger))
+        {
+            runMessageCommand(channel, sender, hostname, message.substring(trigger
+                .length()));
+        }
+    }
+    
+    private void runMessageCommand(String channel, String sender, String hostname,
+        String message)
+    {
     }
     
     protected void onPrivateMessage(String sender, String login, String hostname,
         String message)
     {
+        String channel = null;
+        if (message.startsWith("#") && message.contains(" "))
+        {
+            channel = message.substring(0, message.indexOf(" "));
+            message = message.substring(message.indexOf(" ") + 1);
+        }
+        runMessageCommand(channel, sender, hostname, message);
+    }
+    
+    private void doHelp(String sender)
+    {
         // TODO Auto-generated method stub
-        super.onPrivateMessage(sender, login, hostname, message);
+        
     }
 }
