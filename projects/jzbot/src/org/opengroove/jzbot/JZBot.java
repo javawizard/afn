@@ -229,6 +229,8 @@ public class JZBot extends PircBot
     
     public static boolean isOp(String channel, String hostname)
     {
+        if (isSuperop(hostname))
+            return true;
         Channel c = storage.getChannel(channel);
         if (c == null)
             return false;

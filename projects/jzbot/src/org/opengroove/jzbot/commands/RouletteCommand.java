@@ -71,10 +71,10 @@ public class RouletteCommand implements Command
         }
         if (arguments.equals("reset"))
         {
-            if(JZBot.isOp(channel, hostname))
+            if (JZBot.isOp(channel, hostname))
             {
-            stateMap.remove(channel);
-            JZBot.bot.sendMessage()
+                stateMap.remove(channel);
+                JZBot.bot.sendMessage(pm ? sender : channel, "Roulette reset.");
             }
             else
             {
