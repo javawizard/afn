@@ -4,11 +4,11 @@ import org.opengroove.jzbot.Command;
 
 public class RouletteCommand implements Command
 {
+    private
     
     public String getName()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return "roulette";
     }
     
     public void run(String arguments)
