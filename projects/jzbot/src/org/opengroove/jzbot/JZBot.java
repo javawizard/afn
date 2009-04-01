@@ -150,6 +150,7 @@ public class JZBot extends PircBot
                     sendMessage(pm ? sender : channel, "...");
                 sendMessage(pm ? sender : channel,
                     "The full stack trace of the exception has been printed to stdout.");
+                sendMessage(pm ? sender : channel, "End of exception report.");
             }
             return;
         }
