@@ -17,7 +17,7 @@ public class JZBot extends PircBot
 {
     public static final JZBot bot = new JZBot();
     // numeric 320: is signed on as account
-    private static ProxyStorage proxyStorage;
+    private static ProxyStorage<Storage> proxyStorage;
     public static Storage storage;
     
     public static void main(String[] args) throws Throwable
@@ -27,6 +27,8 @@ public class JZBot extends PircBot
     
     private void start() throws Throwable
     {
-        proxyStorage = new ProxyStorage(Storage.class, new File("storage/db"));
+        proxyStorage = new ProxyStorage<Storage>(Storage.class, new File("storage/db"));
+        storage = proxyStorage.getRoot();
+        bot.connect("", 6667, "");
     }
 }

@@ -17,9 +17,21 @@ public interface Storage
     public Channel getChannel(String name);
     
     @Property
+    public String getPassword();
+    
+    public void setPassword(String password);
+    
+    @Property
     @ListType(Factoid.class)
     public StoredList<Factoid> getFactoids();
     
     @Search(listProperty = "factoids", searchProperty = "name", exact = true)
     public Factoid getFactoid(String name);
+    
+    @Property
+    @ListType(Operator.class)
+    public StoredList<Operator> getOperators();
+    
+    @Search(listProperty = "operators", searchProperty = "hostname")
+    public Operator getOperator(String hostname);
 }
