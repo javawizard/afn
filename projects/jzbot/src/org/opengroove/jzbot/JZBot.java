@@ -164,6 +164,7 @@ public class JZBot extends PircBot
     {
         for (Channel channel : storage.getChannels().isolate())
         {
+            System.out.println("joining " + channel.getName());
             joinChannel(channel.getName());
         }
     }
