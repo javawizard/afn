@@ -16,6 +16,8 @@ public class HelpCommand implements Command
     {
         JZBot.bot.sendMessage(pm ? sender : channel,
             "Help doesn't work yet. Pm jcp or javawizard2539 for info on jzbot.");
+        JZBot.bot.sendMessage(pm ? sender : channel,
+            "You can also run the \"commandlist\" command to list commands.");
     }
     
 }

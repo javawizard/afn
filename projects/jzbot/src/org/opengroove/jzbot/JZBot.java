@@ -11,6 +11,8 @@ import net.sf.opengroove.common.proxystorage.ProxyStorage;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
+import org.opengroove.jzbot.commands.CommandListCommand;
+import org.opengroove.jzbot.commands.ConfigCommand;
 import org.opengroove.jzbot.commands.FactoidCommand;
 import org.opengroove.jzbot.commands.HelpCommand;
 import org.opengroove.jzbot.commands.JoinCommand;
@@ -43,6 +45,8 @@ public class JZBot extends PircBot
     
     private static void loadCommands()
     {
+        loadCommand(new CommandListCommand());
+        loadCommand(new ConfigCommand());
         loadCommand(new FactoidCommand());
         loadCommand(new HelpCommand());
         loadCommand(new JoinCommand());
