@@ -30,4 +30,12 @@ public interface Channel
     
     @Search(listProperty = "factoids", searchProperty = "name", exact = true)
     public Factoid getFactoid(String name);
+    
+    @Property
+    @ListType(Operator.class)
+    public StoredList<Operator> getOperators();
+    
+    @Search(listProperty = "operators", searchProperty = "hostname")
+    public Operator getOperator(String hostname);
+    
 }

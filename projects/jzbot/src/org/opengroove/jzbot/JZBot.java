@@ -104,13 +104,13 @@ public class JZBot extends PircBot
         String trigger = chan.getTrigger();
         if (trigger != null && message.startsWith(trigger))
         {
-            runMessageCommand(channel, sender, hostname, message.substring(trigger
-                .length()));
+            runMessageCommand(channel, false, sender, hostname, message
+                .substring(trigger.length()));
         }
     }
     
-    private void runMessageCommand(String channel, String sender, String hostname,
-        String message)
+    private void runMessageCommand(String channel, boolean pm, String sender,
+        String hostname, String message)
     {
         String[] commandSplit = message.split(" ", 2);
         String command = commandSplit[0];
@@ -118,7 +118,7 @@ public class JZBot extends PircBot
         Command c = commands.get(command);
         if (c != null)
         {
-            c.run(channel, sender, hostname, commandArguments);
+            c.run(channel, pm, sender, hostname, commandArguments);
             return;
         }
         /*
@@ -218,12 +218,25 @@ public class JZBot extends PircBot
             channel = message.substring(0, message.indexOf(" "));
             message = message.substring(message.indexOf(" ") + 1);
         }
-        runMessageCommand(channel, sender, hostname, message);
+        runMessageCommand(channel, true, sender, hostname, message);
     }
     
     private void doHelp(String sender)
     {
         // TODO Auto-generated method stub
         
+    }
+    
+    public static boolean isOp(String channel, String hostname)
+    {
+        Channel c = storage.getChannel(channel);
+        if (c == null)
+            return false;
+        return c.getOperator(hostname) != null;
+    }
+    
+    public static boolean isSuperop(String hostname)
+    {
+        return storage.getOperator(hostname) != null;
     }
 }

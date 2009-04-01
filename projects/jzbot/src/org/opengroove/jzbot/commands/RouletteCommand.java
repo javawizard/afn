@@ -51,13 +51,13 @@ public class RouletteCommand implements Command
         return "roulette";
     }
     
-    public synchronized void run(String channel, String sender, String hostname,
-        String arguments)
+    public synchronized void run(String channel, boolean pm, String sender,
+        String hostname, String arguments)
     {
         if (channel == null)
         {
             JZBot.bot.sendMessage(sender,
-                "You can only use roulette from within a channel.");
+                "You can only use roulette when a channel is specified.");
             return;
         }
         RouletteState state = stateMap.get(channel);
@@ -69,12 +69,24 @@ public class RouletteCommand implements Command
             state.loaded = (int) ((Math.random() * 6.0) + 1.0);
             stateMap.put(channel, state);
         }
+        if (arguments.equals("reset"))
+        {
+            if(JZBot.isOp(channel, hostname))
+            {
+            stateMap.remove(channel);
+            JZBot.bot.sendMessage()
+            }
+            else
+            {
+                
+            }
+        }
         state.changed = System.currentTimeMillis();
         state.current++;
         String prefix = "" + sender + ": (Chamber " + state.current + " of 6) ";
         if (state.current == state.loaded)
         {
-            stateMap.remove(state);
+            stateMap.remove(channel);
             JZBot.bot.sendMessage(channel, prefix + "*BANG* You're dead.");
             JZBot.bot.sendAction(channel, "reloads and spins the chamber");
         }
