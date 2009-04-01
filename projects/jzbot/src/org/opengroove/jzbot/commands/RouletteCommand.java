@@ -88,7 +88,8 @@ public class RouletteCommand implements Command
             {
                 if (state.loaded == 7)
                 {
-                    JZBot.bot.sendMessage(sender, "The gun is unloaded.");
+                    JZBot.bot.sendMessage(sender,
+                        "The gun is unloaded. You'll see this after chamber 6.");
                 }
                 else
                 {
