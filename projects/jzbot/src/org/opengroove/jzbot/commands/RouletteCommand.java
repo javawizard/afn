@@ -11,6 +11,7 @@ import org.opengroove.jzbot.commands.roulette.RouletteState;
 
 public class RouletteCommand implements Command
 {
+    protected static final long TIME_TO_EXPIRE = 1000 * 60 * 5;
     private static Map<String, RouletteState> state =
         Collections.synchronizedMap(new HashMap<String, RouletteState>());
     
@@ -24,9 +25,16 @@ public class RouletteCommand implements Command
                 {
                     try
                     {
+                        Thread.sleep(30 * 1000);
                         for (String key : new ArrayList<String>(state.keySet()))
                         {
-                            
+                            RouletteState value = state.get(key);
+                            if (value != null)
+                            {
+                                if ((value.changed + TIME_TO_EXPIRE) < System
+                                    .currentTimeMillis())
+                                    state.remove(key);
+                            }
                         }
                     }
                     catch (Exception exception)
