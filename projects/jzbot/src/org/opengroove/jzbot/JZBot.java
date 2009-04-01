@@ -29,6 +29,6 @@ public class JZBot extends PircBot
     {
         proxyStorage = new ProxyStorage<Storage>(Storage.class, new File("storage/db"));
         storage = proxyStorage.getRoot();
-        bot.connect("", 6667, "");
+        bot.connect("irc.freenode.net", 6667, storage.getPassword());
     }
 }
