@@ -86,9 +86,17 @@ public class RouletteCommand implements Command
         {
             if (JZBot.isOp(channel, hostname))
             {
-                JZBot.bot.sendMessage(sender, "The loaded barrel is " + state.loaded);
+                if (state.loaded == 7)
+                {
+                    JZBot.bot.sendMessage(sender, "The gun is unloaded.");
+                }
+                else
+                {
+                    JZBot.bot.sendMessage(sender, "The loaded chamber is "
+                        + state.loaded);
+                }
                 JZBot.bot.sendMessage(channel, "" + sender
-                    + " has seen which barrel is loaded.");
+                    + " has seen which chamber is loaded.");
             }
             else
             {
