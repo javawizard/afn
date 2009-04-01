@@ -148,9 +148,9 @@ public class JZBot extends PircBot
     private void doInvalidCommand(String channel, String sender)
     {
         if (channel != null)
-            sendMessage(channel, "Huh?");
+            sendMessage(channel, "Huh? (pm \"help\" for more info)");
         else
-            sendMessage(sender, "Huh?");
+            sendMessage(sender, "Huh? (pm \"help\" for more info)");
     }
     
     protected void onPrivateMessage(String sender, String login, String hostname,
