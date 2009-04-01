@@ -172,7 +172,24 @@ public class JZBot extends PircBot
                 {
                     try
                     {
-                        
+                        attempts++;
+                        int time;
+                        if (attempts < 5)
+                            time = 1;
+                        else if (attempts < 10)
+                            time = 5;
+                        else if (attempts < 20)
+                            time = 15;
+                        else if (attempts < 40)
+                            time = 30;
+                        else if (attempts < 70)
+                            time = 60;
+                        else if (attempts < 100)
+                            time = 120;
+                        else
+                            time = 240;
+                        Thread.sleep(time * 1000);
+                        reconnect();
                     }
                     catch (Exception e)
                     {
