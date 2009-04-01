@@ -35,11 +35,6 @@ public interface Storage
     public Channel createChannel();
     
     @Property
-    public String getPassword();
-    
-    public void setPassword(String password);
-    
-    @Property
     @ListType(Factoid.class)
     public StoredList<Factoid> getFactoids();
     

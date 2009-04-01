@@ -8,6 +8,7 @@ import net.sf.opengroove.common.proxystorage.ProxyStorage;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
+import org.opengroove.jzbot.storage.Config;
 import org.opengroove.jzbot.storage.Storage;
 
 /**
@@ -31,6 +32,22 @@ public class JZBot extends PircBot
     {
         proxyStorage = new ProxyStorage<Storage>(Storage.class, new File("storage/db"));
         storage = proxyStorage.getRoot();
-        bot.connect("irc.freenode.net", 6667, storage.getPassword());
+        config = storage.getConfig();
+        if (config == null)
+        {
+            config = storage.createConfig();
+            storage.setConfig(config);
+        }
+        if (config.getNick() == null || config.getPassword() == null
+            || config.getServer() == null)
+        {
+            System.out.println("No connect info specified. JZBot will exit.");
+            System.exit(0);
+        }
+        bot.setLogin(config.getNick());
+        bot.setName(config.getNick());
+        System.out.println("connecting");
+        bot.connect(config.getServer(), config.getPort(), config.getPassword());
+        System.out.println("connected");
     }
 }
