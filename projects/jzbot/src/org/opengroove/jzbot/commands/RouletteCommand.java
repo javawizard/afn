@@ -78,8 +78,9 @@ public class RouletteCommand implements Command
             }
             else
             {
-                
+                JZBot.bot.sendMessage(sender, "You're not an op here.");
             }
+            return;
         }
         state.changed = System.currentTimeMillis();
         state.current++;
