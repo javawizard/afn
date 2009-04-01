@@ -67,7 +67,6 @@ public class JZBot extends PircBot
         }
         bot.setLogin(config.getNick());
         bot.setName(config.getNick());
-        bot.setMessageDelay(500);
         System.out.println("connecting");
         bot.connect(config.getServer(), config.getPort(), config.getPassword());
         System.out.println("connected");
