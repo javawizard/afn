@@ -20,4 +20,16 @@ public interface Factoid
     public String getValue();
     
     public void setValue(String value);
+    
+    /**
+     * Gets the hostname of the creator of this factoid. Factoids can be deleted
+     * only by their creator and by ops (for channel-specific factoids) and
+     * superops.
+     * 
+     * @return The hostname of the creator of this factoid
+     */
+    @Property
+    public String getCreator();
+    
+    public void setCreator(String creator);
 }
