@@ -118,7 +118,7 @@ public class JZBot extends PircBot
         Command c = commands.get(command);
         if (c != null)
         {
-            c.run(commandArguments);
+            c.run(channel, sender, hostname, commandArguments);
             return;
         }
         /*
