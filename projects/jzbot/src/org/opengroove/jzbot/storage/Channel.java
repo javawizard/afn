@@ -15,4 +15,9 @@ public interface Channel
     public String getJoinFactoid();
     
     public void setJoinFactoid(String name);
+    
+    @Property
+    public String getTrigger();
+    
+    public void setTrigger(String trigger);
 }
