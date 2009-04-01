@@ -2,6 +2,7 @@ package org.opengroove.jzbot;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import net.sf.opengroove.common.proxystorage.ProxyStorage;
 
@@ -15,6 +16,8 @@ import org.opengroove.jzbot.storage.*;
  */
 public class JZBot extends PircBot
 {
+    public static final HashMap<String, Command> commands =
+        new HashMap<String, Command>();
     public static final JZBot bot = new JZBot();
     // numeric 320: is signed on as account
     private static ProxyStorage<Storage> proxyStorage;
@@ -27,8 +30,14 @@ public class JZBot extends PircBot
         bot.start();
     }
     
+    private static void loadCommands()
+    {
+        
+    }
+    
     private void start() throws Throwable
     {
+        loadCommands();
         proxyStorage = new ProxyStorage<Storage>(Storage.class, new File("storage/db"));
         storage = proxyStorage.getRoot();
         config = storage.getConfig();
@@ -96,6 +105,24 @@ public class JZBot extends PircBot
     private void runMessageCommand(String channel, String sender, String hostname,
         String message)
     {
+        String[] commandSplit = message.split(" ", 2);
+        String command = commandSplit[0];
+        String commandArguments = (commandSplit.length == 1 ? "" : commandSplit[1]);
+        Command c = commands.get(command);
+        if (c != null)
+        {
+            c.run(commandArguments);
+            return;
+        }
+        /*
+         * If we get here, then the text isn't a command. We'll check to see if
+         * it's a factoid.
+         */
+        Factoid factoid = storage.getFactoid(command);
+        if(factoid != null)
+        {
+            
+        }
     }
     
     protected void onPrivateMessage(String sender, String login, String hostname,
