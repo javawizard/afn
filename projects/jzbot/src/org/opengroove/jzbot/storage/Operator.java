@@ -4,15 +4,11 @@ import net.sf.opengroove.common.proxystorage.Property;
 import net.sf.opengroove.common.proxystorage.ProxyBean;
 
 @ProxyBean
-public interface Channel
+public interface Operator
 {
     @Property
-    public String getName();
+    public String getHostname();
     
-    public void setName(String name);
+    public void setHostname(String hostname);
     
-    @Property
-    public String getJoinFactoid();
-    
-    public void setJoinFactoid(String name);
 }

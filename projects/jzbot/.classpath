@@ -12,6 +12,10 @@
 	<classpathentry kind="lib" path="lib/junit-4.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2.14.jar"/>
 	<classpathentry kind="lib" path="lib/pircbot.jar"/>
-	<classpathentry kind="lib" path="lib/opengroove-common-r1479.jar"/>
+	<classpathentry kind="lib" path="lib/opengroove-common-r1479.jar" sourcepath="C:/workspace3.0/OpenGroove Common/src">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/C:/workspace3.0/OpenGroove Common/docs/api/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
