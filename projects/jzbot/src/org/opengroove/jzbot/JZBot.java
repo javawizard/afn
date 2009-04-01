@@ -8,6 +8,6 @@ import org.jibble.pircbot.PircBot;
 
 public class JZBot extends PircBot
 {
-    // is signed on as account
+    // numeric 320: is signed on as account
     
 }
