@@ -47,14 +47,43 @@ public class OpCommand implements Command
         }
         else if (subcommand.equals("add"))
         {
-            
+            if (tokens.length == 0)
+            {
+                JZBot.bot.sendMessage(pm ? sender : channel,
+                    "You need to specify a hostname.");
+                return;
+            }
+            String newHostname = tokens[1];
+            Operator op = JZBot.storage.createOperator();
+            op.setHostname(newHostname);
+            c.getOperators().add(op);
+            JZBot.bot.sendMessage(pm ? sender : channel, "Hostname " + newHostname
+                + " was successfully added as an op.");
         }
         else if (subcommand.equals("delete"))
         {
-            
+            if (tokens.length == 0)
+            {
+                JZBot.bot.sendMessage(pm ? sender : channel,
+                    "You need to specify a hostname.");
+                return;
+            }
+            String newHostname = tokens[1];
+            Operator op = c.getOperator(newHostname);
+            if (op == null)
+            {
+                JZBot.bot.sendMessage(pm ? sender : channel,
+                    "That hostname isn't an op.");
+                return;
+            }
+            c.getOperators().remove(op);
+            JZBot.bot.sendMessage(pm ? sender : channel, "Removed.");
         }
         else
         {
+            JZBot.bot.sendMessage(pm ? sender : channel,
+                "Specify one of add, list, or delete.");
+            return;
         }
     }
 }
