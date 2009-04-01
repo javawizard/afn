@@ -20,6 +20,6 @@ public interface Storage
     @ListType(Factoid.class)
     public StoredList<Factoid> getFactoids();
     
-    @Search(listProperty = "factoids", searchProperty = "name", exact = false, anywhere = false)
+    @Search(listProperty = "factoids", searchProperty = "name", exact = true)
     public Factoid getFactoid(String name);
 }
