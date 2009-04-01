@@ -2,6 +2,8 @@ package org.opengroove.jzbot;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 
 import net.sf.opengroove.common.proxystorage.ProxyStorage;
@@ -137,9 +139,17 @@ public class JZBot extends PircBot
                 e.printStackTrace();
                 sendMessage(pm ? sender : channel,
                     "An error occured while running the command:");
-                sendMessage(pm ? sender : channel, e.getClass() + ": " + e.getMessage());
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw, true));
+                String[] eTokens = sw.toString().split("\n");
+                for (int i = 0; i < eTokens.length && i < 4; i++)
+                {
+                    send
+                }
+                if(eTokens.length > 4)
+                    sendMessage(pm?sender:channel, "...");
                 sendMessage(pm ? sender : channel,
-                    "The stack trace of the exception has been printed to stdout.");
+                    "The full stack trace of the exception has been printed to stdout.");
             }
             return;
         }
