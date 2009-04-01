@@ -36,6 +36,11 @@ public class JZBot extends PircBot
         loadCommand(new RouletteCommand());
     }
     
+    private static void loadCommand(Command command)
+    {
+        commands.put(command.getName(), command);
+    }
+    
     private void start() throws Throwable
     {
         loadCommands();
