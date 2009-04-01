@@ -153,6 +153,38 @@ public class JZBot extends PircBot
             sendMessage(sender, "Huh? (pm \"help\" for more info)");
     }
     
+    protected void onConnect()
+    {
+        for (Channel channel : storage.getChannels().isolate())
+        {
+            joinChannel(channel.getName());
+        }
+    }
+    
+    protected void onDisconnect()
+    {
+        new Thread()
+        {
+            public void run()
+            {
+                int attempts = 0;
+                while (true)
+                {
+                    try
+                    {
+                        
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                        continue;
+                    }
+                    return;
+                }
+            }
+        }.start();
+    }
+    
     protected void onPrivateMessage(String sender, String login, String hostname,
         String message)
     {
