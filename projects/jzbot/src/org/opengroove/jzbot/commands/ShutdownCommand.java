@@ -21,7 +21,8 @@ public class ShutdownCommand implements Command
             JZBot.bot.sendMessage(pm ? sender : channel, "You're not a superop.");
             return;
         }
-        JZBot.bot.sendMessage(pm ? sender : channel, "Shutdown has been scheduled.");
+        JZBot.bot.sendMessage(pm ? sender : channel,
+            "Shutdown has been scheduled. No further commands will be acknowledged.");
         long sleepDuration = 5000;
         for (Channel c : JZBot.storage.getChannels().isolate())
         {
