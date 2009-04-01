@@ -20,6 +20,8 @@ public class JZBot extends PircBot
     private static ProxyStorage<Storage> proxyStorage;
     public static Storage storage;
     
+    public static Config config;
+    
     public static void main(String[] args) throws Throwable
     {
         bot.start();

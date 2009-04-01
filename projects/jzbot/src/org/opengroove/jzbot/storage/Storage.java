@@ -1,5 +1,6 @@
 package org.opengroove.jzbot.storage;
 
+import net.sf.opengroove.common.proxystorage.Constructor;
 import net.sf.opengroove.common.proxystorage.ListType;
 import net.sf.opengroove.common.proxystorage.Property;
 import net.sf.opengroove.common.proxystorage.ProxyBean;
@@ -15,6 +16,23 @@ public interface Storage
     
     @Search(listProperty = "channels", searchProperty = "name")
     public Channel getChannel(String name);
+    
+    @Property
+    public Config getConfig();
+    
+    public void setConfig(Config config);
+    
+    @Constructor
+    public Config createConfig();
+    
+    @Constructor
+    public Factoid createFactoid();
+    
+    @Constructor
+    public Operator createOperator();
+    
+    @Constructor
+    public Channel createChannel();
     
     @Property
     public String getPassword();
