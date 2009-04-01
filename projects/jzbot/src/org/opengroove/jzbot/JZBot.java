@@ -117,18 +117,46 @@ public class JZBot extends PircBot
         /*
          * If we get here, then the text isn't a command. We'll check to see if
          * it's a factoid.
+         * 
+         * Our first check will be for a channel-specific factoid.
          */
-        Factoid factoid = storage.getFactoid(command);
-        if(factoid != null)
+        if (channel != null)
         {
-            
+            Channel cn = storage.getChannel(channel);
+            if (cn != null)
+            {
+                Factoid f = cn.getFactoid(command);
+                if (f != null)
+                {
+                    runFactoid(f, channel, sender);
+                    return;
+                }
+            }
         }
+        /*
+         * Now we'll check for a global factoid.
+         */
+        Factoid f = storage.getFactoid(command);
+        if (f != null)
+        {
+            runFactoid(f, channel, sender);
+            return;
+        }
+        doInvalidCommand(channel, sender);
+    }
+    
+    private void doInvalidCommand(String channel, String sender)
+    {
+        if (channel != null)
+            sendMessage(channel, "Huh?");
+        else
+            sendMessage(sender, "Huh?");
     }
     
     protected void onPrivateMessage(String sender, String login, String hostname,
         String message)
     {
-        String channel = null;
+        String channel = "";
         if (message.startsWith("#") && message.contains(" "))
         {
             channel = message.substring(0, message.indexOf(" "));
