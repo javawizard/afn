@@ -159,15 +159,15 @@ public class JZBot extends PircBot
             runFactoid(f, channel, sender);
             return;
         }
-        doInvalidCommand(channel, sender);
+        doInvalidCommand(pm, channel, sender);
     }
     
-    private void doInvalidCommand(String channel, String sender)
+    private void doInvalidCommand(boolean pm, String channel, String sender)
     {
         if (channel != null)
-            sendMessage(channel, "Huh? (pm \"help\" for more info)");
+            sendMessage(pm ? sender : channel, "Huh? (pm \"help\" for more info)");
         else
-            sendMessage(sender, "Huh? (pm \"help\" for more info)");
+            sendMessage(pm ? sender : channel, "Huh? (pm \"help\" for more info)");
     }
     
     protected void onConnect()
