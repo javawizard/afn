@@ -128,7 +128,19 @@ public class JZBot extends PircBot
         Command c = commands.get(command);
         if (c != null)
         {
-            c.run(channel, pm, sender, hostname, commandArguments);
+            try
+            {
+                c.run(channel, pm, sender, hostname, commandArguments);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                sendMessage(pm ? sender : channel,
+                    "An error occured while running the command:");
+                sendMessage(pm ? sender : channel, e.getClass() + ": " + e.getMessage());
+                sendMessage(pm ? sender : channel,
+                    "The stack trace of the exception has been printed to stdout.");
+            }
             return;
         }
         /*
