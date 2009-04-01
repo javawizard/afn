@@ -13,7 +13,6 @@ public class SuperopCommand implements Command
     public void run(String channel, boolean pm, String sender, String hostname,
         String arguments)
     {
-        // TODO Auto-generated method stub
         
     }
     
