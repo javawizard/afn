@@ -22,7 +22,7 @@ public class OpCommand implements Command
                 "You have to specify a channel.");
             return;
         }
-        if (!JZBot.isOp(channel, sender))
+        if (!JZBot.isOp(channel, hostname))
         {
             JZBot.bot.sendMessage(pm ? sender : channel, "You're not an op here.");
             return;
