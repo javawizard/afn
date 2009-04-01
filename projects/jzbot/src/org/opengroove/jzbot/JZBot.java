@@ -25,6 +25,7 @@ public class JZBot extends PircBot
     public static Storage storage;
     
     public static Config config;
+    public static boolean isRunning;
     
     public static void main(String[] args) throws Throwable
     {
