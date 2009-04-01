@@ -8,8 +8,7 @@ import net.sf.opengroove.common.proxystorage.ProxyStorage;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
-import org.opengroove.jzbot.storage.Config;
-import org.opengroove.jzbot.storage.Storage;
+import org.opengroove.jzbot.storage.*;
 
 /**
  * jzbot authenticates off of hostmask.
@@ -49,5 +48,48 @@ public class JZBot extends PircBot
         System.out.println("connecting");
         bot.connect(config.getServer(), config.getPort(), config.getPassword());
         System.out.println("connected");
+    }
+    
+    protected void onJoin(String channel, String sender, String login, String hostname)
+    {
+        Channel chan = storage.getChannel(channel);
+        if (chan == null)
+            return;
+        if (chan.getJoinFactoid() != null)
+        {
+            Factoid factoid = storage.getFactoid(chan.getJoinFactoid());
+            if (factoid != null)
+                runFactoid(factoid, channel, sender);
+        }
+    }
+    
+    /**
+     * Runs the factoid specified, outputting to the channel specified.
+     * 
+     * @param factoid
+     *            The factoid to run
+     * @param channel
+     *            The channel to send to
+     * @param sender
+     *            The sender of the factoid request
+     */
+    private void runFactoid(Factoid factoid, String channel, String sender)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    protected void onMessage(String channel, String sender, String login,
+        String hostname, String message)
+    {
+        // TODO Auto-generated method stub
+        super.onMessage(channel, sender, login, hostname, message);
+    }
+    
+    protected void onPrivateMessage(String sender, String login, String hostname,
+        String message)
+    {
+        // TODO Auto-generated method stub
+        super.onPrivateMessage(sender, login, hostname, message);
     }
 }
