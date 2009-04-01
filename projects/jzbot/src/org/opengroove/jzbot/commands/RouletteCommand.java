@@ -82,6 +82,20 @@ public class RouletteCommand implements Command
             }
             return;
         }
+        if (arguments.equals("show"))
+        {
+            if (JZBot.isOp(channel, hostname))
+            {
+                JZBot.bot.sendMessage(sender, "The loaded barrel is " + state.loaded);
+                JZBot.bot.sendMessage(channel, "" + sender
+                    + " has seen which barrel is loaded.");
+            }
+            else
+            {
+                JZBot.bot.sendMessage(sender, "You're not an op here.");
+            }
+            return;
+        }
         state.changed = System.currentTimeMillis();
         state.current++;
         String prefix = "" + sender + ": (Chamber " + state.current + " of 6) ";
