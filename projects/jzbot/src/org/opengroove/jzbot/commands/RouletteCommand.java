@@ -66,7 +66,7 @@ public class RouletteCommand implements Command
             state = new RouletteState();
             state.changed = System.currentTimeMillis();
             state.current = 0;
-            state.loaded = (int) ((Math.random() * 6.0) + 1.0);
+            state.loaded = (int) ((Math.random() * 7.0) + 1.0);
             stateMap.put(channel, state);
         }
         if (arguments.equals("reset"))
@@ -108,6 +108,11 @@ public class RouletteCommand implements Command
         else
         {
             JZBot.bot.sendMessage(channel, prefix + "*click*");
+            if (state.current == 6)
+            {
+                JZBot.bot.sendMessage(channel, "The gun was unloaded. Luckster.");
+                JZBot.bot.sendAction(channel, "reloads and spins the chamber");
+            }
         }
     }
 }
