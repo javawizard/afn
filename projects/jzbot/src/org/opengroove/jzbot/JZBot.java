@@ -9,6 +9,7 @@ import net.sf.opengroove.common.proxystorage.ProxyStorage;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
+import org.opengroove.jzbot.commands.RouletteCommand;
 import org.opengroove.jzbot.storage.*;
 
 /**
@@ -32,7 +33,7 @@ public class JZBot extends PircBot
     
     private static void loadCommands()
     {
-        
+        loadCommand(new RouletteCommand());
     }
     
     private void start() throws Throwable
