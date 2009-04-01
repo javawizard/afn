@@ -144,10 +144,10 @@ public class JZBot extends PircBot
                 String[] eTokens = sw.toString().split("\n");
                 for (int i = 0; i < eTokens.length && i < 4; i++)
                 {
-                    send
+                    sendMessage(pm ? sender : channel, eTokens[i]);
                 }
-                if(eTokens.length > 4)
-                    sendMessage(pm?sender:channel, "...");
+                if (eTokens.length > 4)
+                    sendMessage(pm ? sender : channel, "...");
                 sendMessage(pm ? sender : channel,
                     "The full stack trace of the exception has been printed to stdout.");
             }
