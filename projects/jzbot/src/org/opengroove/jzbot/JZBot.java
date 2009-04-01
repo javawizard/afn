@@ -138,7 +138,7 @@ public class JZBot extends PircBot
             {
                 e.printStackTrace();
                 sendMessage(pm ? sender : channel,
-                    "An error occured while running the command:");
+                    "An error occured while running the command " + command + ":");
                 StringWriter sw = new StringWriter();
                 e.printStackTrace(new PrintWriter(sw, true));
                 String[] eTokens = sw.toString().split("\n");
