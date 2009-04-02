@@ -29,7 +29,7 @@ public class WeatherCommand implements Command
     {
         if (arguments.equals(""))
             throw new ResponseException(
-                "You need to specify a zip code. For example, ~weather 12345");
+                "You need to specify a zip code. For example, ~weather 12345. Developers: you can run ~weather props");
         if (arguments.equals("props"))
         {
             JZBot.bot.sendMessage(pm ? sender : channel,
