@@ -98,7 +98,8 @@ public class JZBot extends PircBot
             Factoid factoid = storage.getFactoid(chan.getJoinFactoid());
             if (factoid != null)
             {
-                sendMessage(channel, runFactoid(factoid, channel, sender));
+                sendMessage(channel,
+                    runFactoid(factoid, channel, sender, new String[0]));
             }
         }
     }
@@ -113,9 +114,10 @@ public class JZBot extends PircBot
      * @param sender
      *            The sender of the factoid request
      */
-    private String runFactoid(Factoid factoid, String channel, String sender)
+    private String runFactoid(Factoid factoid, String channel, String sender,
+        String[] args)
     {
-        return null;
+        
     }
     
     protected void onMessage(String channel, String sender, String login,
@@ -179,7 +181,8 @@ public class JZBot extends PircBot
                 Factoid f = cn.getFactoid(command);
                 if (f != null)
                 {
-                    sendMessage(channel, runFactoid(f, channel, sender));
+                    sendMessage(channel, runFactoid(f, channel, sender,
+                        commandArguments.split(" ")));
                     return;
                 }
             }
@@ -190,7 +193,7 @@ public class JZBot extends PircBot
         Factoid f = storage.getFactoid(command);
         if (f != null)
         {
-            runFactoid(f, channel, sender);
+            runFactoid(f, channel, sender, commandArguments.split(" "));
             return;
         }
         doInvalidCommand(pm, channel, sender);
