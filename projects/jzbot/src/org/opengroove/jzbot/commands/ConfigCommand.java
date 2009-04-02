@@ -22,7 +22,7 @@ public class ConfigCommand implements Command
         String[] tokens = arguments.split(" ");
         if (tokens[0].equals("delay"))
         {
-            if (tokens.length == 0)
+            if (tokens.length == 1)
             {
                 JZBot.bot.sendMessage(pm ? sender : channel, "Delay is "
                     + JZBot.bot.getMessageDelay());
