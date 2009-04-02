@@ -141,6 +141,11 @@ public class JZBot extends PircBot
                 String toClose = text.substring(0, closeIndex + 2);
                 text = text.substring(toClose.length());
                 String commandString = toClose.substring(2, toClose.length() - 2);
+                String[] commandStringTokens = commandString.split("\\|\\|", 2);
+                String command = commandStringTokens[0];
+                String[] arguments =
+                    (commandStringTokens.length == 1) ? new String[0]
+                        : commandStringTokens[1].split("\\|\\|");
             }
             else
             {
