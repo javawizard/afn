@@ -29,15 +29,18 @@ public class WeatherCommand implements Command
     {
         if (arguments.equals(""))
             throw new ResponseException(
-                "You need to specify a zip code. For example, ~weather 12345. Developers: you can run ~weather props");
-        if (arguments.equals("props"))
+                "You need to specify a zip code. For example, ~weather 12345. Developers: you can run ~weather 12345 props");
+        boolean propsShown = false;
+        if (arguments.endsWith("props"))
         {
             JZBot.bot.sendMessage(pm ? sender : channel,
                 "http://code.google.com/p/jwutils/source/browse/trunk/"
                     + "projects/jzbot/src/org/opengroove/jzbot/commands/"
                     + "WeatherCommand.java for command list");
-            return;
+            propsShown = true;
+            arguments = arguments.substring(0, arguments.length() - 5);
         }
+        arguments = arguments.trim();
         Factoid weatherFactoid = null;
         if (channel != null)
             weatherFactoid =
@@ -74,6 +77,21 @@ public class WeatherCommand implements Command
             map.put("windchill", tokens[15]);
             map.put("monthlyrain", tokens[16]);
             map.put("yearlyrain", tokens[31]);
+            if (propsShown)
+            {
+                String currentList = "";
+                for (String name : map.keySet())
+                {
+                    currentList += name + "=" + map.get(name) + "     ";
+                    if (currentList.length() > 200)
+                    {
+                        JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+                        currentList = "";
+                    }
+                }
+                if (!currentList.equals(""))
+                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+            }
             String result =
                 JZBot.runFactoid(weatherFactoid, channel, sender, new String[0], map);
             JZBot.bot.sendMessage(pm ? sender : channel, result);
