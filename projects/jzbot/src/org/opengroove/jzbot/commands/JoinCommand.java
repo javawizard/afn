@@ -29,7 +29,7 @@ public class JoinCommand implements Command
         String name = arguments;
         if (JZBot.storage.getChannel(name) != null)
         {
-            Channel c = JZBot.storage.getChannel("channel");
+            Channel c = JZBot.storage.getChannel(name);
             if (c.isSuspended())
             {
                 c.setSuspended(false);
