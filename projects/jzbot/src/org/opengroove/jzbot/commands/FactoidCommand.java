@@ -48,8 +48,10 @@ public class FactoidCommand implements Command
                 throw new ResponseException("You need to specify the factoid");
             String[] argumentsTokenized2 = afterCommand.split(" ", 2);
             if (argumentsTokenized2.length != 2)
-                throw new RuntimeException("You need to specify the factoid itself");
+                throw new ResponseException("You need to specify the factoid itself");
             String factoidName = argumentsTokenized2[0];
+            if (JZBot.commands.get(factoidName) != null)
+                throw new ResponseException("That is a reserved keyword.");
             String factoidContents = argumentsTokenized2[1];
             if (c != null && c.getFactoid(factoidName) != null)
                 throw new ResponseException(
