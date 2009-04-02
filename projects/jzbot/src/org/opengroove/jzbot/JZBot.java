@@ -52,6 +52,7 @@ public class JZBot extends PircBot
         loadCommand(new JoinCommand());
         loadCommand(new OpCommand());
         loadCommand(new RouletteCommand());
+        loadCommand(new SayCommand());
         loadCommand(new ShutdownCommand());
         loadCommand(new SuperopCommand());
         loadCommand(new TriggerCommand());
