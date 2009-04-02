@@ -94,12 +94,12 @@ public class WeatherCommand implements Command
             URL yahooUrl =
                 new URL("http://weather.yahooapis.com/forecastrss?p="
                     + arguments.replace("&", ""));
-            stream = weatherbugUrl.openStream();
+            stream = yahooUrl.openStream();
             baos = new ByteArrayOutputStream();
             StringUtils.copy(stream, baos);
             stream.close();
             String yahooResult = new String(baos.toByteArray());
-            String conditionStart = "yweather:condition text=\"";
+            String conditionStart = "yweather:condition  text=\"";
             int conditionsIndex = yahooResult.indexOf(conditionStart);
             String conditions = "";
             System.out.println("result:" + yahooResult + ",idx:" + conditionsIndex);
