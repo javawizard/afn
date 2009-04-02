@@ -15,9 +15,9 @@ public interface Channel
     public void setName(String name);
     
     @Property
-    public boolean isActive();
+    public boolean isSuspended();
     
-    public void setActive(boolean active);
+    public void setSuspended(boolean suspended);
     
     @Property
     public String getJoinFactoid();

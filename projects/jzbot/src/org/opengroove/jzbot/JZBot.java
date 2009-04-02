@@ -376,7 +376,7 @@ public class JZBot extends PircBot
     {
         for (Channel channel : storage.getChannels().isolate())
         {
-            if (channel.isActive())
+            if (!channel.isSuspended())
             {
                 System.out.println("joining " + channel.getName());
                 joinChannel(channel.getName());
