@@ -32,7 +32,11 @@ public class LeaveCommand implements Command
         if (c.isSuspended())
             throw new ResponseException("I've already left that channel.");
         c.setSuspended(true);
-        
+        JZBot.bot.sendMessage(pm ? sender : channel,
+            "Ok, I'll leave now. I'll remember this channel's "
+                + "settings, though. Use /msg " + JZBot.bot.getNick() + " join "
+                + channel + " to have me join the channel again.");
+        JZBot.bot.partChannel(channel, "Leaving on request from " + sender);
     }
     
 }
