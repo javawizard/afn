@@ -71,7 +71,17 @@ public class WeatherCommand implements Command
             map.put("gustwspeed", tokens[7]);
             map.put("raintoday", tokens[8]);
             map.put("rainrate", tokens[9]);
-            map.put("pressure", tokens[10]);
+            String pressure = tokens[10];
+            String pressureDir;
+            if (pressure.endsWith("f"))
+                pressureDir = "f";
+            else if (pressure.endsWith("s"))
+                pressureDir = "s";
+            else
+                pressureDir = "r";
+            pressure = pressure.substring(0, pressure.length() - 1);
+            map.put("pressure", pressure);
+            map.put("pressuredir", pressureDir);
             map.put("humid", tokens[11]);
             map.put("hightemp", tokens[12]);
             map.put("lowtemp", tokens[13]);
