@@ -16,11 +16,14 @@ import org.opengroove.jzbot.commands.ConfigCommand;
 import org.opengroove.jzbot.commands.FactoidCommand;
 import org.opengroove.jzbot.commands.HelpCommand;
 import org.opengroove.jzbot.commands.JoinCommand;
+import org.opengroove.jzbot.commands.JoinMessageCommand;
+import org.opengroove.jzbot.commands.MMCommand;
 import org.opengroove.jzbot.commands.OpCommand;
 import org.opengroove.jzbot.commands.RouletteCommand;
 import org.opengroove.jzbot.commands.SayCommand;
 import org.opengroove.jzbot.commands.ShutdownCommand;
 import org.opengroove.jzbot.commands.SuperopCommand;
+import org.opengroove.jzbot.commands.TTTCommand;
 import org.opengroove.jzbot.commands.TriggerCommand;
 import org.opengroove.jzbot.storage.*;
 
@@ -51,12 +54,15 @@ public class JZBot extends PircBot
         loadCommand(new FactoidCommand());
         loadCommand(new HelpCommand());
         loadCommand(new JoinCommand());
+        loadCommand(new JoinMessageCommand());
+        loadCommand(new MMCommand());
         loadCommand(new OpCommand());
         loadCommand(new RouletteCommand());
         loadCommand(new SayCommand());
         loadCommand(new ShutdownCommand());
         loadCommand(new SuperopCommand());
         loadCommand(new TriggerCommand());
+        loadCommand(new TTTCommand());
     }
     
     private static void loadCommand(Command command)
