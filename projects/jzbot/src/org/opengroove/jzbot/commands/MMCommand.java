@@ -62,8 +62,7 @@ public class MMCommand implements Command
     
     public String getName()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return "mm";
     }
     
     public void run(String channel, boolean pm, String sender, String hostname,
