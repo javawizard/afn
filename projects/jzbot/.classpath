@@ -18,5 +18,9 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/commons-collections-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/jaxen-core.jar"/>
+	<classpathentry kind="lib" path="lib/jaxen-jdom.jar"/>
+	<classpathentry kind="lib" path="lib/jdom.jar"/>
+	<classpathentry kind="lib" path="lib/saxpath.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
