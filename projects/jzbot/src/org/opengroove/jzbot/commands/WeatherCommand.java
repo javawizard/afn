@@ -58,7 +58,8 @@ public class WeatherCommand implements Command
                 new URL(
                     "http://a7686974884.isapi.wxbug.net/WxDataISAPI/WxDataISAPI.dll?Magic=10991&RegNum=0&ZipCode="
                         + arguments.replace("&", "")
-                        + "&Units=0&Version=7&Fore=0&t=123456");
+                        + "&Units=0&Version=7&Fore=0&t="
+                        + Math.random());
             InputStream stream = weatherbugUrl.openStream();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             StringUtils.copy(stream, baos);
