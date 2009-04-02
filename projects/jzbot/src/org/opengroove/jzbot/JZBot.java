@@ -211,6 +211,20 @@ public class JZBot extends PircBot
                     else if (arguments.length > 3)
                         result.append(arguments[3]);
                 }
+                else if (command.equals("pm"))
+                {
+                    if (arguments.length < 2)
+                        result
+                            .append("Invalid argument number to pm, needs at least 2");
+                    else
+                    {
+                        String message = arguments[arguments.length - 1];
+                        for (int i = 0; i < (arguments.length - 1); i++)
+                        {
+                            JZBot.bot.sendMessage(arguments[i], message);
+                        }
+                    }
+                }
                 else if (command.equals("import"))
                 {
                     Factoid f = null;
