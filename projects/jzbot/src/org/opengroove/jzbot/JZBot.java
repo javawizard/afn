@@ -115,7 +115,7 @@ public class JZBot extends PircBot
                 if (!fName.equals(""))
                 {
                     System.out.println("issuing on join " + fName);
-                    Factoid factoid = storage.getFactoid(fName);
+                    Factoid factoid = chan.getFactoid(fName);
                     if (factoid != null)
                     {
                         System.out.println("found, issuing");
