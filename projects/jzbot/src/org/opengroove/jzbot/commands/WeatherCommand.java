@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import net.sf.opengroove.common.utils.StringUtils;
 
@@ -49,7 +51,7 @@ public class WeatherCommand implements Command
             weatherFactoid = JZBot.storage.getFactoid("weathertemplate");
         if (weatherFactoid == null)
             throw new ResponseException("The weathertemplate factoid does not exist.");
-        HashMap<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new TreeMap<String, String>();
         try
         {
             URL weatherbugUrl =

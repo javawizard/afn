@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.Map;
 
 import net.sf.opengroove.common.proxystorage.ProxyStorage;
 
@@ -123,7 +124,7 @@ public class JZBot extends PircBot
      *            The sender of the factoid request
      */
     public static String runFactoid(Factoid factoid, String channel, String sender,
-        String[] args, HashMap<String, String> vars)
+        String[] args, Map<String, String> vars)
     {
         for (int i = 0; i < args.length; i++)
         {
@@ -242,7 +243,7 @@ public class JZBot extends PircBot
         return result.toString();
     }
     
-    private static String replaceVars(String text, HashMap<String, String> vars)
+    private static String replaceVars(String text, Map<String, String> vars)
     {
         for (String key : vars.keySet())
         {
