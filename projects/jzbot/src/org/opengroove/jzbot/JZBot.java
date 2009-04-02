@@ -252,8 +252,16 @@ public class JZBot extends PircBot
         String trigger = chan.getTrigger();
         if (trigger != null && message.startsWith(trigger))
         {
-            runMessageCommand(channel, false, sender, hostname, message
-                .substring(trigger.length()));
+            try
+            {
+                runMessageCommand(channel, false, sender, hostname, message
+                    .substring(trigger.length()));
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
         }
     }
     
@@ -397,7 +405,16 @@ public class JZBot extends PircBot
             channel = message.substring(0, message.indexOf(" "));
             message = message.substring(message.indexOf(" ") + 1);
         }
-        runMessageCommand(channel, true, sender, hostname, message);
+        try
+        {
+            runMessageCommand(channel, true, sender, hostname, message);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        
     }
     
     private void doHelp(String sender)
