@@ -78,6 +78,17 @@ public class MMCommand implements Command
             return;
         }
         MastermindState state = stateMap.get(channel);
+        if (arguments.equals("info"))
+        {
+            if (state == null)
+                JZBot.bot.sendMessage(channel,
+                    "Info: a game is not in progress. Use ~mm to start one.");
+            else
+                JZBot.bot.sendMessage(channel, "Info: " + state.guesses
+                    + " guesses so far");
+            state.changed = System.currentTimeMillis();
+            return;
+        }
         if (state == null && !arguments.equals("reset"))
         {
             state = new MastermindState();
@@ -97,14 +108,9 @@ public class MMCommand implements Command
         }
         if (arguments.equals("reset"))
         {
+            stateMap.remove(channel);
             JZBot.bot.sendMessage(channel, "The game has been cleared.");
             return;
-        }
-        if (arguments.equals("info"))
-        {
-            JZBot.bot
-                .sendMessage(channel, "Info: " + state.guesses + " guesses so far");
-            state.changed = System.currentTimeMillis();
         }
         /*
          * The arguments are a guess (or at least we'll assume so)
@@ -120,6 +126,7 @@ public class MMCommand implements Command
         {
             guesses[i] = Integer.parseInt(arguments.substring(i, i + 1));
         }
-        
+        int rightPosition = 0;
+        int rightNumber = 0;
     }
 }
