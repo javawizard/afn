@@ -104,11 +104,15 @@ public class JZBot extends PircBot
             return;
         if (chan.getJoinFactoid() != null)
         {
-            Factoid factoid = storage.getFactoid(chan.getJoinFactoid());
-            if (factoid != null)
+            String[] factoidList = chan.getJoinFactoid().split(" ");
+            for (String fName : factoidList)
             {
-                sendMessage(channel, runFactoid(factoid, channel, sender,
-                    new String[0], new HashMap<String, String>()));
+                Factoid factoid = storage.getFactoid(fName);
+                if (factoid != null)
+                {
+                    sendMessage(channel, runFactoid(factoid, channel, sender,
+                        new String[0], new HashMap<String, String>()));
+                }
             }
         }
     }
