@@ -128,6 +128,7 @@ public class JZBot extends PircBot
             cAppend = args[i] + ((i == args.length - 1) ? "" : " ") + cAppend;
             vars.put("" + (i + 1) + "-", cAppend);
         }
+        vars.put("0", sender);
         String text = factoid.getValue();
         boolean isAction = false;
         StringBuffer result = new StringBuffer();
