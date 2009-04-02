@@ -146,6 +146,15 @@ public class JZBot extends PircBot
                 String[] arguments =
                     (commandStringTokens.length == 1) ? new String[0]
                         : commandStringTokens[1].split("\\|\\|");
+                if (command.equals("action"))
+                {
+                    
+                }
+                else
+                {
+                    throw new RuntimeException("Invalid command " + command
+                        + " in def " + commandString);
+                }
             }
             else
             {
