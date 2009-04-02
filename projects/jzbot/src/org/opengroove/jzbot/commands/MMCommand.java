@@ -117,10 +117,12 @@ public class MMCommand implements Command
          */
         if (arguments.length() != state.correct.size())
         {
+            state.changed = System.currentTimeMillis();
             throw new ResponseException("You guessed " + arguments.length()
                 + " numbers. However, the correct answer has " + state.correct.size()
                 + " number in it. Guess that many numbers.");
         }
+        state.changed = System.currentTimeMillis();
         int[] guesses = new int[arguments.length()];
         for (int i = 0; i < arguments.length(); i++)
         {
@@ -129,6 +131,10 @@ public class MMCommand implements Command
         int rightPosition = 0;
         int rightNumber = 0;
         ArrayList<Integer> correct = new ArrayList<Integer>(state.correct);
+        for(int i = 0; i < guesses.length; i++)
+        {
+            
+        }
         state.guesses++;
     }
 }
