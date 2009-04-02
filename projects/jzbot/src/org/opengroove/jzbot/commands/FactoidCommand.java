@@ -98,24 +98,28 @@ public class FactoidCommand implements Command
         }
         else if (command.equals("list"))
         {
+            System.out.println("command is list, " + isGlobal);
             JZBot.bot.sendMessage(pm ? sender : channel, "Start of factoid list");
             StoredList<Factoid> list;
             if (isGlobal)
                 list = JZBot.storage.getFactoids();
             else
                 list = c.getFactoids();
-            String currentList = "";
-            for (Factoid f : list.isolate())
+            if (list != null)
             {
-                currentList += f.getName() + "         ";
-                if (currentList.length() > 250)
+                String currentList = "";
+                for (Factoid f : list.isolate())
                 {
-                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
-                    currentList = "";
+                    currentList += f.getName() + "         ";
+                    if (currentList.length() > 250)
+                    {
+                        JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+                        currentList = "";
+                    }
                 }
+                if (!currentList.equals(""))
+                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
             }
-            if (!currentList.equals(""))
-                JZBot.bot.sendMessage(pm ? sender : channel, currentList);
             JZBot.bot.sendMessage(pm ? sender : channel, "End of factoid list");
             if (!isGlobal)
                 JZBot.bot.sendMessage(pm ? sender : channel,
