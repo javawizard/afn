@@ -126,14 +126,19 @@ public class JZBot extends PircBot
         for (int i = args.length - 1; i >= 0; i--)
         {
             cAppend = args[i] + ((i == args.length - 1) ? "" : " ") + cAppend;
-            vars.put("" + i + "s", cAppend);
+            vars.put("" + i + "-", cAppend);
         }
         String text = factoid.getValue();
         boolean isAction = false;
         StringBuffer result = new StringBuffer();
-        while ((text = text.trim()).length() > 0)
+        while (text.length() > 0)
         {
-            if (text.startsWith("{{"))
+            if (text.startsWith(" "))
+            {
+                text = text.substring(1);
+                result.append(" ");
+            }
+            else if (text.startsWith("{{"))
             {
                 int closeIndex = text.indexOf("}}");
                 if (closeIndex == -1)
@@ -155,16 +160,21 @@ public class JZBot extends PircBot
                     for (String s : arguments)
                     {
                         if (!s.trim().equals(""))
-                            return s;
+                        {
+                            result.append(s);
+                        }
                     }
                 }
                 else if (command.equals("random"))
                 {
-                    
+                    result.append(arguments[(int) (Math.random() * arguments.length)]);
                 }
                 else if (command.equals("ifeq"))
                 {
-                    
+                    if (arguments[0].equalsIgnoreCase(arguments[1]))
+                        result.append(arguments[2]);
+                    else if (arguments.length > 3)
+                        result.append(arguments[3]);
                 }
                 else if (command.equals("ifneq"))
                 {
