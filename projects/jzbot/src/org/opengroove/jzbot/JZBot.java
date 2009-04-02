@@ -274,21 +274,29 @@ public class JZBot extends PircBot
             }
             catch (Exception e)
             {
-                e.printStackTrace();
-                sendMessage(pm ? sender : channel,
-                    "An error occured while running the command " + command + ":");
-                StringWriter sw = new StringWriter();
-                e.printStackTrace(new PrintWriter(sw, true));
-                String[] eTokens = sw.toString().split("\n");
-                for (int i = 0; i < eTokens.length && i < 2; i++)
+                if (e instanceof ResponseException)
                 {
-                    sendMessage(pm ? sender : channel, eTokens[i]);
+                    sendMessage(pm ? sender : channel, ((ResponseException) e)
+                        .getMessage());
                 }
-                if (eTokens.length > 2)
-                    sendMessage(pm ? sender : channel, "...");
-                sendMessage(pm ? sender : channel,
-                    "The full stack trace of the exception has been printed to stdout.");
-                sendMessage(pm ? sender : channel, "End of exception report.");
+                else
+                {
+                    e.printStackTrace();
+                    sendMessage(pm ? sender : channel,
+                        "An error occured while running the command " + command + ":");
+                    StringWriter sw = new StringWriter();
+                    e.printStackTrace(new PrintWriter(sw, true));
+                    String[] eTokens = sw.toString().split("\n");
+                    for (int i = 0; i < eTokens.length && i < 2; i++)
+                    {
+                        sendMessage(pm ? sender : channel, eTokens[i]);
+                    }
+                    if (eTokens.length > 2)
+                        sendMessage(pm ? sender : channel, "...");
+                    sendMessage(pm ? sender : channel,
+                        "The full stack trace of the exception has been printed to stdout.");
+                    sendMessage(pm ? sender : channel, "End of exception report.");
+                }
             }
             return;
         }
@@ -413,5 +421,19 @@ public class JZBot extends PircBot
     public static boolean isSuperop(String hostname)
     {
         return storage.getOperator(hostname) != null;
+    }
+    
+    public void verifyOp(String channel, String hostname)
+    {
+        if (!isOp(channel, hostname))
+            throw new ResponseException(
+                "You are not an op, so you don't have permission to run this command.");
+    }
+    
+    public void verifySuperop(String hostname)
+    {
+        if (!isSuperop(hostname))
+            throw new ResponseException(
+                "You are not a superop, so you don't have permission to run this command.");
     }
 }

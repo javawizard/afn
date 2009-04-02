@@ -37,7 +37,24 @@ public class FactoidCommand implements Command
          */
         if (command.equals("create"))
         {
+            verifyOpSuperop(isGlobal, channel, hostname);
             
         }
+    }
+    
+    /**
+     * Verifies that this is a superop if isGlobal is true. Otherwise, verifies
+     * that this is an op.
+     * 
+     * @param isGlobal
+     * @param channel
+     * @param hostname
+     */
+    private void verifyOpSuperop(boolean isGlobal, String channel, String hostname)
+    {
+        if (isGlobal)
+            JZBot.bot.verifySuperop(hostname);
+        else
+            JZBot.bot.verifyOp(channel, hostname);
     }
 }
