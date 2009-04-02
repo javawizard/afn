@@ -71,6 +71,7 @@ public class FactoidCommand implements Command
                 JZBot.storage.getFactoids().add(f);
             else
                 c.getFactoids().add(f);
+            System.out.println("created fact " + factoidName + " " + factoidContents);
             JZBot.bot.sendMessage(pm ? sender : channel, "Factoid " + factoidName
                 + " created.");
         }
@@ -105,6 +106,10 @@ public class FactoidCommand implements Command
             if (f == null)
                 throw new ResponseException("That factoid doesn't exist");
             JZBot.bot.sendMessage(pm ? sender : channel, f.getValue());
+        }
+        else
+        {
+            throw new ResponseException("Invalid factoid command");
         }
     }
     

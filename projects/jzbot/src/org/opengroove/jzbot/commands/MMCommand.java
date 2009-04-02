@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
+import org.opengroove.jzbot.ResponseException;
 import org.opengroove.jzbot.commands.mm.MastermindState;
 import org.opengroove.jzbot.commands.roulette.RouletteState;
 
@@ -77,7 +78,7 @@ public class MMCommand implements Command
             return;
         }
         MastermindState state = stateMap.get(channel);
-        if (state == null)
+        if (state == null && !arguments.equals("reset"))
         {
             state = new MastermindState();
             state.changed = System.currentTimeMillis();
@@ -94,7 +95,19 @@ public class MMCommand implements Command
                     + "Game will reset if unused for 10 minutes.");
             return;
         }
-        
+        if (arguments.equals("reset"))
+        {
+            JZBot.bot.sendMessage(channel, "The game has been cleared.");
+            return;
+        }
+        /*
+         * The arguments are a guess (or at least we'll assume so)
+         */
+        if (arguments.length() != state.correct.size())
+        {
+            throw new ResponseException("You guessed " + arguments.length()
+                + " numbers. However, the correct answer has " + state.correct.size()
+                + " number in it. Guess that many numbers.");
+        }
     }
-    
 }
