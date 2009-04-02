@@ -109,5 +109,11 @@ public class MMCommand implements Command
                 + " numbers. However, the correct answer has " + state.correct.size()
                 + " number in it. Guess that many numbers.");
         }
+        int[] guesses = new int[arguments.length()];
+        for (int i = 0; i < arguments.length(); i++)
+        {
+            guesses[i] = Integer.parseInt(arguments.substring(i, i + 1));
+        }
+        
     }
 }
