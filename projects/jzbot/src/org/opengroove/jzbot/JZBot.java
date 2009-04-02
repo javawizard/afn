@@ -229,9 +229,7 @@ public class JZBot extends PircBot
         }
         // FIXME: actually deal with isAction, probably prepend result with
         // "<ACTION>"
-        if (result.length() == 0)
-            result.append(" ");
-        return result.toString().substring(1);
+        return result.toString();
     }
     
     private static String replaceVars(String text, HashMap<String, String> vars)
