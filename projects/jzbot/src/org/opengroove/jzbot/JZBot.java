@@ -381,7 +381,7 @@ public class JZBot extends PircBot
     protected void onPrivateMessage(String sender, String login, String hostname,
         String message)
     {
-        String channel = "";
+        String channel = null;
         if (message.startsWith("#") && message.contains(" "))
         {
             channel = message.substring(0, message.indexOf(" "));

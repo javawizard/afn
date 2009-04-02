@@ -29,5 +29,6 @@ public class FactoidCommand implements Command
                     + "a channel (unless it is the isglobal command)");
             return;
         }
+        
     }
 }
