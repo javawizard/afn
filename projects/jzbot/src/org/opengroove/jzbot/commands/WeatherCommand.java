@@ -40,7 +40,8 @@ public class WeatherCommand implements Command
             URL url =
                 new URL(
                     "http://a7686974884.isapi.wxbug.net/WxDataISAPI/WxDataISAPI.dll?Magic=10991&RegNum=0&ZipCode="
-                        + +"&Units=0&Version=7&Fore=0&t=123456");
+                        + arguments.replace("&", "")
+                        + "&Units=0&Version=7&Fore=0&t=123456");
             String result =
                 JZBot.runFactoid(weatherFactoid, channel, sender, new String[0], map);
         }
