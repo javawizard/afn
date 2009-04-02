@@ -29,6 +29,9 @@ public class LeaveCommand implements Command
         Channel c = JZBot.storage.getChannel(channel);
         if (c == null)
             throw new ResponseException("I'm not a member of that channel.");
+        if (c.isSuspended())
+            throw new ResponseException("I've already left that channel.");
+        c.setSuspended(true);
         
     }
     
