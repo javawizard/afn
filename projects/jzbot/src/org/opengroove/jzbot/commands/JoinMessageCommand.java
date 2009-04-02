@@ -26,6 +26,12 @@ public class JoinMessageCommand implements Command
             JZBot.bot.sendMessage(pm ? sender : channel,
                 "Use joinmessage set to set a new one, or "
                     + "joinmessage delete to delete this one.");
+            return;
         }
+        else if(argumentTokens[0].equals("set"))
+        {
+            
+        }
+        else if(argumentTokens[0].equals(""))   
     }
 }

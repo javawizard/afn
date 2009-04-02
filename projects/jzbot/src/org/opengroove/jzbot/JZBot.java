@@ -104,7 +104,10 @@ public class JZBot extends PircBot
             return;
         if (chan.getJoinFactoid() != null)
         {
-            String[] factoidList = chan.getJoinFactoid().split(" ");
+            String jfString = chan.getJoinFactoid();
+            if (jfString == null)
+                jfString = "";
+            String[] factoidList = jfString.split(" ");
             for (String fName : factoidList)
             {
                 if (!fName.equals(""))
