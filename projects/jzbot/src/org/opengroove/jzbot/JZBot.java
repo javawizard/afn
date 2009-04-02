@@ -129,7 +129,12 @@ public class JZBot extends PircBot
             vars.put("" + i + "s", cAppend);
         }
         String text = factoid.getValue();
-        
+        boolean isAction = false;
+        StringBuffer result = new StringBuffer();
+        while ((text = text.trim()).length() > 0)
+        {
+            text = text.trim();
+        }
     }
     
     private static String replaceVars(String text, HashMap<String, String> vars)
