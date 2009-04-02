@@ -119,6 +119,13 @@ public class WeatherCommand implements Command
         double sliceSize = 360.0 / (WIND_DIRECTIONS.length * 1.0d);
         double halfSlice = sliceSize / 2.0d;
         windDegrees += halfSlice;
-        
+        for (int i = 0; i < WIND_DIRECTIONS.length; i++)
+        {
+            if (windDegrees >= (i * sliceSize) && windDegrees <= ((i + 1) * sliceSize))
+                return WIND_DIRECTIONS[i];
+            
+        }
+        throw new RuntimeException("slice size:" + sliceSize + ",degrees:"
+            + windDegrees + ",halfSlice:" + halfSlice);
     }
 }
