@@ -31,5 +31,13 @@ public class FactoidCommand implements Command
         }
         String afterCommand =
             (argumentsTokenized1.length > 1) ? argumentsTokenized1[1] : "";
+        /*
+         * command is something like create, delete, isglobal, etc., and
+         * afterCommand is the rest
+         */
+        if (command.equals("create"))
+        {
+            
+        }
     }
 }
