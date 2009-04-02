@@ -102,7 +102,7 @@ public class MMCommand implements Command
             JZBot.bot.sendMessage(pm ? sender : channel,
                 "A new game of Mastermind has been started. Positions: "
                     + numberOfBeads + ". Numbers 1 through " + ((int) numberOfColors)
-                    + " have been used in the answer. Guess by using ~mm 1234. "
+                    + " are available for guesses. Guess by using ~mm 1234. "
                     + "Game will reset if unused for 10 minutes.");
             return;
         }
