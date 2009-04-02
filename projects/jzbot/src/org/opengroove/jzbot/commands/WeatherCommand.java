@@ -64,8 +64,9 @@ public class WeatherCommand implements Command
             String[] tokens = new String(baos.toByteArray()).split("\\|");
             map.put("temp", tokens[3]);
             map.put("winddir", tokens[4]);
+            map.put("winddirhuman", windDegreesToReadable(tokens[4]));
             map.put("windspeed", tokens[5]);
-            map.put("gustwdir", tokens[6]);
+            map.put("gustwdir", windDegreesToReadable(tokens[6]));
             map.put("gustwspeed", tokens[7]);
             map.put("raintoday", tokens[8]);
             map.put("rainrate", tokens[9]);
@@ -106,5 +107,11 @@ public class WeatherCommand implements Command
             throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage(),
                 e);
         }
+    }
+    
+    private String windDegreesToReadable(String string)
+    {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
