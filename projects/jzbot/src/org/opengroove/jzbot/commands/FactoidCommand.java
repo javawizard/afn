@@ -93,6 +93,19 @@ public class FactoidCommand implements Command
             JZBot.bot.sendMessage(pm ? sender : channel, "Factoid " + afterCommand
                 + " deleted.");
         }
+        else if (command.equals("literal"))
+        {
+            if (afterCommand.equals(""))
+                throw new ResponseException("You need to specify the factoid");
+            Factoid f;
+            if (isGlobal)
+                f = JZBot.storage.getFactoid(afterCommand);
+            else
+                f = c.getFactoid(afterCommand);
+            if (f == null)
+                throw new ResponseException("That factoid doesn't exist");
+            JZBot.bot.sendMessage(pm ? sender : channel, f.getValue());
+        }
     }
     
     /**
