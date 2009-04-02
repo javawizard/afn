@@ -30,6 +30,14 @@ public class WeatherCommand implements Command
         if (arguments.equals(""))
             throw new ResponseException(
                 "You need to specify a zip code. For example, ~weather 12345");
+        if (arguments.equals("props"))
+        {
+            JZBot.bot.sendMessage(pm ? sender : channel,
+                "http://code.google.com/p/jwutils/source/browse/trunk/"
+                    + "projects/jzbot/src/org/opengroove/jzbot/commands/"
+                    + "WeatherCommand.java for command list");
+            return;
+        }
         Factoid weatherFactoid = null;
         if (channel != null)
             weatherFactoid =
