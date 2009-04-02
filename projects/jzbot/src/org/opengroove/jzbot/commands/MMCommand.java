@@ -149,12 +149,14 @@ public class MMCommand implements Command
         int rightPosition = 0;
         int rightNumber = 0;
         ArrayList<Integer> correct = new ArrayList<Integer>(state.correct);
+        ArrayList<Integer> matched = new ArrayList<Integer>();
         for (int i = 0; i < guesses.length; i++)
         {
             int guess = guesses[i];
             int cValue = state.correct.get(i);
             if (guess == cValue)
             {
+                matched.add(i);
                 rightPosition++;
                 removeOne(correct, guess);
                 continue;
@@ -163,6 +165,8 @@ public class MMCommand implements Command
         for (int i = 0; i < guesses.length; i++)
         {
             int guess = guesses[i];
+            if (matched.contains(i))
+                continue;
             int cValue = state.correct.get(i);
             if (correct.contains(guess))
             {
