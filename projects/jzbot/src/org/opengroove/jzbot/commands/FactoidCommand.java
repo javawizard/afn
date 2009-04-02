@@ -1,5 +1,7 @@
 package org.opengroove.jzbot.commands;
 
+import net.sf.opengroove.common.proxystorage.StoredList;
+
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
 import org.opengroove.jzbot.ResponseException;
@@ -93,6 +95,27 @@ public class FactoidCommand implements Command
                 c.getFactoids().remove(f);
             JZBot.bot.sendMessage(pm ? sender : channel, "Factoid " + afterCommand
                 + " deleted.");
+        }
+        else if (command.equals("list"))
+        {
+            JZBot.bot.sendMessage(pm ? sender : channel, "Start of factoid list");
+            StoredList<Factoid> list;
+            if (isGlobal)
+                list = JZBot.storage.getFactoids();
+            else
+                list = c.getFactoids();
+            String currentList = "";
+            for (Factoid f : list.isolate())
+            {
+                currentList += f.getName() + "         ";
+                if (currentList.length() > 250)
+                {
+                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+                    currentList = "";
+                }
+            }
+            if (!currentList.equals(""))
+                JZBot.bot.sendMessage(pm ? sender : channel, currentList);
         }
         else if (command.equals("literal"))
         {
