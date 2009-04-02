@@ -116,6 +116,7 @@ public class FactoidCommand implements Command
             }
             if (!currentList.equals(""))
                 JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+            JZBot.bot.sendMessage(pm ? sender : channel, "End of factoid list");
         }
         else if (command.equals("literal"))
         {

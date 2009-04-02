@@ -392,8 +392,8 @@ public class JZBot extends PircBot
         Factoid f = storage.getFactoid(command);
         if (f != null)
         {
-            runFactoid(f, channel, sender, commandArguments.split(" "),
-                new HashMap<String, String>());
+            sendMessage(channel, runFactoid(f, channel, sender, commandArguments
+                .split(" "), new HashMap<String, String>()));
             return;
         }
         doInvalidCommand(pm, channel, sender);
