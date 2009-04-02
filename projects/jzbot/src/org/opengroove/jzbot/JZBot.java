@@ -104,7 +104,9 @@ public class JZBot extends PircBot
             return;
         if (chan.getJoinFactoid() != null)
         {
+            System.out.println("join factoid");
             String jfString = chan.getJoinFactoid();
+            System.out.println("string " + jfString);
             if (jfString == null)
                 jfString = "";
             String[] factoidList = jfString.split(" ");
@@ -112,9 +114,11 @@ public class JZBot extends PircBot
             {
                 if (!fName.equals(""))
                 {
+                    System.out.println("issuing on join " + fName);
                     Factoid factoid = storage.getFactoid(fName);
                     if (factoid != null)
                     {
+                        System.out.println("found, issuing");
                         sendMessage(channel, runFactoid(factoid, channel, sender,
                             new String[0], new HashMap<String, String>()));
                     }
