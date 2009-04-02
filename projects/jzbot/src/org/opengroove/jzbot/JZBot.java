@@ -133,7 +133,17 @@ public class JZBot extends PircBot
         StringBuffer result = new StringBuffer();
         while ((text = text.trim()).length() > 0)
         {
-            text = text.trim();
+            if (text.startsWith("{{"))
+            {
+                
+            }
+            else
+            {
+                String[] tokens = text.split(" ", 2);
+                result.append(" ");
+                result.append(tokens[0]);
+                text = (tokens.length == 1) ? "" : tokens[1];
+            }
         }
     }
     
