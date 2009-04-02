@@ -114,11 +114,14 @@ public class JZBot extends PircBot
      * @param sender
      *            The sender of the factoid request
      */
-    private String runFactoid(Factoid factoid, String channel, String sender,
+    public static String runFactoid(Factoid factoid, String channel, String sender,
         String[] args)
     {
-        
+        HashMap<String,String> vars = new HashMap<String,String>();
+        String text = factoid.getValue();
     }
+    
+    private static String replaceArgs
     
     protected void onMessage(String channel, String sender, String login,
         String hostname, String message)
