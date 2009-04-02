@@ -109,9 +109,12 @@ public class WeatherCommand implements Command
         }
     }
     
+    private static final String[] WIND_DIRECTIONS =
+        new String[] { "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW",
+            "SW", "WSW", "W", "WNW", "NW", "NNW" };
+    
     private String windDegreesToReadable(String string)
     {
-        // TODO Auto-generated method stub
-        return null;
+        
     }
 }
