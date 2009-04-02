@@ -104,8 +104,8 @@ public class JZBot extends PircBot
             Factoid factoid = storage.getFactoid(chan.getJoinFactoid());
             if (factoid != null)
             {
-                sendMessage(channel,
-                    runFactoid(factoid, channel, sender, new String[0]));
+                sendMessage(channel, runFactoid(factoid, channel, sender,
+                    new String[0], new HashMap<String, String>()));
             }
         }
     }
@@ -121,9 +121,8 @@ public class JZBot extends PircBot
      *            The sender of the factoid request
      */
     public static String runFactoid(Factoid factoid, String channel, String sender,
-        String[] args)
+        String[] args, HashMap<String, String> vars)
     {
-        HashMap<String, String> vars = new HashMap<String, String>();
         for (int i = 0; i < args.length; i++)
         {
             vars.put("" + (i + 1), args[i]);
@@ -215,7 +214,7 @@ public class JZBot extends PircBot
                     String[] subargs = new String[arguments.length - 1];
                     System.arraycopy(arguments, 1, subargs, 0, subargs.length);
                     result.append(runFactoid(f, channelSpecific ? channel : null,
-                        sender, subargs));
+                        sender, subargs, new HashMap<String, String>()));
                 }
                 else if (command.equals(""))
                 {
@@ -330,7 +329,7 @@ public class JZBot extends PircBot
                 if (f != null)
                 {
                     sendMessage(channel, runFactoid(f, channel, sender,
-                        commandArguments.split(" ")));
+                        commandArguments.split(" "), new HashMap<String, String>()));
                     return;
                 }
             }
@@ -341,7 +340,8 @@ public class JZBot extends PircBot
         Factoid f = storage.getFactoid(command);
         if (f != null)
         {
-            runFactoid(f, channel, sender, commandArguments.split(" "));
+            runFactoid(f, channel, sender, commandArguments.split(" "),
+                new HashMap<String, String>());
             return;
         }
         doInvalidCommand(pm, channel, sender);
