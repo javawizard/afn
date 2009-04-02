@@ -25,6 +25,7 @@ import org.opengroove.jzbot.commands.ShutdownCommand;
 import org.opengroove.jzbot.commands.SuperopCommand;
 import org.opengroove.jzbot.commands.TTTCommand;
 import org.opengroove.jzbot.commands.TriggerCommand;
+import org.opengroove.jzbot.commands.WeatherCommand;
 import org.opengroove.jzbot.storage.*;
 
 /**
@@ -63,6 +64,7 @@ public class JZBot extends PircBot
         loadCommand(new SuperopCommand());
         loadCommand(new TriggerCommand());
         loadCommand(new TTTCommand());
+        loadCommand(new WeatherCommand());
     }
     
     private static void loadCommand(Command command)
