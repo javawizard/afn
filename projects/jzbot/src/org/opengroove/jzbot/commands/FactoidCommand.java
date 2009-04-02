@@ -62,7 +62,28 @@ public class FactoidCommand implements Command
              */
             Factoid f = JZBot.storage.createFactoid();
             f.setCreator(hostname);
-            f.setName()
+            f.setName(factoidName);
+            f.setActive(true);
+            f.setValue(factoidContents);
+            if (isGlobal)
+                JZBot.storage.getFactoids().add(f);
+            else
+                c.getFactoids().add(f);
+            JZBot.bot.sendMessage(pm ? sender : channel, "Factoid " + factoidName
+                + " created.");
+        }
+        else if (command.equals("delete"))
+        {
+            verifyOpSuperop(isGlobal, channel, hostname);
+            if (afterCommand.equals(""))
+                throw new ResponseException("You need to specify the factoid");
+            Factoid f;
+            if (isGlobal)
+                f = JZBot.storage.getFactoid(afterCommand);
+            else
+                f = c.getFactoid(afterCommand);
+            if (f == null)
+                throw new ResponseException("That factoid doesn't exist");
         }
     }
     
