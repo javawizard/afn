@@ -179,7 +179,7 @@ public class JZBot extends PircBot
                 Factoid f = cn.getFactoid(command);
                 if (f != null)
                 {
-                    runFactoid(f, channel, sender);
+                    sendMessage(channel, runFactoid(f, channel, sender));
                     return;
                 }
             }
