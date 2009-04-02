@@ -135,13 +135,15 @@ public class JZBot extends PircBot
         {
             if (text.startsWith("{{"))
             {
-                
+                int closeIndex = text.indexOf("}}");
+                if (closeIndex == -1)
+                    throw new RuntimeException("dangling command brace series");
             }
             else
             {
                 String[] tokens = text.split(" ", 2);
                 result.append(" ");
-                result.append(tokens[0]);
+                result.append(replaceVars(tokens[0], vars));
                 text = (tokens.length == 1) ? "" : tokens[1];
             }
         }
