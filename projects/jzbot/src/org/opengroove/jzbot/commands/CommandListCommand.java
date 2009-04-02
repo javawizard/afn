@@ -18,7 +18,7 @@ public class CommandListCommand implements Command
         String currentList = "";
         for (String name : JZBot.commands.keySet())
         {
-            currentList += name + " ";
+            currentList += name + "  ";
             if (currentList.length() > 200)
             {
                 JZBot.bot.sendMessage(pm ? sender : channel, currentList);

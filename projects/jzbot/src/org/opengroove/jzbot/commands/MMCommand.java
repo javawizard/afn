@@ -26,6 +26,8 @@ import org.opengroove.jzbot.commands.roulette.RouletteState;
 public class MMCommand implements Command
 {
     protected static final long TIME_TO_EXPIRE = 0;
+    protected static final int numberOfBeads = 4;
+    protected static final int numberOfColors = 5;
     private static Map<String, MastermindState> stateMap =
         Collections.synchronizedMap(new HashMap<String, MastermindState>());
     
@@ -68,7 +70,20 @@ public class MMCommand implements Command
     public void run(String channel, boolean pm, String sender, String hostname,
         String arguments)
     {
-        // TODO Auto-generated method stub
+        if (channel == null)
+        {
+            JZBot.bot.sendMessage(sender,
+                "You can only use mastermind when a channel is specified.");
+            return;
+        }
+        MastermindState state = stateMap.get(channel);
+        if (state == null)
+        {
+            state = new MastermindState();
+            state.changed = System.currentTimeMillis();
+            
+            stateMap.put(channel, state);
+        }
         
     }
     
