@@ -30,6 +30,7 @@ public class SayCommand implements Command
                 "specify an argument to say. Prefix with <ACTION> to use /me.");
             return;
         }
+        System.out.println("saying " + arguments + " on behalf of " + sender);
         if (arguments.startsWith("<ACTION>") || arguments.startsWith("<action>"))
         {
             arguments = arguments.substring("<action>".length());
