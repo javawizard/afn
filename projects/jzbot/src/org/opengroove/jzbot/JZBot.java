@@ -129,6 +129,7 @@ public class JZBot extends PircBot
             vars.put("" + i + "s", cAppend);
         }
         String text = factoid.getValue();
+        
     }
     
     private static String replaceVars(String text, HashMap<String, String> vars)
@@ -136,8 +137,9 @@ public class JZBot extends PircBot
         for (String key : vars.keySet())
         {
             String value = vars.get(key);
-            text.replaceAll("\\$" + key + "[^a-zA-Z0-9]", value);
+            text = text.replaceAll("\\$" + key + "[^a-zA-Z0-9]", value);
         }
+        return text;
     }
     
     protected void onMessage(String channel, String sender, String login,
