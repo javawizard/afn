@@ -1,6 +1,21 @@
 package org.opengroove.jzbot.commands;
 
-public class WeatherCommand
+import org.opengroove.jzbot.Command;
+
+public class WeatherCommand implements Command
 {
+    
+    public String getName()
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
+    public void run(String channel, boolean pm, String sender, String hostname,
+        String arguments)
+    {
+        // TODO Auto-generated method stub
+        
+    }
     
 }
