@@ -2,6 +2,7 @@ package org.opengroove.jzbot.commands;
 
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
+import org.opengroove.jzbot.ResponseException;
 import org.opengroove.jzbot.storage.Channel;
 
 public class JoinCommand implements Command
@@ -26,6 +27,24 @@ public class JoinCommand implements Command
             return;
         }
         String name = arguments;
+        if (JZBot.storage.getChannel(name) != null)
+        {
+            Channel c = JZBot.storage.getChannel("channel");
+            if (c.isSuspended())
+            {
+                c.setSuspended(false);
+                JZBot.bot.sendMessage(pm ? sender : channel,
+                    "Ok, I'll come back to that channel.");
+                JZBot.bot.joinChannel(channel);
+                JZBot.bot.sendMessage(name, "I've come back (courtesy of " + sender
+                    + ")");
+            }
+            else
+            {
+                throw new ResponseException("I'm already a member of that channel.");
+            }
+            return;
+        }
         Channel c = JZBot.storage.createChannel();
         c.setName(name);
         c.setTrigger("~");
