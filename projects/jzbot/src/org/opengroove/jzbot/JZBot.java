@@ -271,6 +271,13 @@ public class JZBot extends PircBot
         return result.toString();
     }
     
+    protected void onKick(String channel, String kickerNick, String kickerLogin,
+        String kickerHostname, String recipientNick, String reason)
+    {
+        if (recipientNick.equals(this.getName()))
+            joinChannel(channel);
+    }
+    
     private static String replaceVars(String text, Map<String, String> vars)
     {
         for (String key : vars.keySet())
