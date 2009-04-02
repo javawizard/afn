@@ -102,6 +102,16 @@ public class JZBot extends PircBot
         Channel chan = storage.getChannel(channel);
         if (chan == null)
             return;
+        if (sender.equals(getName()))
+        {
+            Factoid f = chan.getFactoid("selfjoin");
+            if (f != null)
+            {
+                sendMessage(channel, runFactoid(f, channel, sender, new String[0],
+                    new HashMap<String, String>()));
+            }
+            return;
+        }
         if (chan.getJoinFactoid() != null)
         {
             System.out.println("join factoid");
