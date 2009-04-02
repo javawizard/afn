@@ -52,12 +52,12 @@ public class WeatherCommand implements Command
         HashMap<String, String> map = new HashMap<String, String>();
         try
         {
-            URL url =
+            URL weatherbugUrl =
                 new URL(
                     "http://a7686974884.isapi.wxbug.net/WxDataISAPI/WxDataISAPI.dll?Magic=10991&RegNum=0&ZipCode="
                         + arguments.replace("&", "")
                         + "&Units=0&Version=7&Fore=0&t=123456");
-            InputStream stream = url.openStream();
+            InputStream stream = weatherbugUrl.openStream();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             StringUtils.copy(stream, baos);
             stream.close();
@@ -79,13 +79,34 @@ public class WeatherCommand implements Command
             map.put("windchill", tokens[15]);
             map.put("monthlyrain", tokens[16]);
             map.put("yearlyrain", tokens[31]);
+            URL yahooUrl =
+                new URL("http://weather.yahooapis.com/forecastrss?p="
+                    + arguments.replace("&", ""));
+            stream = weatherbugUrl.openStream();
+            baos = new ByteArrayOutputStream();
+            StringUtils.copy(stream, baos);
+            stream.close();
+            String yahooResult = new String(baos.toByteArray());
+            String conditionStart = "yweather:condition text=\"";
+            int conditionsIndex = yahooResult.indexOf(conditionStart);
+            String conditions = "";
+            if (conditionsIndex != -1)
+            {
+                int endIndex =
+                    yahooResult.indexOf("\"", conditionsIndex + conditionStart.length()
+                        + 1);
+                conditions =
+                    yahooResult.substring(conditionsIndex + conditionStart.length(),
+                        endIndex);
+            }
+            map.put("conditions", conditions);
             if (propsShown)
             {
                 String currentList = "";
                 for (String name : map.keySet())
                 {
                     currentList += name + "=" + map.get(name) + "          ";
-                    if (currentList.length() > 300)
+                    if (currentList.length() > 200)
                     {
                         JZBot.bot.sendMessage(pm ? sender : channel, currentList);
                         currentList = "";
