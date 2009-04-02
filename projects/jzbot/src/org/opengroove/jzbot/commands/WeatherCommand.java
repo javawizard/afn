@@ -1,7 +1,11 @@
 package org.opengroove.jzbot.commands;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
+
+import net.sf.opengroove.common.utils.StringUtils;
 
 import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
@@ -42,13 +46,22 @@ public class WeatherCommand implements Command
                     "http://a7686974884.isapi.wxbug.net/WxDataISAPI/WxDataISAPI.dll?Magic=10991&RegNum=0&ZipCode="
                         + arguments.replace("&", "")
                         + "&Units=0&Version=7&Fore=0&t=123456");
-            Object content = url.openConnection().getContent();
-            throw new ResponseException("Type is " + content.getClass().getName());
+            InputStream stream = url.openStream();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            StringUtils.copy(stream, baos);
+            stream.close();
+            String[] tokens = new String(baos.toByteArray()).split("\\|");
+            map.put("temp", tokens[3]);
+            map.put("winddir", tokens[4]);
+            map.put("windspeed", tokens[5]);
+            String result =
+                JZBot.runFactoid(weatherFactoid, channel, sender, new String[0], map);
+            JZBot.bot.sendMessage(pm ? sender : channel, result);
         }
         catch (Exception e)
         {
-            String result =
-                JZBot.runFactoid(weatherFactoid, channel, sender, new String[0], map);
+            if (e instanceof ResponseException)
+                throw (ResponseException) e;
             e.printStackTrace();
             throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage(),
                 e);
