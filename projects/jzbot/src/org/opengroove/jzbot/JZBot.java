@@ -204,8 +204,9 @@ public class JZBot extends PircBot
         for (String key : vars.keySet())
         {
             String value = vars.get(key);
-            text = text.replaceAll("\\$" + key + "[^a-zA-Z0-9]", value);
+            text = text.replace("%" + key + "%", value);
         }
+        text = text.replaceAll("\\%[^\\%]+%", "");
         return text;
     }
     
