@@ -17,6 +17,7 @@ public class ReconnectCommand implements Command
         JZBot.bot.verifySuperop(hostname);
         JZBot.bot.sendMessage(pm ? sender : channel, "Reconnecting on request from "
             + sender);
+        Thread.sleep(2000);
         JZBot.bot.disconnect();
     }
     
