@@ -178,11 +178,32 @@ public class JZBot extends PircBot
                 }
                 else if (command.equals("ifneq"))
                 {
-                    
+                    if (!arguments[0].equalsIgnoreCase(arguments[1]))
+                        result.append(arguments[2]);
+                    else if (arguments.length > 3)
+                        result.append(arguments[3]);
                 }
                 else if (command.equals("import"))
                 {
-                    
+                    Factoid f = null;
+                    boolean channelSpecific = false;
+                    if (channel != null)
+                    {
+                        f = JZBot.storage.getChannel(channel).getFactoid(arguments[0]);
+                        if (f != null)
+                            channelSpecific = true;
+                    }
+                    if (f == null)
+                    {
+                        f = JZBot.storage.getFactoid(arguments[0]);
+                    }
+                    if (f == null)
+                        throw new RuntimeException("Invalid import factoid "
+                            + arguments[0]);
+                    String[] subargs = new String[arguments.length - 1];
+                    System.arraycopy(arguments, 1, subargs, 0, subargs.length);
+                    result.append(runFactoid(f, channelSpecific ? channel : null,
+                        sender, subargs));
                 }
                 else if (command.equals(""))
                 {
