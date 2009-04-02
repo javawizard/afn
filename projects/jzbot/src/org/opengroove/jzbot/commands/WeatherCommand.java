@@ -115,6 +115,10 @@ public class WeatherCommand implements Command
     
     private String windDegreesToReadable(String string)
     {
+        double windDegrees = Double.parseDouble(string);
+        double sliceSize = 360.0 / (WIND_DIRECTIONS.length * 1.0d);
+        double halfSlice = sliceSize / 2.0d;
+        windDegrees += halfSlice;
         
     }
 }
