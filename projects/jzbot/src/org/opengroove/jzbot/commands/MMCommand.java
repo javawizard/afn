@@ -112,6 +112,25 @@ public class MMCommand implements Command
             JZBot.bot.sendMessage(channel, "The game has been cleared.");
             return;
         }
+        if (arguments.equals("show"))
+        {
+            if (JZBot.isOp(channel, hostname))
+            {
+                String answer = "";
+                for (int v : state.correct)
+                {
+                    answer += v;
+                }
+                JZBot.bot.sendMessage(sender, "The answer is " + answer);
+                JZBot.bot.sendMessage(channel, "" + sender
+                    + " has seen the answer.");
+            }
+            else
+            {
+                JZBot.bot.sendMessage(pm ? sender : channel, "You're not an op here.");
+            }
+            return;
+        }
         /*
          * The arguments are a guess (or at least we'll assume so)
          */
