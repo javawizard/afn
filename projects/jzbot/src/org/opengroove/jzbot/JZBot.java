@@ -118,6 +118,10 @@ public class JZBot extends PircBot
         String[] args)
     {
         HashMap<String, String> vars = new HashMap<String, String>();
+        for (int i = 0; i < args.length; i++)
+        {
+            vars.put("" + i, args[i]);
+        }
         String text = factoid.getValue();
     }
     
