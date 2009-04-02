@@ -15,10 +15,18 @@ public class CommandListCommand implements Command
         String arguments)
     {
         JZBot.bot.sendMessage(pm ? sender : channel, "Start of command list");
+        String currentList = "";
         for (String name : JZBot.commands.keySet())
         {
-            JZBot.bot.sendMessage(pm ? sender : channel, name);
+            currentList += name + " ";
+            if (currentList.length() > 200)
+            {
+                JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+                currentList = "";
+            }
         }
+        if (!currentList.equals(""))
+            JZBot.bot.sendMessage(pm ? sender : channel, currentList);
         JZBot.bot.sendMessage(pm ? sender : channel, "End of command list");
     }
     
