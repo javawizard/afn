@@ -90,6 +90,7 @@ public class WeatherCommand implements Command
             String conditionStart = "yweather:condition text=\"";
             int conditionsIndex = yahooResult.indexOf(conditionStart);
             String conditions = "";
+            System.out.println("result:" + yahooResult + ",idx:" + conditionsIndex);
             if (conditionsIndex != -1)
             {
                 int endIndex =
