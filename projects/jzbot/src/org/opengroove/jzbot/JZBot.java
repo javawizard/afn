@@ -18,6 +18,7 @@ import org.opengroove.jzbot.commands.HelpCommand;
 import org.opengroove.jzbot.commands.JoinCommand;
 import org.opengroove.jzbot.commands.OpCommand;
 import org.opengroove.jzbot.commands.RouletteCommand;
+import org.opengroove.jzbot.commands.SayCommand;
 import org.opengroove.jzbot.commands.ShutdownCommand;
 import org.opengroove.jzbot.commands.SuperopCommand;
 import org.opengroove.jzbot.commands.TriggerCommand;
