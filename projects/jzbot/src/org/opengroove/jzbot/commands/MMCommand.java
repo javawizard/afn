@@ -27,7 +27,7 @@ public class MMCommand implements Command
 {
     protected static final long TIME_TO_EXPIRE = 0;
     protected static final int numberOfBeads = 4;
-    protected static final int numberOfColors = 5;
+    protected static final double numberOfColors = 5.0;
     private static Map<String, MastermindState> stateMap =
         Collections.synchronizedMap(new HashMap<String, MastermindState>());
     
@@ -81,8 +81,17 @@ public class MMCommand implements Command
         {
             state = new MastermindState();
             state.changed = System.currentTimeMillis();
-            
+            state.guesses = 0;
+            for (int i = 0; i < numberOfBeads; i++)
+            {
+                state.correct.add((int) (1.0 + (Math.random() * numberOfColors)));
+            }
             stateMap.put(channel, state);
+            JZBot.bot.sendMessage(pm ? sender : channel,
+                "A new game of Mastermind has been started. Positions: "
+                    + numberOfBeads + ". Numbers: " + numberOfColors
+                    + ". Guess by using ~mm 1234.");
+            return;
         }
         
     }
