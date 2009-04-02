@@ -148,7 +148,7 @@ public class JZBot extends PircBot
                         : commandStringTokens[1].split("\\|\\|");
                 if (command.equals("action"))
                 {
-                    
+                    isAction = true;
                 }
                 else
                 {
@@ -164,6 +164,7 @@ public class JZBot extends PircBot
                 text = (tokens.length == 1) ? "" : tokens[1];
             }
         }
+        //FIXME: actually deal with isAction, probably prepend result with "<ACTION>"
         if (result.length() == 0)
             result.append(" ");
         return result.toString().substring(1);
