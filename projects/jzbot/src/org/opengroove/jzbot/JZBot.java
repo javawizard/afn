@@ -150,6 +150,34 @@ public class JZBot extends PircBot
                 {
                     isAction = true;
                 }
+                else if (command.equals("first"))
+                {
+                    for (String s : arguments)
+                    {
+                        if (!s.trim().equals(""))
+                            return s;
+                    }
+                }
+                else if (command.equals("random"))
+                {
+                    
+                }
+                else if (command.equals("ifeq"))
+                {
+                    
+                }
+                else if (command.equals("ifneq"))
+                {
+                    
+                }
+                else if (command.equals("import"))
+                {
+                    
+                }
+                else if (command.equals(""))
+                {
+                    
+                }
                 else
                 {
                     throw new RuntimeException("Invalid command " + command
@@ -164,7 +192,8 @@ public class JZBot extends PircBot
                 text = (tokens.length == 1) ? "" : tokens[1];
             }
         }
-        //FIXME: actually deal with isAction, probably prepend result with "<ACTION>"
+        // FIXME: actually deal with isAction, probably prepend result with
+        // "<ACTION>"
         if (result.length() == 0)
             result.append(" ");
         return result.toString().substring(1);
