@@ -141,6 +141,16 @@ public class MMCommand implements Command
                 removeOne(correct, guess);
                 continue;
             }
+            else if (correct.contains(guess))
+            {
+                rightNumber++;
+                removeOne(correct, guess);
+                continue;
+            }
+        }
+        if (rightPosition == state.correct.size())
+        {
+            
         }
         state.guesses++;
     }
