@@ -62,6 +62,8 @@ public class WeatherCommand implements Command
             StringUtils.copy(stream, baos);
             stream.close();
             String[] tokens = new String(baos.toByteArray()).split("\\|");
+            map.put("date", tokens[2]);
+            map.put("time", tokens[1]);
             map.put("temp", tokens[3]);
             map.put("winddir", tokens[4]);
             map.put("winddirhuman", windDegreesToReadable(tokens[4]));
