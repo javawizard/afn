@@ -2,6 +2,9 @@ package org.opengroove.jzbot.commands;
 
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
+import org.opengroove.jzbot.ResponseException;
+import org.opengroove.jzbot.storage.Channel;
+import org.opengroove.jzbot.storage.Factoid;
 
 public class FactoidCommand implements Command
 {
@@ -35,10 +38,31 @@ public class FactoidCommand implements Command
          * command is something like create, delete, isglobal, etc., and
          * afterCommand is the rest
          */
+        Channel c = null;
+        if (!isGlobal)
+            c = JZBot.storage.getChannel(channel);
         if (command.equals("create"))
         {
             verifyOpSuperop(isGlobal, channel, hostname);
-            
+            if (afterCommand.equals(""))
+                throw new ResponseException("You need to specify the factoid");
+            String[] argumentsTokenized2 = afterCommand.split(" ", 2);
+            if (argumentsTokenized2.length != 2)
+                throw new RuntimeException("You need to specify the factoid itself");
+            String factoidName = argumentsTokenized2[0];
+            String factoidContents = argumentsTokenized2[1];
+            if (c != null && c.getFactoid(factoidName) != null)
+                throw new ResponseException(
+                    "That factoid already exists as a channel-specific factoid");
+            else if (c == null && JZBot.storage.getFactoid(factoidName) != null)
+                throw new ResponseException(
+                    "That factoid already exists as a global factoid");
+            /*
+             * The factoid does not exist. Let's create it.
+             */
+            Factoid f = JZBot.storage.createFactoid();
+            f.setCreator(hostname);
+            f.setName()
         }
     }
     
