@@ -148,11 +148,17 @@ public class MMCommand implements Command
                 continue;
             }
         }
+        state.guesses++;
         if (rightPosition == state.correct.size())
         {
-            
+            stateMap.remove(channel);
+            JZBot.bot.sendMessage(channel, sender
+                + " won! That was the correct answer.");
+            return;
         }
-        state.guesses++;
+        JZBot.bot.sendMessage(channel, sender + ": " + rightPosition + " right place, "
+            + rightNumber + " right number wrong place. " + state.guesses
+            + " guesses so far.");
     }
     
     private void removeOne(ArrayList<Integer> correct, int guess)
