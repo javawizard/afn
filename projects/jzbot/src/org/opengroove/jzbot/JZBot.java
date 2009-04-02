@@ -120,13 +120,13 @@ public class JZBot extends PircBot
         HashMap<String, String> vars = new HashMap<String, String>();
         for (int i = 0; i < args.length; i++)
         {
-            vars.put("" + i, args[i]);
+            vars.put("" + (i + 1), args[i]);
         }
         String cAppend = "";
         for (int i = args.length - 1; i >= 0; i--)
         {
             cAppend = args[i] + ((i == args.length - 1) ? "" : " ") + cAppend;
-            vars.put("" + i + "-", cAppend);
+            vars.put("" + (i + 1) + "-", cAppend);
         }
         String text = factoid.getValue();
         boolean isAction = false;
