@@ -119,6 +119,7 @@ public class RouletteCommand implements Command
             JZBot.bot.sendMessage(channel, prefix + "*click*");
             if (state.current == 6)
             {
+                stateMap.remove(channel);
                 JZBot.bot.sendMessage(channel, "The gun was unloaded. Luckster.");
                 JZBot.bot.sendAction(channel, "reloads and spins the chamber");
             }
