@@ -151,17 +151,21 @@ public class JZBot extends PircBot
                 String[] arguments =
                     (commandStringTokens.length == 1) ? new String[0]
                         : commandStringTokens[1].split("\\|\\|");
+                for (int i = 0; i < arguments.length; i++)
+                {
+                    arguments[i] = replaceVars(arguments[i], vars);
+                }
                 if (command.equals("action"))
                 {
                     isAction = true;
                 }
-                else if (command.equals("first"))
+                else if (command.equals("firstvar"))
                 {
-                    for (String s : arguments)
+                    for (int i = 1; i < arguments.length; i++)
                     {
-                        if (!s.trim().equals(""))
+                        if (!arguments[i].trim().equals(""))
                         {
-                            result.append(s);
+                            vars.put(arguments[0], arguments[i]);
                         }
                     }
                 }
