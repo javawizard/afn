@@ -128,5 +128,7 @@ public class MMCommand implements Command
         }
         int rightPosition = 0;
         int rightNumber = 0;
+        ArrayList<Integer> correct = new ArrayList<Integer>(state.correct);
+        state.guesses++;
     }
 }
