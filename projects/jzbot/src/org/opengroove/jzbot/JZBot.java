@@ -138,6 +138,9 @@ public class JZBot extends PircBot
                 int closeIndex = text.indexOf("}}");
                 if (closeIndex == -1)
                     throw new RuntimeException("dangling command brace series");
+                String toClose = text.substring(0, closeIndex + 2);
+                text = text.substring(toClose.length());
+                String commandString = toClose.substring(2, toClose.length() - 2);
             }
             else
             {
@@ -147,6 +150,9 @@ public class JZBot extends PircBot
                 text = (tokens.length == 1) ? "" : tokens[1];
             }
         }
+        if (result.length() == 0)
+            result.append(" ");
+        return result.toString().substring(1);
     }
     
     private static String replaceVars(String text, HashMap<String, String> vars)
@@ -194,11 +200,11 @@ public class JZBot extends PircBot
                 StringWriter sw = new StringWriter();
                 e.printStackTrace(new PrintWriter(sw, true));
                 String[] eTokens = sw.toString().split("\n");
-                for (int i = 0; i < eTokens.length && i < 4; i++)
+                for (int i = 0; i < eTokens.length && i < 2; i++)
                 {
                     sendMessage(pm ? sender : channel, eTokens[i]);
                 }
-                if (eTokens.length > 4)
+                if (eTokens.length > 2)
                     sendMessage(pm ? sender : channel, "...");
                 sendMessage(pm ? sender : channel,
                     "The full stack trace of the exception has been printed to stdout.");
