@@ -97,24 +97,25 @@ public class JZBot extends PircBot
         {
             Factoid factoid = storage.getFactoid(chan.getJoinFactoid());
             if (factoid != null)
-                runFactoid(factoid, channel, sender);
+            {
+                sendMessage(channel, runFactoid(factoid, channel, sender));
+            }
         }
     }
     
     /**
-     * Runs the factoid specified, outputting to the channel specified.
+     * Runs the factoid specified, outputting to the string specified.
      * 
      * @param factoid
      *            The factoid to run
      * @param channel
-     *            The channel to send to
+     *            The channel that it was run on
      * @param sender
      *            The sender of the factoid request
      */
-    private void runFactoid(Factoid factoid, String channel, String sender)
+    private String runFactoid(Factoid factoid, String channel, String sender)
     {
-        // TODO Auto-generated method stub
-        
+        return null;
     }
     
     protected void onMessage(String channel, String sender, String login,
