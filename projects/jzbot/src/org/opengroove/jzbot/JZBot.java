@@ -166,6 +166,7 @@ public class JZBot extends PircBot
                         if (!arguments[i].trim().equals(""))
                         {
                             vars.put(arguments[0], arguments[i]);
+                            break;
                         }
                     }
                 }
