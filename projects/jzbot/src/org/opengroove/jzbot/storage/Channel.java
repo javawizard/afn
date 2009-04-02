@@ -15,6 +15,11 @@ public interface Channel
     public void setName(String name);
     
     @Property
+    public boolean isActive();
+    
+    public void setActive(boolean active);
+    
+    @Property
     public String getJoinFactoid();
     
     public void setJoinFactoid(String name);
