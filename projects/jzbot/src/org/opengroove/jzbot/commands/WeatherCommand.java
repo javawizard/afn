@@ -66,7 +66,8 @@ public class WeatherCommand implements Command
             map.put("winddir", tokens[4]);
             map.put("winddirhuman", windDegreesToReadable(tokens[4]));
             map.put("windspeed", tokens[5]);
-            map.put("gustwdir", windDegreesToReadable(tokens[6]));
+            map.put("gustwdir", tokens[6]);
+            map.put("gustwdirhuman", windDegreesToReadable(tokens[6]));
             map.put("gustwspeed", tokens[7]);
             map.put("raintoday", tokens[8]);
             map.put("rainrate", tokens[9]);

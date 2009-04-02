@@ -27,8 +27,8 @@ public class ShutdownCommand implements Command
         for (Channel c : JZBot.storage.getChannels().isolate())
         {
             sleepDuration += 1100;
-            JZBot.bot.sendMessage(c.getName(),
-                "JZBot is shutting down at the request of " + sender);
+            JZBot.bot.sendMessage(c.getName(), sender
+                + " has requested that I shut down. Later all.");
         }
         try
         {
