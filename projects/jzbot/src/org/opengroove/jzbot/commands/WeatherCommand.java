@@ -83,7 +83,7 @@ public class WeatherCommand implements Command
                 for (String name : map.keySet())
                 {
                     currentList += name + "=" + map.get(name) + "     ";
-                    if (currentList.length() > 350)
+                    if (currentList.length() > 220)
                     {
                         JZBot.bot.sendMessage(pm ? sender : channel, currentList);
                         currentList = "";
@@ -91,6 +91,8 @@ public class WeatherCommand implements Command
                 }
                 if (!currentList.equals(""))
                     JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+                JZBot.bot.sendMessagE(pm ? sender : channel,
+                    "End weather properties list");
             }
             String result =
                 JZBot.runFactoid(weatherFactoid, channel, sender, new String[0], map);
