@@ -91,6 +91,9 @@ public class WeatherCommand implements Command
             map.put("windchill", tokens[15]);
             map.put("monthlyrain", tokens[16]);
             map.put("yearlyrain", tokens[31]);
+            map.put("gusttime", tokens[25]);
+            map.put("station", tokens[35]);
+            map.put("citystate", tokens[36]);
             URL yahooUrl =
                 new URL("http://weather.yahooapis.com/forecastrss?p="
                     + arguments.replace("&", ""));
