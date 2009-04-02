@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
+import org.opengroove.jzbot.commands.mm.MastermindState;
 import org.opengroove.jzbot.commands.roulette.RouletteState;
 
 /**
@@ -25,8 +26,8 @@ import org.opengroove.jzbot.commands.roulette.RouletteState;
 public class MMCommand implements Command
 {
     protected static final long TIME_TO_EXPIRE = 0;
-    private static Map<String, RouletteState> stateMap =
-        Collections.synchronizedMap(new HashMap<String, RouletteState>());
+    private static Map<String, MastermindState> stateMap =
+        Collections.synchronizedMap(new HashMap<String, MastermindState>());
     
     static
     {
@@ -41,7 +42,7 @@ public class MMCommand implements Command
                         Thread.sleep(30 * 1000);
                         for (String key : new ArrayList<String>(stateMap.keySet()))
                         {
-                            RouletteState value = stateMap.get(key);
+                            MastermindState value = stateMap.get(key);
                             if (value != null)
                             {
                                 if ((value.changed + TIME_TO_EXPIRE) < System
