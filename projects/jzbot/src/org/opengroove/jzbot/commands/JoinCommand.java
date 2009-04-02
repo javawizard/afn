@@ -38,6 +38,8 @@ public class JoinCommand implements Command
                 JZBot.bot.joinChannel(channel);
                 JZBot.bot.sendMessage(name, "I've come back (courtesy of " + sender
                     + ")");
+                JZBot.bot.sendMessage(name, "I still remember all of my factoids and "
+                    + "settings from this channel.");
             }
             else
             {
