@@ -117,13 +117,17 @@ public class JZBot extends PircBot
     public static String runFactoid(Factoid factoid, String channel, String sender,
         String[] args)
     {
-        HashMap<String,String> vars = new HashMap<String,String>();
+        HashMap<String, String> vars = new HashMap<String, String>();
         String text = factoid.getValue();
     }
     
-    private static String replaceVars(String text, HashMap<String,String> vars)
+    private static String replaceVars(String text, HashMap<String, String> vars)
     {
-        
+        for (String key : vars.keySet())
+        {
+            String value = vars.get(key);
+            text.replaceAll("\\$" + key + "[a-zA-Z0-9]");
+        }
     }
     
     protected void onMessage(String channel, String sender, String login,
