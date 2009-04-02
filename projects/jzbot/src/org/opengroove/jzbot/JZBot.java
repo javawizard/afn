@@ -222,8 +222,9 @@ public class JZBot extends PircBot
             else
             {
                 String[] tokens = text.split(" ", 2);
-                result.append(" ");
                 result.append(replaceVars(tokens[0], vars));
+                if (tokens.length > 1)
+                    result.append(" ");
                 text = (tokens.length == 1) ? "" : tokens[1];
             }
         }
