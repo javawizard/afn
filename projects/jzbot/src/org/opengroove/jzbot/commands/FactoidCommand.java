@@ -29,6 +29,7 @@ public class FactoidCommand implements Command
                     + "a channel (unless it is the isglobal command)");
             return;
         }
-        
+        String afterCommand =
+            (argumentsTokenized1.length > 1) ? argumentsTokenized1[1] : "";
     }
 }
