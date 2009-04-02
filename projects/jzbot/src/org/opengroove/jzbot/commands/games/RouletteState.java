@@ -1,4 +1,4 @@
-package org.opengroove.jzbot.commands.roulette;
+package org.opengroove.jzbot.commands.games;
 
 public class RouletteState
 {

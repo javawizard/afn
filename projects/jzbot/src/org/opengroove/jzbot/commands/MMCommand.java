@@ -8,8 +8,8 @@ import java.util.Map;
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
 import org.opengroove.jzbot.ResponseException;
-import org.opengroove.jzbot.commands.mm.MastermindState;
-import org.opengroove.jzbot.commands.roulette.RouletteState;
+import org.opengroove.jzbot.commands.games.MastermindState;
+import org.opengroove.jzbot.commands.games.RouletteState;
 
 /**
  * A game of mastermind. Uses numbers 1 through 5 as "bead colors". 4 beads by

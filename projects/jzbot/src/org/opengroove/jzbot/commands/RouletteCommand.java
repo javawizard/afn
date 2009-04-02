@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
-import org.opengroove.jzbot.commands.roulette.RouletteState;
+import org.opengroove.jzbot.commands.games.RouletteState;
 
 public class RouletteCommand implements Command
 {

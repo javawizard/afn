@@ -1,4 +1,4 @@
-package org.opengroove.jzbot.commands.mm;
+package org.opengroove.jzbot.commands.games;
 
 import java.util.ArrayList;
 
