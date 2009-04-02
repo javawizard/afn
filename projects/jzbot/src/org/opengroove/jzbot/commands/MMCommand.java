@@ -100,6 +100,12 @@ public class MMCommand implements Command
             JZBot.bot.sendMessage(channel, "The game has been cleared.");
             return;
         }
+        if (arguments.equals("info"))
+        {
+            JZBot.bot
+                .sendMessage(channel, "Info: " + state.guesses + " guesses so far");
+            state.changed = System.currentTimeMillis();
+        }
         /*
          * The arguments are a guess (or at least we'll assume so)
          */
