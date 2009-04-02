@@ -122,8 +122,7 @@ public class MMCommand implements Command
                     answer += v;
                 }
                 JZBot.bot.sendMessage(sender, "The answer is " + answer);
-                JZBot.bot.sendMessage(channel, "" + sender
-                    + " has seen the answer.");
+                JZBot.bot.sendMessage(channel, "" + sender + " has seen the answer.");
             }
             else
             {
@@ -160,7 +159,12 @@ public class MMCommand implements Command
                 removeOne(correct, guess);
                 continue;
             }
-            else if (correct.contains(guess))
+        }
+        for (int i = 0; i < guesses.length; i++)
+        {
+            int guess = guesses[i];
+            int cValue = state.correct.get(i);
+            if (correct.contains(guess))
             {
                 rightNumber++;
                 removeOne(correct, guess);
