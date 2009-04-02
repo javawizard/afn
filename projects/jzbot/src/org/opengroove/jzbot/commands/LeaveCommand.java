@@ -1,6 +1,9 @@
 package org.opengroove.jzbot.commands;
 
 import org.opengroove.jzbot.Command;
+import org.opengroove.jzbot.JZBot;
+import org.opengroove.jzbot.ResponseException;
+import org.opengroove.jzbot.storage.Channel;
 
 /**
  * Leave instructs the bot to depart from a channel and not come back until a
@@ -14,14 +17,18 @@ public class LeaveCommand implements Command
     
     public String getName()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return "leave";
     }
     
     public void run(String channel, boolean pm, String sender, String hostname,
         String arguments)
     {
-        // TODO Auto-generated method stub
+        if (channel == null)
+            throw new ResponseException("You must specify a channel.");
+        JZBot.bot.verifySuperop(hostname);
+        Channel c = JZBot.storage.getChannel(channel);
+        if (c == null)
+            throw new ResponseException("I'm not a member of that channel.");
         
     }
     
