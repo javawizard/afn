@@ -83,7 +83,7 @@ public class WeatherCommand implements Command
                 for (String name : map.keySet())
                 {
                     currentList += name + "=" + map.get(name) + "     ";
-                    if (currentList.length() > 200)
+                    if (currentList.length() > 350)
                     {
                         JZBot.bot.sendMessage(pm ? sender : channel, currentList);
                         currentList = "";
