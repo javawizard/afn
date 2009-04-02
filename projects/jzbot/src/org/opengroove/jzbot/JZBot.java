@@ -121,7 +121,10 @@ public class JZBot extends PircBot
         String text = factoid.getValue();
     }
     
-    private static String replaceArgs
+    private static String replaceVars(String text, HashMap<String,String> vars)
+    {
+        
+    }
     
     protected void onMessage(String channel, String sender, String login,
         String hostname, String message)
