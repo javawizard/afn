@@ -72,6 +72,8 @@ public class WeatherCommand implements Command
             map.put("lowtemp", tokens[13]);
             map.put("dewpoint", tokens[14]);
             map.put("windchill", tokens[15]);
+            map.put("monthlyrain", tokens[16]);
+            map.put("yearlyrain", tokens[31]);
             String result =
                 JZBot.runFactoid(weatherFactoid, channel, sender, new String[0], map);
             JZBot.bot.sendMessage(pm ? sender : channel, result);
