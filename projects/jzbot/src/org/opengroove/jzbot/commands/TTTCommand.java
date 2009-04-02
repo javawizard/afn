@@ -14,8 +14,7 @@ public class TTTCommand implements Command
     
     public String getName()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return "ttt";
     }
     
     public void run(String channel, boolean pm, String sender, String hostname,
