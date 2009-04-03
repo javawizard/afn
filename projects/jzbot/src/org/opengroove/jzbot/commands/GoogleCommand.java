@@ -7,6 +7,7 @@ import java.net.URLEncoder;
 
 import net.sf.opengroove.common.utils.StringUtils;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
@@ -37,18 +38,11 @@ public class GoogleCommand implements Command
             StringUtils.copy(in, baos);
             in.close();
             JSONObject j = new JSONObject(new String(baos.toByteArray()));
+            JSONObject responseDataObject = j.getJSONObject("responseData");
+            JSONArray resultsObject = responseDataObject.getJSONArray("results");
             String currentList = "";
-            for (Object name : new OneTimeIterable(j.keys()))
-            {
-                currentList += name.toString() + "  ";
-                if (currentList.length() > 200)
-                {
-                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
-                    currentList = "";
-                }
-            }
-            if (!currentList.equals(""))
-                JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+            System.out.println("status: " + j.getInt("responseStatus"));
+            System.out.println("length: " + resultsObject.length());
         }
         catch (Exception e)
         {
@@ -56,5 +50,4 @@ public class GoogleCommand implements Command
                 e);
         }
     }
-    
 }
