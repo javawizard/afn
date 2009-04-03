@@ -9,7 +9,9 @@ import net.sf.opengroove.common.utils.StringUtils;
 
 import org.json.JSONObject;
 import org.opengroove.jzbot.Command;
+import org.opengroove.jzbot.JZBot;
 import org.opengroove.jzbot.ResponseException;
+import org.opengroove.utils.OneTimeIterable;
 
 public class GoogleCommand implements Command
 {
@@ -35,7 +37,18 @@ public class GoogleCommand implements Command
             StringUtils.copy(in, baos);
             in.close();
             JSONObject j = new JSONObject(new String(baos.toByteArray()));
-            sendMessage(pm?sender:channel, j.keys())
+            String currentList = "";
+            for (Object name : new OneTimeIterable(j.keys()))
+            {
+                currentList += name.toString() + "  ";
+                if (currentList.length() > 200)
+                {
+                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+                    currentList = "";
+                }
+            }
+            if (!currentList.equals(""))
+                JZBot.bot.sendMessage(pm ? sender : channel, currentList);
         }
         catch (Exception e)
         {
