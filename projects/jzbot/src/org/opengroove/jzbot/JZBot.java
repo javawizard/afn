@@ -15,6 +15,7 @@ import org.jibble.pircbot.PircBot;
 import org.opengroove.jzbot.commands.CommandListCommand;
 import org.opengroove.jzbot.commands.ConfigCommand;
 import org.opengroove.jzbot.commands.FactoidCommand;
+import org.opengroove.jzbot.commands.GoogleCommand;
 import org.opengroove.jzbot.commands.HelpCommand;
 import org.opengroove.jzbot.commands.JoinCommand;
 import org.opengroove.jzbot.commands.JoinMessageCommand;
@@ -56,6 +57,7 @@ public class JZBot extends PircBot
         loadCommand(new CommandListCommand());
         loadCommand(new ConfigCommand());
         loadCommand(new FactoidCommand());
+        loadCommand(new GoogleCommand());
         loadCommand(new HelpCommand());
         loadCommand(new JoinCommand());
         loadCommand(new JoinMessageCommand());
