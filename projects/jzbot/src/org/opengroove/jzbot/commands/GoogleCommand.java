@@ -54,17 +54,11 @@ public class GoogleCommand implements Command
             for (int i = 0; i < resultsObject.length() && i < 4; i++)
             {
                 JSONObject result = resultsObject.getJSONObject(i);
-                JZBot.bot.sendMessage(pm ? sender : channel, result.getString("url")
-                    + " : "
-                    + result.getString("title").replace("<b>", "").replace("</b>", ""));
-                if (currentList.length() > 200)
-                {
-                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
-                    currentList = "";
-                }
+                String resultText =  result.getString("url")
+                + " "
+                + result.getString("title").replace("<b>", "").replace("</b>", "");
+                JZBot.bot.sendMessage(pm ? sender : channel,);
             }
-            if (!currentList.equals(""))
-                JZBot.bot.sendMessage(pm ? sender : channel, currentList);
             JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
         }
         catch (Exception e)
