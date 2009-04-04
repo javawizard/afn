@@ -83,7 +83,6 @@ public class GoogleCommand implements Command
                 }
             }
             JZBot.bot.sendMessage(pm ? sender : channel, currentList);
-            JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
         }
         catch (Exception e)
         {
