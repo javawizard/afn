@@ -59,6 +59,10 @@ public class GoogleCommand implements Command
                 + " "
                 + result.getString("title").replace("<b>", "").replace("</b>", "");
                 int totalLength = currentList.length() + resultText.length() + separator.length();
+                if(totalLength > 430)
+                {
+                    
+                }
                 JZBot.bot.sendMessage(pm ? sender : channel,);
             }
             JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
