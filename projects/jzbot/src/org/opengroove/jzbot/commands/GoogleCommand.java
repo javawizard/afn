@@ -51,12 +51,14 @@ public class GoogleCommand implements Command
                 + (resultsObject.length() == 1 ? "" : "s")
                 + ", http://google.com/search?q=" + URLEncoder.encode(arguments));
             String currentList = "";
+            String separator = " | ";
             for (int i = 0; i < resultsObject.length() && i < 4; i++)
             {
                 JSONObject result = resultsObject.getJSONObject(i);
                 String resultText =  result.getString("url")
                 + " "
                 + result.getString("title").replace("<b>", "").replace("</b>", "");
+                int totalLength = currentList.length() + resultText.length() + separator.length();
                 JZBot.bot.sendMessage(pm ? sender : channel,);
             }
             JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
