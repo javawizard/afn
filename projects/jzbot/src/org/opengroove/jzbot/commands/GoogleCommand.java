@@ -35,7 +35,7 @@ public class GoogleCommand implements Command
         {
             URL url =
                 new URL(
-                    "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=opengroove"
+                    "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q="
                         + URLEncoder.encode(arguments));
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             URLConnection con = url.openConnection();
@@ -43,6 +43,7 @@ public class GoogleCommand implements Command
             InputStream in = con.getInputStream();
             StringUtils.copy(in, baos);
             in.close();
+            System.out.println(new String(baos.toByteArray()));
             JSONObject j = new JSONObject(new String(baos.toByteArray()));
             JSONObject responseDataObject = j.getJSONObject("responseData");
             JSONArray resultsObject = responseDataObject.getJSONArray("results");
