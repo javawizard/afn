@@ -76,11 +76,12 @@ public class GoogleCommand implements Command
                     /*
                      * append this to the current list
                      */
-                    currentList += separator;
+                    if (!currentList.equals(""))
+                        currentList += separator;
                     currentList += resultText;
                 }
             }
-            JZBot.bot.sendMessage(pm?sender:channel, currentList);
+            JZBot.bot.sendMessage(pm ? sender : channel, currentList);
             JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
         }
         catch (Exception e)
