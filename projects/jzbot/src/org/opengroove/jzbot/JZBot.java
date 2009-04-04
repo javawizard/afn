@@ -517,4 +517,5 @@ public class JZBot extends PircBot
             throw new ResponseException(
                 "You are not a superop, so you don't have permission to run this command.");
     }
+    
 }

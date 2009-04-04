@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 import net.sf.opengroove.common.utils.StringUtils;
 
@@ -46,7 +49,11 @@ public class GoogleCommand implements Command
                 + arguments + ", " + resultsObject.length() + " result"
                 + (resultsObject.length() == 1 ? "" : "s")
                 + ", http://google.com/search?q=" + URLEncoder.encode(arguments));
-            
+            for (int i = 0; i < resultsObject.length(); i++)
+            {
+                JSONObject result = resultsObject.getJSONObject(i);
+                System.out.println(result.names().toString());
+            }
             JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
         }
         catch (Exception e)
