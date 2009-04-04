@@ -34,9 +34,8 @@ public class GoogleCommand implements Command
         try
         {
             URL url =
-                new URL(
-                    "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q="
-                        + URLEncoder.encode(arguments));
+                new URL("http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q="
+                    + URLEncoder.encode(arguments));
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             URLConnection con = url.openConnection();
             con.addRequestProperty("Referer", "http://jzbot.opengroove.org/");
@@ -55,8 +54,8 @@ public class GoogleCommand implements Command
             {
                 JSONObject result = resultsObject.getJSONObject(i);
                 JZBot.bot.sendMessage(pm ? sender : channel, result.getString("url")
-                    + " : " + result.getString("title") + " - "
-                    + result.getString("content"));
+                    + " : "
+                    + result.getString("title").replace("<b>", "").replace("</b>", ""));
             }
             JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
         }
