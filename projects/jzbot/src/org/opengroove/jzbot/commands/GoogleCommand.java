@@ -55,15 +55,30 @@ public class GoogleCommand implements Command
             for (int i = 0; i < resultsObject.length() && i < 4; i++)
             {
                 JSONObject result = resultsObject.getJSONObject(i);
-                String resultText =  result.getString("url")
-                + " "
-                + result.getString("title").replace("<b>", "").replace("</b>", "");
-                int totalLength = currentList.length() + resultText.length() + separator.length();
-                if(totalLength > 430)
+                String resultText =
+                    result.getString("url")
+                        + " "
+                        + result.getString("title").replace("<b>", "").replace("</b>",
+                            "");
+                int totalLength =
+                    currentList.length() + resultText.length() + separator.length();
+                if (totalLength > 430 && resultText.length() < 430)
                 {
-                    
+                    /*
+                     * flush the results, then set the current list to be this
+                     * result
+                     */
+                    JZBot.bot.sendMessage(pm ? sender : channel, currentList);
+                    currentList = resultText;
                 }
-                JZBot.bot.sendMessage(pm ? sender : channel,);
+                else
+                {
+                    /*
+                     * append this to the current list
+                     */
+                    currentList += separator;
+                    currentList += resultText;
+                }
             }
             JZBot.bot.sendMessage(pm ? sender : channel, "End of search results");
         }
