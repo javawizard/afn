@@ -49,7 +49,8 @@ public class GoogleCommand implements Command
             JZBot.bot.sendMessage(pm ? sender : channel, "Search results for "
                 + arguments + ", " + resultsObject.length() + " result"
                 + (resultsObject.length() == 1 ? "" : "s")
-                + ", http://google.com/search?q=" + URLEncoder.encode(arguments));
+                + ", http://google.com/search?q=" + URLEncoder.encode(arguments)
+                + " for more results.");
             String currentList = "";
             String separator = " | ";
             for (int i = 0; i < resultsObject.length() && i < 4; i++)
