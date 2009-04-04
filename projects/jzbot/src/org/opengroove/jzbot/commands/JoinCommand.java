@@ -39,7 +39,8 @@ public class JoinCommand implements Command
                 JZBot.bot.sendMessage(name, "I've come back (courtesy of " + sender
                     + ")");
                 JZBot.bot.sendMessage(name, "I still remember all of my factoids and "
-                    + "settings from this channel.");
+                    + "settings from this channel, and I'm still only "
+                    + "allowing ops to create factoids here.");
             }
             else
             {
@@ -53,6 +54,7 @@ public class JoinCommand implements Command
         JZBot.storage.getChannels().add(c);
         JZBot.bot.joinChannel(name);
         JZBot.bot.sendMessage(sender, "Successful.");
-        JZBot.bot.sendMessage(name, "Here I am (courtesy of " + sender + ")");
+        JZBot.bot.sendMessage(name, "Here I am (courtesy of " + sender
+            + "). I'm only allowing ops to create factoids here.");
     }
 }
