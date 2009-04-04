@@ -35,7 +35,7 @@ public class JoinCommand implements Command
                 c.setSuspended(false);
                 JZBot.bot.sendMessage(pm ? sender : channel,
                     "Ok, I'll come back to that channel.");
-                JZBot.bot.joinChannel(channel);
+                JZBot.bot.joinChannel(name);
                 JZBot.bot.sendMessage(name, "I've come back (courtesy of " + sender
                     + ")");
                 JZBot.bot.sendMessage(name, "I still remember all of my factoids and "
