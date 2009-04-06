@@ -105,6 +105,7 @@ public class JZBot extends PircBot
     
     protected void onJoin(String channel, String sender, String login, String hostname)
     {
+        System.out.println("join detected on " + channel + " by " + sender);
         Channel chan = storage.getChannel(channel);
         if (chan == null)
             return;
