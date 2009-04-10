@@ -34,6 +34,8 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JButton musicDownloadButton;
+    private JButton musicDeleteButton;
     private JButton musicPlayButton;
     private JButton musicUploadButton;
     private JPanel musicSouth;
@@ -152,11 +154,25 @@ public class MainFrame extends javax.swing.JFrame
                                     musicUploadButton = new JButton();
                                     musicSouth.add(getMusicUploadButton());
                                     musicUploadButton.setText("Upload");
+                                    musicUploadButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                 }
                                 {
                                     musicPlayButton = new JButton();
                                     musicSouth.add(getMusicPlayButton());
                                     musicPlayButton.setText("Play");
+                                    musicPlayButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
+                                {
+                                    musicDeleteButton = new JButton();
+                                    musicSouth.add(getMusicDeleteButton());
+                                    musicDeleteButton.setText("Delete");
+                                    musicDeleteButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
+                                {
+                                    musicDownloadButton = new JButton();
+                                    musicSouth.add(getMusicDownloadButton());
+                                    musicDownloadButton.setText("Download");
+                                    musicDownloadButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                 }
                             }
                         }
@@ -591,6 +607,14 @@ public class MainFrame extends javax.swing.JFrame
     
     public JButton getMusicPlayButton() {
         return musicPlayButton;
+    }
+    
+    public JButton getMusicDeleteButton() {
+        return musicDeleteButton;
+    }
+    
+    public JButton getMusicDownloadButton() {
+        return musicDownloadButton;
     }
 
 }
