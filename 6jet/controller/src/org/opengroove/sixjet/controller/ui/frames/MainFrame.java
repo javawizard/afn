@@ -330,6 +330,7 @@ public class MainFrame extends javax.swing.JFrame
                                             chatTextField = new JTextField();
                                             chatSouth.add(getChatTextField(),
                                                 BorderLayout.NORTH);
+                                            chatTextField.setToolTipText("Type a chat message here, then click send.");
                                         }
                                         {
                                             chatSendButton = new JButton();
@@ -339,6 +340,7 @@ public class MainFrame extends javax.swing.JFrame
                                             chatSendButton
                                                 .setMargin(new java.awt.Insets(0, 14,
                                                     0, 14));
+                                            chatSendButton.setToolTipText("Sends the chat message typed above to all people who have 6jet Controller open.");
                                         }
                                     }
                                 }
@@ -398,6 +400,7 @@ public class MainFrame extends javax.swing.JFrame
                                             scheduleDeleteButton
                                                 .setMargin(new java.awt.Insets(0, 14,
                                                     0, 14));
+                                            scheduleDeleteButton.setToolTipText("Deletes the currently selected schedule item.");
                                         }
                                     }
                                 }
@@ -438,6 +441,7 @@ public class MainFrame extends javax.swing.JFrame
                                         centerPanelSouth
                                             .add(getManualControlToggleCheckbox());
                                         manualControlToggleCheckbox.setText("Toggle");
+                                        manualControlToggleCheckbox.setToolTipText("If checked, then clicking on a jet will toggle its state. If unchecked, clicking on a jet will simply fire it.");
                                     }
                                     {
                                         manualControlFixedCheckbox = new JCheckBox();
@@ -445,6 +449,7 @@ public class MainFrame extends javax.swing.JFrame
                                             .add(getManualControlFixedCheckbox());
                                         manualControlFixedCheckbox
                                             .setText("Fixed time");
+                                        manualControlFixedCheckbox.setToolTipText("Irrelevant if toggle is checked. If this is checked, then jets will fire for a fixed amount of time when clicked. If unchecked, jets will fire for as long as the mouse is held down.");
                                     }
                                     {
                                         manualControlTimePanel = new JPanel();
