@@ -3,6 +3,8 @@ package org.opengroove.sixjet.controller.ui.frames;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -182,6 +184,14 @@ public class MainFrame extends javax.swing.JFrame
                                         0, 0, 0));
                                     musicUploadButton
                                         .setToolTipText("<html>Allows you to upload a new music file. You will be asked for the file that you want to upload. <br/>You can also upload a file directly from within 6jet Music.");
+                                    musicUploadButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                musicUploadButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     musicPlayButton = new JButton();
@@ -191,6 +201,14 @@ public class MainFrame extends javax.swing.JFrame
                                         0, 0));
                                     musicPlayButton
                                         .setToolTipText("Plays the selected music, stopping any playlist or music that might be currently playing.");
+                                    musicPlayButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                musicPlayButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     musicDeleteButton = new JButton();
@@ -200,6 +218,14 @@ public class MainFrame extends javax.swing.JFrame
                                         0, 0, 0));
                                     musicDeleteButton
                                         .setToolTipText("Deletes the selected music. You will be asked to confirm that you really want to delete the selected music.");
+                                    musicDeleteButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                musicDeleteButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     musicDownloadButton = new JButton();
@@ -209,6 +235,14 @@ public class MainFrame extends javax.swing.JFrame
                                         0, 0, 0, 0));
                                     musicDownloadButton
                                         .setToolTipText("<html>Downloads the selected music. This will open a web browser window, which will ask you to download the file. <br/>This file can then be edited using 6jet Music.");
+                                    musicDownloadButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                musicDownloadButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                             }
                             {
@@ -251,6 +285,14 @@ public class MainFrame extends javax.swing.JFrame
                                         .setMargin(new java.awt.Insets(0, 0, 0, 0));
                                     nowPlayingPreviousButton
                                         .setToolTipText("Skips to the previous song in the playlist, if a playlist is currently playing.");
+                                    nowPlayingPreviousButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                nowPlayingPreviousButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     nowPlayingRestartButton = new JButton();
@@ -260,6 +302,14 @@ public class MainFrame extends javax.swing.JFrame
                                         .setMargin(new java.awt.Insets(0, 0, 0, 0));
                                     nowPlayingRestartButton
                                         .setToolTipText("Starts the current song over from the beginning.");
+                                    nowPlayingRestartButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                nowPlayingRestartButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     nowPlayingPauseButton = new JButton();
@@ -269,6 +319,14 @@ public class MainFrame extends javax.swing.JFrame
                                         .setMargin(new java.awt.Insets(0, 0, 0, 0));
                                     nowPlayingPauseButton
                                         .setToolTipText("Pauses or unpauses music playback. Jets can be manually controlled while playback is paused.");
+                                    nowPlayingPauseButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                nowPlayingPauseButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     nowPlayingStopButton = new JButton();
@@ -278,6 +336,14 @@ public class MainFrame extends javax.swing.JFrame
                                         0, 0, 0, 0));
                                     nowPlayingStopButton
                                         .setToolTipText("Stops music playback.");
+                                    nowPlayingStopButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                nowPlayingStopButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     nowPlayingCenterButton = new JButton();
@@ -287,6 +353,14 @@ public class MainFrame extends javax.swing.JFrame
                                         .setMargin(new java.awt.Insets(0, 0, 0, 0));
                                     nowPlayingCenterButton
                                         .setToolTipText("Centers the jet pattern view over the current position in the song.");
+                                    nowPlayingCenterButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                nowPlayingCenterButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                                 {
                                     nowPlayingNextButton = new JButton();
@@ -296,6 +370,14 @@ public class MainFrame extends javax.swing.JFrame
                                         0, 0, 0, 0));
                                     nowPlayingNextButton
                                         .setToolTipText("Skips to the next song in the playlist, if a playlist is currently playing.");
+                                    nowPlayingNextButton
+                                        .addActionListener(new ActionListener()
+                                        {
+                                            public void actionPerformed(ActionEvent evt)
+                                            {
+                                                nowPlayingNextButtonActionPerformed(evt);
+                                            }
+                                        });
                                 }
                             }
                         }
@@ -362,6 +444,15 @@ public class MainFrame extends javax.swing.JFrame
                                                 BorderLayout.NORTH);
                                             chatTextField
                                                 .setToolTipText("Type a chat message here, then click send.");
+                                            chatTextField
+                                                .addActionListener(new ActionListener()
+                                                {
+                                                    public void actionPerformed(
+                                                        ActionEvent evt)
+                                                    {
+                                                        chatTextFieldActionPerformed(evt);
+                                                    }
+                                                });
                                         }
                                         {
                                             chatSendButton = new JButton();
@@ -373,6 +464,15 @@ public class MainFrame extends javax.swing.JFrame
                                                     0, 14));
                                             chatSendButton
                                                 .setToolTipText("Sends the chat message typed above to all people who have 6jet Controller open.");
+                                            chatSendButton
+                                                .addActionListener(new ActionListener()
+                                                {
+                                                    public void actionPerformed(
+                                                        ActionEvent evt)
+                                                    {
+                                                        chatSendButtonActionPerformed(evt);
+                                                    }
+                                                });
                                         }
                                     }
                                 }
@@ -423,6 +523,15 @@ public class MainFrame extends javax.swing.JFrame
                                                     0, 14));
                                             scheduleAddButton
                                                 .setToolTipText("<html>Adds the playlist selected in the <b>Playlists</b> pane to the schedule. <br/>You will be asked what date and time the playlist should begin playing. <br/>To schedule a single piece of music, create a playlist with just that music in it, <br/>and then schedule the playlist.");
+                                            scheduleAddButton
+                                                .addActionListener(new ActionListener()
+                                                {
+                                                    public void actionPerformed(
+                                                        ActionEvent evt)
+                                                    {
+                                                        scheduleAddButtonActionPerformed(evt);
+                                                    }
+                                                });
                                         }
                                         {
                                             scheduleDeleteButton = new JButton();
@@ -435,6 +544,15 @@ public class MainFrame extends javax.swing.JFrame
                                                     0, 14));
                                             scheduleDeleteButton
                                                 .setToolTipText("Deletes the currently selected schedule item.");
+                                            scheduleDeleteButton
+                                                .addActionListener(new ActionListener()
+                                                {
+                                                    public void actionPerformed(
+                                                        ActionEvent evt)
+                                                    {
+                                                        scheduleDeleteButtonActionPerformed(evt);
+                                                    }
+                                                });
                                         }
                                     }
                                 }
@@ -582,6 +700,15 @@ public class MainFrame extends javax.swing.JFrame
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                         playlistAddButton
                                             .setToolTipText("Creates a new playlist. You will be asked for the name of the new playlist.");
+                                        playlistAddButton
+                                            .addActionListener(new ActionListener()
+                                            {
+                                                public void actionPerformed(
+                                                    ActionEvent evt)
+                                                {
+                                                    playlistAddButtonActionPerformed(evt);
+                                                }
+                                            });
                                     }
                                     {
                                         playlistDeleteButton = new JButton();
@@ -592,6 +719,15 @@ public class MainFrame extends javax.swing.JFrame
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                         playlistDeleteButton
                                             .setToolTipText("Deletes the selected playlist. You will be asked to confirm that you want to delete the selected playlist.");
+                                        playlistDeleteButton
+                                            .addActionListener(new ActionListener()
+                                            {
+                                                public void actionPerformed(
+                                                    ActionEvent evt)
+                                                {
+                                                    playlistDeleteButtonActionPerformed(evt);
+                                                }
+                                            });
                                     }
                                     {
                                         playlistPlayButton = new JButton();
@@ -602,6 +738,15 @@ public class MainFrame extends javax.swing.JFrame
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                         playlistPlayButton
                                             .setToolTipText("Plays the selected playlist, stopping any currently-playing music if necessary.");
+                                        playlistPlayButton
+                                            .addActionListener(new ActionListener()
+                                            {
+                                                public void actionPerformed(
+                                                    ActionEvent evt)
+                                                {
+                                                    playlistPlayButtonActionPerformed(evt);
+                                                }
+                                            });
                                     }
                                 }
                                 {
@@ -933,6 +1078,108 @@ public class MainFrame extends javax.swing.JFrame
     public JButton getNowPlayingNextButton()
     {
         return nowPlayingNextButton;
+    }
+    
+    private void playlistAddButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("playlistAddButton.actionPerformed, event=" + evt);
+        // TODO add your code for playlistAddButton.actionPerformed
+    }
+    
+    private void playlistDeleteButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("playlistDeleteButton.actionPerformed, event=" + evt);
+        // TODO add your code for playlistDeleteButton.actionPerformed
+    }
+    
+    private void playlistPlayButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("playlistPlayButton.actionPerformed, event=" + evt);
+        // TODO add your code for playlistPlayButton.actionPerformed
+    }
+    
+    private void scheduleAddButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("scheduleAddButton.actionPerformed, event=" + evt);
+        // TODO add your code for scheduleAddButton.actionPerformed
+    }
+    
+    private void scheduleDeleteButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("scheduleDeleteButton.actionPerformed, event=" + evt);
+        // TODO add your code for scheduleDeleteButton.actionPerformed
+    }
+    
+    private void chatSendButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("chatSendButton.actionPerformed, event=" + evt);
+        // TODO add your code for chatSendButton.actionPerformed
+    }
+    
+    private void chatTextFieldActionPerformed(ActionEvent evt)
+    {
+        System.out.println("chatTextField.actionPerformed, event=" + evt);
+        // TODO add your code for chatTextField.actionPerformed
+    }
+    
+    private void musicUploadButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("musicUploadButton.actionPerformed, event=" + evt);
+        // TODO add your code for musicUploadButton.actionPerformed
+    }
+    
+    private void musicPlayButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("musicPlayButton.actionPerformed, event=" + evt);
+        // TODO add your code for musicPlayButton.actionPerformed
+    }
+    
+    private void musicDeleteButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("musicDeleteButton.actionPerformed, event=" + evt);
+        // TODO add your code for musicDeleteButton.actionPerformed
+    }
+    
+    private void musicDownloadButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("musicDownloadButton.actionPerformed, event=" + evt);
+        // TODO add your code for musicDownloadButton.actionPerformed
+    }
+    
+    private void nowPlayingPreviousButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("nowPlayingPreviousButton.actionPerformed, event=" + evt);
+        // TODO add your code for nowPlayingPreviousButton.actionPerformed
+    }
+    
+    private void nowPlayingRestartButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("nowPlayingRestartButton.actionPerformed, event=" + evt);
+        // TODO add your code for nowPlayingRestartButton.actionPerformed
+    }
+    
+    private void nowPlayingPauseButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("nowPlayingPauseButton.actionPerformed, event=" + evt);
+        // TODO add your code for nowPlayingPauseButton.actionPerformed
+    }
+    
+    private void nowPlayingStopButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("nowPlayingStopButton.actionPerformed, event=" + evt);
+        // TODO add your code for nowPlayingStopButton.actionPerformed
+    }
+    
+    private void nowPlayingCenterButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("nowPlayingCenterButton.actionPerformed, event=" + evt);
+        // TODO add your code for nowPlayingCenterButton.actionPerformed
+    }
+    
+    private void nowPlayingNextButtonActionPerformed(ActionEvent evt)
+    {
+        System.out.println("nowPlayingNextButton.actionPerformed, event=" + evt);
+        // TODO add your code for nowPlayingNextButton.actionPerformed
     }
     
 }
