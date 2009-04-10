@@ -1,10 +1,12 @@
 package org.opengroove.sixjet.controller.ui.frames;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -34,6 +36,13 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JLabel timeMsLabel;
+    private JTextField manualControlTimeField;
+    private JLabel manualControlTimeLabel;
+    private JPanel manualControlTimePanel;
+    private JCheckBox manualControlFixedCheckbox;
+    private JCheckBox manualControlToggleCheckbox;
+    private JPanel centerPanelSouth;
     private JButton musicDownloadButton;
     private JButton musicDeleteButton;
     private JButton musicPlayButton;
@@ -339,6 +348,47 @@ public class MainFrame extends javax.swing.JFrame
                                             .setLabel("<html><big>6jet Controller</big></html>");
                                     }
                                 }
+                                {
+                                    centerPanelSouth = new JPanel();
+                                    FlowLayout centerPanelSouthLayout = new FlowLayout();
+                                    centerPanelSouthLayout.setAlignment(FlowLayout.LEFT);
+                                    centerPanelSouthLayout.setHgap(3);
+                                    centerPanelSouthLayout.setVgap(3);
+                                    centerPanel.add(centerPanelSouth, BorderLayout.SOUTH);
+                                    centerPanelSouth.setLayout(centerPanelSouthLayout);
+                                    {
+                                        manualControlToggleCheckbox = new JCheckBox();
+                                        centerPanelSouth.add(getManualControlToggleCheckbox());
+                                        manualControlToggleCheckbox.setText("Toggle");
+                                    }
+                                    {
+                                        manualControlFixedCheckbox = new JCheckBox();
+                                        centerPanelSouth.add(getManualControlFixedCheckbox());
+                                        manualControlFixedCheckbox.setText("Fixed time");
+                                    }
+                                    {
+                                        manualControlTimePanel = new JPanel();
+                                        BorderLayout manualControlTimePanelLayout = new BorderLayout();
+                                        centerPanelSouth.add(manualControlTimePanel);
+                                        manualControlTimePanel.setLayout(manualControlTimePanelLayout);
+                                        {
+                                            manualControlTimeLabel = new JLabel();
+                                            manualControlTimePanel.add(manualControlTimeLabel, BorderLayout.WEST);
+                                            manualControlTimeLabel.setText("Time: ");
+                                        }
+                                        {
+                                            manualControlTimeField = new JTextField();
+                                            manualControlTimePanel.add(manualControlTimeField, BorderLayout.CENTER);
+                                            manualControlTimeField.setText("250");
+                                            manualControlTimeField.setPreferredSize(new java.awt.Dimension(40, 20));
+                                        }
+                                        {
+                                            timeMsLabel = new JLabel();
+                                            manualControlTimePanel.add(timeMsLabel, BorderLayout.EAST);
+                                            timeMsLabel.setText("ms");
+                                        }
+                                    }
+                                }
                             }
                         }
                         {
@@ -539,7 +589,7 @@ public class MainFrame extends javax.swing.JFrame
                 }
             }
             pack();
-            this.setSize(690, 710);
+            this.setSize(690, 690);
         }
         catch (Exception e)
         {
@@ -615,6 +665,14 @@ public class MainFrame extends javax.swing.JFrame
     
     public JButton getMusicDownloadButton() {
         return musicDownloadButton;
+    }
+    
+    public JCheckBox getManualControlToggleCheckbox() {
+        return manualControlToggleCheckbox;
+    }
+    
+    public JCheckBox getManualControlFixedCheckbox() {
+        return manualControlFixedCheckbox;
     }
 
 }
