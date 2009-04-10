@@ -38,6 +38,11 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JPanel nowPlayingLower;
+    private JPanel nowPlayingUpperRight;
+    private JPanel nowPlayingUpperLeft;
+    private JSplitPane nowPlayingMusicPlaylistSplit;
+    private JSplitPane nowPlayingJetSplit;
     private JButton nowPlayingNextButton;
     private JButton nowPlayingCenterButton;
     private JButton nowPlayingStopButton;
@@ -146,7 +151,7 @@ public class MainFrame extends javax.swing.JFrame
                     mainSplit = new JSplitPane();
                     outerPanel.add(mainSplit, BorderLayout.CENTER);
                     mainSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
-                    mainSplit.setDividerLocation(420);
+                    mainSplit.setDividerLocation(390);
                     mainSplit.setResizeWeight(1.0);
                     mainSplit.setContinuousLayout(true);
                     mainSplit.setOneTouchExpandable(true);
@@ -268,27 +273,57 @@ public class MainFrame extends javax.swing.JFrame
                                     nowPlayingNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                 }
                             }
+                            {
+                                nowPlayingJetSplit = new JSplitPane();
+                                nowPlayingPanel.add(nowPlayingJetSplit, BorderLayout.CENTER);
+                                nowPlayingJetSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
+                                nowPlayingJetSplit.setDividerLocation(60);
+                                nowPlayingJetSplit.setOneTouchExpandable(true);
+                                nowPlayingJetSplit.setResizeWeight(0.5);
+                                {
+                                    nowPlayingMusicPlaylistSplit = new JSplitPane();
+                                    nowPlayingJetSplit.add(nowPlayingMusicPlaylistSplit, JSplitPane.TOP);
+                                    nowPlayingMusicPlaylistSplit.setDividerLocation(180);
+                                    nowPlayingMusicPlaylistSplit.setOneTouchExpandable(true);
+                                    {
+                                        nowPlayingUpperLeft = new JPanel();
+                                        nowPlayingMusicPlaylistSplit.add(nowPlayingUpperLeft, JSplitPane.RIGHT);
+                                        BoxLayout nowPlayingUpperLeftLayout = new BoxLayout(nowPlayingUpperLeft, javax.swing.BoxLayout.Y_AXIS);
+                                        nowPlayingUpperLeft.setLayout(nowPlayingUpperLeftLayout);
+                                    }
+                                    {
+                                        nowPlayingUpperRight = new JPanel();
+                                        BorderLayout nowPlayingUpperRightLayout = new BorderLayout();
+                                        nowPlayingMusicPlaylistSplit.add(nowPlayingUpperRight, JSplitPane.LEFT);
+                                        nowPlayingUpperRight.setLayout(nowPlayingUpperRightLayout);
+                                    }
+                                }
+                                {
+                                    nowPlayingLower = new JPanel();
+                                    BorderLayout nowPlayingLowerLayout = new BorderLayout();
+                                    nowPlayingJetSplit.add(nowPlayingLower, JSplitPane.BOTTOM);
+                                    nowPlayingLower.setLayout(nowPlayingLowerLayout);
+                                }
+                            }
                         }
                     }
                     {
                         topContentLeftSplit = new JSplitPane();
                         mainSplit.add(topContentLeftSplit, JSplitPane.TOP);
                         topContentLeftSplit.setContinuousLayout(true);
-                        topContentLeftSplit.setDividerLocation(125);
+                        topContentLeftSplit.setDividerLocation(260);
                         {
                             topContentRightSplit = new JSplitPane();
                             topContentLeftSplit.add(topContentRightSplit,
                                 JSplitPane.RIGHT);
                             topContentRightSplit.setResizeWeight(1.0);
-                            topContentRightSplit.setDividerLocation(399);
+                            topContentRightSplit.setDividerLocation(410);
                             topContentRightSplit.setContinuousLayout(true);
                             {
                                 scheduleChatSplit = new JSplitPane();
                                 topContentRightSplit.add(scheduleChatSplit,
                                     JSplitPane.RIGHT);
-                                scheduleChatSplit
-                                    .setOrientation(JSplitPane.VERTICAL_SPLIT);
-                                scheduleChatSplit.setDividerLocation(215);
+                                scheduleChatSplit.setDividerLocation(123);
                                 scheduleChatSplit.setContinuousLayout(true);
                                 scheduleChatSplit.setResizeWeight(0.5);
                                 scheduleChatSplit.setOneTouchExpandable(true);
@@ -514,9 +549,8 @@ public class MainFrame extends javax.swing.JFrame
                         {
                             playlistSplit = new JSplitPane();
                             topContentLeftSplit.add(playlistSplit, JSplitPane.LEFT);
-                            playlistSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
                             playlistSplit.setContinuousLayout(true);
-                            playlistSplit.setDividerLocation(215);
+                            playlistSplit.setDividerLocation(123);
                             playlistSplit.setResizeWeight(0.5);
                             playlistSplit.setOneTouchExpandable(true);
                             {
@@ -740,7 +774,7 @@ public class MainFrame extends javax.swing.JFrame
                 }
             }
             pack();
-            this.setSize(690, 690);
+            this.setSize(960, 690);
         }
         catch (Exception e)
         {
