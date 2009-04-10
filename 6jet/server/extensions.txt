@@ -11,3 +11,5 @@ Right before that, there is an extension specific to 6jet that indicates what th
 .6jf.jso: A jet firing file. These are typically only seen inside a .6jm.zip file. This file is what the server actually uses when playing back music to figure out when to fire each jet.
 
 .6jp.jso: A jet designer pattern file. These are typicall only seen inside a .6jm.zip file. This file is what 6jet designer actually reads when a user opens a designer project. the designer then converts this into a .6jf.jso when saving.
+
+.6js.txt: A 6jet schedule file. The server typically only has one of these.
