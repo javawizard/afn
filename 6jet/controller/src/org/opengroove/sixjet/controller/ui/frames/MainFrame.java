@@ -38,6 +38,15 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JButton nowPlayingNextButton;
+    private JButton nowPlayingCenterButton;
+    private JButton nowPlayingStopButton;
+    private JButton nowPlayingPauseButton;
+    private JButton nowPlayingRestartButton;
+    private JButton nowPlayingPreviousButton;
+    private JPanel nowPlayingSouth;
+    private JScrollPane jScrollPane5;
+    private JList musicList;
     private JLabel timeMsLabel;
     private JTextField manualControlTimeField;
     private JLabel manualControlTimeLabel;
@@ -140,12 +149,14 @@ public class MainFrame extends javax.swing.JFrame
                     mainSplit.setDividerLocation(420);
                     mainSplit.setResizeWeight(1.0);
                     mainSplit.setContinuousLayout(true);
+                    mainSplit.setOneTouchExpandable(true);
                     {
                         musicPlaybackSplit = new JSplitPane();
                         mainSplit.add(musicPlaybackSplit, JSplitPane.BOTTOM);
                         musicPlaybackSplit.setContinuousLayout(true);
                         musicPlaybackSplit.setDividerLocation(336);
                         musicPlaybackSplit.setResizeWeight(0.5);
+                        musicPlaybackSplit.setOneTouchExpandable(true);
                         {
                             musicPanel = new JPanel();
                             BorderLayout musicPanelLayout = new BorderLayout();
@@ -190,6 +201,19 @@ public class MainFrame extends javax.swing.JFrame
                                         0, 0, 0, 0));
                                 }
                             }
+                            {
+                                jScrollPane5 = new JScrollPane();
+                                musicPanel.add(jScrollPane5, BorderLayout.CENTER);
+                                jScrollPane5.setPreferredSize(new java.awt.Dimension(335, 172));
+                                {
+                                    ListModel musicListModel = 
+                                        new DefaultComboBoxModel(
+                                            new String[] { "Item One", "Item Two" });
+                                    musicList = new JList();
+                                    jScrollPane5.setViewportView(getMusicList());
+                                    musicList.setModel(musicListModel);
+                                }
+                            }
                         }
                         {
                             nowPlayingPanel = new JPanel();
@@ -201,6 +225,48 @@ public class MainFrame extends javax.swing.JFrame
                                 nowPlayingPanel.add(nowPlayingHeader,
                                     BorderLayout.NORTH);
                                 nowPlayingHeader.setLabel("Now Playing");
+                            }
+                            {
+                                nowPlayingSouth = new JPanel();
+                                GridLayout nowPlayingSouthLayout = new GridLayout(1, 1);
+                                nowPlayingPanel.add(nowPlayingSouth, BorderLayout.SOUTH);
+                                nowPlayingSouth.setLayout(nowPlayingSouthLayout);
+                                {
+                                    nowPlayingPreviousButton = new JButton();
+                                    nowPlayingSouth.add(getNowPlayingPreviousButton());
+                                    nowPlayingPreviousButton.setText("<<");
+                                    nowPlayingPreviousButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
+                                {
+                                    nowPlayingRestartButton = new JButton();
+                                    nowPlayingSouth.add(getNowPlayingRestartButton());
+                                    nowPlayingRestartButton.setText("|<");
+                                    nowPlayingRestartButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
+                                {
+                                    nowPlayingPauseButton = new JButton();
+                                    nowPlayingSouth.add(getNowPlayingPauseButton());
+                                    nowPlayingPauseButton.setText("| |");
+                                    nowPlayingPauseButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
+                                {
+                                    nowPlayingStopButton = new JButton();
+                                    nowPlayingSouth.add(getNowPlayingStopButton());
+                                    nowPlayingStopButton.setText("<html>&#9744;");
+                                    nowPlayingStopButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
+                                {
+                                    nowPlayingCenterButton = new JButton();
+                                    nowPlayingSouth.add(getNowPlayingCenterButton());
+                                    nowPlayingCenterButton.setText(">|<");
+                                    nowPlayingCenterButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
+                                {
+                                    nowPlayingNextButton = new JButton();
+                                    nowPlayingSouth.add(getNowPlayingNextButton());
+                                    nowPlayingNextButton.setText(">>");
+                                    nowPlayingNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                }
                             }
                         }
                     }
@@ -225,6 +291,7 @@ public class MainFrame extends javax.swing.JFrame
                                 scheduleChatSplit.setDividerLocation(215);
                                 scheduleChatSplit.setContinuousLayout(true);
                                 scheduleChatSplit.setResizeWeight(0.5);
+                                scheduleChatSplit.setOneTouchExpandable(true);
                                 {
                                     chatPanel = new JPanel();
                                     BorderLayout chatPanelLayout = new BorderLayout();
@@ -445,6 +512,7 @@ public class MainFrame extends javax.swing.JFrame
                             playlistSplit.setContinuousLayout(true);
                             playlistSplit.setDividerLocation(215);
                             playlistSplit.setResizeWeight(0.5);
+                            playlistSplit.setOneTouchExpandable(true);
                             {
                                 playlistsPanel = new JPanel();
                                 BorderLayout playlistsPanelLayout = new BorderLayout();
@@ -774,4 +842,32 @@ public class MainFrame extends javax.swing.JFrame
         return manualControlFixedCheckbox;
     }
     
+    public JList getMusicList() {
+        return musicList;
+    }
+    
+    public JButton getNowPlayingPreviousButton() {
+        return nowPlayingPreviousButton;
+    }
+    
+    public JButton getNowPlayingRestartButton() {
+        return nowPlayingRestartButton;
+    }
+    
+    public JButton getNowPlayingPauseButton() {
+        return nowPlayingPauseButton;
+    }
+    
+    public JButton getNowPlayingStopButton() {
+        return nowPlayingStopButton;
+    }
+    
+    public JButton getNowPlayingCenterButton() {
+        return nowPlayingCenterButton;
+    }
+    
+    public JButton getNowPlayingNextButton() {
+        return nowPlayingNextButton;
+    }
+
 }
