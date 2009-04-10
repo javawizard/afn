@@ -70,7 +70,7 @@ public class LoginFrame extends javax.swing.JFrame
                     mainPanelLayout.setHGap(5);
                     mainPanelLayout.setVGap(5);
                     mainPanel.setLayout(mainPanelLayout);
-                    mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+                    mainPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
                     {
                         usernameLabel = new JLabel();
                         mainPanel.add(usernameLabel, "0, 0");
