@@ -1,5 +1,7 @@
 package org.opengroove.sixjet.common.ui.jetpattern;
 
+import java.util.ArrayList;
+
 import javax.swing.JComponent;
 
 /**
@@ -28,6 +30,7 @@ public class JetPatternEditor extends JComponent
      */
     private boolean editable = true;
     
+    ArrayList<Mark> selectedMarks = new ArrayList<Mark>();
     
     public JetPatternEditor(boolean editable)
     {
