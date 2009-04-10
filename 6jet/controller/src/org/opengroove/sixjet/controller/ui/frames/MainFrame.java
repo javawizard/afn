@@ -184,6 +184,7 @@ public class MainFrame extends javax.swing.JFrame
                                         jScrollPane1
                                             .setPreferredSize(new java.awt.Dimension(
                                                 124, 162));
+                                        jScrollPane1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                                         {
                                             chatTextArea = new JTextArea();
                                             jScrollPane1
