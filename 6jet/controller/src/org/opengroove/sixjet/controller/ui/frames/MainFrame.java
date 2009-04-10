@@ -33,6 +33,9 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private HeaderComponent nowPlayingHeader;
+    private HeaderComponent musicHeader;
+    private HeaderComponent editPlaylistHeader;
     private HeaderComponent playlistsHeader;
     private JScrollPane jScrollPane2;
     private JPanel nowPlayingPanel;
@@ -108,12 +111,23 @@ public class MainFrame extends javax.swing.JFrame
                             BorderLayout musicPanelLayout = new BorderLayout();
                             musicPlaybackSplit.add(musicPanel, JSplitPane.LEFT);
                             musicPanel.setLayout(musicPanelLayout);
+                            {
+                                musicHeader = new HeaderComponent();
+                                musicPanel.add(musicHeader, BorderLayout.NORTH);
+                                musicHeader.setLabel("Music");
+                            }
                         }
                         {
                             nowPlayingPanel = new JPanel();
                             BorderLayout nowPlayingPanelLayout = new BorderLayout();
                             musicPlaybackSplit.add(nowPlayingPanel, JSplitPane.RIGHT);
                             nowPlayingPanel.setLayout(nowPlayingPanelLayout);
+                            {
+                                nowPlayingHeader = new HeaderComponent();
+                                nowPlayingPanel.add(nowPlayingHeader,
+                                    BorderLayout.NORTH);
+                                nowPlayingHeader.setLabel("Now Playing");
+                            }
                         }
                     }
                     {
@@ -261,6 +275,12 @@ public class MainFrame extends javax.swing.JFrame
                                     new BorderLayout();
                                 playlistSplit.add(editPlaylistPanel, JSplitPane.BOTTOM);
                                 editPlaylistPanel.setLayout(editPlaylistPanelLayout);
+                                {
+                                    editPlaylistHeader = new HeaderComponent();
+                                    editPlaylistPanel.add(editPlaylistHeader,
+                                        BorderLayout.NORTH);
+                                    editPlaylistHeader.setLabel("Edit Playlist");
+                                }
                             }
                         }
                     }
