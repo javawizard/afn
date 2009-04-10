@@ -1,1 +1,3 @@
 The 6jet controller project is the controller program for 6jet. The controller is the program that is run by a user to actually interact with 6jet. This computer only needs an internet connection that it can use to access the machine running 6jet server.
+
+Only one controller can be connected to the server at any given time. If another controller connects, it will be informed that it can't connect right now. In the future, it will kick off the first one if the user at the first one doesn't confirm, within 1 minute, that they really want to keep controlling 6jet.
