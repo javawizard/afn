@@ -13,8 +13,9 @@ public class JetPatternEditorColors
             .parseInt(bs, 16));
     }
     
-    static final Color markNormalStart = hexColor("c8dae9");
-    static final Color markNormalEnd = hexColor("4681b2");
+    static final Color markNormalStart = hexColor("b9d1e3");
+    static final Color markNormalEnd = hexColor("6195c1");
     static final Color markSelectedStart = hexColor("5b91be");
     static final Color markSelectedEnd = hexColor("5b91be");
+    static final Color markBorder = hexColor("3e8ebb");
 }
