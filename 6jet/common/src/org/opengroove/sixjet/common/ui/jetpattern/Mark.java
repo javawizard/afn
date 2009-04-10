@@ -114,8 +114,9 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     
     private Color brighter(Color color)
     {
-        return new Color((int) (color.getRed() * 1.1d),
-            (int) (color.getGreen() * 1.1d), (int) (color.getBlue() * 1.1d));
+        return new Color(Math.min(255, (int) (color.getRed() * 1.1d)), Math.min(255,
+            (int) (color.getGreen() * 1.1d)), Math.min(255,
+            (int) (color.getBlue() * 1.1d)));
     }
     
     Paint createSelectedPaint()
