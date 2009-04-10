@@ -539,6 +539,7 @@ public class MainFrame extends javax.swing.JFrame
                 }
             }
             pack();
+            this.setSize(690, 710);
         }
         catch (Exception e)
         {
