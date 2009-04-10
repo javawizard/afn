@@ -29,7 +29,12 @@ public class JetPatternEditor extends JComponent
      * Whether or not this pattern editor is editable.
      */
     private boolean editable = true;
-    
+    /**
+     * The list of marks that are currently selected. I may change this to a
+     * LinkedHashSet in the future, if an array list proves too slow (since
+     * marks query this list each time they repaint themselves to see if they
+     * are selected)
+     */
     ArrayList<Mark> selectedMarks = new ArrayList<Mark>();
     
     public JetPatternEditor(boolean editable)

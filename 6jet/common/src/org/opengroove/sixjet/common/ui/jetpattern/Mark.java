@@ -24,7 +24,7 @@ public class Mark extends JComponent
     Mark(JetPatternEditor editor)
     {
         this.editor = editor;
-        setBorder();
+        setBorder(markBorder);
     }
     
     protected void paintComponent(Graphics g)
