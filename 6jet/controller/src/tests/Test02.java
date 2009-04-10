@@ -1,9 +1,16 @@
 package tests;
 
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
+
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.border.LineBorder;
 
 public class Test02
 {
@@ -14,21 +21,26 @@ public class Test02
     public static void main(String[] args)
     {
         JFrame f = new JFrame();
-        JDesktopPane d = new JDesktopPane();
-        f.getContentPane().add(d);
-        f.setSize(500, 400);
-        f.setLocationRelativeTo(null);
+        JLabel l = new JLabel("hi");
+        l.setBorder(new LineBorder(Color.RED));
+        JLabel l2 = new JLabel("bye");
+        f.getContentPane().setLayout(new FlowLayout());
+        f.getContentPane().add(l);
+        f.getContentPane().add(l2);
         f.show();
-        JInternalFrame if1 = new JInternalFrame();
-        if1.setResizable(true);
-        if1.setMaximizable(false);
-        if1.setIconifiable(false);
-        if1.setClosable(false);
-        if1.setTitle("");
-        if1.setSize(100, 20);
-        d.add(if1);
-        if1.show();
-        JTable t;
+        l.addMouseMotionListener(new MouseMotionListener()
+        {
+            
+            public void mouseDragged(MouseEvent e)
+            {
+                System.out.println("dragged " + e.getX() + "," + e.getY());
+            }
+            
+            public void mouseMoved(MouseEvent e)
+            {
+                System.out.println("moved " + e.getX() + "," + e.getY());
+            }
+        });
     }
     
 }
