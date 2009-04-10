@@ -22,6 +22,8 @@ public class HeaderComponent extends JComponent
         label.setMaximumSize(new Dimension(10000, 10000));
         label.setHorizontalAlignment(label.CENTER);
         add(label, BorderLayout.CENTER);
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 0));
+        add(separator, BorderLayout.SOUTH);
     }
     
     public String getLabel()
