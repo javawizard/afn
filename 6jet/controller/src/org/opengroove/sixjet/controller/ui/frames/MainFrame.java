@@ -1,8 +1,12 @@
 package org.opengroove.sixjet.controller.ui.frames;
 
 import java.awt.BorderLayout;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
+import javax.swing.SwingConstants;
 
 import javax.swing.WindowConstants;
 import javax.swing.SwingUtilities;
@@ -21,6 +25,8 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JSplitPane scheduleChatSplit;
+    private JPanel chatPanel;
     private JSplitPane playlistSplit;
     private JSplitPane topContentRightSplit;
     private JSplitPane musicPlaybackSplit;
@@ -83,6 +89,21 @@ public class MainFrame extends javax.swing.JFrame
                                 JSplitPane.RIGHT);
                             topContentRightSplit.setResizeWeight(1.0);
                             topContentRightSplit.setDividerLocation(399);
+                            topContentRightSplit.setContinuousLayout(true);
+                            {
+                                scheduleChatSplit = new JSplitPane();
+                                topContentRightSplit.add(scheduleChatSplit, JSplitPane.RIGHT);
+                                scheduleChatSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
+                                scheduleChatSplit.setDividerLocation(215);
+                                scheduleChatSplit.setContinuousLayout(true);
+                                scheduleChatSplit.setResizeWeight(0.5);
+                                {
+                                    chatPanel = new JPanel();
+                                    BorderLayout chatPanelLayout = new BorderLayout();
+                                    scheduleChatSplit.add(chatPanel, JSplitPane.BOTTOM);
+                                    chatPanel.setLayout(chatPanelLayout);
+                                }
+                            }
                         }
                         {
                             playlistSplit = new JSplitPane();
