@@ -1,6 +1,7 @@
 package org.opengroove.sixjet.controller.ui.frames;
 
 import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -33,6 +34,9 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JPanel editPlaylistAddPanel;
+    private JLabel editPlaylistAddLabel;
+    private JPanel editPlaylistSouthMid;
     private HeaderComponent centerPanelHeader;
     private JPanel centerPanelNorth;
     private JPanel centerPanel;
@@ -184,7 +188,8 @@ public class MainFrame extends javax.swing.JFrame
                                         jScrollPane1
                                             .setPreferredSize(new java.awt.Dimension(
                                                 124, 162));
-                                        jScrollPane1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                                        jScrollPane1
+                                            .setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
                                         {
                                             chatTextArea = new JTextArea();
                                             jScrollPane1
@@ -290,7 +295,8 @@ public class MainFrame extends javax.swing.JFrame
                                         centerPanelHeader = new HeaderComponent();
                                         centerPanelNorth.add(centerPanelHeader,
                                             BorderLayout.NORTH);
-                                        centerPanelHeader.setLabel("<html><big>6jet Controller</big></html>");
+                                        centerPanelHeader
+                                            .setLabel("<html><big>6jet Controller</big></html>");
                                     }
                                 }
                             }
@@ -383,24 +389,6 @@ public class MainFrame extends javax.swing.JFrame
                                     editPlaylistSouth
                                         .setLayout(editPlaylistSouthLayout);
                                     {
-                                        playlistAddMusicButton = new JButton();
-                                        editPlaylistSouth.add(
-                                            getPlaylistAddMusicButton(),
-                                            BorderLayout.NORTH);
-                                        playlistAddMusicButton.setText("Add Music");
-                                        playlistAddMusicButton
-                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
-                                    }
-                                    {
-                                        playlistAddDelayButton = new JButton();
-                                        editPlaylistSouth.add(
-                                            getPlaylistAddDelayButton(),
-                                            BorderLayout.CENTER);
-                                        playlistAddDelayButton.setText("Add Delay");
-                                        playlistAddDelayButton
-                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
-                                    }
-                                    {
                                         playlistDeleteItemButton = new JButton();
                                         editPlaylistSouth.add(
                                             getPlaylistDeleteItemButton(),
@@ -408,6 +396,53 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistDeleteItemButton.setText("Delete Item");
                                         playlistDeleteItemButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                    }
+                                    {
+                                        editPlaylistSouthMid = new JPanel();
+                                        BorderLayout editPlaylistSouthMidLayout =
+                                            new BorderLayout();
+                                        editPlaylistSouth.add(editPlaylistSouthMid,
+                                            BorderLayout.CENTER);
+                                        editPlaylistSouthMid
+                                            .setLayout(editPlaylistSouthMidLayout);
+                                        {
+                                            editPlaylistAddLabel = new JLabel();
+                                            editPlaylistSouthMid
+                                                .add(editPlaylistAddLabel,
+                                                    BorderLayout.WEST);
+                                            editPlaylistAddLabel.setText("Add:");
+                                        }
+                                        {
+                                            editPlaylistAddPanel = new JPanel();
+                                            GridLayout editPlaylistAddPanelLayout =
+                                                new GridLayout(1, 2);
+                                            editPlaylistAddPanelLayout.setColumns(1);
+                                            editPlaylistAddPanelLayout.setHgap(5);
+                                            editPlaylistAddPanelLayout.setVgap(5);
+                                            editPlaylistSouthMid.add(
+                                                editPlaylistAddPanel,
+                                                BorderLayout.CENTER);
+                                            editPlaylistAddPanel
+                                                .setLayout(editPlaylistAddPanelLayout);
+                                            {
+                                                playlistAddDelayButton = new JButton();
+                                                editPlaylistAddPanel
+                                                    .add(playlistAddDelayButton);
+                                                playlistAddDelayButton.setText("Delay");
+                                                playlistAddDelayButton
+                                                    .setMargin(new java.awt.Insets(0,
+                                                        0, 0, 0));
+                                            }
+                                            {
+                                                playlistAddMusicButton = new JButton();
+                                                editPlaylistAddPanel
+                                                    .add(playlistAddMusicButton);
+                                                playlistAddMusicButton.setText("Music");
+                                                playlistAddMusicButton
+                                                    .setMargin(new java.awt.Insets(0,
+                                                        0, 0, 0));
+                                            }
+                                        }
                                     }
                                 }
                                 {
