@@ -2,4 +2,4 @@ The 6jet controller project is the controller program for 6jet. The controller i
 
 Only one controller can be connected to the server at any given time. If another controller connects, it will be informed that it can't connect right now. In the future, it will kick off the first one if the user at the first one doesn't confirm, within 1 minute, that they really want to keep controlling 6jet.
 
-Music files are uploaded through the controller. Music files on the server are managed through the controller. Jets can also be manually controlled via the controller.
+Music files are uploaded through the controller. Music files on the server are managed through the controller. Music files are played on the server (and on a music box) via the controller. Jets can also be manually controlled via the controller.
