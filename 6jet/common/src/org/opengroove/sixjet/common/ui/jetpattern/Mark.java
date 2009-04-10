@@ -108,8 +108,14 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     
     Paint createHoveredPaint()
     {
-        return shadedVertical(JetPatternEditorColors.markNormalStart.brighter(),
-            JetPatternEditorColors.markNormalEnd.brighter());
+        return shadedVertical(brighter(JetPatternEditorColors.markNormalStart),
+            brighter(JetPatternEditorColors.markNormalEnd));
+    }
+    
+    private Color brighter(Color color)
+    {
+        return new Color((int) (color.getRed() * 1.1d),
+            (int) (Color.getGreen() * 1.1d), (int) (Color.getBlue() * 1.1d));
     }
     
     Paint createSelectedPaint()
