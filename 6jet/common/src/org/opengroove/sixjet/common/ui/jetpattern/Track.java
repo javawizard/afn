@@ -73,6 +73,7 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
             }
         }
         draggingLocation = -1;
+        wasDragged = false;
         repaint();
     }
     

@@ -21,7 +21,7 @@ public class JetPatternEditorColors
     static final Color markSelectedStart = hexColor("5b91be");
     static final Color markSelectedEnd = hexColor("5b91be");
     static final Color markBorder = hexColor("3e8ebb");
-    static final Color trackCreateStart = hexColor("bcc8d6");
-    static final Color trackCreateEnd = hexColor("d5dde5");
+    static final Color trackCreateStart = hexColor("d5dde6");
+    static final Color trackCreateEnd = hexColor("dee4eb");
     static final Color trackCreateBorder = hexColor("00000000");
 }

@@ -180,6 +180,10 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
         {
             finalizeDrag();
         }
+        else if (getBounds().contains(e.getX(), e.getY()))
+        {
+            boolean toggle = e.isControlDown();
+        }
         repaint();
     }
     
