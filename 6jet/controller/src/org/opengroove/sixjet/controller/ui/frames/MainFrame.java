@@ -21,6 +21,8 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import org.opengroove.sixjet.common.ui.HeaderComponent;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  * This code was edited or generated using CloudGarden's Jigloo SWT/Swing GUI
@@ -389,6 +391,9 @@ public class MainFrame extends javax.swing.JFrame
                                                 manualControlTimeLabel,
                                                 BorderLayout.WEST);
                                             manualControlTimeLabel.setText("Time: ");
+                                            manualControlTimeLabel
+                                                .setPreferredSize(new java.awt.Dimension(
+                                                    34, 20));
                                         }
                                         {
                                             manualControlTimeField = new JTextField();
@@ -396,6 +401,24 @@ public class MainFrame extends javax.swing.JFrame
                                                 .addDocumentListener(
                                                     new DocumentListener()
                                                     {
+                                                        
+                                                        public void changedUpdate(
+                                                            DocumentEvent e)
+                                                        {
+                                                            onTimeFieldChanged();
+                                                        }
+                                                        
+                                                        public void insertUpdate(
+                                                            DocumentEvent e)
+                                                        {
+                                                            changedUpdate(e);
+                                                        }
+                                                        
+                                                        public void removeUpdate(
+                                                            DocumentEvent e)
+                                                        {
+                                                            changedUpdate(e);
+                                                        }
                                                     });
                                             manualControlTimePanel.add(
                                                 manualControlTimeField,
@@ -640,6 +663,27 @@ public class MainFrame extends javax.swing.JFrame
         catch (Exception e)
         {
             e.printStackTrace();
+        }
+    }
+    
+    protected void onTimeFieldChanged()
+    {
+        final String text = manualControlTimeField.getText();
+        if (!text.replaceAll("[^0-9]", "").equals(text))
+        {
+            /*
+             * There were some non-number characters in the text. We'll update
+             * the text field with numbers removed.
+             */
+            SwingUtilities.invokeLater(new Runnable()
+            {
+                
+                public void run()
+                {
+                    manualControlTimeField.setText(text.replaceAll("[^0-9]", ""));
+                }
+            });
+            
         }
     }
     
