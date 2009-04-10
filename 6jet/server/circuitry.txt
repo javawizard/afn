@@ -2,4 +2,20 @@ The circuitry behind 6jet will need to contain shift registers, since there aren
 
 I should probably mention why the name "6jet". This seems somewhat of a misnomer, since 6jet actually has 18 jets. The name stems from the very first version of 6jet, which I built when I was 9 years old. This version had 6 jets arranged in a hexagon. The jets were 6 drip line nozzles (meant for converting from a hose to a 1/4 inch drip line, but they worked great as nozzles), attached to 6 hoses. These were taped to some wooden stands, made out of 3 2-by-2's bolted together in the center so they could rotate about each other. All of the hoses ran to a bank of 6 rain-bird sprinkler valves arranged side-by-side. I got these from my grandpa, Bill Boyd, when he got rid of a ton of sprinkler stuff. These, by the way, have had the fastest switching time of any sprinkler valve I've seen yet, at somewhere around 50 to 100 milliseconds. They were unbeatable fot the system. Anyway, I added 5 more jets the next year, 4 in a square pattern inside the hexagon, and one in the center. The name, however, was hard-coded all throughout 6jet's software, so I just left it as it was.
 
-So anyway, back to the circuitry.
+So anyway, back to the circuitry. the old 11-jet-containing 6jet system had one jet per output pin on the parallel port (with appropriate relays, buffers, and such). The new system, however, has more jets than can fit on the parallel port. My idea is to have 3 8-bit shift registers. I believe I have some in my room that are of the 74HC series, which means that their outputs should be able to power the 20 milliamp reed relays I had planned on using without problems. I'll have to look at those, though, before I can draw any clear conclusions.
+
+Anyway, the data pins of each of these shift registers will be hooked to data pins 1, 2, and 3 of the parallel port. The shift registers' clock pin will be connected to data pin 4 of the parallel port. The shift registers' strobe pin will be connected to data pin 5 of the parallel port. Pin 6 will connect to a power supply shutoff switch (probably itself connected to a reed relay) that will allow for powering down the circuit board when not in use. This pin will also have a weak pullup (which I think the parallel port already has; if it's the other way around then I'll do it the other way around), so that if the board gets disconnected from the computer or the computer shuts down, the circuitry, and all jets, will automatically power off. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
