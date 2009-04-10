@@ -1,5 +1,7 @@
 package org.opengroove.sixjet.server;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import org.opengroove.sixjet.common.com.Packet;
@@ -7,6 +9,10 @@ import org.opengroove.sixjet.common.com.PacketSpooler;
 
 public class ControllerHandler extends Thread
 {
+    private ObjectInputStream in;
+    
+    private ObjectOutputStream out;
+    
     private PacketSpooler spooler;
     
     private String username;
