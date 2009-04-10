@@ -58,7 +58,7 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     private static final Border markBorder =
         BorderFactory.createLineBorder(JetPatternEditorColors.markBorder, 1);
     
-    private static final int MARK_HEIGHT = 30;
+    public static final int MARK_HEIGHT = 25;
     
     public Mark(JetPatternEditor editor, Track track)
     {
