@@ -643,6 +643,7 @@ public class MainFrame extends javax.swing.JFrame
                                                 playlistAddDelayButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
+                                                playlistAddDelayButton.setToolTipText("Adds a new delay to the playlist. You will be asked how long the delay should be.");
                                             }
                                             {
                                                 playlistAddMusicButton = new JButton();
@@ -652,6 +653,7 @@ public class MainFrame extends javax.swing.JFrame
                                                 playlistAddMusicButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
+                                                playlistAddMusicButton.setToolTipText("<html>Adds the music selected in the <b>Music</b> pane to the playlist.");
                                             }
                                         }
                                     }
@@ -702,6 +704,7 @@ public class MainFrame extends javax.swing.JFrame
                                                 editPlaylistDownButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
+                                                editPlaylistDownButton.setToolTipText("Moves the selected playlist item down within the playlist.");
                                             }
                                         }
                                     }
