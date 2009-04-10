@@ -176,6 +176,8 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     public void mouseReleased(MouseEvent e)
     {
         down = false;
+        System.out.println("x:" + e.getX() + ",y:" + e.getY());
+        System.out.println("bounds:" + getBounds());
         if (wasDragged)
         {
             System.out.println("wasDragged");
