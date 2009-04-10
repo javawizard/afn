@@ -1,3 +1,4 @@
 The 6jet server project holds the 6jet server program, which is started on the computer that has the actual 6jet fountain connected to it. All other 6jet programs connect to it.
 
 6jet server listens on port 56538 for connections from 6jet controller, and port 56537 for connections from 6jet music. Each connection comes with a username and a password, which is authenticated.
+
