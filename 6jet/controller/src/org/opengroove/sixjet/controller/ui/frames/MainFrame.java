@@ -9,6 +9,7 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingConstants;
 
 import javax.swing.WindowConstants;
+import org.opengroove.sixjet.common.ui.HeaderComponent;
 import javax.swing.SwingUtilities;
 
 /**
@@ -26,6 +27,7 @@ public class MainFrame extends javax.swing.JFrame
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
     private JSplitPane scheduleChatSplit;
+    private HeaderComponent chatPanelHeader;
     private JPanel chatPanel;
     private JSplitPane playlistSplit;
     private JSplitPane topContentRightSplit;
@@ -92,8 +94,10 @@ public class MainFrame extends javax.swing.JFrame
                             topContentRightSplit.setContinuousLayout(true);
                             {
                                 scheduleChatSplit = new JSplitPane();
-                                topContentRightSplit.add(scheduleChatSplit, JSplitPane.RIGHT);
-                                scheduleChatSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
+                                topContentRightSplit.add(scheduleChatSplit,
+                                    JSplitPane.RIGHT);
+                                scheduleChatSplit
+                                    .setOrientation(JSplitPane.VERTICAL_SPLIT);
                                 scheduleChatSplit.setDividerLocation(215);
                                 scheduleChatSplit.setContinuousLayout(true);
                                 scheduleChatSplit.setResizeWeight(0.5);
@@ -102,6 +106,12 @@ public class MainFrame extends javax.swing.JFrame
                                     BorderLayout chatPanelLayout = new BorderLayout();
                                     scheduleChatSplit.add(chatPanel, JSplitPane.BOTTOM);
                                     chatPanel.setLayout(chatPanelLayout);
+                                    {
+                                        chatPanelHeader = new HeaderComponent();
+                                        chatPanel.add(chatPanelHeader,
+                                            BorderLayout.NORTH);
+                                        chatPanelHeader.setLabel("Chat");
+                                    }
                                 }
                             }
                         }
