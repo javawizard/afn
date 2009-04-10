@@ -5,6 +5,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -69,6 +70,26 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     
     protected void paintComponent(Graphics g)
     {
+        Paint paint;
+        boolean selected = isSelected();
+        if (hovered && selected)
+            paint = createSelectedHoveredPaint();
+        else if (hovered && !selected)
+            paint = createHoveredPaint();
+        else if (!hovered && selected)
+            paint = createSelectedPaint();
+        else
+            paint = createNormalPaint();
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setPaint(paint);
+        g2.fillRect(0, 0, getWidth(), getHeight());
+    }
+    
+    private boolean isSelected()
+    {
+        if (editor != null)
+            return editor.selectedMarks.contains(this);
+        return false;
     }
     
     Paint createNormalPaint()
@@ -107,11 +128,13 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     public void mouseEntered(MouseEvent e)
     {
         hovered = true;
+        repaint();
     }
     
     public void mouseExited(MouseEvent e)
     {
         hovered = false;
+        repaint();
     }
     
     public void mousePressed(MouseEvent e)
@@ -137,6 +160,7 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
          * DragTarget.mark will be added soon, which is the middle of the mark
          * somewhere. This shifts the mark left or right.
          */
+        repaint();
     }
     
     public void mouseReleased(MouseEvent e)
@@ -146,6 +170,7 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
         {
             finalizeDrag();
         }
+        repaint();
     }
     
     /**
