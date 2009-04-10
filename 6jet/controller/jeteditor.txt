@@ -1,0 +1,1 @@
+The jet editor component is a jcomponent. It has no layout. It creates a bunch of track components, which it adds. Each track component has a number of mark components as children. 
