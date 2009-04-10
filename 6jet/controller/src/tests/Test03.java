@@ -18,6 +18,10 @@ public class Test03
         Track track = new Track();
         f.getContentPane().add(track);
         track.setSize(350, Mark.MARK_HEIGHT);
+        track.setLocation(10, 40);
+        Mark mark = new Mark(null, track);
+        track.add(mark);
+        mark.setSize(65, Mark.MARK_HEIGHT);
+        mark.setLocation(120, 0);
     }
-    
 }
