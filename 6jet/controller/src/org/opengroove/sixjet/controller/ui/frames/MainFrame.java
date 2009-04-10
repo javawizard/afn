@@ -17,6 +17,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListModel;
 import javax.swing.SwingConstants;
+import javax.swing.ToolTipManager;
 
 import javax.swing.WindowConstants;
 import org.opengroove.sixjet.common.ui.HeaderComponent;
@@ -129,6 +130,7 @@ public class MainFrame extends javax.swing.JFrame
     public MainFrame()
     {
         super();
+        ToolTipManager.sharedInstance().setDismissDelay(15 * 1000);
         initGUI();
     }
     
@@ -178,7 +180,8 @@ public class MainFrame extends javax.swing.JFrame
                                     musicUploadButton.setText("Upload");
                                     musicUploadButton.setMargin(new java.awt.Insets(0,
                                         0, 0, 0));
-                                    musicUploadButton.setToolTipText("<html>Allows you to upload a new music file. You will be asked for the file that you want to upload. <br/>You can also upload a file directly from within 6jet Music.");
+                                    musicUploadButton
+                                        .setToolTipText("<html>Allows you to upload a new music file. You will be asked for the file that you want to upload. <br/>You can also upload a file directly from within 6jet Music.");
                                 }
                                 {
                                     musicPlayButton = new JButton();
@@ -186,7 +189,8 @@ public class MainFrame extends javax.swing.JFrame
                                     musicPlayButton.setText("Play");
                                     musicPlayButton.setMargin(new java.awt.Insets(0, 0,
                                         0, 0));
-                                    musicPlayButton.setToolTipText("Plays the selected music, stopping any playlist or music that might be currently playing.");
+                                    musicPlayButton
+                                        .setToolTipText("Plays the selected music, stopping any playlist or music that might be currently playing.");
                                 }
                                 {
                                     musicDeleteButton = new JButton();
@@ -194,7 +198,8 @@ public class MainFrame extends javax.swing.JFrame
                                     musicDeleteButton.setText("Delete");
                                     musicDeleteButton.setMargin(new java.awt.Insets(0,
                                         0, 0, 0));
-                                    musicDeleteButton.setToolTipText("Deletes the selected music. You will be asked to confirm that you really want to delete the selected music.");
+                                    musicDeleteButton
+                                        .setToolTipText("Deletes the selected music. You will be asked to confirm that you really want to delete the selected music.");
                                 }
                                 {
                                     musicDownloadButton = new JButton();
@@ -202,17 +207,19 @@ public class MainFrame extends javax.swing.JFrame
                                     musicDownloadButton.setText("Download");
                                     musicDownloadButton.setMargin(new java.awt.Insets(
                                         0, 0, 0, 0));
-                                    musicDownloadButton.setToolTipText("<html>Downloads the selected music. This will open a web browser window, which will ask you to download the file. <br/>This file can then be edited using 6jet Music.");
+                                    musicDownloadButton
+                                        .setToolTipText("<html>Downloads the selected music. This will open a web browser window, which will ask you to download the file. <br/>This file can then be edited using 6jet Music.");
                                 }
                             }
                             {
                                 jScrollPane5 = new JScrollPane();
                                 musicPanel.add(jScrollPane5, BorderLayout.CENTER);
-                                jScrollPane5.setPreferredSize(new java.awt.Dimension(335, 172));
+                                jScrollPane5.setPreferredSize(new java.awt.Dimension(
+                                    335, 172));
                                 {
-                                    ListModel musicListModel = 
-                                        new DefaultComboBoxModel(
-                                            new String[] { "Item One", "Item Two" });
+                                    ListModel musicListModel =
+                                        new DefaultComboBoxModel(new String[] {
+                                            "Item One", "Item Two" });
                                     musicList = new JList();
                                     jScrollPane5.setViewportView(getMusicList());
                                     musicList.setModel(musicListModel);
@@ -233,49 +240,62 @@ public class MainFrame extends javax.swing.JFrame
                             {
                                 nowPlayingSouth = new JPanel();
                                 GridLayout nowPlayingSouthLayout = new GridLayout(1, 1);
-                                nowPlayingPanel.add(nowPlayingSouth, BorderLayout.SOUTH);
+                                nowPlayingPanel
+                                    .add(nowPlayingSouth, BorderLayout.SOUTH);
                                 nowPlayingSouth.setLayout(nowPlayingSouthLayout);
                                 {
                                     nowPlayingPreviousButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingPreviousButton());
                                     nowPlayingPreviousButton.setText("<<");
-                                    nowPlayingPreviousButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-                                    nowPlayingPreviousButton.setToolTipText("Skips to the previous song in the playlist, if a playlist is currently playing.");
+                                    nowPlayingPreviousButton
+                                        .setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingPreviousButton
+                                        .setToolTipText("Skips to the previous song in the playlist, if a playlist is currently playing.");
                                 }
                                 {
                                     nowPlayingRestartButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingRestartButton());
                                     nowPlayingRestartButton.setText("|<");
-                                    nowPlayingRestartButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-                                    nowPlayingRestartButton.setToolTipText("Starts the current song over from the beginning.");
+                                    nowPlayingRestartButton
+                                        .setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingRestartButton
+                                        .setToolTipText("Starts the current song over from the beginning.");
                                 }
                                 {
                                     nowPlayingPauseButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingPauseButton());
                                     nowPlayingPauseButton.setText("| |");
-                                    nowPlayingPauseButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-                                    nowPlayingPauseButton.setToolTipText("Pauses or unpauses music playback. Jets can be manually controlled while playback is paused.");
+                                    nowPlayingPauseButton
+                                        .setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingPauseButton
+                                        .setToolTipText("Pauses or unpauses music playback. Jets can be manually controlled while playback is paused.");
                                 }
                                 {
                                     nowPlayingStopButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingStopButton());
                                     nowPlayingStopButton.setText("<html>&#9744;");
-                                    nowPlayingStopButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-                                    nowPlayingStopButton.setToolTipText("Stops music playback.");
+                                    nowPlayingStopButton.setMargin(new java.awt.Insets(
+                                        0, 0, 0, 0));
+                                    nowPlayingStopButton
+                                        .setToolTipText("Stops music playback.");
                                 }
                                 {
                                     nowPlayingCenterButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingCenterButton());
                                     nowPlayingCenterButton.setText(">|<");
-                                    nowPlayingCenterButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-                                    nowPlayingCenterButton.setToolTipText("Centers the jet pattern view over the current position in the song.");
+                                    nowPlayingCenterButton
+                                        .setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingCenterButton
+                                        .setToolTipText("Centers the jet pattern view over the current position in the song.");
                                 }
                                 {
                                     nowPlayingNextButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingNextButton());
                                     nowPlayingNextButton.setText(">>");
-                                    nowPlayingNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-                                    nowPlayingNextButton.setToolTipText("Skips to the next song in the playlist, if a playlist is currently playing.");
+                                    nowPlayingNextButton.setMargin(new java.awt.Insets(
+                                        0, 0, 0, 0));
+                                    nowPlayingNextButton
+                                        .setToolTipText("Skips to the next song in the playlist, if a playlist is currently playing.");
                                 }
                             }
                         }
@@ -340,7 +360,8 @@ public class MainFrame extends javax.swing.JFrame
                                             chatTextField = new JTextField();
                                             chatSouth.add(getChatTextField(),
                                                 BorderLayout.NORTH);
-                                            chatTextField.setToolTipText("Type a chat message here, then click send.");
+                                            chatTextField
+                                                .setToolTipText("Type a chat message here, then click send.");
                                         }
                                         {
                                             chatSendButton = new JButton();
@@ -350,7 +371,8 @@ public class MainFrame extends javax.swing.JFrame
                                             chatSendButton
                                                 .setMargin(new java.awt.Insets(0, 14,
                                                     0, 14));
-                                            chatSendButton.setToolTipText("Sends the chat message typed above to all people who have 6jet Controller open.");
+                                            chatSendButton
+                                                .setToolTipText("Sends the chat message typed above to all people who have 6jet Controller open.");
                                         }
                                     }
                                 }
@@ -399,7 +421,8 @@ public class MainFrame extends javax.swing.JFrame
                                             scheduleAddButton
                                                 .setMargin(new java.awt.Insets(0, 14,
                                                     0, 14));
-                                            scheduleAddButton.setToolTipText("<html>Adds the playlist selected in the <b>Playlists</b> pane to the schedule. <br/>You will be asked what date and time the playlist should begin playing. <br/>To schedule a single piece of music, create a playlist with just that music in it, <br/>and then schedule the playlist.");
+                                            scheduleAddButton
+                                                .setToolTipText("<html>Adds the playlist selected in the <b>Playlists</b> pane to the schedule. <br/>You will be asked what date and time the playlist should begin playing. <br/>To schedule a single piece of music, create a playlist with just that music in it, <br/>and then schedule the playlist.");
                                         }
                                         {
                                             scheduleDeleteButton = new JButton();
@@ -410,7 +433,8 @@ public class MainFrame extends javax.swing.JFrame
                                             scheduleDeleteButton
                                                 .setMargin(new java.awt.Insets(0, 14,
                                                     0, 14));
-                                            scheduleDeleteButton.setToolTipText("Deletes the currently selected schedule item.");
+                                            scheduleDeleteButton
+                                                .setToolTipText("Deletes the currently selected schedule item.");
                                         }
                                     }
                                 }
@@ -451,7 +475,8 @@ public class MainFrame extends javax.swing.JFrame
                                         centerPanelSouth
                                             .add(getManualControlToggleCheckbox());
                                         manualControlToggleCheckbox.setText("Toggle");
-                                        manualControlToggleCheckbox.setToolTipText("If checked, then clicking on a jet will toggle its state. If unchecked, clicking on a jet will simply fire it.");
+                                        manualControlToggleCheckbox
+                                            .setToolTipText("If checked, then clicking on a jet will toggle its state. If unchecked, clicking on a jet will simply fire it.");
                                     }
                                     {
                                         manualControlFixedCheckbox = new JCheckBox();
@@ -459,7 +484,8 @@ public class MainFrame extends javax.swing.JFrame
                                             .add(getManualControlFixedCheckbox());
                                         manualControlFixedCheckbox
                                             .setText("Fixed time");
-                                        manualControlFixedCheckbox.setToolTipText("Irrelevant if toggle is checked. If this is checked, then jets will fire for a fixed amount of time when clicked. If unchecked, jets will fire for as long as the mouse is held down.");
+                                        manualControlFixedCheckbox
+                                            .setToolTipText("Irrelevant if toggle is checked. If this is checked, then jets will fire for a fixed amount of time when clicked. If unchecked, jets will fire for as long as the mouse is held down.");
                                     }
                                     {
                                         manualControlTimePanel = new JPanel();
@@ -554,7 +580,8 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistAddButton.setText("Add");
                                         playlistAddButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
-                                        playlistAddButton.setToolTipText("Creates a new playlist. You will be asked for the name of the new playlist.");
+                                        playlistAddButton
+                                            .setToolTipText("Creates a new playlist. You will be asked for the name of the new playlist.");
                                     }
                                     {
                                         playlistDeleteButton = new JButton();
@@ -563,7 +590,8 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistDeleteButton.setText("Delete");
                                         playlistDeleteButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
-                                        playlistDeleteButton.setToolTipText("Deletes the selected playlist. You will be asked to confirm that you want to delete the selected playlist.");
+                                        playlistDeleteButton
+                                            .setToolTipText("Deletes the selected playlist. You will be asked to confirm that you want to delete the selected playlist.");
                                     }
                                     {
                                         playlistPlayButton = new JButton();
@@ -572,7 +600,8 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistPlayButton.setText("Play");
                                         playlistPlayButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
-                                        playlistPlayButton.setToolTipText("Plays the selected playlist, stopping any currently-playing music if necessary.");
+                                        playlistPlayButton
+                                            .setToolTipText("Plays the selected playlist, stopping any currently-playing music if necessary.");
                                     }
                                 }
                                 {
@@ -620,7 +649,8 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistDeleteItemButton.setText("Delete Item");
                                         playlistDeleteItemButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
-                                        playlistDeleteItemButton.setToolTipText("Deletes the currently selected playlist item. You will be asked to confirm that you want to delete the playlist item.");
+                                        playlistDeleteItemButton
+                                            .setToolTipText("Deletes the currently selected playlist item. You will be asked to confirm that you want to delete the playlist item.");
                                     }
                                     {
                                         editPlaylistSouthMid = new JPanel();
@@ -660,7 +690,8 @@ public class MainFrame extends javax.swing.JFrame
                                                 playlistAddDelayButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
-                                                playlistAddDelayButton.setToolTipText("Adds a new delay to the playlist. You will be asked how long the delay should be.");
+                                                playlistAddDelayButton
+                                                    .setToolTipText("Adds a new delay to the playlist. You will be asked how long the delay should be.");
                                             }
                                             {
                                                 playlistAddMusicButton = new JButton();
@@ -670,7 +701,8 @@ public class MainFrame extends javax.swing.JFrame
                                                 playlistAddMusicButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
-                                                playlistAddMusicButton.setToolTipText("<html>Adds the music selected in the <b>Music</b> pane to the playlist.");
+                                                playlistAddMusicButton
+                                                    .setToolTipText("<html>Adds the music selected in the <b>Music</b> pane to the playlist.");
                                             }
                                         }
                                     }
@@ -710,7 +742,8 @@ public class MainFrame extends javax.swing.JFrame
                                                 editPlaylistUpButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
-                                                editPlaylistUpButton.setToolTipText("Moves the selected playlist item up within the playlist.");
+                                                editPlaylistUpButton
+                                                    .setToolTipText("Moves the selected playlist item up within the playlist.");
                                             }
                                             {
                                                 editPlaylistDownButton = new JButton();
@@ -721,7 +754,8 @@ public class MainFrame extends javax.swing.JFrame
                                                 editPlaylistDownButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
-                                                editPlaylistDownButton.setToolTipText("Moves the selected playlist item down within the playlist.");
+                                                editPlaylistDownButton
+                                                    .setToolTipText("Moves the selected playlist item down within the playlist.");
                                             }
                                         }
                                     }
@@ -866,32 +900,39 @@ public class MainFrame extends javax.swing.JFrame
         return manualControlFixedCheckbox;
     }
     
-    public JList getMusicList() {
+    public JList getMusicList()
+    {
         return musicList;
     }
     
-    public JButton getNowPlayingPreviousButton() {
+    public JButton getNowPlayingPreviousButton()
+    {
         return nowPlayingPreviousButton;
     }
     
-    public JButton getNowPlayingRestartButton() {
+    public JButton getNowPlayingRestartButton()
+    {
         return nowPlayingRestartButton;
     }
     
-    public JButton getNowPlayingPauseButton() {
+    public JButton getNowPlayingPauseButton()
+    {
         return nowPlayingPauseButton;
     }
     
-    public JButton getNowPlayingStopButton() {
+    public JButton getNowPlayingStopButton()
+    {
         return nowPlayingStopButton;
     }
     
-    public JButton getNowPlayingCenterButton() {
+    public JButton getNowPlayingCenterButton()
+    {
         return nowPlayingCenterButton;
     }
     
-    public JButton getNowPlayingNextButton() {
+    public JButton getNowPlayingNextButton()
+    {
         return nowPlayingNextButton;
     }
-
+    
 }
