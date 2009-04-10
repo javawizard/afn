@@ -186,6 +186,7 @@ public class MainFrame extends javax.swing.JFrame
                                     musicPlayButton.setText("Play");
                                     musicPlayButton.setMargin(new java.awt.Insets(0, 0,
                                         0, 0));
+                                    musicPlayButton.setToolTipText("Plays the selected music, stopping any playlist or music that might be currently playing.");
                                 }
                                 {
                                     musicDeleteButton = new JButton();
@@ -193,6 +194,7 @@ public class MainFrame extends javax.swing.JFrame
                                     musicDeleteButton.setText("Delete");
                                     musicDeleteButton.setMargin(new java.awt.Insets(0,
                                         0, 0, 0));
+                                    musicDeleteButton.setToolTipText("Deletes the selected music. You will be asked to confirm that you really want to delete the selected music.");
                                 }
                                 {
                                     musicDownloadButton = new JButton();
@@ -200,6 +202,7 @@ public class MainFrame extends javax.swing.JFrame
                                     musicDownloadButton.setText("Download");
                                     musicDownloadButton.setMargin(new java.awt.Insets(
                                         0, 0, 0, 0));
+                                    musicDownloadButton.setToolTipText("<html>Downloads the selected music. This will open a web browser window, which will ask you to download the file. <br/>This file can then be edited using 6jet Music.");
                                 }
                             }
                             {
@@ -237,36 +240,42 @@ public class MainFrame extends javax.swing.JFrame
                                     nowPlayingSouth.add(getNowPlayingPreviousButton());
                                     nowPlayingPreviousButton.setText("<<");
                                     nowPlayingPreviousButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingPreviousButton.setToolTipText("Skips to the previous song in the playlist, if a playlist is currently playing.");
                                 }
                                 {
                                     nowPlayingRestartButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingRestartButton());
                                     nowPlayingRestartButton.setText("|<");
                                     nowPlayingRestartButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingRestartButton.setToolTipText("Starts the current song over from the beginning.");
                                 }
                                 {
                                     nowPlayingPauseButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingPauseButton());
                                     nowPlayingPauseButton.setText("| |");
                                     nowPlayingPauseButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingPauseButton.setToolTipText("Pauses or unpauses music playback. Jets can be manually controlled while playback is paused.");
                                 }
                                 {
                                     nowPlayingStopButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingStopButton());
                                     nowPlayingStopButton.setText("<html>&#9744;");
                                     nowPlayingStopButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingStopButton.setToolTipText("Stops music playback.");
                                 }
                                 {
                                     nowPlayingCenterButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingCenterButton());
                                     nowPlayingCenterButton.setText(">|<");
                                     nowPlayingCenterButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingCenterButton.setToolTipText("Centers the jet pattern view over the current position in the song.");
                                 }
                                 {
                                     nowPlayingNextButton = new JButton();
                                     nowPlayingSouth.add(getNowPlayingNextButton());
                                     nowPlayingNextButton.setText(">>");
                                     nowPlayingNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    nowPlayingNextButton.setToolTipText("Skips to the next song in the playlist, if a playlist is currently playing.");
                                 }
                             }
                         }
