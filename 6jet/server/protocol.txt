@@ -1,1 +1,33 @@
 6jet's network protocol is actually fairly simple. The server to controller link and the server to music box link use object streams, reading and writing subclasses of the Packet class. The port used to download and upload music files is http. Downloading music files can be done by downloading from /music/FILENAME.6jm.zip on the http server, and uploading can be done by presenting the file as the request data to /musicupload. The latter url should have 3 query parameters: username, password, and filename. Filename should end with ".6jm.zip". Username and password are the username and password of a controller.
+
+
+
+So, the packet protocol. Each individual packet won't be described here by itself; that's the work of the javadoc for that packet. Here, I'll give some senarios, and which packets would be sent.
+
+When a user logs in to the controller, they send a LoginPacket as their first packet. This results in a LoginResponse, which contains whether they logged in, and if they didn't, the reason.
+
+Any packet that gets sent to the server that modifies some aspect of the system will result in either that packet or a similar packet getting sent to all connected controllers (including the one that sent the initial packet). 
+
+When a jet is to be manually controlled (which can only happen when no music is playing), a JetControlPacket is sent. This will either set the jet's state and broadcast itself to all clients, or it will send back an error (which will happen if music is playing at the time).
+
+When the music, or another person, changes a jet's status, a JetControlPacket is sent out. Essentially, whenever something happens to change a jet's state, and when the user first connects, a JetControlPacket is sent.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

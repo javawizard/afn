@@ -1,0 +1,3 @@
+The server's storage is essentially made up of the storage folder. Under that, there are these folders: 
+
+music: This folder holds a bunch of files that end with .6jm.zip. These represent music. 
