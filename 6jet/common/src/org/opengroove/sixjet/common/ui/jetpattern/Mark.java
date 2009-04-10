@@ -29,6 +29,7 @@ public class Mark extends JComponent implements MouseListener
      */
     private boolean mouseInDown = false;
     
+    
     private JetPatternEditor editor;
     
     private static final Border markBorder =
