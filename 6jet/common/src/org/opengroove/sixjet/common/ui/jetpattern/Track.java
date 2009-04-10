@@ -1,7 +1,9 @@
 package org.opengroove.sixjet.common.ui.jetpattern;
 
 import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -102,7 +104,18 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
     
     protected void paintComponent(Graphics g)
     {
-        
+        Graphics2D g2 = (Graphics2D) g;
+        if (draggingLocation != -1)
+        {
+            g2.setPaint(new GradientPaint(0, 0,
+                JetPatternEditorColors.trackCreateStart, 0, getHeight(),
+                JetPatternEditorColors.trackCreateEnd));
+            int startpos = Math.min(draggingLocation, locationAtMouseDown.x);
+            int endpos = Math.max(draggingLocation, locationAtMouseDown.x);
+            g2.fillRect(startpos, 0, endpos - startpos, getHeight());
+            g2.setColor(JetPatternEditorColors.trackCreateBorder);
+            g2.drawRect(startpos, 0, (endpos - startpos) - 1, getHeight() - 1);
+        }
     }
     
     public void mouseMoved(MouseEvent e)
