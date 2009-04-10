@@ -33,7 +33,15 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private HeaderComponent playlistsHeader;
     private JScrollPane jScrollPane2;
+    private JPanel nowPlayingPanel;
+    private JPanel musicPanel;
+    private JPanel editPlaylistPanel;
+    private JPanel playlistsPanel;
+    private JButton scheduleDeleteButton;
+    private JButton scheduleAddButton;
+    private JPanel scheduleSouth;
     private JList scheduleList;
     private HeaderComponent scheduleHeader;
     private JPanel schedulePanel;
@@ -95,6 +103,18 @@ public class MainFrame extends javax.swing.JFrame
                         musicPlaybackSplit.setContinuousLayout(true);
                         musicPlaybackSplit.setDividerLocation(336);
                         musicPlaybackSplit.setResizeWeight(0.5);
+                        {
+                            musicPanel = new JPanel();
+                            BorderLayout musicPanelLayout = new BorderLayout();
+                            musicPlaybackSplit.add(musicPanel, JSplitPane.LEFT);
+                            musicPanel.setLayout(musicPanelLayout);
+                        }
+                        {
+                            nowPlayingPanel = new JPanel();
+                            BorderLayout nowPlayingPanelLayout = new BorderLayout();
+                            musicPlaybackSplit.add(nowPlayingPanel, JSplitPane.RIGHT);
+                            nowPlayingPanel.setLayout(nowPlayingPanelLayout);
+                        }
                     }
                     {
                         topContentLeftSplit = new JSplitPane();
@@ -171,20 +191,46 @@ public class MainFrame extends javax.swing.JFrame
                                     schedulePanel.setLayout(schedulePanelLayout);
                                     {
                                         scheduleHeader = new HeaderComponent();
-                                        schedulePanel.add(scheduleHeader, BorderLayout.NORTH);
+                                        schedulePanel.add(scheduleHeader,
+                                            BorderLayout.NORTH);
                                         scheduleHeader.setLabel("Schedule");
                                     }
                                     {
                                         jScrollPane2 = new JScrollPane();
-                                        schedulePanel.add(jScrollPane2, BorderLayout.CENTER);
-                                        jScrollPane2.setPreferredSize(new java.awt.Dimension(124, 187));
+                                        schedulePanel.add(jScrollPane2,
+                                            BorderLayout.CENTER);
+                                        jScrollPane2
+                                            .setPreferredSize(new java.awt.Dimension(
+                                                124, 187));
                                         {
-                                            ListModel scheduleListModel = 
-                                                new DefaultComboBoxModel(
-                                                    new String[] { "Item One", "Item Two" });
+                                            ListModel scheduleListModel =
+                                                new DefaultComboBoxModel(new String[] {
+                                                    "Item One", "Item Two" });
                                             scheduleList = new JList();
-                                            jScrollPane2.setViewportView(getScheduleList());
+                                            jScrollPane2
+                                                .setViewportView(getScheduleList());
                                             scheduleList.setModel(scheduleListModel);
+                                        }
+                                    }
+                                    {
+                                        scheduleSouth = new JPanel();
+                                        BorderLayout scheduleSouthLayout =
+                                            new BorderLayout();
+                                        schedulePanel.add(scheduleSouth,
+                                            BorderLayout.SOUTH);
+                                        scheduleSouth.setLayout(scheduleSouthLayout);
+                                        {
+                                            scheduleAddButton = new JButton();
+                                            scheduleSouth.add(getScheduleAddButton(),
+                                                BorderLayout.NORTH);
+                                            scheduleAddButton.setText("Add");
+                                        }
+                                        {
+                                            scheduleDeleteButton = new JButton();
+                                            scheduleSouth.add(
+                                                getScheduleDeleteButton(),
+                                                BorderLayout.SOUTH);
+                                            scheduleDeleteButton.setText("Delete");
                                         }
                                     }
                                 }
@@ -197,6 +243,25 @@ public class MainFrame extends javax.swing.JFrame
                             playlistSplit.setContinuousLayout(true);
                             playlistSplit.setDividerLocation(215);
                             playlistSplit.setResizeWeight(0.5);
+                            {
+                                playlistsPanel = new JPanel();
+                                BorderLayout playlistsPanelLayout = new BorderLayout();
+                                playlistSplit.add(playlistsPanel, JSplitPane.TOP);
+                                playlistsPanel.setLayout(playlistsPanelLayout);
+                                {
+                                    playlistsHeader = new HeaderComponent();
+                                    playlistsPanel.add(playlistsHeader,
+                                        BorderLayout.NORTH);
+                                    playlistsHeader.setLabel("Playlists");
+                                }
+                            }
+                            {
+                                editPlaylistPanel = new JPanel();
+                                BorderLayout editPlaylistPanelLayout =
+                                    new BorderLayout();
+                                playlistSplit.add(editPlaylistPanel, JSplitPane.BOTTOM);
+                                editPlaylistPanel.setLayout(editPlaylistPanelLayout);
+                            }
                         }
                     }
                 }
@@ -220,8 +285,19 @@ public class MainFrame extends javax.swing.JFrame
         return chatTextField;
     }
     
-    public JList getScheduleList() {
+    public JList getScheduleList()
+    {
         return scheduleList;
     }
-
+    
+    public JButton getScheduleAddButton()
+    {
+        return scheduleAddButton;
+    }
+    
+    public JButton getScheduleDeleteButton()
+    {
+        return scheduleDeleteButton;
+    }
+    
 }
