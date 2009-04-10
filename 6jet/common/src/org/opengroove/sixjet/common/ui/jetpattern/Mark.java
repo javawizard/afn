@@ -74,11 +74,12 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     {
         Paint paint;
         boolean selected = isSelected();
-        if (hovered && selected)
+        boolean hovered2 = hovered && !down;
+        if (hovered2 && selected)
             paint = createSelectedHoveredPaint();
-        else if (hovered && !selected)
+        else if (hovered2 && !selected)
             paint = createHoveredPaint();
-        else if (!hovered && selected)
+        else if (!hovered2 && selected)
             paint = createSelectedPaint();
         else
             paint = createNormalPaint();
