@@ -7,8 +7,9 @@ import javax.swing.JComponent;
  * component is created with a specified length, in milliseconds, and it sets
  * its initial zoom to be 10 milliseconds per pixel.
  * 
- * The editor does not automatically incorporate a scroll pane or jet labels.
- * You can use JetPatternLabelSet in the left side of a scroll pane for that.
+ * The editor does not automcatically include a scroll pane itself, although it
+ * can be asked to create one (which it will then add itself to) by calling
+ * createScrollPane.
  * 
  * 
  * @author Alexander Boyd

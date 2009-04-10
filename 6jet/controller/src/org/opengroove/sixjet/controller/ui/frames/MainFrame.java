@@ -669,7 +669,7 @@ public class MainFrame extends javax.swing.JFrame
     protected void onTimeFieldChanged()
     {
         final String text = manualControlTimeField.getText();
-        if (!text.replaceAll("[^0-9]", "").equals(text))
+        if ((!text.replaceAll("[^0-9]", "").equals(text)) || text.length() == 0)
         {
             /*
              * There were some non-number characters in the text. We'll update
@@ -681,6 +681,8 @@ public class MainFrame extends javax.swing.JFrame
                 public void run()
                 {
                     manualControlTimeField.setText(text.replaceAll("[^0-9]", ""));
+                    if (text.length() == 0)
+                        manualControlTimeField.setText("0");
                 }
             });
             
