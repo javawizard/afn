@@ -200,13 +200,16 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
             SwingUtilities.convertPoint(this, new Point(e.getX(), e.getY()), track);
         if (dragTarget == DragTarget.LEFT)
         {
-            setLocation(mouseTrackPoint.x, 0);
-            // FIXME: This shifts the whole mark to the right if it's getting to
-            // small. We should refuse to move it if it's too small.
+            int newX = mouseTrackPoint.x;
             int newSize =
                 sizeAtMouseDown.width + (locationAtMouseDown.x - mouseTrackPoint.x);
             if (newSize < 4)
+            {
+                newX -= (4 - newSize);
                 newSize = 4;
+                
+            }
+            setLocation(newX, 0);
             setSize(newSize, MARK_HEIGHT);
         }
         else if (dragTarget == DragTarget.RIGHT)
