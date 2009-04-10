@@ -57,8 +57,11 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     private static final Border markBorder =
         BorderFactory.createLineBorder(JetPatternEditorColors.markBorder, 1);
     
-    Mark(JetPatternEditor editor)
+    private static final int MARK_HEIGHT = 30;
+    
+    Mark(JetPatternEditor editor, Track track)
     {
+        this.track = track;
         this.editor = editor;
         setBorder(markBorder);
         addMouseListener(this);
@@ -159,7 +162,23 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
         if (dragTarget == DragTarget.NONE)
             return;
         Point mouseTrackPoint =
-            SwingUtilities.convertPoint(this, locationAtMouseDown, track);
+            SwingUtilities.convertPoint(this, new Point(e.getX(), e.getY()), track);
+        if (dragTarget == DragTarget.LEFT)
+        {
+            setLocation(mouseTrackPoint.x, 0);
+            int newSize =
+                sizeAtMouseDown.width + (locationAtMouseDown.x - mouseTrackPoint.x);
+            if (newSize < 3)
+                newSize = 3;
+            setSize(newSize, MARK_HEIGHT);
+        }
+        else if (dragTarget == DragTarget.RIGHT)
+        {
+            int newSize = mouseTrackPoint.x - locationAtMouseDown.x;
+            if (newSize < 3)
+                newSize = 3;
+            setSize(newSize, MARK_HEIGHT);
+        }
     }
     
     public void mouseMoved(MouseEvent e)
