@@ -6,6 +6,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import javax.swing.JOptionPane;
+
 import org.opengroove.sixjet.common.ui.LoginFrame;
 import org.opengroove.sixjet.controller.ui.frames.MainFrame;
 
@@ -43,7 +45,20 @@ public class SixjetController
         String server = loginFrame.getServerField().getText();
         String username = loginFrame.getUsernameField().getText();
         String password = loginFrame.getPasswordField().getText();
-        socket = new Socket(server)
+        try
+        {
+            socket = new Socket(server, 56538);
+        }
+        catch (Exception e)
+        {
+            loginFrame.getServerField().setEnabled(true);
+            loginFrame.getUsernameField().setEnabled(true);
+            loginFrame.getPasswordField().setEnabled(true);
+            loginFrame.getLoginButton().setEnabled(true);
+            JOptionPane.showMessageDialog(loginFrame,
+                "<html>An error has occured while logging in:<br/>");
+            e.printStackTrace();
+        }
     }
     
 }
