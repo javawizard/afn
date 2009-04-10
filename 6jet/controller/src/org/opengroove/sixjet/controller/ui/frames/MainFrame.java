@@ -33,6 +33,7 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JButton playlistDeleteItemButton;
     private JButton playlistAddDelayButton;
     private JButton playlistAddMusicButton;
     private JScrollPane jScrollPane3;
@@ -369,6 +370,13 @@ public class MainFrame extends javax.swing.JFrame
                                             BorderLayout.CENTER);
                                         playlistAddDelayButton.setText("Add Delay");
                                     }
+                                    {
+                                        playlistDeleteItemButton = new JButton();
+                                        editPlaylistSouth.add(
+                                            getPlaylistDeleteItemButton(),
+                                            BorderLayout.SOUTH);
+                                        playlistDeleteItemButton.setText("Delete Item");
+                                    }
                                 }
                             }
                         }
@@ -422,6 +430,11 @@ public class MainFrame extends javax.swing.JFrame
     public JButton getPlaylistAddDelayButton()
     {
         return playlistAddDelayButton;
+    }
+    
+    public JButton getPlaylistDeleteItemButton()
+    {
+        return playlistDeleteItemButton;
     }
     
 }
