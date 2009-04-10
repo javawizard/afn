@@ -31,8 +31,8 @@ public class HeaderComponent extends JComponent
         return label.getText();
     }
     
-    public void setLabel(String text)
+    public void setLabel(String label2)
     {
-        label.setText(text);
+        label.setText(label2);
     }
 }
