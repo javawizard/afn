@@ -1,6 +1,7 @@
 package org.opengroove.sixjet.common.ui.jetpattern;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -14,6 +15,7 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
     private boolean down = false;
     private boolean wasDragged = false;
     private Point locationAtMouseDown;
+    private int draggingLocation = -1;
     
     public Track()
     {
@@ -47,6 +49,32 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
     }
     
     public void mouseDragged(MouseEvent e)
+    {
+        int px = locationAtMouseDown.x;
+        int py = locationAtMouseDown.y;
+        int cx = e.getX();
+        int cy = e.getY();
+        int pxu = px + 3;
+        int pxd = px - 3;
+        int pyu = py + 3;
+        int pyd = py - 3;
+        /*
+         * Only count a drag as a drag if the user first drags their mouse 3
+         * pixels away from where they clicked, so minor
+         * "click and drag a tiny bit"'s don't get counted as drags.
+         */
+        if (cx > pxu || cx < pxd || cy > pyu || cy < pyd)
+        {
+            wasDragged = true;
+        }
+        if (wasDragged)
+        {
+            draggingLocation = cx;
+        }
+        repaint();
+    }
+    
+    protected void paintComponent(Graphics g)
     {
         
     }
