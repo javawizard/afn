@@ -387,6 +387,7 @@ public class MainFrame extends javax.swing.JFrame
                                             scheduleAddButton
                                                 .setMargin(new java.awt.Insets(0, 14,
                                                     0, 14));
+                                            scheduleAddButton.setToolTipText("<html>Adds the playlist selected in the <b>Playlists</b> pane to the schedule. <br/>You will be asked what date and time the playlist should begin playing. <br/>To schedule a single piece of music, create a playlist with just that music in it, <br/>and then schedule the playlist.");
                                         }
                                         {
                                             scheduleDeleteButton = new JButton();
