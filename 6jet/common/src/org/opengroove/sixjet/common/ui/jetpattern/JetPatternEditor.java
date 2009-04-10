@@ -3,6 +3,7 @@ package org.opengroove.sixjet.common.ui.jetpattern;
 import java.util.ArrayList;
 
 import javax.swing.JComponent;
+import javax.swing.JInternalFrame;
 
 /**
  * A component that shows a list of tracks, with marks in each track. The
@@ -37,6 +38,10 @@ public class JetPatternEditor extends JComponent
      */
     ArrayList<Mark> selectedMarks = new ArrayList<Mark>();
     
+    ArrayList<Mark> allMarks = new ArrayList<Mark>();
+    
+    ArrayList<Channel> allChannels = new ArrayList<Channel>();
+    
     public JetPatternEditor(boolean editable)
     {
         this.editable = editable;
@@ -44,7 +49,6 @@ public class JetPatternEditor extends JComponent
     
     public void deleteSelection()
     {
-        
     }
     
     /**
