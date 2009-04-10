@@ -1,5 +1,8 @@
 package tests;
 
+import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
+
 public class Test02
 {
     
@@ -8,8 +11,12 @@ public class Test02
      */
     public static void main(String[] args)
     {
-        // TODO Auto-generated method stub
-        
+        JFrame f = new JFrame();
+        JDesktopPane d = new JDesktopPane();
+        f.getContentPane().add(d);
+        f.setSize(500, 400);
+        f.setLocationRelativeTo(null);
+        f.show();
     }
     
 }
