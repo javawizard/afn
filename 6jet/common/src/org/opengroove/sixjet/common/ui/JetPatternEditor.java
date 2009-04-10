@@ -23,5 +23,13 @@ import javax.swing.JComponent;
  */
 public class JetPatternEditor extends JComponent
 {
+    /**
+     * Whether or not this pattern editor is editable.
+     */
+    private boolean editable = true;
     
+    public JetPatternEditor(boolean editable)
+    {
+        this.editable = editable;
+    }
 }
