@@ -29,14 +29,6 @@ public class Test03
         f.getContentPane().add(track);
         track.setSize(890, Mark.MARK_HEIGHT);
         track.setLocation(10, 40);
-        Mark mark = new Mark(e, track);
-        track.add(mark);
-        mark.setSize(65, Mark.MARK_HEIGHT);
-        mark.setLocation(120, 0);
-        Mark mark2 = new Mark(e, track);
-        track.add(mark2);
-        mark2.setLocation(240, 0);
-        mark2.setSize(15, Mark.MARK_HEIGHT);
         f.setSize(1000, 300);
         JPanel p = new JPanel();
         p.setLayout(new FlowLayout());
