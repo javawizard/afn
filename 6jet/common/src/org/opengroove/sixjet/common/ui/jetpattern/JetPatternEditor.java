@@ -51,6 +51,7 @@ public class JetPatternEditor extends JComponent
     
     public void deleteSelection()
     {
+        
     }
     
     /**

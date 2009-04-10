@@ -226,6 +226,8 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     {
     }
     
+    public 
+    
     public void mouseDragged(MouseEvent e)
     {
         if (dragTarget == DragTarget.NONE)

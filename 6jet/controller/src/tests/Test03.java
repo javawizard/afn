@@ -19,7 +19,7 @@ public class Test03
         JetPatternEditor e = new JetPatternEditor(true);
         Track track = new Track(e);
         f.getContentPane().add(track);
-        track.setSize(350, Mark.MARK_HEIGHT);
+        track.setSize(890, Mark.MARK_HEIGHT);
         track.setLocation(10, 40);
         Mark mark = new Mark(e, track);
         track.add(mark);
@@ -29,7 +29,7 @@ public class Test03
         track.add(mark2);
         mark2.setLocation(240, 0);
         mark2.setSize(15, Mark.MARK_HEIGHT);
-        f.setSize(550, 300);
+        f.setSize(1000, 300);
         f.show();
     }
 }
