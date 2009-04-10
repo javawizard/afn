@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Paint;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -15,7 +17,7 @@ import javax.swing.border.Border;
  * @author Alexander Boyd
  * 
  */
-public class Mark extends JComponent
+public class Mark extends JComponent implements MouseListener
 {
     /**
      * True if the mouse is hovering over this mark, false if it is not
@@ -70,6 +72,26 @@ public class Mark extends JComponent
     {
         return shadedVertical(JetPatternEditorColors.markSelectedStart.brighter(),
             JetPatternEditorColors.markSelectedEnd.brighter());
+    }
+    
+    public void mouseClicked(MouseEvent e)
+    {
+    }
+    
+    public void mouseEntered(MouseEvent e)
+    {
+    }
+    
+    public void mouseExited(MouseEvent e)
+    {
+    }
+    
+    public void mousePressed(MouseEvent e)
+    {
+    }
+    
+    public void mouseReleased(MouseEvent e)
+    {
     }
     
 }
