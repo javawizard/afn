@@ -2,3 +2,4 @@ The 6jet server project holds the 6jet server program, which is started on the c
 
 6jet server listens on port 56538 for connections from 6jet controller, and port 56537 for connections from 6jet music. Each connection comes with a username and a password, which is authenticated.
 
+6jet server stores the master copy of all music files (.6jm.zip files) in the system. 6jet controllers upload these to the server, and then download them to actually use them. 6jet music boxes
