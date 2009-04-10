@@ -16,11 +16,11 @@ public class Test03
     {
         JFrame f = new JFrame();
         f.getContentPane().setLayout(null);
-        Track track = new Track();
+        JetPatternEditor e = new JetPatternEditor(true);
+        Track track = new Track(e);
         f.getContentPane().add(track);
         track.setSize(350, Mark.MARK_HEIGHT);
         track.setLocation(10, 40);
-        JetPatternEditor e = new JetPatternEditor(true);
         Mark mark = new Mark(e, track);
         track.add(mark);
         mark.setSize(65, Mark.MARK_HEIGHT);
