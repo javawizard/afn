@@ -1,5 +1,7 @@
 package org.opengroove.sixjet.server;
 
+import java.net.Socket;
+
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
 
@@ -11,7 +13,8 @@ public class ControllerHandler extends Thread
     
     /**
      * Returns the username associated with this handler, if the user has
-     * authenticated. If they have not authenticated, then this returns null.
+     * successfully authenticated. If they have not authenticated, then this
+     * returns null.
      * 
      * @return
      */
@@ -23,6 +26,11 @@ public class ControllerHandler extends Thread
     public void send(Packet packet)
     {
         spooler.send(packet);
+    }
+    
+    public ControllerHandler(Socket socket)
+    {
+        
     }
     
     public void run()
