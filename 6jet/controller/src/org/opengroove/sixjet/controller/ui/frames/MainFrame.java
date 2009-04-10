@@ -378,6 +378,7 @@ public class MainFrame extends javax.swing.JFrame
                                             getPlaylistDeleteItemButton(),
                                             BorderLayout.SOUTH);
                                         playlistDeleteItemButton.setText("Delete Item");
+                                        playlistDeleteItemButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                 }
                             }
