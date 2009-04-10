@@ -9,6 +9,9 @@ public class JetPatternEditorColors
         String rs = hex.substring(0, 2);
         String gs = hex.substring(2, 4);
         String bs = hex.substring(4, 6);
+        String as = "ff";
+        if (hex.length() == 8)
+            as = hex.substring(6, 8);
         return new Color(Integer.parseInt(rs, 16), Integer.parseInt(gs, 16), Integer
             .parseInt(bs, 16));
     }
@@ -18,4 +21,7 @@ public class JetPatternEditorColors
     static final Color markSelectedStart = hexColor("5b91be");
     static final Color markSelectedEnd = hexColor("5b91be");
     static final Color markBorder = hexColor("3e8ebb");
+    static final Color trackCreateStart = hexColor("bcc8d6");
+    static final Color trackCreateEnd = hexColor("d5dde5");
+    static final Color trackCreateBorder = hexColor("00000000");
 }
