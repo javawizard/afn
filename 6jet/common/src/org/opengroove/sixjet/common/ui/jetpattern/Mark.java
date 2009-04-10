@@ -5,7 +5,9 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Paint;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.border.Border;
 
 /**
  * A mark on a jet pattern editor.
@@ -17,10 +19,12 @@ public class Mark extends JComponent
 {
     private JetPatternEditor editor;
     
+    private static final Border markBorder = BorderFactory.createLineBorder(JetPatternEditorColors.markBorder, 1)
+    
     Mark(JetPatternEditor editor)
     {
         this.editor = editor;
-        setBorder(new LineBorder());
+        setBorder();
     }
     
     protected void paintComponent(Graphics g)

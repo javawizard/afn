@@ -41,4 +41,12 @@ public class JetPatternEditor extends JComponent
     {
         
     }
+    
+    /**
+     * Called by the Mark class when a mark is selected or deselected.
+     */
+    void markSelectionUpdated()
+    {
+        
+    }
 }
