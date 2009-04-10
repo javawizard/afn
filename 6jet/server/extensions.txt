@@ -1,0 +1,13 @@
+Each 6jet file's final extension represents the style of content in it. The extensions currently used are .zip, .txt, .properties, and .jso (which is a java serialized object or object list). .xml and .tar.gz might be included in the future.
+
+Right before that, there is an extension specific to 6jet that indicates what the file is actually for. Each of these extensions specifies which final extension must immediately follow it.
+
+
+
+.6jm.zip: A music file, which holds music to be played and the jet firing pattern.
+
+.6jl.txt: A 6jet playlist file.
+
+.6jf.jso: A jet firing file. These are typically only seen inside a .6jm.zip file. This file is what the server actually uses when playing back music to figure out when to fire each jet.
+
+.6jp.jso: A jet designer pattern file. These are typicall only seen inside a .6jm.zip file. This file is what 6jet designer actually reads when a user opens a designer project. the designer then converts this into a .6jf.jso when saving.
