@@ -1,6 +1,8 @@
 package org.opengroove.sixjet.common.ui.jetpattern;
 
+import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Paint;
 
 import javax.swing.JComponent;
 
@@ -24,4 +26,20 @@ public class Mark extends JComponent
         // TODO Auto-generated method stub
         super.paintComponent(g);
     }
+    
+    Paint createNormalPaint()
+    {
+        return new GradientPaint()
+    }
+    
+    Paint createHoveredPaint()
+    {
+        
+    }
+    
+    Paint createSelectedPaint()
+    {
+        
+    }
+    
 }
