@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
 
 import org.opengroove.sixjet.common.com.model.Channel;
 
@@ -51,6 +52,27 @@ public class JetPatternEditor extends JComponent
     
     public void deleteSelection()
     {
+        ArrayList<Mark> mlist = new ArrayList<Mark>(selectedMarks);
+        if (mlist.size() == 0)
+        {
+            JOptionPane.showMessageDialog(this,
+                "You haven't selected any marks to delete. "
+                    + "Click on a mark to select it, then try deleting again.");
+            return;
+        }
+        for (Mark m : mlist)
+        {
+            selectedMarks.remove(m);
+            m.getTrack().remove(m);
+            removeChannelEventForMark(m);
+            m.getTrack().revalidate();
+            m.getTrack().repaint();
+        }
+    }
+    
+    private void removeChannelEventForMark(Mark m)
+    {
+        // TODO Auto-generated method stub
         
     }
     
