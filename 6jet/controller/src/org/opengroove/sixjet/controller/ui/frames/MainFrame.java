@@ -21,6 +21,9 @@ import javax.swing.SwingUtilities;
 */
 public class MainFrame extends javax.swing.JFrame {
     private JPanel outerPanel;
+    private JSplitPane topContentLeftSplit;
+    private JSplitPane topContentRightSplit;
+    private JSplitPane musicPlaybackSplit;
     private JSplitPane mainSplit;
 
     /**
@@ -56,6 +59,25 @@ public class MainFrame extends javax.swing.JFrame {
                     mainSplit.setDividerLocation(420);
                     mainSplit.setResizeWeight(1.0);
                     mainSplit.setContinuousLayout(true);
+                    {
+                        musicPlaybackSplit = new JSplitPane();
+                        mainSplit.add(musicPlaybackSplit, JSplitPane.BOTTOM);
+                        musicPlaybackSplit.setContinuousLayout(true);
+                        musicPlaybackSplit.setDividerLocation(336);
+                        musicPlaybackSplit.setResizeWeight(0.5);
+                    }
+                    {
+                        topContentLeftSplit = new JSplitPane();
+                        mainSplit.add(topContentLeftSplit, JSplitPane.TOP);
+                        topContentLeftSplit.setContinuousLayout(true);
+                        topContentLeftSplit.setDividerLocation(125);
+                        {
+                            topContentRightSplit = new JSplitPane();
+                            topContentLeftSplit.add(topContentRightSplit, JSplitPane.RIGHT);
+                            topContentRightSplit.setResizeWeight(1.0);
+                            topContentRightSplit.setDividerLocation(434);
+                        }
+                    }
                 }
             }
             pack();
