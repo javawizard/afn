@@ -2,10 +2,17 @@ package org.opengroove.sixjet.controller.ui.frames;
 
 import java.awt.BorderLayout;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListModel;
 import javax.swing.SwingConstants;
 
 import javax.swing.WindowConstants;
@@ -26,7 +33,16 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JScrollPane jScrollPane2;
+    private JList scheduleList;
+    private HeaderComponent scheduleHeader;
+    private JPanel schedulePanel;
+    private JButton chatSendButton;
     private JSplitPane scheduleChatSplit;
+    private JPanel chatSouth;
+    private JTextField chatTextField;
+    private JScrollPane jScrollPane1;
+    private JTextArea chatTextArea;
     private HeaderComponent chatPanelHeader;
     private JPanel chatPanel;
     private JSplitPane playlistSplit;
@@ -112,6 +128,65 @@ public class MainFrame extends javax.swing.JFrame
                                             BorderLayout.NORTH);
                                         chatPanelHeader.setLabel("Chat");
                                     }
+                                    {
+                                        jScrollPane1 = new JScrollPane();
+                                        chatPanel
+                                            .add(jScrollPane1, BorderLayout.CENTER);
+                                        jScrollPane1
+                                            .setPreferredSize(new java.awt.Dimension(
+                                                124, 162));
+                                        {
+                                            chatTextArea = new JTextArea();
+                                            jScrollPane1
+                                                .setViewportView(getChatTextArea());
+                                            chatTextArea.setEditable(false);
+                                            chatTextArea.setOpaque(false);
+                                        }
+                                    }
+                                    {
+                                        chatSouth = new JPanel();
+                                        BorderLayout chatSouthLayout =
+                                            new BorderLayout();
+                                        chatPanel.add(chatSouth, BorderLayout.SOUTH);
+                                        chatSouth.setLayout(chatSouthLayout);
+                                        {
+                                            chatTextField = new JTextField();
+                                            chatSouth.add(getChatTextField(),
+                                                BorderLayout.NORTH);
+                                        }
+                                        {
+                                            chatSendButton = new JButton();
+                                            chatSouth.add(chatSendButton,
+                                                BorderLayout.SOUTH);
+                                            chatSendButton.setText("Send");
+                                        }
+                                    }
+                                }
+                                {
+                                    schedulePanel = new JPanel();
+                                    BorderLayout schedulePanelLayout =
+                                        new BorderLayout();
+                                    scheduleChatSplit
+                                        .add(schedulePanel, JSplitPane.TOP);
+                                    schedulePanel.setLayout(schedulePanelLayout);
+                                    {
+                                        scheduleHeader = new HeaderComponent();
+                                        schedulePanel.add(scheduleHeader, BorderLayout.NORTH);
+                                        scheduleHeader.setLabel("Schedule");
+                                    }
+                                    {
+                                        jScrollPane2 = new JScrollPane();
+                                        schedulePanel.add(jScrollPane2, BorderLayout.CENTER);
+                                        jScrollPane2.setPreferredSize(new java.awt.Dimension(124, 187));
+                                        {
+                                            ListModel scheduleListModel = 
+                                                new DefaultComboBoxModel(
+                                                    new String[] { "Item One", "Item Two" });
+                                            scheduleList = new JList();
+                                            jScrollPane2.setViewportView(getScheduleList());
+                                            scheduleList.setModel(scheduleListModel);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -135,4 +210,18 @@ public class MainFrame extends javax.swing.JFrame
         }
     }
     
+    public JTextArea getChatTextArea()
+    {
+        return chatTextArea;
+    }
+    
+    public JTextField getChatTextField()
+    {
+        return chatTextField;
+    }
+    
+    public JList getScheduleList() {
+        return scheduleList;
+    }
+
 }
