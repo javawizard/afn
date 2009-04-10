@@ -33,6 +33,9 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private HeaderComponent centerPanelHeader;
+    private JPanel centerPanelNorth;
+    private JPanel centerPanel;
     private JScrollPane jScrollPane4;
     private JList editPlaylistList;
     private JButton playlistDeleteItemButton;
@@ -270,6 +273,26 @@ public class MainFrame extends javax.swing.JFrame
                                     }
                                 }
                             }
+                            {
+                                centerPanel = new JPanel();
+                                BorderLayout centerPanelLayout = new BorderLayout();
+                                topContentRightSplit.add(centerPanel, JSplitPane.LEFT);
+                                centerPanel.setLayout(centerPanelLayout);
+                                {
+                                    centerPanelNorth = new JPanel();
+                                    BorderLayout centerPanelNorthLayout =
+                                        new BorderLayout();
+                                    centerPanel.add(centerPanelNorth,
+                                        BorderLayout.NORTH);
+                                    centerPanelNorth.setLayout(centerPanelNorthLayout);
+                                    {
+                                        centerPanelHeader = new HeaderComponent();
+                                        centerPanelNorth.add(centerPanelHeader,
+                                            BorderLayout.NORTH);
+                                        centerPanelHeader.setLabel("<html><big>6jet Controller</big></html>");
+                                    }
+                                }
+                            }
                         }
                         {
                             playlistSplit = new JSplitPane();
@@ -364,7 +387,8 @@ public class MainFrame extends javax.swing.JFrame
                                             getPlaylistAddMusicButton(),
                                             BorderLayout.NORTH);
                                         playlistAddMusicButton.setText("Add Music");
-                                        playlistAddMusicButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistAddMusicButton
+                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistAddDelayButton = new JButton();
@@ -372,7 +396,8 @@ public class MainFrame extends javax.swing.JFrame
                                             getPlaylistAddDelayButton(),
                                             BorderLayout.CENTER);
                                         playlistAddDelayButton.setText("Add Delay");
-                                        playlistAddDelayButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistAddDelayButton
+                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistDeleteItemButton = new JButton();
@@ -380,20 +405,26 @@ public class MainFrame extends javax.swing.JFrame
                                             getPlaylistDeleteItemButton(),
                                             BorderLayout.SOUTH);
                                         playlistDeleteItemButton.setText("Delete Item");
-                                        playlistDeleteItemButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistDeleteItemButton
+                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                 }
                                 {
                                     jScrollPane4 = new JScrollPane();
-                                    editPlaylistPanel.add(jScrollPane4, BorderLayout.CENTER);
-                                    jScrollPane4.setPreferredSize(new java.awt.Dimension(122, 98));
+                                    editPlaylistPanel.add(jScrollPane4,
+                                        BorderLayout.CENTER);
+                                    jScrollPane4
+                                        .setPreferredSize(new java.awt.Dimension(122,
+                                            98));
                                     {
-                                        ListModel editPlaylistListModel = 
-                                            new DefaultComboBoxModel(
-                                                new String[] { "Item One", "Item Two" });
+                                        ListModel editPlaylistListModel =
+                                            new DefaultComboBoxModel(new String[] {
+                                                "Item One", "Item Two" });
                                         editPlaylistList = new JList();
-                                        jScrollPane4.setViewportView(getEditPlaylistList());
-                                        editPlaylistList.setModel(editPlaylistListModel);
+                                        jScrollPane4
+                                            .setViewportView(getEditPlaylistList());
+                                        editPlaylistList
+                                            .setModel(editPlaylistListModel);
                                     }
                                 }
                             }
@@ -455,8 +486,9 @@ public class MainFrame extends javax.swing.JFrame
         return playlistDeleteItemButton;
     }
     
-    public JList getEditPlaylistList() {
+    public JList getEditPlaylistList()
+    {
         return editPlaylistList;
     }
-
+    
 }
