@@ -1,5 +1,6 @@
 package org.opengroove.sixjet.server;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -34,9 +35,11 @@ public class ControllerHandler extends Thread
         spooler.send(packet);
     }
     
-    public ControllerHandler(Socket socket)
+    public ControllerHandler(Socket socket) throws IOException
     {
-        
+        out = new ObjectOutputStream(socket.getOutputStream());
+        out.flush();
+        in = new ObjectInputStream(socket.getInputStream());
     }
     
     public void run()
