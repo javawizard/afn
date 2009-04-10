@@ -33,6 +33,8 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JButton playlistAddDelayButton;
+    private JButton playlistAddMusicButton;
     private JScrollPane jScrollPane3;
     private JList playlistList;
     private JButton playlistPlayButton;
@@ -200,7 +202,9 @@ public class MainFrame extends javax.swing.JFrame
                                             chatSouth.add(chatSendButton,
                                                 BorderLayout.SOUTH);
                                             chatSendButton.setText("Send");
-                                            chatSendButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                            chatSendButton
+                                                .setMargin(new java.awt.Insets(0, 14,
+                                                    0, 14));
                                         }
                                     }
                                 }
@@ -246,7 +250,9 @@ public class MainFrame extends javax.swing.JFrame
                                             scheduleSouth.add(getScheduleAddButton(),
                                                 BorderLayout.NORTH);
                                             scheduleAddButton.setText("Add");
-                                            scheduleAddButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                            scheduleAddButton
+                                                .setMargin(new java.awt.Insets(0, 14,
+                                                    0, 14));
                                         }
                                         {
                                             scheduleDeleteButton = new JButton();
@@ -254,7 +260,9 @@ public class MainFrame extends javax.swing.JFrame
                                                 getScheduleDeleteButton(),
                                                 BorderLayout.SOUTH);
                                             scheduleDeleteButton.setText("Delete");
-                                            scheduleDeleteButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                            scheduleDeleteButton
+                                                .setMargin(new java.awt.Insets(0, 14,
+                                                    0, 14));
                                         }
                                     }
                                 }
@@ -290,31 +298,37 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistsSouth.add(playlistAddButton,
                                             BorderLayout.NORTH);
                                         playlistAddButton.setText("Add");
-                                        playlistAddButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistAddButton
+                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistDeleteButton = new JButton();
                                         playlistsSouth.add(playlistDeleteButton,
                                             BorderLayout.CENTER);
                                         playlistDeleteButton.setText("Delete");
-                                        playlistDeleteButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistDeleteButton
+                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistPlayButton = new JButton();
                                         playlistsSouth.add(playlistPlayButton,
                                             BorderLayout.SOUTH);
                                         playlistPlayButton.setText("Play");
-                                        playlistPlayButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistPlayButton
+                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                 }
                                 {
                                     jScrollPane3 = new JScrollPane();
-                                    playlistsPanel.add(jScrollPane3, BorderLayout.CENTER);
-                                    jScrollPane3.setPreferredSize(new java.awt.Dimension(122, 109));
+                                    playlistsPanel.add(jScrollPane3,
+                                        BorderLayout.CENTER);
+                                    jScrollPane3
+                                        .setPreferredSize(new java.awt.Dimension(122,
+                                            109));
                                     {
-                                        ListModel playlistListModel = 
-                                            new DefaultComboBoxModel(
-                                                new String[] { "Item One", "Item Two" });
+                                        ListModel playlistListModel =
+                                            new DefaultComboBoxModel(new String[] {
+                                                "Item One", "Item Two" });
                                         playlistList = new JList();
                                         jScrollPane3.setViewportView(getPlaylistList());
                                         playlistList.setModel(playlistListModel);
@@ -341,6 +355,20 @@ public class MainFrame extends javax.swing.JFrame
                                         BorderLayout.SOUTH);
                                     editPlaylistSouth
                                         .setLayout(editPlaylistSouthLayout);
+                                    {
+                                        playlistAddMusicButton = new JButton();
+                                        editPlaylistSouth.add(
+                                            getPlaylistAddMusicButton(),
+                                            BorderLayout.NORTH);
+                                        playlistAddMusicButton.setText("Add Music");
+                                    }
+                                    {
+                                        playlistAddDelayButton = new JButton();
+                                        editPlaylistSouth.add(
+                                            getPlaylistAddDelayButton(),
+                                            BorderLayout.CENTER);
+                                        playlistAddDelayButton.setText("Add Delay");
+                                    }
                                 }
                             }
                         }
@@ -381,8 +409,19 @@ public class MainFrame extends javax.swing.JFrame
         return scheduleDeleteButton;
     }
     
-    public JList getPlaylistList() {
+    public JList getPlaylistList()
+    {
         return playlistList;
     }
-
+    
+    public JButton getPlaylistAddMusicButton()
+    {
+        return playlistAddMusicButton;
+    }
+    
+    public JButton getPlaylistAddDelayButton()
+    {
+        return playlistAddDelayButton;
+    }
+    
 }
