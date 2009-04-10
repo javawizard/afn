@@ -538,6 +538,7 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistAddButton.setText("Add");
                                         playlistAddButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistAddButton.setToolTipText("Creates a new playlist. You will be asked for the name of the new playlist.");
                                     }
                                     {
                                         playlistDeleteButton = new JButton();
