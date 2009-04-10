@@ -75,7 +75,7 @@ public class MainFrame extends javax.swing.JFrame {
                             topContentRightSplit = new JSplitPane();
                             topContentLeftSplit.add(topContentRightSplit, JSplitPane.RIGHT);
                             topContentRightSplit.setResizeWeight(1.0);
-                            topContentRightSplit.setDividerLocation(434);
+                            topContentRightSplit.setDividerLocation(399);
                         }
                     }
                 }
