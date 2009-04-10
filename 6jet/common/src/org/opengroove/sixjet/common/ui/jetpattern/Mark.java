@@ -154,11 +154,11 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
         sizeAtMouseDown = getSize();
         int width = getWidth();
         int mx = e.getX();
-        if (mx < 4)
+        if (mx < 6)
         {
             dragTarget = DragTarget.LEFT;
         }
-        else if (mx > (width - 4))
+        else if (mx > (width - 6))
         {
             dragTarget = DragTarget.RIGHT;
         }
@@ -226,11 +226,11 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     
     public void mouseMoved(MouseEvent e)
     {
-        if (e.getX() < 4)
+        if (e.getX() < 6)
         {
             setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
         }
-        else if (e.getX() > (getWidth() - 4))
+        else if (e.getX() > (getWidth() - 6))
         {
             setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
         }
