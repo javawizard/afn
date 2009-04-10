@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 
 import javax.swing.JOptionPane;
@@ -46,6 +47,9 @@ public class SixjetController
             }
         });
         loginFrame.setDefaultCloseOperation(loginFrame.EXIT_ON_CLOSE);
+        loginFrame.setLocationRelativeTo(null);
+        loginFrame.setTitle("Log in - 6jet Controller");
+        loginFrame.show();
     }
     
     protected static void attemptLogin()
@@ -83,13 +87,23 @@ public class SixjetController
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             loginFrame.getServerField().setEnabled(true);
             loginFrame.getUsernameField().setEnabled(true);
             loginFrame.getPasswordField().setEnabled(true);
             loginFrame.getLoginButton().setEnabled(true);
             JOptionPane.showMessageDialog(loginFrame,
-                "<html>An error has occured while logging in:<br/>");
-            e.printStackTrace();
+                "<html>An error has occured while logging in:<br/>" + e.getMessage()
+                    + "<br/><br/>Class: " + e.getClass().getName());
+            if (e instanceof ConnectException)
+            {
+                JOptionPane
+                    .showMessageDialog(
+                        loginFrame,
+                        "<html>This error means that 6jet Controller couldn't connect<br/>"
+                            + "to the server. This could be because the server is not running.<br/>"
+                            + "Check to make sure that the server computer is running, and try again.");
+            }
         }
     }
     
