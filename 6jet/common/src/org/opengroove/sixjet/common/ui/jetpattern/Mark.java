@@ -191,6 +191,8 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
         if (dragTarget == DragTarget.LEFT)
         {
             setLocation(mouseTrackPoint.x, 0);
+            // FIXME: This shifts the whole mark to the right if it's getting to
+            // small. We should refuse to move it if it's too small.
             int newSize =
                 sizeAtMouseDown.width + (locationAtMouseDown.x - mouseTrackPoint.x);
             if (newSize < 4)
