@@ -547,6 +547,7 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistDeleteButton.setText("Delete");
                                         playlistDeleteButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistDeleteButton.setToolTipText("Deletes the selected playlist. You will be asked to confirm that you want to delete the selected playlist.");
                                     }
                                     {
                                         playlistPlayButton = new JButton();
