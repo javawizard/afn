@@ -178,6 +178,7 @@ public class MainFrame extends javax.swing.JFrame
                                     musicUploadButton.setText("Upload");
                                     musicUploadButton.setMargin(new java.awt.Insets(0,
                                         0, 0, 0));
+                                    musicUploadButton.setToolTipText("<html>Allows you to upload a new music file. You will be asked for the file that you want to upload. <br/>You can also upload a file directly from within 6jet Music.");
                                 }
                                 {
                                     musicPlayButton = new JButton();
