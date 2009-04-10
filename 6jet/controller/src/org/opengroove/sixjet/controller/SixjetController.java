@@ -8,6 +8,8 @@ import java.net.Socket;
 
 import javax.swing.JOptionPane;
 
+import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
+import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
 import org.opengroove.sixjet.common.ui.LoginFrame;
 import org.opengroove.sixjet.controller.ui.frames.MainFrame;
 
@@ -34,7 +36,13 @@ public class SixjetController
             
             public void actionPerformed(ActionEvent e)
             {
-                attemptLogin();
+                new Thread()
+                {
+                    public void run()
+                    {
+                        attemptLogin();
+                    }
+                }.start();
             }
         });
         loginFrame.setDefaultCloseOperation(loginFrame.EXIT_ON_CLOSE);
@@ -47,7 +55,31 @@ public class SixjetController
         String password = loginFrame.getPasswordField().getText();
         try
         {
+            loginFrame.getServerField().setEnabled(false);
+            loginFrame.getUsernameField().setEnabled(false);
+            loginFrame.getPasswordField().setEnabled(false);
+            loginFrame.getLoginButton().setEnabled(false);
             socket = new Socket(server, 56538);
+            inStream = new ObjectInputStream(socket.getInputStream());
+            outStream = new ObjectOutputStream(socket.getOutputStream());
+            outStream.writeObject(new LoginPacket(username, password));
+            LoginResponse response = (LoginResponse) inStream.readObject();
+            if (response.isSuccessful())
+            {
+                loginFrame.dispose();
+                setupController();
+                return;
+            }
+            else
+            {
+                loginFrame.getServerField().setEnabled(true);
+                loginFrame.getUsernameField().setEnabled(true);
+                loginFrame.getPasswordField().setEnabled(true);
+                loginFrame.getLoginButton().setEnabled(true);
+                socket.close();
+                JOptionPane.showMessageDialog(loginFrame, "Login failed: "
+                    + response.getReason());
+            }
         }
         catch (Exception e)
         {
@@ -61,4 +93,9 @@ public class SixjetController
         }
     }
     
+    private static void setupController()
+    {
+        // TODO Auto-generated method stub
+        
+    }
 }
