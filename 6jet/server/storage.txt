@@ -3,3 +3,7 @@ The server's storage is essentially made up of the storage folder. Under that, t
 music: This folder holds a bunch of files that end with .6jm.zip. These represent music that has been uploaded to the server. 
 
 playlists: This folder holds one file for each playlist. The file ends with ".6jl". I'll discuss the file's exact format in a bit.
+
+schedules: This folder holds one file, schedule.6js. I might add more schedule files in the future, mainly for events that repeat. Anyway, this one file holds all upcoming schedule events.
+
+auth: This folder holds two files, 
