@@ -163,25 +163,29 @@ public class MainFrame extends javax.swing.JFrame
                                     musicUploadButton = new JButton();
                                     musicSouth.add(getMusicUploadButton());
                                     musicUploadButton.setText("Upload");
-                                    musicUploadButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    musicUploadButton.setMargin(new java.awt.Insets(0,
+                                        0, 0, 0));
                                 }
                                 {
                                     musicPlayButton = new JButton();
                                     musicSouth.add(getMusicPlayButton());
                                     musicPlayButton.setText("Play");
-                                    musicPlayButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    musicPlayButton.setMargin(new java.awt.Insets(0, 0,
+                                        0, 0));
                                 }
                                 {
                                     musicDeleteButton = new JButton();
                                     musicSouth.add(getMusicDeleteButton());
                                     musicDeleteButton.setText("Delete");
-                                    musicDeleteButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    musicDeleteButton.setMargin(new java.awt.Insets(0,
+                                        0, 0, 0));
                                 }
                                 {
                                     musicDownloadButton = new JButton();
                                     musicSouth.add(getMusicDownloadButton());
                                     musicDownloadButton.setText("Download");
-                                    musicDownloadButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                    musicDownloadButton.setMargin(new java.awt.Insets(
+                                        0, 0, 0, 0));
                                 }
                             }
                         }
@@ -350,41 +354,61 @@ public class MainFrame extends javax.swing.JFrame
                                 }
                                 {
                                     centerPanelSouth = new JPanel();
-                                    FlowLayout centerPanelSouthLayout = new FlowLayout();
-                                    centerPanelSouthLayout.setAlignment(FlowLayout.LEFT);
+                                    FlowLayout centerPanelSouthLayout =
+                                        new FlowLayout();
+                                    centerPanelSouthLayout
+                                        .setAlignment(FlowLayout.LEFT);
                                     centerPanelSouthLayout.setHgap(3);
                                     centerPanelSouthLayout.setVgap(3);
-                                    centerPanel.add(centerPanelSouth, BorderLayout.SOUTH);
+                                    centerPanel.add(centerPanelSouth,
+                                        BorderLayout.SOUTH);
                                     centerPanelSouth.setLayout(centerPanelSouthLayout);
                                     {
                                         manualControlToggleCheckbox = new JCheckBox();
-                                        centerPanelSouth.add(getManualControlToggleCheckbox());
+                                        centerPanelSouth
+                                            .add(getManualControlToggleCheckbox());
                                         manualControlToggleCheckbox.setText("Toggle");
                                     }
                                     {
                                         manualControlFixedCheckbox = new JCheckBox();
-                                        centerPanelSouth.add(getManualControlFixedCheckbox());
-                                        manualControlFixedCheckbox.setText("Fixed time");
+                                        centerPanelSouth
+                                            .add(getManualControlFixedCheckbox());
+                                        manualControlFixedCheckbox
+                                            .setText("Fixed time");
                                     }
                                     {
                                         manualControlTimePanel = new JPanel();
-                                        BorderLayout manualControlTimePanelLayout = new BorderLayout();
+                                        BorderLayout manualControlTimePanelLayout =
+                                            new BorderLayout();
                                         centerPanelSouth.add(manualControlTimePanel);
-                                        manualControlTimePanel.setLayout(manualControlTimePanelLayout);
+                                        manualControlTimePanel
+                                            .setLayout(manualControlTimePanelLayout);
                                         {
                                             manualControlTimeLabel = new JLabel();
-                                            manualControlTimePanel.add(manualControlTimeLabel, BorderLayout.WEST);
+                                            manualControlTimePanel.add(
+                                                manualControlTimeLabel,
+                                                BorderLayout.WEST);
                                             manualControlTimeLabel.setText("Time: ");
                                         }
                                         {
                                             manualControlTimeField = new JTextField();
-                                            manualControlTimePanel.add(manualControlTimeField, BorderLayout.CENTER);
+                                            manualControlTimeField.getDocument()
+                                                .addDocumentListener(
+                                                    new DocumentListener()
+                                                    {
+                                                    });
+                                            manualControlTimePanel.add(
+                                                manualControlTimeField,
+                                                BorderLayout.CENTER);
                                             manualControlTimeField.setText("250");
-                                            manualControlTimeField.setPreferredSize(new java.awt.Dimension(40, 20));
+                                            manualControlTimeField
+                                                .setPreferredSize(new java.awt.Dimension(
+                                                    40, 20));
                                         }
                                         {
                                             timeMsLabel = new JLabel();
-                                            manualControlTimePanel.add(timeMsLabel, BorderLayout.EAST);
+                                            manualControlTimePanel.add(timeMsLabel,
+                                                BorderLayout.EAST);
                                             timeMsLabel.setText("ms");
                                         }
                                     }
@@ -501,7 +525,9 @@ public class MainFrame extends javax.swing.JFrame
                                                 .add(editPlaylistAddLabel,
                                                     BorderLayout.WEST);
                                             editPlaylistAddLabel.setText("Add:");
-                                            editPlaylistAddLabel.setPreferredSize(new java.awt.Dimension(38, 22));
+                                            editPlaylistAddLabel
+                                                .setPreferredSize(new java.awt.Dimension(
+                                                    38, 22));
                                         }
                                         {
                                             editPlaylistAddPanel = new JPanel();
@@ -526,7 +552,8 @@ public class MainFrame extends javax.swing.JFrame
                                             }
                                             {
                                                 playlistAddMusicButton = new JButton();
-                                                editPlaylistAddPanel.add(playlistAddMusicButton);
+                                                editPlaylistAddPanel
+                                                    .add(playlistAddMusicButton);
                                                 playlistAddMusicButton.setText("Music");
                                                 playlistAddMusicButton
                                                     .setMargin(new java.awt.Insets(0,
@@ -536,31 +563,50 @@ public class MainFrame extends javax.swing.JFrame
                                     }
                                     {
                                         editPlaylistSouthTop = new JPanel();
-                                        BorderLayout editPlaylistSouthTopLayout = new BorderLayout();
-                                        editPlaylistSouth.add(editPlaylistSouthTop, BorderLayout.NORTH);
-                                        editPlaylistSouthTop.setLayout(editPlaylistSouthTopLayout);
+                                        BorderLayout editPlaylistSouthTopLayout =
+                                            new BorderLayout();
+                                        editPlaylistSouth.add(editPlaylistSouthTop,
+                                            BorderLayout.NORTH);
+                                        editPlaylistSouthTop
+                                            .setLayout(editPlaylistSouthTopLayout);
                                         {
                                             editPlaylistMoveLabel = new JLabel();
-                                            editPlaylistSouthTop.add(editPlaylistMoveLabel, BorderLayout.WEST);
+                                            editPlaylistSouthTop.add(
+                                                editPlaylistMoveLabel,
+                                                BorderLayout.WEST);
                                             editPlaylistMoveLabel.setText("Move:");
-                                            editPlaylistMoveLabel.setPreferredSize(new java.awt.Dimension(38, 22));
+                                            editPlaylistMoveLabel
+                                                .setPreferredSize(new java.awt.Dimension(
+                                                    38, 22));
                                         }
                                         {
                                             editPlaylistMovePanel = new JPanel();
-                                            GridLayout editPlaylistMovePanelLayout = new GridLayout(1, 1);
-                                            editPlaylistSouthTop.add(editPlaylistMovePanel, BorderLayout.CENTER);
-                                            editPlaylistMovePanel.setLayout(editPlaylistMovePanelLayout);
+                                            GridLayout editPlaylistMovePanelLayout =
+                                                new GridLayout(1, 1);
+                                            editPlaylistSouthTop.add(
+                                                editPlaylistMovePanel,
+                                                BorderLayout.CENTER);
+                                            editPlaylistMovePanel
+                                                .setLayout(editPlaylistMovePanelLayout);
                                             {
                                                 editPlaylistUpButton = new JButton();
-                                                editPlaylistMovePanel.add(editPlaylistUpButton);
-                                                editPlaylistUpButton.setText("<html>&uarr;");
-                                                editPlaylistUpButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                                editPlaylistMovePanel
+                                                    .add(editPlaylistUpButton);
+                                                editPlaylistUpButton
+                                                    .setText("<html>&uarr;");
+                                                editPlaylistUpButton
+                                                    .setMargin(new java.awt.Insets(0,
+                                                        0, 0, 0));
                                             }
                                             {
                                                 editPlaylistDownButton = new JButton();
-                                                editPlaylistMovePanel.add(getEditPlaylistDownButton());
-                                                editPlaylistDownButton.setText("<html>&darr;");
-                                                editPlaylistDownButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                                editPlaylistMovePanel
+                                                    .add(getEditPlaylistDownButton());
+                                                editPlaylistDownButton
+                                                    .setText("<html>&darr;");
+                                                editPlaylistDownButton
+                                                    .setMargin(new java.awt.Insets(0,
+                                                        0, 0, 0));
                                             }
                                         }
                                     }
@@ -647,32 +693,39 @@ public class MainFrame extends javax.swing.JFrame
         return editPlaylistList;
     }
     
-    public JButton getEditPlaylistDownButton() {
+    public JButton getEditPlaylistDownButton()
+    {
         return editPlaylistDownButton;
     }
     
-    public JButton getMusicUploadButton() {
+    public JButton getMusicUploadButton()
+    {
         return musicUploadButton;
     }
     
-    public JButton getMusicPlayButton() {
+    public JButton getMusicPlayButton()
+    {
         return musicPlayButton;
     }
     
-    public JButton getMusicDeleteButton() {
+    public JButton getMusicDeleteButton()
+    {
         return musicDeleteButton;
     }
     
-    public JButton getMusicDownloadButton() {
+    public JButton getMusicDownloadButton()
+    {
         return musicDownloadButton;
     }
     
-    public JCheckBox getManualControlToggleCheckbox() {
+    public JCheckBox getManualControlToggleCheckbox()
+    {
         return manualControlToggleCheckbox;
     }
     
-    public JCheckBox getManualControlFixedCheckbox() {
+    public JCheckBox getManualControlFixedCheckbox()
+    {
         return manualControlFixedCheckbox;
     }
-
+    
 }
