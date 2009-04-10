@@ -13,7 +13,9 @@ import javax.swing.JComponent;
  * "current position" on the ruler, if asked to.
  * 
  * The editor draws each channel as a row. Within a channel, marks are present.
- * Marks are added by clicking and dragging in an area where there is no mark. 
+ * Marks are added by clicking and dragging in an area where there is no mark. A
+ * mark can be resized on its left and right side by dragging its left and right
+ * sides.
  * 
  * 
  * @author Alexander Boyd
