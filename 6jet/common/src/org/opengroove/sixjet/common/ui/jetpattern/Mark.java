@@ -226,7 +226,10 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     {
     }
     
-    public 
+    Track getTrack()
+    {
+        return track;
+    }
     
     public void mouseDragged(MouseEvent e)
     {
