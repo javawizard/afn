@@ -1,4 +1,4 @@
-package org.opengroove.sixjet.common.ui;
+package org.opengroove.sixjet.common.ui.jetpattern;
 
 import javax.swing.JComponent;
 
@@ -28,8 +28,14 @@ public class JetPatternEditor extends JComponent
      */
     private boolean editable = true;
     
+    
     public JetPatternEditor(boolean editable)
     {
         this.editable = editable;
+    }
+    
+    public void deleteSelection()
+    {
+        
     }
 }
