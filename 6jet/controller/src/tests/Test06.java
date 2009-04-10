@@ -1,5 +1,7 @@
 package tests;
 
+import org.opengroove.sixjet.controller.SixjetController;
+
 public class Test06
 {
     
