@@ -19,7 +19,7 @@ public class Test01
         System.out.println("creating folders and doing write");
         File file = File.createTempFile("test", "test");
         ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < 50000; i++)
         {
             out.writeObject(new Packet());
         }
@@ -27,7 +27,7 @@ public class Test01
         out.close();
         System.out.println("doing read");
         ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < 50000; i++)
         {
             Packet packet = (Packet) in.readObject();
         }
