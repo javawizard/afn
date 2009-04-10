@@ -556,6 +556,7 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistPlayButton.setText("Play");
                                         playlistPlayButton
                                             .setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistPlayButton.setToolTipText("Plays the selected playlist, stopping any currently-playing music if necessary.");
                                     }
                                 }
                                 {
