@@ -8,7 +8,7 @@ Anyway, the data pins of each of these shift registers will be hooked to data pi
 
 6 bits will be used on each shift register to control the 18 valves. One additional pin will be used to control a 120-volt relay that powers the 24-volt power supply, so that this power supply can be powered down, independant of the controller board, to save power when not in use. This leaves 5 extra pins, plus 16 potential others (since I could add two more shift registers on without having to chain them together, something I'd like to avoid due to its inherent slowdown of output speed). A few of these might be used to control existing sprinkler system valves. These would be represented as additional jets, and would be controlled by a dpdt relay that either connects the sprinkler valve to the 24-volt power supply or connects the sprinkler valve to the actual sprinkler system. That way, yard sprinklers can contribute to 6jet music too.
 
-
+Each jet has a 5 volt reed relay dedicated to it. These reed relays will either be powered directly by the shift registers (which, by the way, I think were either 74HC125's or 74HC126's), or by a series of tri-state buffers (which function solely as buffers and not as tri-state devices; I just have an excess of tri-state buffers that I could use) if the shift registers won't be able to output enough power to drive all of the reed relays connected to them at once.
 
 
 
