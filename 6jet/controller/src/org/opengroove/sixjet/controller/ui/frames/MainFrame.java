@@ -200,6 +200,7 @@ public class MainFrame extends javax.swing.JFrame
                                             chatSouth.add(chatSendButton,
                                                 BorderLayout.SOUTH);
                                             chatSendButton.setText("Send");
+                                            chatSendButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                         }
                                     }
                                 }
@@ -245,6 +246,7 @@ public class MainFrame extends javax.swing.JFrame
                                             scheduleSouth.add(getScheduleAddButton(),
                                                 BorderLayout.NORTH);
                                             scheduleAddButton.setText("Add");
+                                            scheduleAddButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                         }
                                         {
                                             scheduleDeleteButton = new JButton();
@@ -252,6 +254,7 @@ public class MainFrame extends javax.swing.JFrame
                                                 getScheduleDeleteButton(),
                                                 BorderLayout.SOUTH);
                                             scheduleDeleteButton.setText("Delete");
+                                            scheduleDeleteButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                         }
                                     }
                                 }
@@ -287,18 +290,21 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistsSouth.add(playlistAddButton,
                                             BorderLayout.NORTH);
                                         playlistAddButton.setText("Add");
+                                        playlistAddButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistDeleteButton = new JButton();
                                         playlistsSouth.add(playlistDeleteButton,
                                             BorderLayout.CENTER);
                                         playlistDeleteButton.setText("Delete");
+                                        playlistDeleteButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistPlayButton = new JButton();
                                         playlistsSouth.add(playlistPlayButton,
                                             BorderLayout.SOUTH);
                                         playlistPlayButton.setText("Play");
+                                        playlistPlayButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                 }
                                 {
