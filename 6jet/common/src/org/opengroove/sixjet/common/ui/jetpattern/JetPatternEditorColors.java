@@ -13,7 +13,7 @@ public class JetPatternEditorColors
         if (hex.length() == 8)
             as = hex.substring(6, 8);
         return new Color(Integer.parseInt(rs, 16), Integer.parseInt(gs, 16), Integer
-            .parseInt(bs, 16));
+            .parseInt(bs, 16), Integer.parseInt(as, 16));
     }
     
     static final Color markNormalStart = hexColor("b9d1e3");
