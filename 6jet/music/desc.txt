@@ -1,1 +1,1 @@
-The 6jet music project contains the 6jet music program, the program that should be run on the computer that is to emit the actual audio played by 6jet. Computers running 6jet music connect to the 6jet server
+The 6jet music project contains the 6jet music program, the program that should be run on the computer that is to emit the actual audio played by 6jet. 6jet music boxes (the term for a computer running 6jet music) connect to the 6jet server. These are then available to the controller for playback on.
