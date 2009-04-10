@@ -8,9 +8,11 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -184,7 +186,7 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
             finalizeDrag();
             wasDragged = false;
         }
-        else if (getBounds().contains(e.getX(), e.getY()))
+        else if (new Rectangle(getSize()).contains(e.getX(), e.getY()))
         {
             System.out.println("in bounds");
             boolean toggle = e.isControlDown();
@@ -192,8 +194,14 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
             if (!toggle)
             {
                 System.out.println("selecting");
+                ArrayList<Mark> previousSelection =
+                    new ArrayList<Mark>(editor.selectedMarks);
                 editor.selectedMarks.clear();
                 editor.selectedMarks.add(this);
+                for (Mark m : previousSelection)
+                {
+                    m.repaint();
+                }
             }
             else if (selected)
             {
