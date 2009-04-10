@@ -41,6 +41,7 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
     {
         locationAtMouseDown = new Point(e.getX(), e.getY());
         down = true;
+        repaint();
     }
     
     public void mouseReleased(MouseEvent e)
@@ -57,7 +58,10 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
                 {
                     end = end + (4 - (end - start));
                 }
-                
+                if(end < getWidth() && end >= 0)
+                {
+                    
+                }
             }
         }
         draggingLocation = -1;
