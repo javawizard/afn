@@ -34,6 +34,14 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JButton musicPlayButton;
+    private JButton musicUploadButton;
+    private JPanel musicSouth;
+    private JButton editPlaylistDownButton;
+    private JButton editPlaylistUpButton;
+    private JPanel editPlaylistMovePanel;
+    private JLabel editPlaylistMoveLabel;
+    private JPanel editPlaylistSouthTop;
     private JPanel editPlaylistAddPanel;
     private JLabel editPlaylistAddLabel;
     private JPanel editPlaylistSouthMid;
@@ -134,6 +142,22 @@ public class MainFrame extends javax.swing.JFrame
                                 musicHeader = new HeaderComponent();
                                 musicPanel.add(musicHeader, BorderLayout.NORTH);
                                 musicHeader.setLabel("Music");
+                            }
+                            {
+                                musicSouth = new JPanel();
+                                GridLayout musicSouthLayout = new GridLayout(1, 1);
+                                musicPanel.add(musicSouth, BorderLayout.SOUTH);
+                                musicSouth.setLayout(musicSouthLayout);
+                                {
+                                    musicUploadButton = new JButton();
+                                    musicSouth.add(getMusicUploadButton());
+                                    musicUploadButton.setText("Upload");
+                                }
+                                {
+                                    musicPlayButton = new JButton();
+                                    musicSouth.add(getMusicPlayButton());
+                                    musicPlayButton.setText("Play");
+                                }
                             }
                         }
                         {
@@ -411,14 +435,15 @@ public class MainFrame extends javax.swing.JFrame
                                                 .add(editPlaylistAddLabel,
                                                     BorderLayout.WEST);
                                             editPlaylistAddLabel.setText("Add:");
+                                            editPlaylistAddLabel.setPreferredSize(new java.awt.Dimension(38, 22));
                                         }
                                         {
                                             editPlaylistAddPanel = new JPanel();
                                             GridLayout editPlaylistAddPanelLayout =
                                                 new GridLayout(1, 2);
                                             editPlaylistAddPanelLayout.setColumns(1);
-                                            editPlaylistAddPanelLayout.setHgap(5);
-                                            editPlaylistAddPanelLayout.setVgap(5);
+                                            editPlaylistAddPanelLayout.setHgap(0);
+                                            editPlaylistAddPanelLayout.setVgap(0);
                                             editPlaylistSouthMid.add(
                                                 editPlaylistAddPanel,
                                                 BorderLayout.CENTER);
@@ -435,12 +460,41 @@ public class MainFrame extends javax.swing.JFrame
                                             }
                                             {
                                                 playlistAddMusicButton = new JButton();
-                                                editPlaylistAddPanel
-                                                    .add(playlistAddMusicButton);
+                                                editPlaylistAddPanel.add(playlistAddMusicButton);
                                                 playlistAddMusicButton.setText("Music");
                                                 playlistAddMusicButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
+                                            }
+                                        }
+                                    }
+                                    {
+                                        editPlaylistSouthTop = new JPanel();
+                                        BorderLayout editPlaylistSouthTopLayout = new BorderLayout();
+                                        editPlaylistSouth.add(editPlaylistSouthTop, BorderLayout.NORTH);
+                                        editPlaylistSouthTop.setLayout(editPlaylistSouthTopLayout);
+                                        {
+                                            editPlaylistMoveLabel = new JLabel();
+                                            editPlaylistSouthTop.add(editPlaylistMoveLabel, BorderLayout.WEST);
+                                            editPlaylistMoveLabel.setText("Move:");
+                                            editPlaylistMoveLabel.setPreferredSize(new java.awt.Dimension(38, 22));
+                                        }
+                                        {
+                                            editPlaylistMovePanel = new JPanel();
+                                            GridLayout editPlaylistMovePanelLayout = new GridLayout(1, 1);
+                                            editPlaylistSouthTop.add(editPlaylistMovePanel, BorderLayout.CENTER);
+                                            editPlaylistMovePanel.setLayout(editPlaylistMovePanelLayout);
+                                            {
+                                                editPlaylistUpButton = new JButton();
+                                                editPlaylistMovePanel.add(editPlaylistUpButton);
+                                                editPlaylistUpButton.setText("<html>&uarr;");
+                                                editPlaylistUpButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+                                            }
+                                            {
+                                                editPlaylistDownButton = new JButton();
+                                                editPlaylistMovePanel.add(getEditPlaylistDownButton());
+                                                editPlaylistDownButton.setText("<html>&darr;");
+                                                editPlaylistDownButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                             }
                                         }
                                     }
@@ -527,4 +581,16 @@ public class MainFrame extends javax.swing.JFrame
         return editPlaylistList;
     }
     
+    public JButton getEditPlaylistDownButton() {
+        return editPlaylistDownButton;
+    }
+    
+    public JButton getMusicUploadButton() {
+        return musicUploadButton;
+    }
+    
+    public JButton getMusicPlayButton() {
+        return musicPlayButton;
+    }
+
 }
