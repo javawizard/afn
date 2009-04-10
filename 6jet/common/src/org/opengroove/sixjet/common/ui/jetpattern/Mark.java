@@ -178,23 +178,29 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
         down = false;
         if (wasDragged)
         {
+            System.out.println("wasDragged");
             finalizeDrag();
+            wasDragged = false;
         }
         else if (getBounds().contains(e.getX(), e.getY()))
         {
+            System.out.println("in bounds");
             boolean toggle = e.isControlDown();
             boolean selected = isSelected();
             if (!toggle)
             {
+                System.out.println("selecting");
                 editor.selectedMarks.clear();
                 editor.selectedMarks.add(this);
             }
             else if (selected)
             {
+                System.out.println("removing selection");
                 editor.selectedMarks.remove(this);
             }
             else
             {
+                System.out.println("adding selection");
                 editor.selectedMarks.add(this);
             }
         }
