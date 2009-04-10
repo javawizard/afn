@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import javax.swing.JComponent;
 import javax.swing.JInternalFrame;
 
+import org.opengroove.sixjet.common.com.model.Channel;
+
 /**
  * A component that shows a list of tracks, with marks in each track. The
  * component is created with a specified length, in milliseconds, and it sets
