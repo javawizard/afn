@@ -60,12 +60,14 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
     
     private static final int MARK_HEIGHT = 30;
     
-    Mark(JetPatternEditor editor, Track track)
+    public Mark(JetPatternEditor editor, Track track)
     {
         this.track = track;
         this.editor = editor;
         setBorder(markBorder);
+        setLayout(null);
         addMouseListener(this);
+        addMouseMotionListener(this);
     }
     
     protected void paintComponent(Graphics g)
