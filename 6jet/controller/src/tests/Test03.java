@@ -23,5 +23,7 @@ public class Test03
         track.add(mark);
         mark.setSize(65, Mark.MARK_HEIGHT);
         mark.setLocation(120, 0);
+        f.setSize(550,300);
+        f.show();
     }
 }
