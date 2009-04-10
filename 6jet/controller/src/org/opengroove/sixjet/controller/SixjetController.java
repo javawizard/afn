@@ -40,6 +40,10 @@ public class SixjetController
     
     protected static void attemptLogin()
     {
+        String server = loginFrame.getServerField().getText();
+        String username = loginFrame.getUsernameField().getText();
+        String password = loginFrame.getPasswordField().getText();
+        socket = new Socket(server)
     }
     
 }
