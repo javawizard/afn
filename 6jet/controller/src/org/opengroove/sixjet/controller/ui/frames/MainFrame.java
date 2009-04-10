@@ -33,6 +33,8 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JScrollPane jScrollPane4;
+    private JList editPlaylistList;
     private JButton playlistDeleteItemButton;
     private JButton playlistAddDelayButton;
     private JButton playlistAddMusicButton;
@@ -381,6 +383,19 @@ public class MainFrame extends javax.swing.JFrame
                                         playlistDeleteItemButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                 }
+                                {
+                                    jScrollPane4 = new JScrollPane();
+                                    editPlaylistPanel.add(jScrollPane4, BorderLayout.CENTER);
+                                    jScrollPane4.setPreferredSize(new java.awt.Dimension(122, 98));
+                                    {
+                                        ListModel editPlaylistListModel = 
+                                            new DefaultComboBoxModel(
+                                                new String[] { "Item One", "Item Two" });
+                                        editPlaylistList = new JList();
+                                        jScrollPane4.setViewportView(getEditPlaylistList());
+                                        editPlaylistList.setModel(editPlaylistListModel);
+                                    }
+                                }
                             }
                         }
                     }
@@ -440,4 +455,8 @@ public class MainFrame extends javax.swing.JFrame
         return playlistDeleteItemButton;
     }
     
+    public JList getEditPlaylistList() {
+        return editPlaylistList;
+    }
+
 }
