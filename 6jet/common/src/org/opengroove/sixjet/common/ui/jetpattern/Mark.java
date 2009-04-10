@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Paint;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -17,7 +18,7 @@ import javax.swing.border.Border;
  * @author Alexander Boyd
  * 
  */
-public class Mark extends JComponent implements MouseListener
+public class Mark extends JComponent implements MouseListener, MouseMotionListener
 {
     /**
      * True if the mouse is hovering over this mark, false if it is not
@@ -28,7 +29,6 @@ public class Mark extends JComponent implements MouseListener
      * this mark, false if not
      */
     private boolean mouseInDown = false;
-    
     
     private JetPatternEditor editor;
     
@@ -93,6 +93,18 @@ public class Mark extends JComponent implements MouseListener
     
     public void mouseReleased(MouseEvent e)
     {
+    }
+    
+    public void mouseDragged(MouseEvent e)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public void mouseMoved(MouseEvent e)
+    {
+        // TODO Auto-generated method stub
+        
     }
     
 }
