@@ -198,6 +198,10 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
             return;
         Point mouseTrackPoint =
             SwingUtilities.convertPoint(this, new Point(e.getX(), e.getY()), track);
+        if (mouseTrackPoint.x < 1)
+            mouseTrackPoint.x = 1;
+        else if (mouseTrackPoint.x > (track.getWidth() - 1))
+            mouseTrackPoint.x = track.getWidth() - 1;
         if (dragTarget == DragTarget.LEFT)
         {
             int newX = mouseTrackPoint.x;
@@ -207,7 +211,6 @@ public class Mark extends JComponent implements MouseListener, MouseMotionListen
             {
                 newX -= (4 - newSize);
                 newSize = 4;
-                
             }
             setLocation(newX, 0);
             setSize(newSize, MARK_HEIGHT);
