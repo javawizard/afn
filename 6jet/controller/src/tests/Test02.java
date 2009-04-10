@@ -21,12 +21,12 @@ public class Test02
     public static void main(String[] args)
     {
         JFrame f = new JFrame();
-        JLabel l = new JLabel("hi");
+        final JLabel l = new JLabel("hi");
+        l.setLocation(500, 50);
         l.setBorder(new LineBorder(Color.RED));
-        JLabel l2 = new JLabel("bye");
-        f.getContentPane().setLayout(new FlowLayout());
+        f.getContentPane().setLayout(null);
         f.getContentPane().add(l);
-        f.getContentPane().add(l2);
+        l.setSize(l.getPreferredSize());
         f.show();
         l.addMouseMotionListener(new MouseMotionListener()
         {
@@ -34,6 +34,7 @@ public class Test02
             public void mouseDragged(MouseEvent e)
             {
                 System.out.println("dragged " + e.getX() + "," + e.getY());
+                l.setLocation(l.getX() - 1, l.getY());
             }
             
             public void mouseMoved(MouseEvent e)
