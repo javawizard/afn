@@ -17,8 +17,11 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
     private Point locationAtMouseDown;
     private int draggingLocation = -1;
     
-    public Track()
+    private JetPatternEditor editor;
+    
+    public Track(JetPatternEditor editor)
     {
+        this.editor = editor;
         setLayout(null);
         setBorder(new LineBorder(Color.BLACK));
         addMouseListener(this);
@@ -58,9 +61,12 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
                 {
                     end = end + (4 - (end - start));
                 }
-                if(end < getWidth() && end >= 0)
+                if (end < getWidth() && end >= 0)
                 {
-                    
+                    Mark mark = new Mark(editor, this);
+                    add(mark);
+                    mark.setSize(end - start, Mark.MARK_HEIGHT);
+                    mark.setLocation(start, 0);
                 }
             }
         }
