@@ -6,4 +6,4 @@ playlists: This folder holds one file for each playlist. The file ends with ".6j
 
 schedules: This folder holds one file, schedule.6js. I might add more schedule files in the future, mainly for events that repeat. Anyway, this one file holds all upcoming schedule events.
 
-auth: This folder holds two files, 
+auth: This folder holds two files, controllers.6ja.properties, which authenticates controllers, and musicboxes.6ja.properties, which authenticates music boxes.

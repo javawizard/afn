@@ -15,3 +15,8 @@ Right before that, there is an extension specific to 6jet that indicates what th
 .6js.txt: A 6jet schedule file. The server typically only has one of these.
 
 .6ja.properties: An authentication file. Keys are usernames and values are SHA-512 passwords.
+
+
+
+
+
