@@ -362,6 +362,7 @@ public class MainFrame extends javax.swing.JFrame
                                             getPlaylistAddMusicButton(),
                                             BorderLayout.NORTH);
                                         playlistAddMusicButton.setText("Add Music");
+                                        playlistAddMusicButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistAddDelayButton = new JButton();
@@ -369,6 +370,7 @@ public class MainFrame extends javax.swing.JFrame
                                             getPlaylistAddDelayButton(),
                                             BorderLayout.CENTER);
                                         playlistAddDelayButton.setText("Add Delay");
+                                        playlistAddDelayButton.setMargin(new java.awt.Insets(0, 14, 0, 14));
                                     }
                                     {
                                         playlistDeleteItemButton = new JButton();
