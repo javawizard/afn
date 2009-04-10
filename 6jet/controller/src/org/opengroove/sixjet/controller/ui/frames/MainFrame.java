@@ -691,6 +691,7 @@ public class MainFrame extends javax.swing.JFrame
                                                 editPlaylistUpButton
                                                     .setMargin(new java.awt.Insets(0,
                                                         0, 0, 0));
+                                                editPlaylistUpButton.setToolTipText("Moves the selected playlist item up within the playlist.");
                                             }
                                             {
                                                 editPlaylistDownButton = new JButton();
