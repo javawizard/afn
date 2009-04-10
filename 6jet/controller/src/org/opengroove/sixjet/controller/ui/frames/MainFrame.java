@@ -33,6 +33,13 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JScrollPane jScrollPane3;
+    private JList playlistList;
+    private JButton playlistPlayButton;
+    private JButton playlistDeleteButton;
+    private JButton playlistAddButton;
+    private JPanel editPlaylistSouth;
+    private JPanel playlistsSouth;
     private HeaderComponent nowPlayingHeader;
     private HeaderComponent musicHeader;
     private HeaderComponent editPlaylistHeader;
@@ -268,6 +275,45 @@ public class MainFrame extends javax.swing.JFrame
                                         BorderLayout.NORTH);
                                     playlistsHeader.setLabel("Playlists");
                                 }
+                                {
+                                    playlistsSouth = new JPanel();
+                                    BorderLayout playlistsSouthLayout =
+                                        new BorderLayout();
+                                    playlistsPanel.add(playlistsSouth,
+                                        BorderLayout.SOUTH);
+                                    playlistsSouth.setLayout(playlistsSouthLayout);
+                                    {
+                                        playlistAddButton = new JButton();
+                                        playlistsSouth.add(playlistAddButton,
+                                            BorderLayout.NORTH);
+                                        playlistAddButton.setText("Add");
+                                    }
+                                    {
+                                        playlistDeleteButton = new JButton();
+                                        playlistsSouth.add(playlistDeleteButton,
+                                            BorderLayout.CENTER);
+                                        playlistDeleteButton.setText("Delete");
+                                    }
+                                    {
+                                        playlistPlayButton = new JButton();
+                                        playlistsSouth.add(playlistPlayButton,
+                                            BorderLayout.SOUTH);
+                                        playlistPlayButton.setText("Play");
+                                    }
+                                }
+                                {
+                                    jScrollPane3 = new JScrollPane();
+                                    playlistsPanel.add(jScrollPane3, BorderLayout.CENTER);
+                                    jScrollPane3.setPreferredSize(new java.awt.Dimension(122, 109));
+                                    {
+                                        ListModel playlistListModel = 
+                                            new DefaultComboBoxModel(
+                                                new String[] { "Item One", "Item Two" });
+                                        playlistList = new JList();
+                                        jScrollPane3.setViewportView(getPlaylistList());
+                                        playlistList.setModel(playlistListModel);
+                                    }
+                                }
                             }
                             {
                                 editPlaylistPanel = new JPanel();
@@ -280,6 +326,15 @@ public class MainFrame extends javax.swing.JFrame
                                     editPlaylistPanel.add(editPlaylistHeader,
                                         BorderLayout.NORTH);
                                     editPlaylistHeader.setLabel("Edit Playlist");
+                                }
+                                {
+                                    editPlaylistSouth = new JPanel();
+                                    BorderLayout editPlaylistSouthLayout =
+                                        new BorderLayout();
+                                    editPlaylistPanel.add(editPlaylistSouth,
+                                        BorderLayout.SOUTH);
+                                    editPlaylistSouth
+                                        .setLayout(editPlaylistSouthLayout);
                                 }
                             }
                         }
@@ -320,4 +375,8 @@ public class MainFrame extends javax.swing.JFrame
         return scheduleDeleteButton;
     }
     
+    public JList getPlaylistList() {
+        return playlistList;
+    }
+
 }
