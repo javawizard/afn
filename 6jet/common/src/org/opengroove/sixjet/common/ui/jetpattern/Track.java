@@ -46,6 +46,22 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
     public void mouseReleased(MouseEvent e)
     {
         down = false;
+        if (wasDragged)
+        {
+            int otherPos = locationAtMouseDown.x;
+            int start = Math.min(otherPos, draggingLocation);
+            int end = Math.max(otherPos, draggingLocation);
+            if (start != end)
+            {
+                if ((end - start) < 4)
+                {
+                    end = end + (4 - (end - start));
+                }
+                
+            }
+        }
+        draggingLocation = -1;
+        repaint();
     }
     
     public void mouseDragged(MouseEvent e)
@@ -69,7 +85,7 @@ public class Track extends JComponent implements MouseListener, MouseMotionListe
         }
         if (wasDragged)
         {
-            draggingLocation = cx;
+            draggingLocation = Math.max(0, Math.min(getWidth() - 1, cx));
         }
         repaint();
     }
