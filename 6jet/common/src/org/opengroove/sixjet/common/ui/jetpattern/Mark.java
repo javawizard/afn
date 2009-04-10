@@ -17,20 +17,30 @@ import javax.swing.border.Border;
  */
 public class Mark extends JComponent
 {
+    /**
+     * True if the mouse is hovering over this mark, false if it is not
+     */
+    private boolean hovered = false;
+    /**
+     * True if the mouse is pressed down and it was initially pressed within
+     * this mark, false if not
+     */
+    private boolean mouseInDown = false;
+    
     private JetPatternEditor editor;
     
-    private static final Border markBorder = BorderFactory.createLineBorder(JetPatternEditorColors.markBorder, 1)
+    private static final Border markBorder =
+        BorderFactory.createLineBorder(JetPatternEditorColors.markBorder, 1);
     
     Mark(JetPatternEditor editor)
     {
         this.editor = editor;
         setBorder(markBorder);
+        addMouseListener(this);
     }
     
     protected void paintComponent(Graphics g)
     {
-        // TODO Auto-generated method stub
-        super.paintComponent(g);
     }
     
     Paint createNormalPaint()
