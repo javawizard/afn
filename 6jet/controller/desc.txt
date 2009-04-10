@@ -1,5 +1,9 @@
 The 6jet controller project is the controller program for 6jet. The controller is the program that is run by a user to actually interact with 6jet. This computer only needs an internet connection that it can use to access the machine running 6jet server.
 
-Only one controller can be connected to the server at any given time. If another controller connects, it will be informed that it can't connect right now. In the future, it will kick off the first one if the user at the first one doesn't confirm, within 1 minute, that they really want to keep controlling 6jet.
+Multiple controllers can be connected to the server at a time. The controllers will essentially "fight for control", if this occurs. Every state change in the UI that changes something about the server itself doesn't actually change anything in the controller's UI; the response from the server is what causes the UI change. As a result of this, the server can simply broadcast any state change to all connected controllers, and they will all see exactly what's happening. Controllers will be able to chat with each other in the future.
+
+Here's an example of how this UI broadcast thing works: when you click on a jet (on the individual jet control screen) to turn it on, the icon (or whatever it's going to be) on the screen stays the same, but a message to turn the jet on is sent to the server. The server then broadcasts that the jet has been turned on. Upon receiving this, the client updates the jet's icon to indicate that the jet is now on. This update would occur across all connected controllers.
 
 Music files are uploaded through the controller. Music files on the server are managed through the controller. Music files are played on the server (and on a music box) via the controller. Jets can also be manually controlled via the controller.
+
+The server reports to the controller its position in music playback. It pretty much just relays the info handed to it by the music box, except that it factors in the music box's lag. It does not, however, factor in the lag of the controller.
