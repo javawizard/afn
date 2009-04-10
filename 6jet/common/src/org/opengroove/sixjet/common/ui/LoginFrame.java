@@ -27,6 +27,8 @@ public class LoginFrame extends javax.swing.JFrame
     private JPanel mainPanel;
     private JPasswordField passwordField;
     private JPanel jPanel1;
+    private JLabel serverLabel;
+    private JTextField serverField;
     private JTextField usernameField;
     private JButton loginButton;
     private JLabel passwordLabel;
@@ -66,35 +68,59 @@ public class LoginFrame extends javax.swing.JFrame
                 {
                     mainPanel = new JPanel();
                     jPanel1.add(mainPanel);
-                    TableLayout mainPanelLayout = new TableLayout(new double[][] {{TableLayout.PREFERRED, TableLayout.FILL, TableLayout.PREFERRED}, {TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.FILL, TableLayout.PREFERRED}});
+                    TableLayout mainPanelLayout =
+                        new TableLayout(new double[][] {
+                            { TableLayout.PREFERRED, TableLayout.FILL,
+                                TableLayout.PREFERRED },
+                            { TableLayout.PREFERRED, TableLayout.PREFERRED,
+                                TableLayout.PREFERRED, TableLayout.FILL,
+                                TableLayout.PREFERRED } });
                     mainPanelLayout.setHGap(5);
                     mainPanelLayout.setVGap(5);
                     mainPanel.setLayout(mainPanelLayout);
                     mainPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
                     {
                         usernameLabel = new JLabel();
-                        mainPanel.add(usernameLabel, "0, 0");
+                        mainPanel.add(usernameLabel, "0, 1");
                         usernameLabel.setText("Username:");
                     }
                     {
                         passwordLabel = new JLabel();
-                        mainPanel.add(passwordLabel, "0, 1");
+                        mainPanel.add(passwordLabel, "0, 2");
                         passwordLabel.setText("Password:");
                     }
                     {
                         loginButton = new JButton();
-                        mainPanel.add(loginButton, "2, 3");
+                        mainPanel.add(loginButton, "2, 4");
                         loginButton.setText("Log in");
+                        loginButton.setToolTipText("<html>Click here to log in. You must be connected to the internet before you click this button. <br/>If you don't want to log in anymore, just close the window.");
                     }
                     {
                         usernameField = new JTextField();
-                        mainPanel.add(usernameField, "1, 0, 2, 0");
+                        mainPanel.add(usernameField, "1, 1, 2, 1");
                         usernameField.setColumns(12);
+                        usernameField
+                            .setToolTipText("The username to log in as. For example, \"alexlaptop\" or \"kitchen\".");
                     }
                     {
                         passwordField = new JPasswordField();
-                        mainPanel.add(passwordField, "1, 1, 2, 1");
+                        mainPanel.add(passwordField, "1, 2, 2, 2");
                         passwordField.setColumns(12);
+                        passwordField
+                            .setToolTipText("The password to log in as. For example, \"1234\".");
+                    }
+                    {
+                        serverLabel = new JLabel();
+                        mainPanel.add(serverLabel, "0, 0");
+                        serverLabel.setText("Server:");
+                    }
+                    {
+                        serverField = new JTextField();
+                        mainPanel.add(getServerField(), "1,0,2,0");
+                        serverField.setText("192.168.1.61");
+                        serverField.setColumns(12);
+                        serverField
+                            .setToolTipText("The server to connect to. To connect to Alex's 6jet server, use 192.168.1.61 for this field.");
                     }
                 }
             }
@@ -119,6 +145,11 @@ public class LoginFrame extends javax.swing.JFrame
     public JPasswordField getPasswordField()
     {
         return passwordField;
+    }
+    
+    public JTextField getServerField()
+    {
+        return serverField;
     }
     
 }
