@@ -4,5 +4,8 @@ import javax.swing.JComponent;
 
 public class Track extends JComponent
 {
-    
+    Track()
+    {
+        
+    }
 }
