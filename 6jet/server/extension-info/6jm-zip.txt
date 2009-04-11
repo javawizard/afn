@@ -5,3 +5,4 @@ pattern.6jp.jso
 music.XYZ
 
 where XYZ is any music file extension supported by the java sound api. There can be other files within the zip file, which will be ignored. However, there must not be more than one file with its name starting with the word music. 
+

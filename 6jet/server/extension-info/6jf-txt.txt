@@ -1,5 +1,7 @@
 A jet firing file. These are typically only seen inside a .6jm.zip file. This file is what the server actually uses when playing back music to figure out when to fire each jet.
 
+TODO: consider switching to one line per jet, "flush" and "-positioninms" or "+delayinms" lines, for easier processing at the expense of slightly larger files.
+
 The first line of the file is a number, which is the amount of time that the file covers, in milliseconds.
 
 The second line is the number of milliseconds into this file at which to start playing the music. There must be at least 1 second at the start of the file before any jets can fire, so this is typically 1000 to have the music start at the moment when jets can begin firing (even if they don't actually fire then).
