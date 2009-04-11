@@ -29,10 +29,14 @@ public class VirtualControllerBoard implements ControllerBoard
         for (int i = 0; i < bits.size(); i++)
         {
             Bit bit = bits.get(i);
-            String ns = "" + i;
-            while(ns.length() < 3)
+            String ns = "" + (i + 1);
+            while (ns.length() < 3)
                 ns += " ";
-            
+            String nu = "   ";
+            if (bit.value)
+                s += nu;
+            else
+                s += ns;
         }
         for (Socket socket : new ArrayList<Socket>(sockets))
         {
