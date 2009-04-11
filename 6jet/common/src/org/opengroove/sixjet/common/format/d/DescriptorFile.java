@@ -31,6 +31,8 @@ public class DescriptorFile
         String[] lines = fileContentsRest.split("\n");
         for (String line : lines)
         {
+            if (line.trim().equals(""))
+                continue;
             Scanner s = new Scanner(line).useDelimiter(" ");
             DescriptorFileJet jet = new DescriptorFileJet();
             jet.number = s.nextInt();
