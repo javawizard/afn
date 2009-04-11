@@ -3,4 +3,22 @@ package org.opengroove.sixjet.server.output;
 public class ParallelPortControllerBoard implements ControllerBoard
 {
     
+    public void flush()
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public int getNumberOfJets()
+    {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+    
+    public void setJetState(int jet, boolean state)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
 }
