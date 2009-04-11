@@ -101,6 +101,9 @@ public class VirtualControllerBoard implements ControllerBoard
                             }
                             else
                             {
+                                s.getOutputStream().write(
+                                    "Connected.\r\n".getBytes());
+                                s.getOutputStream().flush();
                                 sockets.add(s);
                             }
                         }
