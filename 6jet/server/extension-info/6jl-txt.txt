@@ -1,0 +1,7 @@
+A 6jet playlist file.
+
+A 6jet playlist file's name is the name of the playlist (plus .6jl.txt). Each line within the playlist starts with either the word delay or the word music.
+
+If it starts with the word delay, then there is a space, followed by the number of milliseconds to delay for.
+
+If the line starts with the word music, then there is a space, and then the name of a music file to play, without .6jm.zip on the end.
