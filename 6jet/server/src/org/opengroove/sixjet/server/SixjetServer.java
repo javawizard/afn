@@ -31,5 +31,15 @@ public class SixjetServer
             (ControllerBoard) Class.forName(controllerBoardClassname).newInstance();
         descriptor = new DescriptorFile(new FileInputStream(descriptorPath));
         controllerBoard.init();
+        /*
+         * TODO 2009.04.11: add stuff to listen for connections, start the music
+         * playing thread (which checks a minimum of once every second for music
+         * to play and for whether it's supposed to stop playing music during
+         * playback), remember to send a descriptor file packet to controllers
+         * right after they connect, broadcast most ui events, have a command
+         * handler class or something (or maybe just a bunch of if/else
+         * statements for different command types), add a method for
+         * multicasting to all connected controllers (including the sender)
+         */
     }
 }
