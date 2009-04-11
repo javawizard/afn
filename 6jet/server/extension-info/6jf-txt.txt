@@ -1,0 +1,1 @@
+A jet firing file. These are typically only seen inside a .6jm.zip file. This file is what the server actually uses when playing back music to figure out when to fire each jet.

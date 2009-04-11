@@ -1,9 +1,9 @@
 package org.opengroove.sixjet.server.output;
 
 /**
- * An emulated controller board that is hardcoded to support 18 jets. When
- * started, socket connections are accepted on an unused port (which is then
- * printed to stdout).
+ * An emulated controller board that supports how ever many jets are controlled
+ * with it. When started, socket connections are accepted on an unused port
+ * (which is then printed to stdout).
  * 
  * @author Alexander Boyd
  * 
