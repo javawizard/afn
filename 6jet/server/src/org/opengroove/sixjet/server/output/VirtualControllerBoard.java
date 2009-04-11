@@ -65,8 +65,10 @@ public class VirtualControllerBoard implements ControllerBoard
     
     public synchronized void setJetState(int jet, boolean state)
     {
-        // TODO Auto-generated method stub
-        
+        while (jet >= bits.size())
+        {
+            bits.add(new Bit());
+        }
     }
     
     public void init()
