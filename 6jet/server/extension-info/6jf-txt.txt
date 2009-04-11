@@ -1,3 +1,13 @@
 A jet firing file. These are typically only seen inside a .6jm.zip file. This file is what the server actually uses when playing back music to figure out when to fire each jet.
 
 The first line of the file is a number, which is the amount of time that the file covers, in milliseconds.
+
+The second line is the number of milliseconds into this file at which to start playing the music. There must be at least 1 second at the start of the file before any jets can fire, so this is typically 1000 to have the music start at the moment when jets can begin firing (even if they don't actually fire then).
+
+Every line after that starts with a number, which is the number of milliseconds into file playback that the line should be run. The rest of the line is made up of pairs of tokens (tokens are delimited by spaces), consisting of the jet number to set the state of, and the state to set it to (either "on" or "off").
+
+These lines must be ordered in chronological order. If they are not, the results are unspecified.
+
+Here's an example file that causes jets 1 and 4 to fire, then 2 and 5, then 3 and 6, then all of them together, with a small delay before all of them firing at the same time.
+
+6000
