@@ -15,6 +15,8 @@ public class SixjetServer
     
     public static Properties controllerAuthProperties = new Properties();
     
+    public static Properties musicBoxAuthProperties = new Properties();
+    
     public static File authFolder;
     public static File musicFilesFolder;
     public static File musicFoldersFolder;
@@ -55,7 +57,10 @@ public class SixjetServer
             (ControllerBoard) Class.forName(controllerBoardClassname).newInstance();
         descriptor = new DescriptorFile(new FileInputStream(descriptorPath));
         controllerBoard.init();
-        controllerAuthProperties.load(new FileInputStream());
+        controllerAuthProperties.load(new FileInputStream(new File(authFolder,
+            "controllers.6ja.properties")));
+        musicBoxAuthProperties.load(new FileInputStream(new File(authFolder,
+            "musicboxes.6ja.properties")));
         /*
          * TODO 2009.04.11: add stuff to listen for connections, start the music
          * playing thread (which checks a minimum of once every second for music
