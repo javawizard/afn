@@ -18,6 +18,10 @@ public interface ControllerBoard
      * should be set by the server before anything else is done.<br/>
      * <br/>
      * 
+     * If the jet number specified is not present on this controller board, then
+     * this method should throw a RuntimeException.<br/>
+     * <br/>
+     * 
      * This should not actually change the physical jet to the new state. This
      * should only happen when {@link #flush()} is called.
      * 
@@ -29,15 +33,6 @@ public interface ControllerBoard
      *            True to turn this jet on, false to turn this jet off
      */
     public void setJetState(int jet, boolean state);
-    
-    /**
-     * Returns the number of jets that this controller board supports. This
-     * should match up with the jet definition file provided to the server, or
-     * the server will report an error when starting.
-     * 
-     * @return The number of jets supported by this controller board
-     */
-    public int getNumberOfJets();
     
     /**
      * Flushes the current state of all jets to the actual fountain. This should
