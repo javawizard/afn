@@ -7,6 +7,7 @@ import java.net.Socket;
 
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 
 public class ControllerHandler extends Thread
 {
@@ -49,6 +50,34 @@ public class ControllerHandler extends Thread
     
     public void run()
     {
-        
+        try
+        {
+            main();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            try
+            {
+                spooler.close();
+                in.close();
+            }
+            catch (Exception exception)
+            {
+                exception.printStackTrace();
+            }
+        }
+    }
+    
+    private void main() throws Exception
+    {
+        /*
+         * First thing we'll do is read a login packet. According to the 6jet
+         * protocol, the first packet must be a login packet, so we don't have
+         * to worry about the possible class cast exception (which will just
+         * result in the connection being rejected anyway, which is what we
+         * want).
+         */
+        LoginPacket loginPacket = (LoginPacket) in.readObject();
     }
 }
