@@ -43,11 +43,22 @@ public class VirtualControllerBoard implements ControllerBoard
             try
             {
                 OutputStream o = socket.getOutputStream();
-                
+                o.write(s.getBytes());
+                o.write("\r\n".getBytes());
+                o.flush();
             }
             catch (Exception exception)
             {
                 exception.printStackTrace();
+                try
+                {
+                    socket.close();
+                }
+                catch (Exception exception2)
+                {
+                    exception2.printStackTrace();
+                }
+                sockets.remove(socket);
             }
         }
     }
