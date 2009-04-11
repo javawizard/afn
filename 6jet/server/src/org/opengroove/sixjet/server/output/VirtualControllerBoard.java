@@ -1,6 +1,7 @@
 package org.opengroove.sixjet.server.output;
 
 import java.io.OutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -18,6 +19,8 @@ public class VirtualControllerBoard implements ControllerBoard
     {
         public boolean value;
     }
+    
+    protected static final int MAX_SOCKETS = 20;
     
     private ArrayList<Socket> sockets = new ArrayList<Socket>();
     
@@ -69,12 +72,48 @@ public class VirtualControllerBoard implements ControllerBoard
         {
             bits.add(new Bit());
         }
+        Bit bit = bits.get(jet);
+        bit.value = state;
     }
     
     public void init()
     {
-        // TODO Auto-generated method stub
-        
+        try
+        {
+            final ServerSocket ss = new ServerSocket(0);
+            System.out.println("VirtualControllerBoard listening on port "
+                + ss.getLocalPort());
+            new Thread()
+            {
+                public void run()
+                {
+                    while (true)
+                    {
+                        try
+                        {
+                            Socket s = ss.accept();
+                            if (sockets.size() > MAX_SOCKETS)
+                            {
+                                s.getOutputStream().write(
+                                    "Too many connections\r\n".getBytes());
+                                s.getOutputStream().flush();
+                                s.close();
+                            }
+                            else
+                            {
+                                sockets.add(s);
+                            }
+                        }
+                        catch (Exception exception)
+                        {
+                            exception.printStackTrace();
+                        }
+                    }
+                }
+            }.start();
+        }
+        catch (Exception e)
+        {
+        }
     }
-    
 }
