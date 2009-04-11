@@ -8,6 +8,28 @@ Every line after that starts with a number, which is the number of milliseconds 
 
 These lines must be ordered in chronological order. If they are not, the results are unspecified.
 
-Here's an example file that causes jets 1 and 4 to fire, then 2 and 5, then 3 and 6, then all of them together, with a small delay before all of them firing at the same time.
+There should generally be a second after the last jet event in the file before the end of the file, or some jets may get skipped. It's ok if the firing pattern goes beyond the end of the music.
 
-6000
+Here's an example file that causes jets 1 and 4 to fire, then 2 and 5, then 3 and 6, then all of them together, with a small delay before all of them firing at the same time. This example delays whatever music might be playing with it by 2000 milliseconds, so that the music will not being to play until 2 seconds of the jet firing pattern have elapsed. 
+
+4500
+2000
+1000 1 on 4 on
+1500 1 off 4 off 2 on 5 on
+2000 2 off 5 off 3 on 6 on
+2500 3 off 6 off
+3000 1 on 2 on 3 on 4 on 5 on 6 on
+3500 1 off 2 off 3 off 4 off 5 off 6 off
+
+
+
+
+
+
+
+
+
+
+
+
+
