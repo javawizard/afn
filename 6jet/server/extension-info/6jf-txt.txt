@@ -1,1 +1,3 @@
 A jet firing file. These are typically only seen inside a .6jm.zip file. This file is what the server actually uses when playing back music to figure out when to fire each jet.
+
+The first line of the file is a number, which is the amount of time that the file covers, in milliseconds.
