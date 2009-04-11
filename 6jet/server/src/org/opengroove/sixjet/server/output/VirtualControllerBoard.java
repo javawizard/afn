@@ -10,6 +10,7 @@ package org.opengroove.sixjet.server.output;
  */
 public class VirtualControllerBoard implements ControllerBoard
 {
+    private ArrayList<>
     
     public void flush()
     {

@@ -5,7 +5,11 @@ package org.opengroove.sixjet.server.output;
  * of this class handle actually controlling a physical 6jet fountain.
  * Currently, the only implementation of this class designed to run an actual
  * 6jet fountain is {@link ParallelPortControllerBoard}, which controls a 6jet
- * fountain by means of a 6jet board plugged into LPT1.
+ * fountain by means of a 6jet board plugged into LPT1.<br/>
+ * <br/>
+ * 
+ * Implementations should either be thread-safe or mark all methods with the
+ * synchronized modifier.
  * 
  * @author Alexander Boyd
  * 
