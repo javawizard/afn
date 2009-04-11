@@ -1,22 +1,18 @@
 package org.opengroove.sixjet.common.com.packets.setup;
 
 import org.opengroove.sixjet.common.com.Packet;
+import org.opengroove.sixjet.common.format.d.DescriptorFile;
 
 public class DescriptorFilePacket extends Packet
 {
-    private String file;
+    private DescriptorFile file;
     
-    /**
-     * Gets the actual contents of the descriptor file.
-     * 
-     * @return
-     */
-    public String getFile()
+    public DescriptorFile getFile()
     {
         return file;
     }
     
-    public void setFile(String file)
+    public void setFile(DescriptorFile file)
     {
         this.file = file;
     }
