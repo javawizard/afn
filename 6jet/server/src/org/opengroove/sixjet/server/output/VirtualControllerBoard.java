@@ -1,5 +1,6 @@
 package org.opengroove.sixjet.server.output;
 
+import java.net.Socket;
 import java.util.ArrayList;
 
 /**
@@ -17,6 +18,8 @@ public class VirtualControllerBoard implements ControllerBoard
         public boolean value;
     }
     
+    private ArrayList<Socket> sockets = new ArrayList<Socket>();
+    
     private ArrayList<Bit> bits = new ArrayList<Bit>();
     
     public void flush()
@@ -26,6 +29,12 @@ public class VirtualControllerBoard implements ControllerBoard
     }
     
     public void setJetState(int jet, boolean state)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public void init()
     {
         // TODO Auto-generated method stub
         

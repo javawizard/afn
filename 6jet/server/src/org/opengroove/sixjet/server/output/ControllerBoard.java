@@ -16,6 +16,8 @@ package org.opengroove.sixjet.server.output;
  */
 public interface ControllerBoard
 {
+    public void init();
+    
     /**
      * Sets whether a given jet is on or off. When the controller board starts
      * up, the state of each jet is indeterminate, so the state of each jet

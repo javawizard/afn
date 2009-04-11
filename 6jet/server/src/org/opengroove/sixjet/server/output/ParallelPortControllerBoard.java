@@ -20,5 +20,11 @@ public class ParallelPortControllerBoard implements ControllerBoard
         // TODO Auto-generated method stub
         
     }
+
+    public void init()
+    {
+        // TODO Auto-generated method stub
+        
+    }
     
 }
