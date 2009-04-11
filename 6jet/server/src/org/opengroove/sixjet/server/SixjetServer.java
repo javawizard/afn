@@ -1,5 +1,7 @@
 package org.opengroove.sixjet.server;
 
+import java.io.FileInputStream;
+
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.server.output.ControllerBoard;
 
@@ -22,10 +24,12 @@ public class SixjetServer
                 + "org.opengroove.sixjet.server.output.ControllerBoard");
             System.out.println("descriptor-file is the path to a .6jd.txt file");
         }
+        System.out.println("Loading controller board and descriptor...");
         String controllerBoardClassname = args[0];
         String descriptorPath = args[1];
         controllerBoard =
             (ControllerBoard) Class.forName(controllerBoardClassname).newInstance();
         descriptor = new DescriptorFile(new FileInputStream(descriptorPath));
+        controllerBoard.init();
     }
 }
