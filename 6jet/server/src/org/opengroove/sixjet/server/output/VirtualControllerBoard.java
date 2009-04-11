@@ -1,5 +1,6 @@
 package org.opengroove.sixjet.server.output;
 
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -22,13 +23,32 @@ public class VirtualControllerBoard implements ControllerBoard
     
     private ArrayList<Bit> bits = new ArrayList<Bit>();
     
-    public void flush()
+    public synchronized void flush()
     {
-        // TODO Auto-generated method stub
-        
+        String s = "";
+        for (int i = 0; i < bits.size(); i++)
+        {
+            Bit bit = bits.get(i);
+            String ns = "" + i;
+            while(ns.length() < 3)
+                ns += " ";
+            
+        }
+        for (Socket socket : new ArrayList<Socket>(sockets))
+        {
+            try
+            {
+                OutputStream o = socket.getOutputStream();
+                
+            }
+            catch (Exception exception)
+            {
+                exception.printStackTrace();
+            }
+        }
     }
     
-    public void setJetState(int jet, boolean state)
+    public synchronized void setJetState(int jet, boolean state)
     {
         // TODO Auto-generated method stub
         
