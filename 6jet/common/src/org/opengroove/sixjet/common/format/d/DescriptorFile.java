@@ -1,5 +1,6 @@
 package org.opengroove.sixjet.common.format.d;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -17,9 +18,10 @@ public class DescriptorFile
     private int height;
     private ArrayList<DescriptorFileJet> jets = new ArrayList<DescriptorFileJet>();
     
-    public DescriptorFile(InputStream file)
+    public DescriptorFile(InputStream file) throws IOException
     {
         String fileContents = new Scanner(file).useDelimiter("\\z").next();
+        file.close();
         String[] initial = fileContents.split("\n", 2);
         String fileContentsRest = initial[1];
         String header = initial[0];
