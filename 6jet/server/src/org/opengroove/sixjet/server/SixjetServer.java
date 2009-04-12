@@ -2,7 +2,12 @@ package org.opengroove.sixjet.server;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Properties;
+import java.util.zip.ZipInputStream;
+
+import net.sf.opengroove.common.utils.DataUtils;
 
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.server.output.ControllerBoard;
@@ -61,6 +66,8 @@ public class SixjetServer
             "controllers.6ja.properties")));
         musicBoxAuthProperties.load(new FileInputStream(new File(authFolder,
             "musicboxes.6ja.properties")));
+        System.out.println("Regenerating music folders...");
+        regenerateMusicFolders();
         /*
          * TODO 2009.04.11: add stuff to listen for connections, start the music
          * playing thread (which checks a minimum of once every second for music
@@ -72,4 +79,33 @@ public class SixjetServer
          * multicasting to all connected controllers (including the sender)
          */
     }
+    
+    private static void regenerateMusicFolders()
+    {
+        File[] files = musicFilesFolder.listFiles();
+        for (int i = 0; i < files.length; i++)
+        {
+            File file = files[i];
+            if (!file.getName().endsWith(".6jm.zip"))
+            {
+                System.out.println("warning: file " + file.getName()
+                    + " is in the music folder but does not end with "
+                    + ".6jm.zip. This file will be skipped.");
+                continue;
+            }
+            File target =
+                new File(musicFoldersFolder, file.getName().substring(0,
+                    file.getName().length() - ".6jm.zip".length()));
+            if (target.exists())
+                DataUtils.recursiveDelete(target);
+        }
+        
+    }
+    
+    public static void extractZipFile(File zipFile, File targetFolder)
+        throws IOException
+    {
+        ZipInputStream in = new ZipInputStream(new FileInputStream(zipFile));
+    }
+    
 }
