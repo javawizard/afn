@@ -149,8 +149,10 @@ public class JetDisplayComponent extends JComponent
             jets[i] = new JetState();
             DescriptorFileJet fileJet = descriptor.getJets().get(i);
             UIJet jet = new UIJet(i, fileJet.number, fileJet.x, fileJet.y, jets[i]);
+            jetMap.put(fileJet.number, jet);
             panel.add(jet);
         }
+        repaint();
     }
     
     private void notifyListeners(boolean up, int number, boolean in)
@@ -174,7 +176,8 @@ public class JetDisplayComponent extends JComponent
      */
     public void setState(int number, boolean state)
     {
-        
+        jetMap.get(number).state.state = state;
+        jetMap.get(number).repaint();
     }
     
     public void addJetListener(JetDisplayListener l)
