@@ -37,9 +37,9 @@ public class VirtualControllerBoard implements ControllerBoard
                 ns += " ";
             String nu = "   ";
             if (bit.value)
-                s += nu;
-            else
                 s += ns;
+            else
+                s += nu;
         }
         for (Socket socket : new ArrayList<Socket>(sockets))
         {
