@@ -5,9 +5,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import net.sf.opengroove.common.security.Hash;
+
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
+import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
 
 public class ControllerHandler extends Thread
 {
@@ -79,5 +82,18 @@ public class ControllerHandler extends Thread
          * want).
          */
         LoginPacket loginPacket = (LoginPacket) in.readObject();
+        String correctPasswordEnc =
+            SixjetServer.controllerAuthProperties
+                .getProperty(loginPacket.getUsername());
+        String passwordEnc = Hash.hash(loginPacket.getPassword());
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setSuccessful(passwordEnc.equals(correctPasswordEnc));
+        if (!loginResponse.isSuccessful())
+        {
+            loginResponse.setReason("Incorrect username/password");
+        }
+        out.writeObject(loginResponse);
+        out.flush();
+        if()
     }
 }
