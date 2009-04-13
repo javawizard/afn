@@ -205,7 +205,7 @@ public class SixjetServer
         }
         for (ControllerHandler handler : handlers)
         {
-            
+            handler.trySend(packet);
         }
     }
 }
