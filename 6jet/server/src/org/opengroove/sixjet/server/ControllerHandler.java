@@ -67,6 +67,7 @@ public class ControllerHandler extends Thread
         out.flush();
         in = new ObjectInputStream(socket.getInputStream());
         spooler = new PacketSpooler(out, QUEUE_SIZE);
+        spooler.start();
     }
     
     public void run()
