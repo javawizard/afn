@@ -60,6 +60,8 @@ public class ControllerHandler extends Thread
         catch (Exception e)
         {
             e.printStackTrace();
+            if (username != null)
+                SixjetServer.controllerConnectionMap.remove(username);
             try
             {
                 spooler.close();
@@ -101,5 +103,11 @@ public class ControllerHandler extends Thread
             out.close();
             return;
         }
+        /*
+         * We logged the person in successfully. Now we add them to the
+         * connection map.
+         */
+        username = loginPacket.getUsername();
+        SixjetServer.controllerConnectionMap.put(username, this);
     }
 }
