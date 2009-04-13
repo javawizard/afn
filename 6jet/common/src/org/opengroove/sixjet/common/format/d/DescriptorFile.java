@@ -25,6 +25,7 @@ public class DescriptorFile
         String[] initial = fileContents.split("\n", 2);
         String fileContentsRest = initial[1];
         String header = initial[0];
+        System.out.println("header:" + header);
         Scanner headerScanner = new Scanner(header).useDelimiter(" ");
         width = headerScanner.nextInt();
         height = headerScanner.nextInt();
