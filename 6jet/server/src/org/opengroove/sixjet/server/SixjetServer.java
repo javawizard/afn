@@ -125,6 +125,8 @@ public class SixjetServer
                     try
                     {
                         Socket s = controllerServerSocket.accept();
+                        ControllerHandler handler = new ControllerHandler(s);
+                        handler.start();
                     }
                     catch (Exception exception)
                     {
