@@ -172,7 +172,7 @@ public class SixjetController
                 }
                 else
                 {
-                    send(new JetControlPacket(jet, true));
+                    send(new JetControlPacket(jet, false));
                 }
             }
         });
