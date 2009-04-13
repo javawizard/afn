@@ -76,7 +76,12 @@ public class ControllerHandler extends Thread
         {
             e.printStackTrace();
             if (username != null)
-                SixjetServer.controllerConnectionMap.remove(username);
+            {
+                synchronized (SixjetServer.controllerConnectionMap)
+                {
+                    SixjetServer.controllerConnectionMap.remove(username);
+                }
+            }
             try
             {
                 spooler.close();
@@ -135,7 +140,10 @@ public class ControllerHandler extends Thread
          * connection map.
          */
         username = loginPacket.getUsername();
-        SixjetServer.controllerConnectionMap.put(username, this);
+        synchronized (SixjetServer.controllerConnectionMap)
+        {
+            SixjetServer.controllerConnectionMap.put(username, this);
+        }
         /*
          * Now we send them the descriptor. From here on out, everything will be
          * sent by way of the packet spooler.

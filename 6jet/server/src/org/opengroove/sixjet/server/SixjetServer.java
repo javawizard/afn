@@ -197,8 +197,15 @@ public class SixjetServer
      */
     public void controllerBroadcast(Packet packet)
     {
-        ArrayList<ControllerHandler> handlers =
-            new ArrayList<ControllerHandler>(controllerConnectionMap.values());
+        ArrayList<ControllerHandler> handlers;
+        synchronized (controllerConnectionMap)
+        {
+            handlers =
+                new ArrayList<ControllerHandler>(controllerConnectionMap.values());
+        }
+        for (ControllerHandler handler : handlers)
+        {
+            
+        }
     }
-    
 }
