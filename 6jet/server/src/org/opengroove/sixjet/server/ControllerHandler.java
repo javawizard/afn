@@ -95,6 +95,12 @@ public class ControllerHandler extends Thread
         {
             loginResponse.setReason("Incorrect username/password");
         }
+        if (loginResponse.isSuccessful()
+            && SixjetServer.controllerConnectionMap.get(loginPacket.getUsername()) != null)
+        {
+            loginResponse.setSuccessful(false);
+            loginResponse.setReason("You are already logged in.");
+        }
         out.writeObject(loginResponse);
         out.flush();
         if (!loginResponse.isSuccessful())
