@@ -181,6 +181,10 @@ public class ControllerHandler extends Thread
     
     private void processJetControlPacket(JetControlPacket packet)
     {
+        /*
+         * FIXME: this needs to check to see if music is playing. If music is
+         * playing, then this method should do nothing.
+         */
         SixjetServer.setJetState(packet.getJet(), packet.isState());
         SixjetServer.flushBoard();
     }
