@@ -130,5 +130,15 @@ public class ControllerHandler extends Thread
         DescriptorFilePacket descriptorPacket = new DescriptorFilePacket();
         descriptorPacket.setFile(SixjetServer.descriptor);
         send(descriptorPacket);
+        /*
+         * Now we read off commands, process them, and send them on their way.
+         * We don't need to check for socket connectivity in this loop since
+         * we'll automatically get an exception when trying to read from the
+         * socket.
+         */
+        while (SixjetServer.isRunning)
+        {
+            
+        }
     }
 }
