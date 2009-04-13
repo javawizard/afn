@@ -92,6 +92,17 @@ public class JetDisplayComponent extends JComponent
         }
     }
     
+    private void notifyListeners(boolean up, int number, boolean in)
+    {
+        for (JetDisplayListener l : new ArrayList<JetDisplayListener>(listeners))
+        {
+            if (up)
+                l.jetUp(number, in);
+            else
+                l.jetDown(number);
+        }
+    }
+    
     public void addJetListener(JetDisplayListener l)
     {
         listeners.add(l);
