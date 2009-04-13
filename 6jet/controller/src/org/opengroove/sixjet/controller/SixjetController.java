@@ -126,6 +126,7 @@ public class SixjetController
     private static void setupController()
     {
         mainFrame = new MainFrame();
+        mainFrame.setDefaultCloseOperation(mainFrame.EXIT_ON_CLOSE);
         mainFrame.setLocationRelativeTo(null);
         mainFrame.show();
         jetDisplay = new JetDisplayComponent(jetDescriptor);
