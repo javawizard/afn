@@ -10,6 +10,7 @@ import net.sf.opengroove.common.security.Hash;
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
+import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
 
@@ -122,5 +123,12 @@ public class ControllerHandler extends Thread
          */
         username = loginPacket.getUsername();
         SixjetServer.controllerConnectionMap.put(username, this);
+        /*
+         * Now we send them the descriptor. From here on out, everything will be
+         * sent by way of the packet spooler.
+         */
+        DescriptorFilePacket descriptorPacket = new DescriptorFilePacket();
+        descriptorPacket.setFile(SixjetServer.descriptor);
+        send(descriptorPacket);
     }
 }
