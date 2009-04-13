@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
 
@@ -23,6 +26,17 @@ public class SixjetServer
     public static Properties controllerAuthProperties = new Properties();
     
     public static Properties musicBoxAuthProperties = new Properties();
+    
+    public static ServerSocket controllerServerSocket;
+    
+    public static ServerSocket musicServerSocket;
+    
+    public static Thread controllerServerThread;
+    
+    public static HashMap<String, ControllerHandler> controllerConnectionMap =
+        new HashMap<String, ControllerHandler>();
+    
+    public static Thread musicServerThread;
     
     public static File authFolder;
     public static File musicFilesFolder;
@@ -76,6 +90,14 @@ public class SixjetServer
             controllerBoard.setJetState(jet.number, false);
         }
         controllerBoard.flush();
+        System.out.println("Starting controller server...");
+        startControllerServer();
+        System.out.println("Starting music server...");
+        startMusicServer();
+        System.out.println("Starting download server...");
+        startDownloadServer();
+        System.out.println("Starting upload server...");
+        startUploadServer();
         System.out.println("6jet Server has successfully started up.");
         /*
          * TODO 2009.04.11: add stuff to listen for connections, start the music
@@ -87,6 +109,49 @@ public class SixjetServer
          * statements for different command types), add a method for
          * multicasting to all connected controllers (including the sender)
          */
+    }
+    
+    protected static boolean isRunning = true;
+    
+    private static void startControllerServer() throws IOException
+    {
+        controllerServerSocket = new ServerSocket(56538);
+        controllerServerThread = new Thread()
+        {
+            public void run()
+            {
+                while (isRunning)
+                {
+                    try
+                    {
+                        Socket s = controllerServerSocket.accept();
+                    }
+                    catch (Exception exception)
+                    {
+                        exception.printStackTrace();
+                    }
+                }
+            }
+        };
+        controllerServerThread.start();
+    }
+    
+    private static void startMusicServer()
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    private static void startDownloadServer()
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    private static void startUploadServer()
+    {
+        // TODO Auto-generated method stub
+        
     }
     
     private static void regenerateMusicFolders() throws IOException
