@@ -25,16 +25,16 @@ public class DescriptorFile
         String[] initial = fileContents.split("\n", 2);
         String fileContentsRest = initial[1];
         String header = initial[0];
-        System.out.println("header:" + header);
-        Scanner headerScanner = new Scanner(header).useDelimiter(" ");
+        Scanner headerScanner = new Scanner(header.trim()).useDelimiter(" ");
         width = headerScanner.nextInt();
+        System.out.println("w:" + width);
         height = headerScanner.nextInt();
         String[] lines = fileContentsRest.split("\n");
         for (String line : lines)
         {
             if (line.trim().equals(""))
                 continue;
-            Scanner s = new Scanner(line).useDelimiter(" ");
+            Scanner s = new Scanner(line.trim()).useDelimiter(" ");
             DescriptorFileJet jet = new DescriptorFileJet();
             jet.number = s.nextInt();
             jet.x = s.nextInt();
