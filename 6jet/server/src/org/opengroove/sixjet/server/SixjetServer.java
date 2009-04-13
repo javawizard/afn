@@ -6,12 +6,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
 
 import net.sf.opengroove.common.utils.DataUtils;
 
+import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
 import org.opengroove.sixjet.common.format.m.ExtractUtils;
@@ -187,6 +189,16 @@ public class SixjetServer
         ZipInputStream in = new ZipInputStream(new FileInputStream(zipFile));
     }
     
-    
+    /**
+     * Sends the packet specified to all connected and authenticated
+     * controllers. This method does not block while the packet is sent.
+     * 
+     * @param packet
+     */
+    public void controllerBroadcast(Packet packet)
+    {
+        ArrayList<ControllerHandler> handlers =
+            new ArrayList<ControllerHandler>(controllerConnectionMap.values());
+    }
     
 }
