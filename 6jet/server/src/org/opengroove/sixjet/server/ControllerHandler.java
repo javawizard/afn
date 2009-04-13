@@ -109,6 +109,8 @@ public class ControllerHandler extends Thread
             SixjetServer.controllerAuthProperties
                 .getProperty(loginPacket.getUsername());
         String passwordEnc = Hash.hash(loginPacket.getPassword());
+        System.out.println(passwordEnc);
+        System.out.println(correctPasswordEnc);
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setSuccessful(passwordEnc.equals(correctPasswordEnc));
         if (!loginResponse.isSuccessful())

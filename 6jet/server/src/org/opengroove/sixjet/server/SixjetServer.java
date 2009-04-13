@@ -61,11 +61,12 @@ public class SixjetServer
             System.out.println("descriptor-file is the path to a .6jd.txt file");
             System.out.println("storage-folder is the storage folder, "
                 + "which will be created if needed");
+            return;
         }
         System.out.println("Loading controller board and descriptor...");
         String controllerBoardClassname = args[0];
         String descriptorPath = args[1];
-        String storageFolderPath = args[3];
+        String storageFolderPath = args[2];
         File storageFolder = new File(storageFolderPath);
         authFolder = new File(storageFolder, "auth");
         musicFilesFolder = new File(storageFolder, "musicfiles");
