@@ -4,6 +4,27 @@ import org.opengroove.sixjet.common.com.Packet;
 
 public class ChatMessage extends Packet
 {
+    public ChatMessage(String message)
+    {
+        super();
+        this.message = message;
+    }
+    public String getMessage()
+    {
+        return message;
+    }
+    public long getWhen()
+    {
+        return when;
+    }
+    public void setMessage(String message)
+    {
+        this.message = message;
+    }
+    public void setWhen(long when)
+    {
+        this.when = when;
+    }
     private String message;
     private long when;
 }

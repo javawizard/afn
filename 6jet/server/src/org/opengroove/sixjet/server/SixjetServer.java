@@ -242,4 +242,9 @@ public class SixjetServer
     {
         controllerBoard.flush();
     }
+    
+    public static boolean getJetState(int number)
+    {
+        return controllerBoard.getJetState(number);
+    }
 }

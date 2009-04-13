@@ -9,11 +9,13 @@ import net.sf.opengroove.common.security.Hash;
 
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
+import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
 
 public class ControllerHandler extends Thread
 {
@@ -154,6 +156,11 @@ public class ControllerHandler extends Thread
         descriptorPacket.setFile(SixjetServer.descriptor);
         send(descriptorPacket);
         /*
+         * Now we send any initial packets to inform the client of our state.F
+         */
+        sendInitialState();
+        send(new ChatMessage())
+        /*
          * Now we read off commands, process them, and send them on their way.
          * We don't need to check for socket connectivity in this loop since
          * we'll automatically get an exception when trying to read from the
@@ -163,6 +170,16 @@ public class ControllerHandler extends Thread
         {
             Packet packet = (Packet) in.readObject();
             process(packet);
+        }
+    }
+    
+    private void sendInitialState()
+    {
+        for (DescriptorFileJet jet : SixjetServer.descriptor.getJets())
+        {
+            JetControlPacket p =
+                new JetControlPacket(jet.number, SixjetServer.getJetState(jet.number));
+            send(p);
         }
     }
     
