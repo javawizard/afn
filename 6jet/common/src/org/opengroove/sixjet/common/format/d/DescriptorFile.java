@@ -2,11 +2,17 @@ package org.opengroove.sixjet.common.format.d;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class DescriptorFile
+public class DescriptorFile implements Serializable
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 319492598702124739L;
+    
     public static class DescriptorFileJet
     {
         public int x;
