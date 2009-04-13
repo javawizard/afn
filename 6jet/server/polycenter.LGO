@@ -16,6 +16,10 @@ back :width / 2
 pendown
 END
 
+to polylines :length :sides
+repeat :sides [forward :length back :length right 360.0/:sides]
+end
+
 to sixjetlayout
 cs penup forward 220 right 90 forward 220 left 90 pendown
 left 180/4 polygon 70 4 right 180/4
