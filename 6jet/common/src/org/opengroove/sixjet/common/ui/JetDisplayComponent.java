@@ -53,6 +53,8 @@ public class JetDisplayComponent extends JComponent
     public JetDisplayComponent(DescriptorFile descriptor)
     {
         jets = new JetState[descriptor.getJets().size()];
+        setLayout();
+        for(int i = 0; )
     }
     
     
