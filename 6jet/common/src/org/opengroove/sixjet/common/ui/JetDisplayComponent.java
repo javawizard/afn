@@ -10,6 +10,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -52,6 +53,8 @@ public class JetDisplayComponent extends JComponent
     {
         public boolean state;
     }
+    
+    private HashMap<Integer, UIJet> jetMap = new HashMap<Integer, UIJet>();
     
     private class UIJet extends JComponent implements MouseListener
     {
