@@ -119,4 +119,12 @@ public class VirtualControllerBoard implements ControllerBoard
         {
         }
     }
+    
+    public boolean getJetState(int jet)
+    {
+        Bit bit = bits.get(jet);
+        if (bit == null)
+            return false;
+        return bit.value;
+    }
 }

@@ -20,11 +20,17 @@ public class ParallelPortControllerBoard implements ControllerBoard
         // TODO Auto-generated method stub
         
     }
-
+    
     public void init()
     {
         // TODO Auto-generated method stub
         
+    }
+    
+    public boolean getJetState(int jet)
+    {
+        // TODO Auto-generated method stub
+        return false;
     }
     
 }

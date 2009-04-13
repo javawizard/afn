@@ -10,6 +10,7 @@ import java.util.zip.ZipInputStream;
 import net.sf.opengroove.common.utils.DataUtils;
 
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
+import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
 import org.opengroove.sixjet.server.output.ControllerBoard;
 
 public class SixjetServer
@@ -68,6 +69,13 @@ public class SixjetServer
             "musicboxes.6ja.properties")));
         System.out.println("Regenerating music folders...");
         regenerateMusicFolders();
+        System.out.println("Resetting jets...");
+        for (DescriptorFileJet jet : descriptor.getJets())
+        {
+            controllerBoard.setJetState(jet.number, false);
+        }
+        controllerBoard.flush();
+        System.out.println("6jet Server has successfully started up.");
         /*
          * TODO 2009.04.11: add stuff to listen for connections, start the music
          * playing thread (which checks a minimum of once every second for music

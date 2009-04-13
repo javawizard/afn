@@ -40,6 +40,8 @@ public interface ControllerBoard
      */
     public void setJetState(int jet, boolean state);
     
+    public boolean getJetState(int jet);
+    
     /**
      * Flushes the current state of all jets to the actual fountain. This should
      * block until the data has been sent to the fountain. For example,
