@@ -27,7 +27,6 @@ public class DescriptorFile
         String header = initial[0];
         Scanner headerScanner = new Scanner(header.trim()).useDelimiter(" ");
         width = headerScanner.nextInt();
-        System.out.println("w:" + width);
         height = headerScanner.nextInt();
         String[] lines = fileContentsRest.split("\n");
         for (String line : lines)
@@ -35,6 +34,7 @@ public class DescriptorFile
             if (line.trim().equals(""))
                 continue;
             Scanner s = new Scanner(line.trim()).useDelimiter(" ");
+            s.next();
             DescriptorFileJet jet = new DescriptorFileJet();
             jet.number = s.nextInt();
             jet.x = s.nextInt();
