@@ -91,4 +91,14 @@ public class JetDisplayComponent extends JComponent
             panel.add(jet);
         }
     }
+    
+    public void addJetListener(JetDisplayListener l)
+    {
+        listeners.add(l);
+    }
+    
+    public void removeJetListener(JetDisplayListener l)
+    {
+        listeners.remove(l);
+    }
 }
