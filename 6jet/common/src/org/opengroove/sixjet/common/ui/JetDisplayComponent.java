@@ -1,8 +1,11 @@
 package org.opengroove.sixjet.common.ui;
 
+import info.clearthought.layout.TableLayout;
+
 import java.awt.Color;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.ui.jetpattern.JetPatternEditorColors;
@@ -53,9 +56,20 @@ public class JetDisplayComponent extends JComponent
     public JetDisplayComponent(DescriptorFile descriptor)
     {
         jets = new JetState[descriptor.getJets().size()];
-        setLayout();
-        for(int i = 0; )
+        setLayout(new TableLayout(
+            new double[][] {
+                new double[] { TableLayout.FILL, TableLayout.PREFERRED,
+                    TableLayout.FILL },
+                new double[] { TableLayout.FILL, TableLayout.PREFERRED,
+                    TableLayout.FILL } }));
+        JPanel panel = new JPanel();
+        panel.setLayout(null);
+        panel.setPreferredSize(new Dimension(descriptor.getWidth(), descriptor
+            .getHeight()));
+        for (int i = 0; i < descriptor.getJets().size(); i++)
+        {
+            
+        }
     }
-    
     
 }
