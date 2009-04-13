@@ -9,8 +9,14 @@ import java.net.Socket;
 
 import javax.swing.JOptionPane;
 
+import org.opengroove.sixjet.common.com.Packet;
+import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.packets.JetControlPacket;
+import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
+import org.opengroove.sixjet.common.format.d.DescriptorFile;
+import org.opengroove.sixjet.common.ui.JetDisplayComponent;
 import org.opengroove.sixjet.common.ui.LoginFrame;
 import org.opengroove.sixjet.controller.ui.frames.MainFrame;
 
@@ -25,6 +31,12 @@ public class SixjetController
     public static ObjectInputStream inStream;
     
     public static ObjectOutputStream outStream;
+    
+    public static JetDisplayComponent jetDisplay;
+    
+    public static DescriptorFile jetDescriptor;
+    
+    private static PacketSpooler spooler;
     
     /**
      * @param args
@@ -71,6 +83,9 @@ public class SixjetController
             if (response.isSuccessful())
             {
                 loginFrame.dispose();
+                DescriptorFilePacket descriptorPacket =
+                    (DescriptorFilePacket) inStream.readObject();
+                jetDescriptor = descriptorPacket.getFile();
                 setupController();
                 return;
             }
@@ -109,6 +124,65 @@ public class SixjetController
     
     private static void setupController()
     {
-        System.out.println("login succeeded. todo: set up the controller ui here.");
+        mainFrame = new MainFrame();
+        mainFrame.setLocationRelativeTo(null);
+        mainFrame.show();
+        jetDisplay = new JetDisplayComponent(jetDescriptor);
+        spooler = new PacketSpooler(outStream, 200);
+        spooler.start();
+        startReceivingThread();
+    }
+    
+    private static void startReceivingThread()
+    {
+        new Thread()
+        {
+            public void run()
+            {
+                try
+                {
+                    while (mainFrame.isShowing())
+                    {
+                        Packet packet = (Packet) inStream.readObject();
+                        process(packet);
+                    }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                    if (mainFrame.isShowing())
+                    {
+                        JOptionPane
+                            .showMessageDialog(
+                                mainFrame,
+                                "6jet Controller has been disconnected from the"
+                                    + " server. Please restart 6jet Controller, and try again.");
+                    }
+                }
+                try
+                {
+                    Thread.sleep(2000);
+                }
+                catch (Exception exception)
+                {
+                    exception.printStackTrace();
+                }
+                System.exit(2);
+            }
+        }.start();
+    }
+    
+    protected static void process(Packet packet)
+    {
+        if (packet instanceof JetControlPacket)
+            processJetControlPacket((JetControlPacket) packet);
+    }
+    
+    private static void processJetControlPacket(JetControlPacket packet)
+    {
+        /*
+         * For now, all we do is show this on the screen.
+         */
+        jetDisplay.setState(packet.)
     }
 }
