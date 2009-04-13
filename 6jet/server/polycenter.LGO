@@ -8,8 +8,7 @@ right 180
 forward :width / 2
 right 90
 right 180.0/:sides
-pendown
-REPEAT :sides [FD :length RT 360.0/:sides print list round first pos round last pos]
+REPEAT :sides [FD :length RT 360.0/:sides print list round first pos round last pos pendown circle 12 penup]
 penup
 left 180.0/:sides
 left 90
@@ -21,6 +20,6 @@ to sixjetlayout
 cs penup forward 220 right 90 forward 220 left 90 pendown
 left 180/4 polygon 70 4 right 180/4
 polygon 119 6
-left 180/8 polygon 150 8 right 180/8
+left 180/6 polygon 190 6 right 180/6
 end
 
