@@ -17,6 +17,7 @@ import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.ui.JetDisplayComponent;
+import org.opengroove.sixjet.common.ui.JetDisplayListener;
 import org.opengroove.sixjet.common.ui.LoginFrame;
 import org.opengroove.sixjet.controller.ui.frames.MainFrame;
 
@@ -128,6 +129,7 @@ public class SixjetController
         mainFrame.setLocationRelativeTo(null);
         mainFrame.show();
         jetDisplay = new JetDisplayComponent(jetDescriptor);
+        addJetDisplayListener();
         mainFrame.getJetDisplayPanel().add(jetDisplay);
         spooler = new PacketSpooler(outStream, 200);
         spooler.start();
@@ -135,6 +137,45 @@ public class SixjetController
         mainFrame.invalidate();
         mainFrame.validate();
         mainFrame.repaint();
+    }
+    
+    private static void addJetDisplayListener()
+    {
+        jetDisplay.addJetListener(new JetDisplayListener()
+        {
+            
+            public void jetDown(int jet)
+            {
+                if (mainFrame.getManualControlToggleCheckbox().isSelected())
+                {
+                    send(new JetControlPacket(jet, !jetDisplay.getState(jet)));
+                }
+                else if (mainFrame.getManualControlFixedCheckbox().isSelected())
+                {
+                    
+                }
+                else
+                {
+                    send(new JetControlPacket(jet, true));
+                }
+            }
+            
+            public void jetUp(int jet, boolean in)
+            {
+                if (mainFrame.getManualControlToggleCheckbox().isSelected())
+                {
+                    
+                }
+                else if (mainFrame.getManualControlFixedCheckbox().isSelected())
+                {
+                    
+                }
+                else
+                {
+                    send(new JetControlPacket(jet, true));
+                }
+            }
+        });
     }
     
     public static void send(Packet packet)
