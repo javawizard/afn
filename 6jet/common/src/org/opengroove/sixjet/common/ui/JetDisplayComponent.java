@@ -67,6 +67,10 @@ public class JetDisplayComponent extends JComponent
         panel.setLayout(null);
         panel.setPreferredSize(new Dimension(descriptor.getWidth(), descriptor
             .getHeight()));
+        panel.setOpaque(true);
+        panel.setBackground(groundColor);
+        setBackground(groundColor);
+        setOpaque(true);
         for (int i = 0; i < descriptor.getJets().size(); i++)
         {
             
