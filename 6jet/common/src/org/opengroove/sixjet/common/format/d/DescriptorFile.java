@@ -13,8 +13,12 @@ public class DescriptorFile implements Serializable
      */
     private static final long serialVersionUID = 319492598702124739L;
     
-    public static class DescriptorFileJet
+    public static class DescriptorFileJet implements Serializable
     {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = -2424409507616792602L;
         public int x;
         public int y;
         public int number;
