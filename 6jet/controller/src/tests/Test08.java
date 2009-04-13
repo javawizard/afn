@@ -1,11 +1,13 @@
 package tests;
 
+import java.awt.BorderLayout;
 import java.io.ByteArrayInputStream;
 
 import javax.swing.JFrame;
 
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.ui.JetDisplayComponent;
+import org.opengroove.sixjet.common.ui.JetDisplayListener;
 
 public class Test08
 {
@@ -21,9 +23,23 @@ public class Test08
     {
         DescriptorFile file =
             new DescriptorFile(new ByteArrayInputStream(testDescriptor));
-        JetDisplayComponent display = new JetDisplayComponent(file);
+        final JetDisplayComponent display = new JetDisplayComponent(file);
+        display.addJetListener(new JetDisplayListener()
+        {
+            
+            public void jetDown(int jet)
+            {
+                display.setState(jet, true);
+            }
+            
+            public void jetUp(int jet, boolean in)
+            {
+                display.setState(jet, false);
+            }
+        });
         JFrame f = new JFrame();
         f.setSize(600, 600);
+        f.getContentPane().setLayout(new BorderLayout());
         f.setLocationRelativeTo(null);
         f.getContentPane().add(display);
         f.show();

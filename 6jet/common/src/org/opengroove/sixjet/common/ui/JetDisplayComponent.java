@@ -66,7 +66,7 @@ public class JetDisplayComponent extends JComponent
         {
             this.number = number;
             this.state = state;
-            setSize(24, 24);
+            setSize(25, 25);
             setLocation(x - 12, y - 12);
             setOpaque(false);
             addMouseListener(this);
@@ -188,5 +188,10 @@ public class JetDisplayComponent extends JComponent
     public void removeJetListener(JetDisplayListener l)
     {
         listeners.remove(l);
+    }
+    
+    public boolean getState(int jet)
+    {
+        return jetMap.get(jet).state.state;
     }
 }
