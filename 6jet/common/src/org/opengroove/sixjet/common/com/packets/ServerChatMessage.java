@@ -10,5 +10,15 @@ public class ServerChatMessage extends ChatMessage
         this.from = from;
     }
     
+    public String getFrom()
+    {
+        return from;
+    }
+
+    public void setFrom(String from)
+    {
+        this.from = from;
+    }
+
     private String from;
 }

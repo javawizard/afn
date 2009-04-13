@@ -12,6 +12,7 @@ import org.opengroove.sixjet.common.com.PacketSpooler;
 import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
+import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
@@ -159,7 +160,7 @@ public class ControllerHandler extends Thread
          * Now we send any initial packets to inform the client of our state.F
          */
         sendInitialState();
-        send(new ChatMessage())
+        send(new ServerChatMessage("6jet Controller is ready.", "Server"));
         /*
          * Now we read off commands, process them, and send them on their way.
          * We don't need to check for socket connectivity in this loop since
