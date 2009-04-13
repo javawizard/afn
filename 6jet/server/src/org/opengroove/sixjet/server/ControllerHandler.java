@@ -64,6 +64,7 @@ public class ControllerHandler extends Thread
             {
                 spooler.close();
                 in.close();
+                out.close();
             }
             catch (Exception exception)
             {
@@ -94,6 +95,11 @@ public class ControllerHandler extends Thread
         }
         out.writeObject(loginResponse);
         out.flush();
-        if()
+        if (!loginResponse.isSuccessful())
+        {
+            in.close();
+            out.close();
+            return;
+        }
     }
 }
