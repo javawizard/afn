@@ -27,6 +27,18 @@ public class ControllerHandler extends Thread
     
     private String username;
     
+    public void trySend(Packet packet)
+    {
+        try
+        {
+            send(packet);
+        }
+        catch (Exception exception)
+        {
+            exception.printStackTrace();
+        }
+    }
+    
     /**
      * Returns the username associated with this handler, if the user has
      * successfully authenticated. If they have not authenticated, then this
@@ -154,13 +166,13 @@ public class ControllerHandler extends Thread
     
     private void processNopPacket(NopPacket packet)
     {
-        // TODO Auto-generated method stub
-        
+        /*
+         * Nothing to do for a nop packet
+         */
     }
     
     private void processJetControlPacket(JetControlPacket packet)
     {
-        // TODO Auto-generated method stub
         
     }
 }
