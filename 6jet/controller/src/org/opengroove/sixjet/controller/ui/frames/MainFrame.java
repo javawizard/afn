@@ -41,6 +41,8 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JScrollPane jScrollPane6;
+    private JPanel jetDisplayPanel;
     private JButton nowPlayingNextButton;
     private JButton nowPlayingCenterButton;
     private JButton nowPlayingStopButton;
@@ -141,6 +143,7 @@ public class MainFrame extends javax.swing.JFrame
         try
         {
             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            this.setTitle("6jet Controller");
             {
                 outerPanel = new JPanel();
                 BorderLayout outerPanelLayout = new BorderLayout();
@@ -150,7 +153,7 @@ public class MainFrame extends javax.swing.JFrame
                     mainSplit = new JSplitPane();
                     outerPanel.add(mainSplit, BorderLayout.CENTER);
                     mainSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
-                    mainSplit.setDividerLocation(420);
+                    mainSplit.setDividerLocation(500);
                     mainSplit.setResizeWeight(1.0);
                     mainSplit.setContinuousLayout(true);
                     mainSplit.setOneTouchExpandable(true);
@@ -392,7 +395,7 @@ public class MainFrame extends javax.swing.JFrame
                             topContentLeftSplit.add(topContentRightSplit,
                                 JSplitPane.RIGHT);
                             topContentRightSplit.setResizeWeight(1.0);
-                            topContentRightSplit.setDividerLocation(399);
+                            topContentRightSplit.setDividerLocation(450);
                             topContentRightSplit.setContinuousLayout(true);
                             {
                                 scheduleChatSplit = new JSplitPane();
@@ -400,7 +403,7 @@ public class MainFrame extends javax.swing.JFrame
                                     JSplitPane.RIGHT);
                                 scheduleChatSplit
                                     .setOrientation(JSplitPane.VERTICAL_SPLIT);
-                                scheduleChatSplit.setDividerLocation(215);
+                                scheduleChatSplit.setDividerLocation(220);
                                 scheduleChatSplit.setContinuousLayout(true);
                                 scheduleChatSplit.setResizeWeight(0.5);
                                 scheduleChatSplit.setOneTouchExpandable(true);
@@ -663,6 +666,17 @@ public class MainFrame extends javax.swing.JFrame
                                         }
                                     }
                                 }
+                                {
+                                    jScrollPane6 = new JScrollPane();
+                                    centerPanel.add(jScrollPane6, BorderLayout.CENTER);
+                                    jScrollPane6.setPreferredSize(new java.awt.Dimension(398, 342));
+                                    {
+                                        jetDisplayPanel = new JPanel();
+                                        jScrollPane6.setViewportView(getJetDisplayPanel());
+                                        BorderLayout jetDisplayPanelLayout = new BorderLayout();
+                                        jetDisplayPanel.setLayout(jetDisplayPanelLayout);
+                                    }
+                                }
                             }
                         }
                         {
@@ -670,7 +684,7 @@ public class MainFrame extends javax.swing.JFrame
                             topContentLeftSplit.add(playlistSplit, JSplitPane.LEFT);
                             playlistSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
                             playlistSplit.setContinuousLayout(true);
-                            playlistSplit.setDividerLocation(215);
+                            playlistSplit.setDividerLocation(220);
                             playlistSplit.setResizeWeight(0.5);
                             playlistSplit.setOneTouchExpandable(true);
                             {
@@ -929,7 +943,7 @@ public class MainFrame extends javax.swing.JFrame
                 }
             }
             pack();
-            this.setSize(690, 690);
+            this.setSize(740, 750);
         }
         catch (Exception e)
         {
@@ -1182,4 +1196,8 @@ public class MainFrame extends javax.swing.JFrame
         // TODO add your code for nowPlayingNextButton.actionPerformed
     }
     
+    public JPanel getJetDisplayPanel() {
+        return jetDisplayPanel;
+    }
+
 }
