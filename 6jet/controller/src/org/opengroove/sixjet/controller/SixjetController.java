@@ -109,7 +109,6 @@ public class SixjetController
     
     private static void setupController()
     {
-        // TODO Auto-generated method stub
-        
+        System.out.println("login succeeded. todo: set up the controller ui here.");
     }
 }
