@@ -182,5 +182,6 @@ public class ControllerHandler extends Thread
     private void processJetControlPacket(JetControlPacket packet)
     {
         SixjetServer.setJetState(packet.getJet(), packet.isState());
+        SixjetServer.flushBoard();
     }
 }

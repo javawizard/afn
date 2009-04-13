@@ -197,7 +197,7 @@ public class SixjetServer
      * @param packet
      *            The packet to send
      */
-    public void controllerBroadcast(Packet packet)
+    public static void controllerBroadcast(Packet packet)
     {
         /*
          * TODO: This should probably be created as some sort of thread pool
@@ -231,6 +231,14 @@ public class SixjetServer
     {
         controllerBoard.setJetState(jet, state);
         JetControlPacket packet = new JetControlPacket(jet, state);
-        
+        controllerBroadcast(packet);
+    }
+    
+    /**
+     * Flushes the controller board.
+     */
+    public static void flushBoard()
+    {
+        controllerBoard.flush();
     }
 }
