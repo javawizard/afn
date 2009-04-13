@@ -9,6 +9,7 @@ import net.sf.opengroove.common.security.Hash;
 
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.packets.NopPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
 
@@ -100,6 +101,12 @@ public class ControllerHandler extends Thread
         {
             loginResponse.setSuccessful(false);
             loginResponse.setReason("You are already logged in.");
+            ControllerHandler old =
+                SixjetServer.controllerConnectionMap.get(loginPacket.getUsername());
+            if (old != null)
+            {
+                old.send(new NopPacket());
+            }
         }
         out.writeObject(loginResponse);
         out.flush();
