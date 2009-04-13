@@ -128,9 +128,13 @@ public class SixjetController
         mainFrame.setLocationRelativeTo(null);
         mainFrame.show();
         jetDisplay = new JetDisplayComponent(jetDescriptor);
+        mainFrame.getJetDisplayPanel().add(jetDisplay);
         spooler = new PacketSpooler(outStream, 200);
         spooler.start();
         startReceivingThread();
+        mainFrame.invalidate();
+        mainFrame.validate();
+        mainFrame.repaint();
     }
     
     public static void send(Packet packet)
