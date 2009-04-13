@@ -4,7 +4,7 @@ import java.awt.Color;
 
 public class JetPatternEditorColors
 {
-    private static Color hexColor(String hex)
+    public static Color hexColor(String hex)
     {
         String rs = hex.substring(0, 2);
         String gs = hex.substring(2, 4);
