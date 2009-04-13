@@ -11,6 +11,7 @@ import net.sf.opengroove.common.utils.DataUtils;
 
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
+import org.opengroove.sixjet.common.format.m.ExtractUtils;
 import org.opengroove.sixjet.server.output.ControllerBoard;
 
 public class SixjetServer
@@ -88,7 +89,7 @@ public class SixjetServer
          */
     }
     
-    private static void regenerateMusicFolders()
+    private static void regenerateMusicFolders() throws IOException
     {
         File[] files = musicFilesFolder.listFiles();
         for (int i = 0; i < files.length; i++)
@@ -106,6 +107,9 @@ public class SixjetServer
                     file.getName().length() - ".6jm.zip".length()));
             if (target.exists())
                 DataUtils.recursiveDelete(target);
+            target.mkdirs();
+            System.out.println("Extracting " + file.getName());
+            ExtractUtils.extract(file, target);
         }
         
     }
