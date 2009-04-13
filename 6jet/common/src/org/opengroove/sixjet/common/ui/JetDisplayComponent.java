@@ -4,11 +4,13 @@ import info.clearthought.layout.TableLayout;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.ArrayList;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
+import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
 import org.opengroove.sixjet.common.ui.jetpattern.JetPatternEditorColors;
 
 /**
@@ -49,10 +51,17 @@ public class JetDisplayComponent extends JComponent
     private static class UIJet extends JComponent
     {
         
+        public UIJet(int i, int number, int x, int y)
+        {
+            // TODO Auto-generated constructor stub
+        }
+        
     }
     
     private DescriptorFile descriptor;
     private JetState[] jets;
+    private ArrayList<JetDisplayListener> listeners =
+        new ArrayList<JetDisplayListener>();
     
     public JetDisplayComponent(DescriptorFile descriptor)
     {
@@ -71,10 +80,15 @@ public class JetDisplayComponent extends JComponent
         panel.setBackground(groundColor);
         setBackground(groundColor);
         setOpaque(true);
+        add(panel, "1,1");
+        setPreferredSize(panel.getPreferredSize());
+        setMinimumSize(getPreferredSize());
         for (int i = 0; i < descriptor.getJets().size(); i++)
         {
-            
+            jets[i] = new JetState();
+            DescriptorFileJet fileJet = descriptor.getJets().get(i);
+            UIJet jet = new UIJet(i, fileJet.number, fileJet.x, fileJet.y);
+            panel.add(jet);
         }
     }
-    
 }
