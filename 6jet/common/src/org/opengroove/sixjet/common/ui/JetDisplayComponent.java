@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import javax.swing.JComponent;
 
+import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.ui.jetpattern.JetPatternEditorColors;
 
 /**
@@ -40,4 +41,19 @@ public class JetDisplayComponent extends JComponent
     {
         public boolean state;
     }
+    
+    private static class UIJet extends JComponent
+    {
+        
+    }
+    
+    private DescriptorFile descriptor;
+    private JetState[] jets;
+    
+    public JetDisplayComponent(DescriptorFile descriptor)
+    {
+        jets = new JetState[descriptor.getJets().size()];
+    }
+    
+    
 }
