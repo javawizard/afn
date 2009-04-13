@@ -14,6 +14,7 @@ import java.util.zip.ZipInputStream;
 import net.sf.opengroove.common.utils.DataUtils;
 
 import org.opengroove.sixjet.common.com.Packet;
+import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
 import org.opengroove.sixjet.common.format.m.ExtractUtils;
@@ -198,6 +199,12 @@ public class SixjetServer
      */
     public void controllerBroadcast(Packet packet)
     {
+        /*
+         * TODO: This should probably be created as some sort of thread pool
+         * executable task in the future, in the interest of speed. That way,
+         * other things can go on doing whatever, and the thread pool will take
+         * care of iteration and all that.
+         */
         ArrayList<ControllerHandler> handlers;
         synchronized (controllerConnectionMap)
         {
@@ -208,5 +215,22 @@ public class SixjetServer
         {
             handler.trySend(packet);
         }
+    }
+    
+    /**
+     * Sets the specified jet to the specified state, broadcasting this to all
+     * connected clients in the process. This method, however, does not flush
+     * the controller board.
+     * 
+     * @param jet
+     *            The jet, as defined by the descriptor, to change
+     * @param state
+     *            The new state for the jet, true for on, false for off
+     */
+    public static void setJetState(int jet, boolean state)
+    {
+        controllerBoard.setJetState(jet, state);
+        JetControlPacket packet = new JetControlPacket(jet, state);
+        
     }
 }
