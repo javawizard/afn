@@ -3,6 +3,7 @@ package org.opengroove.sixjet.common.ui;
 import info.clearthought.layout.TableLayout;
 
 import java.awt.Color;
+import java.awt.Dimension;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
