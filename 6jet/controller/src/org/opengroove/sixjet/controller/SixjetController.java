@@ -133,6 +133,13 @@ public class SixjetController
         startReceivingThread();
     }
     
+    public static void send(Packet packet)
+    {
+        if (!spooler.send(packet))
+            throw new RuntimeException("Couldn't send packet "
+                + packet.getClass().getName() + " " + packet);
+    }
+    
     private static void startReceivingThread()
     {
         new Thread()
@@ -183,6 +190,6 @@ public class SixjetController
         /*
          * For now, all we do is show this on the screen.
          */
-        jetDisplay.setState(packet.)
+        jetDisplay.setState(packet.getJet(), packet.isState());
     }
 }
