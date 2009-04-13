@@ -9,6 +9,7 @@ import net.sf.opengroove.common.security.Hash;
 
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
@@ -138,7 +139,28 @@ public class ControllerHandler extends Thread
          */
         while (SixjetServer.isRunning)
         {
-            
+            Packet packet = (Packet) in.readObject();
+            process(packet);
         }
+    }
+    
+    private void process(Packet packet)
+    {
+        if (packet instanceof JetControlPacket)
+            processJetControlPacket((JetControlPacket) packet);
+        else if (packet instanceof NopPacket)
+            processNopPacket((NopPacket) packet);
+    }
+    
+    private void processNopPacket(NopPacket packet)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    private void processJetControlPacket(JetControlPacket packet)
+    {
+        // TODO Auto-generated method stub
+        
     }
 }
