@@ -155,6 +155,12 @@ public class JetDisplayComponent extends JComponent
         repaint();
     }
     
+    protected void paintComponent(Graphics g)
+    {
+        g.setColor(groundColor);
+        g.fillRect(0, 0, getWidth(), getHeight());
+    }
+    
     private void notifyListeners(boolean up, int number, boolean in)
     {
         for (JetDisplayListener l : new ArrayList<JetDisplayListener>(listeners))

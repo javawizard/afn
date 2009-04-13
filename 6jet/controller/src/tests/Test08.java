@@ -1,9 +1,11 @@
 package tests;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.io.ByteArrayInputStream;
 
 import javax.swing.JFrame;
+import javax.swing.border.LineBorder;
 
 import org.opengroove.sixjet.common.format.d.DescriptorFile;
 import org.opengroove.sixjet.common.ui.JetDisplayComponent;
