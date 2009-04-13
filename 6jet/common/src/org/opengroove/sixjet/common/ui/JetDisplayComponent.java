@@ -6,6 +6,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
 import javax.swing.JComponent;
@@ -45,25 +48,69 @@ public class JetDisplayComponent extends JComponent
     private static final Color lineColor = JetPatternEditorColors.hexColor("000000");
     private static final Color lineOffColor = JetPatternEditorColors.hexColor("000000");
     
-    private static class JetState
+    private class JetState
     {
         public boolean state;
     }
     
-    private static class UIJet extends JComponent
+    private class UIJet extends JComponent implements MouseListener
     {
         private int number;
         
-        public UIJet(int index, int number, int x, int y)
+        private JetState state;
+        
+        public UIJet(int index, int number, int x, int y, JetState state)
         {
             this.number = number;
-            setSize(25, 25);
+            this.state = state;
+            setSize(24, 24);
+            setLocation(x - 12, y - 12);
             setOpaque(false);
+            addMouseListener(this);
         }
         
         public void paintComponent(Graphics g)
         {
             Graphics2D g2 = (Graphics2D) g;
+            if (state.state)
+                g2.setColor(waterColor);
+            else
+                g2.setColor(waterOffColor);
+            g2.fillOval(0, 0, 24, 24);
+            if (state.state)
+                g2.setColor(lineColor);
+            else
+                g2.setColor(lineOffColor);
+            g2.drawOval(0, 0, 24, 24);
+            /*
+             * TODO: possibly add stuff to color a jet lighter when it is being
+             * hovered. Maybe allow the application using the component to
+             * determine whether hovering is shown, to indicate when a jet
+             * display component is read-only (such as during music playback)
+             */
+        }
+        
+        public void mouseClicked(MouseEvent e)
+        {
+        }
+        
+        public void mouseEntered(MouseEvent e)
+        {
+        }
+        
+        public void mouseExited(MouseEvent e)
+        {
+        }
+        
+        public void mousePressed(MouseEvent e)
+        {
+            notifyListeners(false, number, true);
+        }
+        
+        public void mouseReleased(MouseEvent e)
+        {
+            notifyListeners(true, number, new Rectangle(getSize()).contains(e.getX(), e
+                .getY()));
         }
         
     }
@@ -75,6 +122,7 @@ public class JetDisplayComponent extends JComponent
     
     public JetDisplayComponent(DescriptorFile descriptor)
     {
+        this.descriptor = descriptor;
         jets = new JetState[descriptor.getJets().size()];
         setLayout(new TableLayout(
             new double[][] {
@@ -97,7 +145,7 @@ public class JetDisplayComponent extends JComponent
         {
             jets[i] = new JetState();
             DescriptorFileJet fileJet = descriptor.getJets().get(i);
-            UIJet jet = new UIJet(i, fileJet.number, fileJet.x, fileJet.y);
+            UIJet jet = new UIJet(i, fileJet.number, fileJet.x, fileJet.y, jets[i]);
             panel.add(jet);
         }
     }
@@ -111,6 +159,19 @@ public class JetDisplayComponent extends JComponent
             else
                 l.jetDown(number);
         }
+    }
+    
+    /**
+     * Sets the state of a jet.
+     * 
+     * @param number
+     *            The number, as specified in the descriptor, of the jet
+     * @param state
+     *            The new state of the jet, true for on, false for off
+     */
+    public void setState(int number, boolean state)
+    {
+        
     }
     
     public void addJetListener(JetDisplayListener l)
