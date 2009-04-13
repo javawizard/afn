@@ -160,7 +160,8 @@ public class ControllerHandler extends Thread
          * Now we send any initial packets to inform the client of our state.F
          */
         sendInitialState();
-        send(new ServerChatMessage("6jet Controller is ready.", "Server"));
+        send(new ServerChatMessage("You have successfully connected. You "
+            + "can now use 6jet Controller.", "Server"));
         /*
          * Now we read off commands, process them, and send them on their way.
          * We don't need to check for socket connectivity in this loop since
