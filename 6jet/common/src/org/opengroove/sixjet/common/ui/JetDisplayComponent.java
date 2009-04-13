@@ -4,6 +4,8 @@ import info.clearthought.layout.TableLayout;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 
 import javax.swing.JComponent;
@@ -50,10 +52,18 @@ public class JetDisplayComponent extends JComponent
     
     private static class UIJet extends JComponent
     {
+        private int number;
         
-        public UIJet(int i, int number, int x, int y)
+        public UIJet(int index, int number, int x, int y)
         {
-            // TODO Auto-generated constructor stub
+            this.number = number;
+            setSize(25, 25);
+            setOpaque(false);
+        }
+        
+        public void paintComponent(Graphics g)
+        {
+            Graphics2D g2 = (Graphics2D) g;
         }
         
     }
