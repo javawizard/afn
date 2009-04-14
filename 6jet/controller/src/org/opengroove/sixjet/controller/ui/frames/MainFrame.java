@@ -23,6 +23,8 @@ import javax.swing.ToolTipManager;
 
 import javax.swing.WindowConstants;
 import org.opengroove.sixjet.common.ui.HeaderComponent;
+import org.opengroove.sixjet.controller.SixjetController;
+
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -433,6 +435,8 @@ public class MainFrame extends javax.swing.JFrame
                                                 .setViewportView(getChatTextArea());
                                             chatTextArea.setEditable(false);
                                             chatTextArea.setOpaque(false);
+                                            chatTextArea.setLineWrap(true);
+                                            chatTextArea.setWrapStyleWord(true);
                                         }
                                     }
                                     {
@@ -669,12 +673,17 @@ public class MainFrame extends javax.swing.JFrame
                                 {
                                     jScrollPane6 = new JScrollPane();
                                     centerPanel.add(jScrollPane6, BorderLayout.CENTER);
-                                    jScrollPane6.setPreferredSize(new java.awt.Dimension(398, 342));
+                                    jScrollPane6
+                                        .setPreferredSize(new java.awt.Dimension(398,
+                                            342));
                                     {
                                         jetDisplayPanel = new JPanel();
-                                        jScrollPane6.setViewportView(getJetDisplayPanel());
-                                        BorderLayout jetDisplayPanelLayout = new BorderLayout();
-                                        jetDisplayPanel.setLayout(jetDisplayPanelLayout);
+                                        jScrollPane6
+                                            .setViewportView(getJetDisplayPanel());
+                                        BorderLayout jetDisplayPanelLayout =
+                                            new BorderLayout();
+                                        jetDisplayPanel
+                                            .setLayout(jetDisplayPanelLayout);
                                     }
                                 }
                             }
@@ -1126,14 +1135,16 @@ public class MainFrame extends javax.swing.JFrame
     
     private void chatSendButtonActionPerformed(ActionEvent evt)
     {
-        System.out.println("chatSendButton.actionPerformed, event=" + evt);
-        // TODO add your code for chatSendButton.actionPerformed
+        /*
+         * This does the same thing as firing an event on the chat text field,
+         * so we'll just call the same method.
+         */
+        SixjetController.chatTextFieldActionPerformed();
     }
     
     private void chatTextFieldActionPerformed(ActionEvent evt)
     {
-        System.out.println("chatTextField.actionPerformed, event=" + evt);
-        // TODO add your code for chatTextField.actionPerformed
+        SixjetController.chatTextFieldActionPerformed();
     }
     
     private void musicUploadButtonActionPerformed(ActionEvent evt)
@@ -1196,8 +1207,9 @@ public class MainFrame extends javax.swing.JFrame
         // TODO add your code for nowPlayingNextButton.actionPerformed
     }
     
-    public JPanel getJetDisplayPanel() {
+    public JPanel getJetDisplayPanel()
+    {
         return jetDisplayPanel;
     }
-
+    
 }

@@ -6,12 +6,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 
 import javax.swing.JOptionPane;
 
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
+import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
@@ -229,6 +232,28 @@ public class SixjetController
     {
         if (packet instanceof JetControlPacket)
             processJetControlPacket((JetControlPacket) packet);
+        else if (packet instanceof ServerChatMessage)
+            processServerChatMessage((ServerChatMessage) packet);
+    }
+    
+    private static void processServerChatMessage(ServerChatMessage packet)
+    {
+        mainFrame.getChatTextArea().append(
+            "(" + new SimpleDateFormat("M/dd h:mmaa").format(packet.getWhen()) + ")");
+        mainFrame.getChatTextArea().append(" " + packet.getFrom());
+        String text = packet.getMessage();
+        boolean isMe = text.startsWith("/me ");
+        if (isMe)
+        {
+            text = text.substring("/me ".length());
+        }
+        else
+        {
+            mainFrame.getChatTextArea().append(":");
+        }
+        mainFrame.getChatTextArea().append(" " + text + "\n\n");
+        mainFrame.getChatTextArea().setCaretPosition(
+            mainFrame.getChatTextArea().getDocument().getLength());
     }
     
     private static void processJetControlPacket(JetControlPacket packet)
@@ -237,5 +262,15 @@ public class SixjetController
          * For now, all we do is show this on the screen.
          */
         jetDisplay.setState(packet.getJet(), packet.isState());
+    }
+    
+    public static void chatTextFieldActionPerformed()
+    {
+        String text = mainFrame.getChatTextField().getText();
+        if (text.trim().equals(""))
+            return;
+        ChatMessage message = new ChatMessage(text);
+        send(message);
+        mainFrame.getChatTextField().setText("");
     }
 }
