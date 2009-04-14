@@ -66,6 +66,16 @@ public class SixjetController
         loginFrame.setLocationRelativeTo(null);
         loginFrame.setTitle("Log in - 6jet Controller");
         loginFrame.show();
+        String fixedServer = System.getenv("SIXJC_SERVER");
+        String fixedUsername = System.getenv("SIXJC_USERNAME");
+        String fixedPassword = System.getenv("SIXJC_PASSWORD");
+        if (fixedUsername != null && fixedPassword != null && fixedServer != null)
+        {
+            loginFrame.getUsernameField().setText(fixedUsername);
+            loginFrame.getPasswordField().setText(fixedPassword);
+            loginFrame.getServerField().setText(fixedServer);
+            attemptLogin();
+        }
     }
     
     protected static void attemptLogin()
