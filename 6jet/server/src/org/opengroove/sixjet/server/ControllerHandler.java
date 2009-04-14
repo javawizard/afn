@@ -192,6 +192,15 @@ public class ControllerHandler extends Thread
             processJetControlPacket((JetControlPacket) packet);
         else if (packet instanceof NopPacket)
             processNopPacket((NopPacket) packet);
+        else if (packet instanceof ChatMessage)
+            processChatMessage((ChatMessage) packet);
+    }
+    
+    private void processChatMessage(ChatMessage packet)
+    {
+        ServerChatMessage outPacket =
+            new ServerChatMessage(packet.getMessage(), username);
+        SixjetServer.controllerBroadcast(outPacket);
     }
     
     private void processNopPacket(NopPacket packet)

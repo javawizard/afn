@@ -8,23 +8,29 @@ public class ChatMessage extends Packet
     {
         super();
         this.message = message;
+        this.when = System.currentTimeMillis();
     }
+    
     public String getMessage()
     {
         return message;
     }
+    
     public long getWhen()
     {
         return when;
     }
+    
     public void setMessage(String message)
     {
         this.message = message;
     }
+    
     public void setWhen(long when)
     {
         this.when = when;
     }
+    
     private String message;
     private long when;
 }
