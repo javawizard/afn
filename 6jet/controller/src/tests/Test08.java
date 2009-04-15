@@ -40,6 +40,5 @@ public class Test08 {
 		f.setLocationRelativeTo(null);
 		f.getContentPane().add(display);
 		f.show();
-
 	}
 }
