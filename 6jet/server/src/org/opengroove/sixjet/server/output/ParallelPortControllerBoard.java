@@ -2,10 +2,23 @@ package org.opengroove.sixjet.server.output;
 
 public class ParallelPortControllerBoard implements ControllerBoard
 {
+    /**
+     * The address of the parallel port to communicate with. 0x378 (888 in
+     * decimal) is LPT1. This will probably be configurable in the future.
+     */
+    public static final int address = 0x378;
     
     public void flush()
     {
-        // TODO Auto-generated method stub
+        
+    }
+    
+    /**
+     * Sets pins 2 through 9 on the parallel port to be the least-significant 8
+     * bits of the number specified.
+     */
+    public void write(int b)
+    {
         
     }
     
