@@ -91,8 +91,7 @@ public class ParallelPortControllerBoard implements ControllerBoard
     
     public boolean getJetState(int jet)
     {
-        // TODO Auto-generated method stub
-        return false;
+        return ((jetState >> jet) & 1) != 0;
     }
     
 }
