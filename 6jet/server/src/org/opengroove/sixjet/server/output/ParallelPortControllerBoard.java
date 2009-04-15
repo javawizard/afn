@@ -17,11 +17,14 @@ public class ParallelPortControllerBoard implements ControllerBoard
     
     /**
      * Sets pins 2 through 9 on the physical parallel port to be the
-     * least-significant 8 bits of the number specified.
+     * least-significant 8 bits of the number specified. This method also
+     * inserts a delay suitable for the shift registers.
      */
     public void write(int b)
     {
         ParallelPort.writeOneByte(address, b);
+        for (int i = 0; i < 500; i++)
+            ;
     }
     
     /**
@@ -30,7 +33,8 @@ public class ParallelPortControllerBoard implements ControllerBoard
      * register. The third byte is also written to the third register, although
      * this shift register is currently unused in the physical 6jet controller.
      * 
-     * @param value The value to write
+     * @param value
+     *            The value to write
      */
     public void shiftOut(int value)
     {
