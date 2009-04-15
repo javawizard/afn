@@ -65,6 +65,9 @@ public class ParallelPortControllerBoard implements ControllerBoard
             write(data);
             write(data | data4);
             write(data);
+            byte1 >>= 1;
+            byte2 >>= 1;
+            byte3 >>= 1;
         }
         write(0);
         write(data5);
