@@ -24,6 +24,19 @@ public class ParallelPortControllerBoard implements ControllerBoard
         ParallelPort.writeOneByte(address, b);
     }
     
+    /**
+     * Writes the least-significant byte to the first output shift register, and
+     * writes the next least significant byte to the second output shift
+     * register. The third byte is also written to the third register, although
+     * this shift register is currently unused in the physical 6jet controller.
+     * 
+     * @param value The value to write
+     */
+    public void shiftOut(int value)
+    {
+        
+    }
+    
     public void setJetState(int jet, boolean state)
     {
         // TODO Auto-generated method stub
