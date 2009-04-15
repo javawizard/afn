@@ -12,6 +12,9 @@ public class ParallelPortControllerBoard implements ControllerBoard
     public static final int data6 = 0x01 << 5;
     public static final int data7 = 0x01 << 6;
     public static final int data8 = 0x01 << 7;
+    
+    public int jetState;
+    
     /**
      * The address of the parallel port to communicate with. 0x378 (888 in
      * decimal) is LPT1. This will probably be configurable in the future.
@@ -20,7 +23,7 @@ public class ParallelPortControllerBoard implements ControllerBoard
     
     public void flush()
     {
-        
+        shiftOut(jetState);
     }
     
     /**
@@ -69,8 +72,15 @@ public class ParallelPortControllerBoard implements ControllerBoard
     
     public void setJetState(int jet, boolean state)
     {
-        // TODO Auto-generated method stub
-        
+        if (jet > 23)
+            throw new RuntimeException("Invalid jet number " + jet
+                + ", only jets 0 through 23 are allowed");
+        int vp = 1 << jet;
+        int vn = 0xFFFFFFFF ^ vp;
+        if(state)
+            jetState |= vp;
+        else
+            jetState &= vn;
     }
     
     public void init()
