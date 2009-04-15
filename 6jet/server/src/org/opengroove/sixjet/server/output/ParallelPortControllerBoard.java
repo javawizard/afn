@@ -77,7 +77,7 @@ public class ParallelPortControllerBoard implements ControllerBoard
                 + ", only jets 0 through 23 are allowed");
         int vp = 1 << jet;
         int vn = 0xFFFFFFFF ^ vp;
-        if(state)
+        if (state)
             jetState |= vp;
         else
             jetState &= vn;
@@ -91,6 +91,9 @@ public class ParallelPortControllerBoard implements ControllerBoard
     
     public boolean getJetState(int jet)
     {
+        if (jet > 23)
+            throw new RuntimeException("Invalid jet number " + jet
+                + ", only jets 0 through 23 are allowed");
         return ((jetState >> jet) & 1) != 0;
     }
     
