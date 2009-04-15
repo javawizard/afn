@@ -4,6 +4,14 @@ import parport.ParallelPort;
 
 public class ParallelPortControllerBoard implements ControllerBoard
 {
+    public static final int data1 = 0x01;
+    public static final int data2 = 0x01 << 1;
+    public static final int data3 = 0x01 << 2;
+    public static final int data4 = 0x01 << 3;
+    public static final int data5 = 0x01 << 4;
+    public static final int data6 = 0x01 << 5;
+    public static final int data7 = 0x01 << 6;
+    public static final int data8 = 0x01 << 7;
     /**
      * The address of the parallel port to communicate with. 0x378 (888 in
      * decimal) is LPT1. This will probably be configurable in the future.
@@ -23,7 +31,7 @@ public class ParallelPortControllerBoard implements ControllerBoard
     public void write(int b)
     {
         ParallelPort.writeOneByte(address, b);
-        for (int i = 0; i < 500; i++)
+        for (int i = 0; i < 1000; i++)
             ;
     }
     
@@ -38,7 +46,25 @@ public class ParallelPortControllerBoard implements ControllerBoard
      */
     public void shiftOut(int value)
     {
-        
+        // FIXME: this doesn't enable pin 6, which enables the 24-volt power
+        // supplies used for the valves
+        int byte1 = value & 0xFF;
+        int byte2 = (value >> 8) & 0xFF;
+        int byte3 = (value >> 16) & 0xFF;
+        write(0);
+        for (int i = 0; i < 8; i++)
+        {
+            int b1 = byte1 & 1;
+            int b2 = byte2 & 1;
+            int b3 = byte3 & 1;
+            int data = b1 | (b2 << 1) | (b3 << 2);
+            write(data);
+            write(data | data4);
+            write(data);
+        }
+        write(0);
+        write(data5);
+        write(0);
     }
     
     public void setJetState(int jet, boolean state)
