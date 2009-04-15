@@ -33,7 +33,7 @@ public class ParallelPortControllerBoard implements ControllerBoard
      */
     public void write(int b)
     {
-    	System.out.println("writing " + Integer.toString(b, 2) + " to address " + address);
+//    	System.out.println("writing " + Integer.toString(b, 2) + " to address " + address);
         ParallelPort.writeOneByte(address, b);
         for (int i = 0; i < 10000; i++)
             ;
