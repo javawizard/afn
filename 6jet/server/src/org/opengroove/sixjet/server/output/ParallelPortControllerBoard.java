@@ -14,8 +14,8 @@ public class ParallelPortControllerBoard implements ControllerBoard
     }
     
     /**
-     * Sets pins 2 through 9 on the parallel port to be the least-significant 8
-     * bits of the number specified.
+     * Sets pins 2 through 9 on the physical parallel port to be the
+     * least-significant 8 bits of the number specified.
      */
     public void write(int b)
     {
