@@ -2,8 +2,11 @@ package org.opengroove.sixjet.controller;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FilterOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
@@ -91,7 +94,17 @@ public class SixjetController
             loginFrame.getLoginButton().setEnabled(false);
             socket = new Socket(server, 56538);
             inStream = new ObjectInputStream(socket.getInputStream());
-            outStream = new ObjectOutputStream(socket.getOutputStream());
+            OutputStream oo = new FilterOutputStream(socket.getOutputStream())
+            {
+                
+                public void flush() throws IOException
+                {
+                    System.out.println("flushing");
+                    super.flush();
+                    System.out.println("flushed");
+                }
+            };
+            outStream = new ObjectOutputStream(oo);
             outStream.writeObject(new LoginPacket(username, password));
             LoginResponse response = (LoginResponse) inStream.readObject();
             if (response.isSuccessful())
