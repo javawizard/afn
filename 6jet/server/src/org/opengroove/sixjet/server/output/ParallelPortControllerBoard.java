@@ -1,5 +1,7 @@
 package org.opengroove.sixjet.server.output;
 
+import parport.ParallelPort;
+
 public class ParallelPortControllerBoard implements ControllerBoard
 {
     /**
@@ -19,7 +21,7 @@ public class ParallelPortControllerBoard implements ControllerBoard
      */
     public void write(int b)
     {
-        
+        ParallelPort.writeOneByte(address, b);
     }
     
     public void setJetState(int jet, boolean state)
