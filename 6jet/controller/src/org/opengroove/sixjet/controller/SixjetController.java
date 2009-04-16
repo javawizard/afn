@@ -173,6 +173,7 @@ public class SixjetController
             
             public void jetDown(int jet)
             {
+            	System.out.println("jet " + jet + " down");
                 if (mainFrame.getManualControlToggleCheckbox().isSelected())
                 {
                     send(new JetControlPacket(jet, !jetDisplay.getState(jet)));
@@ -189,6 +190,7 @@ public class SixjetController
             
             public void jetUp(int jet, boolean in)
             {
+            	System.out.println("jet " + jet + " up");
                 if (mainFrame.getManualControlToggleCheckbox().isSelected())
                 {
                     
