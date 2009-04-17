@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import net.sf.opengroove.common.security.Hash;
 
@@ -84,6 +85,8 @@ public class ControllerHandler extends Thread
                 synchronized (SixjetServer.controllerConnectionMap)
                 {
                     SixjetServer.controllerConnectionMap.remove(username);
+                    SixjetServer.controllerBroadcast(new ServerChatMessage(username
+                        + " has signed off of 6jet Controller.", "Server"));
                 }
             }
             try
@@ -125,7 +128,7 @@ public class ControllerHandler extends Thread
             && SixjetServer.controllerConnectionMap.get(loginPacket.getUsername()) != null)
         {
             loginResponse.setSuccessful(false);
-            loginResponse.setReason("You are already logged in.");
+            loginResponse.setReason("You are already logged in as that username.");
             ControllerHandler old =
                 SixjetServer.controllerConnectionMap.get(loginPacket.getUsername());
             if (old != null)
@@ -158,9 +161,15 @@ public class ControllerHandler extends Thread
         descriptorPacket.setFile(SixjetServer.descriptor);
         send(descriptorPacket);
         /*
-         * Now we send any initial packets to inform the client of our state.F
+         * Now we send any initial packets to inform the client of our state.
          */
         sendInitialState();
+        /*
+         * Now we'll broadcast a chat message to everyone, indicating that this
+         * user has signed on.
+         */
+        SixjetServer.controllerBroadcast(new ServerChatMessage(username
+            + " has signed on to 6jet Controller.", "Server"));
         send(new ServerChatMessage("You have successfully connected. You "
             + "can now use 6jet Controller.", "Server"));
         /*
@@ -183,6 +192,19 @@ public class ControllerHandler extends Thread
             JetControlPacket p =
                 new JetControlPacket(jet.number, SixjetServer.getJetState(jet.number));
             send(p);
+        }
+        ArrayList<ControllerHandler> handlers;
+        synchronized (SixjetServer.controllerConnectionMap)
+        {
+            handlers =
+                new ArrayList<ControllerHandler>(SixjetServer.controllerConnectionMap
+                    .values());
+        }
+        for (ControllerHandler handler : handlers)
+        {
+            if (!handler.username.equals(username))
+                send(new ServerChatMessage(handler.username
+                    + " has signed on to 6jet Controller.", "Server"));
         }
     }
     

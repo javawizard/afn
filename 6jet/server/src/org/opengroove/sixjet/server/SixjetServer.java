@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipInputStream;
 
 import net.sf.opengroove.common.utils.DataUtils;
@@ -41,6 +44,10 @@ public class SixjetServer
     
     public static Thread musicServerThread;
     
+    public static ThreadPoolExecutor tasks =
+        new ThreadPoolExecutor(5, 20, 1, TimeUnit.MINUTES,
+            new ArrayBlockingQueue<Runnable>(800));
+    
     public static File authFolder;
     public static File musicFilesFolder;
     public static File musicFoldersFolder;
@@ -63,6 +70,7 @@ public class SixjetServer
                 + "which will be created if needed");
             return;
         }
+        tasks.allowCoreThreadTimeOut(true);
         System.out.println("Loading controller board and descriptor...");
         String controllerBoardClassname = args[0];
         String descriptorPath = args[1];
@@ -198,24 +206,25 @@ public class SixjetServer
      * @param packet
      *            The packet to send
      */
-    public static void controllerBroadcast(Packet packet)
+    public static void controllerBroadcast(final Packet packet)
     {
-        /*
-         * TODO: This should probably be created as some sort of thread pool
-         * executable task in the future, in the interest of speed. That way,
-         * other things can go on doing whatever, and the thread pool will take
-         * care of iteration and all that.
-         */
-        ArrayList<ControllerHandler> handlers;
-        synchronized (controllerConnectionMap)
+        tasks.execute(new Runnable()
         {
-            handlers =
-                new ArrayList<ControllerHandler>(controllerConnectionMap.values());
-        }
-        for (ControllerHandler handler : handlers)
-        {
-            handler.trySend(packet);
-        }
+            public void run()
+            {
+                ArrayList<ControllerHandler> handlers;
+                synchronized (controllerConnectionMap)
+                {
+                    handlers =
+                        new ArrayList<ControllerHandler>(controllerConnectionMap
+                            .values());
+                }
+                for (ControllerHandler handler : handlers)
+                {
+                    handler.trySend(packet);
+                }
+            }
+        });
     }
     
     /**

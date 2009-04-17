@@ -9,3 +9,5 @@ The next word in the line is either "music" or "delay". In the future, a line wi
 If it is music, then the rest of the line is the name of a music file to play, mius the .6jm.zip extension. This music file must be present on the server side.
 
 If it is delay, then the rest of the line is the number of milliseconds to delay for.
+
+In the future, this word will be allowed to be "playlist". If it is playlist, then the rest of the line is the name of a playlist, minus the file extension, of a playlist to play. This playlist will be played, and then control will return to this playlist.
