@@ -11,6 +11,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -43,6 +44,7 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JButton aboutButton;
     private JScrollPane jScrollPane6;
     private JPanel jetDisplayPanel;
     private JButton nowPlayingNextButton;
@@ -670,6 +672,22 @@ public class MainFrame extends javax.swing.JFrame
                                             timeMsLabel.setText("ms");
                                         }
                                     }
+                                    {
+                                        aboutButton = new JButton();
+                                        centerPanelSouth.add(aboutButton);
+                                        aboutButton.setText("About");
+                                        aboutButton.setMargin(new java.awt.Insets(0, 0,
+                                            0, 0));
+                                        aboutButton
+                                            .addActionListener(new ActionListener()
+                                            {
+                                                public void actionPerformed(
+                                                    ActionEvent evt)
+                                                {
+                                                    aboutButtonActionPerformed(evt);
+                                                }
+                                            });
+                                    }
                                 }
                                 {
                                     jScrollPane6 = new JScrollPane();
@@ -1211,6 +1229,14 @@ public class MainFrame extends javax.swing.JFrame
     public JPanel getJetDisplayPanel()
     {
         return jetDisplayPanel;
+    }
+    
+    private void aboutButtonActionPerformed(ActionEvent evt)
+    {
+        JOptionPane.showMessageDialog(this, "<html>6jet Controller<br/>"
+            + "http://6jet.googlecode.com<br/>"
+            + "&copy; 2009 Alexander Boyd<br/>"
+            + "Released under the terms of the GNU Lesser General Public License");
     }
     
 }
