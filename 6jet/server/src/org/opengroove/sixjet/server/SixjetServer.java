@@ -228,6 +228,28 @@ public class SixjetServer
     }
     
     /**
+     * A partly-synchronous version of {@link #controllerBroadcast(Packet)}.
+     * This takes the current user list and sends the packet to them sometime in
+     * the future. controllerBroadcast obtains the user list in the future.
+     * 
+     * @param packet
+     *            The packet to send
+     */
+    public static void synchronousControllerBroadcast(final Packet packet)
+    {
+        ArrayList<ControllerHandler> handlers;
+        synchronized (controllerConnectionMap)
+        {
+            handlers =
+                new ArrayList<ControllerHandler>(controllerConnectionMap.values());
+        }
+        for (ControllerHandler handler : handlers)
+        {
+            handler.trySend(packet);
+        }
+    }
+    
+    /**
      * Sets the specified jet to the specified state, broadcasting this to all
      * connected clients in the process. This method, however, does not flush
      * the controller board.

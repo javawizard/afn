@@ -149,6 +149,12 @@ public class ControllerHandler extends Thread
          * connection map.
          */
         username = loginPacket.getUsername();
+        /*
+         * Now we'll broadcast a chat message to everyone, indicating that this
+         * user has signed on.
+         */
+        SixjetServer.synchronousControllerBroadcast(new ServerChatMessage(username
+            + " has signed on to 6jet Controller.", "Server"));
         synchronized (SixjetServer.controllerConnectionMap)
         {
             SixjetServer.controllerConnectionMap.put(username, this);
@@ -164,12 +170,6 @@ public class ControllerHandler extends Thread
          * Now we send any initial packets to inform the client of our state.
          */
         sendInitialState();
-        /*
-         * Now we'll broadcast a chat message to everyone, indicating that this
-         * user has signed on.
-         */
-        SixjetServer.controllerBroadcast(new ServerChatMessage(username
-            + " has signed on to 6jet Controller.", "Server"));
         send(new ServerChatMessage("You have successfully connected. You "
             + "can now use 6jet Controller.", "Server"));
         /*
