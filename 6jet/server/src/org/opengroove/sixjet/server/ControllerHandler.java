@@ -5,6 +5,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import net.sf.opengroove.common.security.Hash;
 
@@ -31,6 +35,20 @@ public class ControllerHandler extends Thread
     private PacketSpooler spooler;
     
     private String username;
+    
+    private long token;
+    
+    private BlockingQueue<Packet> packetsToProcess =
+        new ArrayBlockingQueue<Packet>(200);
+    /*
+     * This set must be a set that retains its insert ordering.
+     */
+    private Set<String> processedPacketIds = new LinkedHashSet<String>();
+    
+    public void processInboundPacket(Packet packet)
+    {
+        packetsToProcess.add(packet);
+    }
     
     public void trySend(Packet packet)
     {
