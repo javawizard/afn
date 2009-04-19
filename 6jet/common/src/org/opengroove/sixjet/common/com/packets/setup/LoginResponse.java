@@ -26,4 +26,15 @@ public class LoginResponse extends Packet
     
     private boolean successful;
     private String reason;
+    private long token;
+    
+    public long getToken()
+    {
+        return token;
+    }
+    
+    public void setToken(long token)
+    {
+        this.token = token;
+    }
 }

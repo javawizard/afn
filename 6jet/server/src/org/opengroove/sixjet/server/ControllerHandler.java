@@ -14,6 +14,7 @@ import net.sf.opengroove.common.security.Hash;
 
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.StopPacket;
 import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
@@ -45,7 +46,13 @@ public class ControllerHandler extends Thread
      */
     private Set<String> processedPacketIds = new LinkedHashSet<String>();
     
-    public void processInboundPacket(Packet packet)
+    /**
+     * Schedules this inbound packet for processing. The connection thread will
+     * process this packet as soon as possible.
+     * 
+     * @param packet
+     */
+    public void scheduleForProcessing(Packet packet)
     {
         packetsToProcess.add(packet);
     }
@@ -155,6 +162,14 @@ public class ControllerHandler extends Thread
                 old.send(new NopPacket());
             }
         }
+        if (loginResponse.isSuccessful())
+        {
+            /*
+             * We'll generate a token now, and send it to the client.
+             */
+            token = Double.doubleToLongBits(Math.random());
+            loginResponse.setToken(token);
+        }
         out.writeObject(loginResponse);
         out.flush();
         if (!loginResponse.isSuccessful())
@@ -191,6 +206,27 @@ public class ControllerHandler extends Thread
         sendInitialState();
         send(new ServerChatMessage("You have successfully connected. You "
             + "can now use 6jet Controller.", "Server"));
+        /*
+         * Now we'll start the tcp server thread.
+         */
+        new Thread()
+        {
+            public void run()
+            {
+                try
+                {
+                    while (true)
+                    {
+                        
+                    }
+                }
+                catch (Exception exception)
+                {
+                    exception.printStackTrace();
+                }
+                packetsToProcess.add(new StopPacket());
+            }
+        }.start();
         /*
          * Now we read off commands, process them, and send them on their way.
          * We don't need to check for socket connectivity in this loop since

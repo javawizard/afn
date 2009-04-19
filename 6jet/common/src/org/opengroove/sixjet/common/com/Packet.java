@@ -16,6 +16,8 @@ public class Packet implements Serializable
     
     private String packetId;
     
+    private long dateReceived;
+    
     public Packet()
     {
         packetId = "" + System.currentTimeMillis() + "-" + Math.random();
