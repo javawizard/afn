@@ -153,6 +153,8 @@ public class ParallelPortControllerBoard implements ControllerBoard
             else
                 jetState &= vn;
             lastChangeTime = System.currentTimeMillis();
+            if(state)
+                powerStatus = data6;
         }
     }
     
