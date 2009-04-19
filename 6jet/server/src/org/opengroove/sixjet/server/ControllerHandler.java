@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -44,7 +45,7 @@ public class ControllerHandler extends Thread
     /*
      * This set must be a set that retains its insert ordering.
      */
-    private Set<String> processedPacketIds = new LinkedHashSet<String>();
+    private LinkedHashSet<String> processedPacketIds = new LinkedHashSet<String>();
     
     /**
      * Schedules this inbound packet for processing. The connection thread will
@@ -218,7 +219,10 @@ public class ControllerHandler extends Thread
                     while (true)
                     {
                         Packet packet = (Packet) in.readObject();
-                        packetsToProcess.add(packet);
+                        String packetId = packet.getPacketId();
+                        boolean shouldProcess = validateAndAdd(packetId);
+                        if (shouldProcess)
+                            packetsToProcess.add(packet);
                     }
                 }
                 catch (Exception exception)
@@ -257,6 +261,46 @@ public class ControllerHandler extends Thread
             if (packet instanceof StopPacket)
                 return;
             process(packet);
+        }
+    }
+    
+    /**
+     * Validates that the packet specified is not in the processed packets list.
+     * If it is not in the list, then it is added, and the list is trimmed back
+     * to the maximum list size (currently 300).
+     * 
+     * @param packetId
+     *            The id of the packet to check
+     * @return True if this packet has not yet been processed, and should
+     *         therefore be processed, or false if the packet has already been
+     *         processed, and should not be processed again
+     */
+    protected boolean validateAndAdd(String packetId)
+    {
+        synchronized (processedPacketIds)
+        {
+            boolean alreadyReceived = processedPacketIds.contains(packetId);
+            if (alreadyReceived)
+                return false;
+            /*
+             * The packet is new. We'll add it, trim the list, and return true.
+             */
+            processedPacketIds.add(packetId);
+            /*
+             * numOver is the number of elements in the list in excess of the
+             * maximum number (300)
+             */
+            int numOver = processedPacketIds.size() - 300;
+            if (numOver > 0)
+            {
+                Iterator iter = processedPacketIds.iterator();
+                for (int i = 0; i < numOver; i++)
+                {
+                    iter.next();
+                    iter.remove();
+                }
+            }
+            return true;
         }
     }
     
