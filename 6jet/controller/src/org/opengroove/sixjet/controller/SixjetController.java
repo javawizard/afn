@@ -158,7 +158,7 @@ public class SixjetController
         jetDisplay = new JetDisplayComponent(jetDescriptor);
         addJetDisplayListener();
         mainFrame.getJetDisplayPanel().add(jetDisplay);
-        spooler = new PacketSpooler(outStream, 200);
+        spooler = new PacketSpooler(outStream, null, null, 0, 200);
         spooler.start();
         startReceivingThread();
         mainFrame.invalidate();
@@ -173,7 +173,7 @@ public class SixjetController
             
             public void jetDown(int jet)
             {
-            	System.out.println("jet " + jet + " down");
+                System.out.println("jet " + jet + " down");
                 if (mainFrame.getManualControlToggleCheckbox().isSelected())
                 {
                     send(new JetControlPacket(jet, !jetDisplay.getState(jet)));
@@ -190,7 +190,7 @@ public class SixjetController
             
             public void jetUp(int jet, boolean in)
             {
-            	System.out.println("jet " + jet + " up");
+                System.out.println("jet " + jet + " up");
                 if (mainFrame.getManualControlToggleCheckbox().isSelected())
                 {
                     
