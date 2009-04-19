@@ -225,16 +225,20 @@ public class ControllerHandler extends Thread
          * it's not significant enough that I'm going to work on solving it
          * right now.
          */
-        for(String name : SixjetServer.playlistsFolder.list())
+        for (String name : SixjetServer.playlistsFolder.list())
         {
-            if(!name.endsWith(""))
+            if (!name.endsWith(""))
             {
-                System.err.println("Skipping playlist file " + name + " on invalid extension");
+                System.err.println("Skipping playlist file " + name
+                    + " on invalid extension");
                 continue;
             }
             AddPlaylist packet = new AddPlaylist();
             packet.setName(name);
             send(packet);
+            /*
+             * The playlist has been sent. Now we'll send its contents.
+             */
         }
     }
     
