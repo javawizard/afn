@@ -106,25 +106,25 @@ public class ControllerHandler extends Thread
         catch (Exception e)
         {
             e.printStackTrace();
-            if (username != null)
+        }
+        if (username != null)
+        {
+            synchronized (SixjetServer.controllerConnectionMap)
             {
-                synchronized (SixjetServer.controllerConnectionMap)
-                {
-                    SixjetServer.controllerConnectionMap.remove(username);
-                    SixjetServer.controllerBroadcast(new ServerChatMessage(username
-                        + " has signed off of 6jet Controller.", "Server"));
-                }
+                SixjetServer.controllerConnectionMap.remove(username);
+                SixjetServer.controllerBroadcast(new ServerChatMessage(username
+                    + " has signed off of 6jet Controller.", "Server"));
             }
-            try
-            {
-                spooler.close();
-                in.close();
-                out.close();
-            }
-            catch (Exception exception)
-            {
-                exception.printStackTrace();
-            }
+        }
+        try
+        {
+            spooler.close();
+            in.close();
+            out.close();
+        }
+        catch (Exception exception)
+        {
+            exception.printStackTrace();
         }
     }
     
@@ -224,14 +224,25 @@ public class ControllerHandler extends Thread
                 catch (Exception exception)
                 {
                     System.err.println("Exception for user " + username);
-                    exception.printStackTrace();
                     if (exception instanceof IllegalStateException)
                     {
                         System.err.println("Processing queue backed up; client "
                             + "is sending commands too fast");
                     }
+                    exception.printStackTrace();
                 }
-                packetsToProcess.put(new StopPacket());
+                try
+                {
+                    packetsToProcess.put(new StopPacket());
+                }
+                catch (InterruptedException e)
+                {
+                    e.printStackTrace();
+                    System.err
+                        .println("InterruptedException encountered while trying to stop "
+                            + "controller handler. The controller thread will not "
+                            + "terminate. Restart 6jet Server in order to fix this.");
+                }
             }
         }.start();
         /*
@@ -242,6 +253,9 @@ public class ControllerHandler extends Thread
          */
         while (SixjetServer.isRunning)
         {
+            Packet packet = packetsToProcess.take();
+            if (packet instanceof StopPacket)
+                return;
             process(packet);
         }
     }
