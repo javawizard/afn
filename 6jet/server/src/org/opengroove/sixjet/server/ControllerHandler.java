@@ -275,7 +275,7 @@ public class ControllerHandler extends Thread
      *         therefore be processed, or false if the packet has already been
      *         processed, and should not be processed again
      */
-    protected boolean validateAndAdd(String packetId)
+    public boolean validateAndAdd(String packetId)
     {
         synchronized (processedPacketIds)
         {

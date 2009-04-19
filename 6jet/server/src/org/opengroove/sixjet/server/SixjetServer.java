@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ public class SixjetServer
     public static ServerSocket controllerServerSocket;
     
     public static ServerSocket musicServerSocket;
+    
+    public static DatagramSocket controllerDatagramSocket;
     
     public static Thread controllerServerThread;
     
@@ -125,6 +129,8 @@ public class SixjetServer
     
     protected static boolean isRunning = true;
     
+    private static Thread controllerDatagramThread;
+    
     private static void startControllerServer() throws IOException
     {
         controllerServerSocket = new ServerSocket(56538);
@@ -148,6 +154,29 @@ public class SixjetServer
             }
         };
         controllerServerThread.start();
+        controllerDatagramSocket = new DatagramSocket(56538);
+        byte[] datagramBuffer = new byte[32768];
+        final DatagramPacket datagram =
+            new DatagramPacket(datagramBuffer, datagramBuffer.length);
+        controllerDatagramThread = new Thread()
+        {
+            public void run()
+            {
+                while (isRunning)
+                {
+                    try
+                    {
+                        
+                        controllerDatagramSocket.receive(datagram);
+                    }
+                    catch (Exception exception)
+                    {
+                        exception.printStackTrace();
+                    }
+                }
+            }
+        };
+        controllerDatagramThread.start();
     }
     
     private static void startMusicServer()
