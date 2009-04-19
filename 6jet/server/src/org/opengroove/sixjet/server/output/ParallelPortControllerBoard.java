@@ -21,6 +21,13 @@ public class ParallelPortControllerBoard implements ControllerBoard {
 	public static final Object writeLock = new Object();
 
 	public Thread powerStateThread = new Thread() {
+		public void run()
+		{
+			while(true)
+			{
+				
+			}
+		}
 	};
 
 	/**
