@@ -238,6 +238,8 @@ public class ControllerHandler extends Thread
             send(packet);
             /*
              * The playlist has been sent. Now we'll send its contents.
+             * 
+             * TODO: actually do this
              */
         }
     }
