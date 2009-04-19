@@ -187,12 +187,24 @@ public class ControllerHandler extends Thread
     
     private void sendInitialState()
     {
+        /*
+         * First up is the current jet status. There is currently a potential
+         * race condition here, being that we could create the jet control
+         * packet, another thread could change the jet state and notify the
+         * client, and then we could send this packet out. At that point, the
+         * client has invalid information. This is rare enough, however, that I
+         * don't see it as a real issue.
+         */
         for (DescriptorFileJet jet : SixjetServer.descriptor.getJets())
         {
             JetControlPacket p =
                 new JetControlPacket(jet.number, SixjetServer.getJetState(jet.number));
             send(p);
         }
+        /*
+         * Now we'll send this user a message for every user that's currently
+         * online, telling them that the user is online.
+         */
         ArrayList<ControllerHandler> handlers;
         synchronized (SixjetServer.controllerConnectionMap)
         {
@@ -206,6 +218,12 @@ public class ControllerHandler extends Thread
                 send(new ServerChatMessage(handler.username
                     + " has signed on to 6jet Controller.", "Server"));
         }
+        /*
+         * Now we'll send them the list of playlists, and each playlist's
+         * contents. There's another race condition here, but like the first,
+         * it's not significant enough that I'm going to work on solving it
+         * right now.
+         */
     }
     
     private void process(Packet packet)
