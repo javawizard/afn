@@ -38,7 +38,7 @@ public class ControllerHandler extends Thread
     
     private String username;
     
-    private long token;
+    long token;
     
     private BlockingQueue<Packet> packetsToProcess =
         new ArrayBlockingQueue<Packet>(200);

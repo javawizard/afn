@@ -1,9 +1,11 @@
 package org.opengroove.sixjet.server;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -155,7 +157,7 @@ public class SixjetServer
         };
         controllerServerThread.start();
         controllerDatagramSocket = new DatagramSocket(56538);
-        byte[] datagramBuffer = new byte[32768];
+        final byte[] datagramBuffer = new byte[32768];
         final DatagramPacket datagram =
             new DatagramPacket(datagramBuffer, datagramBuffer.length);
         controllerDatagramThread = new Thread()
@@ -166,8 +168,31 @@ public class SixjetServer
                 {
                     try
                     {
-                        
                         controllerDatagramSocket.receive(datagram);
+                        if (datagram.getLength() > datagramBuffer.length)
+                        {
+                            System.err
+                                .println("Datagram received that is too large ("
+                                    + datagram.getLength()
+                                    + " bytes). It will be dropped.");
+                            continue;
+                        }
+                        ByteArrayInputStream byteIn =
+                            new ByteArrayInputStream(datagramBuffer, 0, datagram
+                                .getLength());
+                        ObjectInputStream objectIn = new ObjectInputStream(byteIn);
+                        String username = objectIn.readUTF();
+                        long token = objectIn.readLong();
+                        Packet packet = (Packet) objectIn.readObject();
+                        ControllerHandler handler = controllerConnectionMap.get(username);
+                        if(handler == null)
+                            continue;
+                        if(token != handler.token)
+                        {
+                            System.err.println("Dropping on invalid token");
+                            continue;
+                        }
+                        handler.scheduleForProcessing(packet);
                     }
                     catch (Exception exception)
                     {
