@@ -181,13 +181,12 @@ public class SixjetServer
                             new ByteArrayInputStream(datagramBuffer, 0, datagram
                                 .getLength());
                         ObjectInputStream objectIn = new ObjectInputStream(byteIn);
-                        String username = objectIn.readUTF();
-                        long token = objectIn.readLong();
                         Packet packet = (Packet) objectIn.readObject();
-                        ControllerHandler handler = controllerConnectionMap.get(username);
-                        if(handler == null)
+                        ControllerHandler handler =
+                            controllerConnectionMap.get(packet.getIntendedUsername());
+                        if (handler == null)
                             continue;
-                        if(token != handler.token)
+                        if (packet.getIntendedToken() != handler.token)
                         {
                             System.err.println("Dropping on invalid token");
                             continue;

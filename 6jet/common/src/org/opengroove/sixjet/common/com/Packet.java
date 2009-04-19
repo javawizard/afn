@@ -18,6 +18,40 @@ public class Packet implements Serializable
     
     private long dateReceived;
     
+    private String intendedUsername;
+    
+    private long intendedToken;
+    
+    public long getDateReceived()
+    {
+        return dateReceived;
+    }
+    
+    public String getIntendedUsername()
+    {
+        return intendedUsername;
+    }
+    
+    public long getIntendedToken()
+    {
+        return intendedToken;
+    }
+    
+    public void setDateReceived(long dateReceived)
+    {
+        this.dateReceived = dateReceived;
+    }
+    
+    public void setIntendedUsername(String intendedUsername)
+    {
+        this.intendedUsername = intendedUsername;
+    }
+    
+    public void setIntendedToken(long intendedToken)
+    {
+        this.intendedToken = intendedToken;
+    }
+    
     public Packet()
     {
         packetId = "" + System.currentTimeMillis() + "-" + Math.random();
