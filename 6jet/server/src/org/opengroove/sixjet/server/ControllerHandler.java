@@ -14,6 +14,7 @@ import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
 import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
+import org.opengroove.sixjet.common.com.packets.playlist.AddPlaylist;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
@@ -224,6 +225,17 @@ public class ControllerHandler extends Thread
          * it's not significant enough that I'm going to work on solving it
          * right now.
          */
+        for(String name : SixjetServer.playlistsFolder.list())
+        {
+            if(!name.endsWith(""))
+            {
+                System.err.println("Skipping playlist file " + name + " on invalid extension");
+                continue;
+            }
+            AddPlaylist packet = new AddPlaylist();
+            packet.setName(name);
+            send(packet);
+        }
     }
     
     private void process(Packet packet)
