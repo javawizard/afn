@@ -14,4 +14,15 @@ public class Packet implements Serializable
     
     private static final long serialVersionUID = -7033775827263609295L;
     
+    private String packetId;
+    
+    public Packet()
+    {
+        packetId = "" + System.currentTimeMillis() + "-" + Math.random();
+    }
+    
+    public String getPacketId()
+    {
+        return packetId;
+    }
 }
