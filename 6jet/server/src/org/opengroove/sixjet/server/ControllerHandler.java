@@ -217,14 +217,21 @@ public class ControllerHandler extends Thread
                 {
                     while (true)
                     {
-                        
+                        Packet packet = (Packet) in.readObject();
+                        packetsToProcess.add(packet);
                     }
                 }
                 catch (Exception exception)
                 {
+                    System.err.println("Exception for user " + username);
                     exception.printStackTrace();
+                    if (exception instanceof IllegalStateException)
+                    {
+                        System.err.println("Processing queue backed up; client "
+                            + "is sending commands too fast");
+                    }
                 }
-                packetsToProcess.add(new StopPacket());
+                packetsToProcess.put(new StopPacket());
             }
         }.start();
         /*
@@ -235,7 +242,6 @@ public class ControllerHandler extends Thread
          */
         while (SixjetServer.isRunning)
         {
-            Packet packet = (Packet) in.readObject();
             process(packet);
         }
     }
