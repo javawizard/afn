@@ -1,5 +1,6 @@
 package org.opengroove.sixjet.common.format.l;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -96,6 +97,14 @@ public class PlaylistFile implements Serializable
                 throw new RuntimeException("Line type " + type
                     + " is not music or delay");
             items.add(item);
+        }
+        try
+        {
+            in.close();
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
         }
     }
 }

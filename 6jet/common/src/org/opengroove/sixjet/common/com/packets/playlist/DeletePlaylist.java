@@ -1,0 +1,8 @@
+package org.opengroove.sixjet.common.com.packets.playlist;
+
+import org.opengroove.sixjet.common.com.Packet;
+
+public class DeletePlaylist extends Packet
+{
+    
+}
