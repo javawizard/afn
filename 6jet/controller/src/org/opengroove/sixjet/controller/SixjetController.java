@@ -8,13 +8,18 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
+import java.net.DatagramSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import javax.swing.JOptionPane;
 
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
+import org.opengroove.sixjet.common.com.StopPacket;
 import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
@@ -44,6 +49,13 @@ public class SixjetController
     public static DescriptorFile jetDescriptor;
     
     private static PacketSpooler spooler;
+    
+    public static DatagramSocket datagramSocket;
+    
+    public static LinkedHashSet<String> processedPacketIds =
+        new LinkedHashSet<String>();
+    
+    private static long authToken;
     
     /**
      * @param args
@@ -109,6 +121,7 @@ public class SixjetController
             LoginResponse response = (LoginResponse) inStream.readObject();
             if (response.isSuccessful())
             {
+                authToken = response.getToken();
                 loginFrame.dispose();
                 DescriptorFilePacket descriptorPacket =
                     (DescriptorFilePacket) inStream.readObject();
@@ -214,8 +227,50 @@ public class SixjetController
                 + packet.getClass().getName() + " " + packet);
     }
     
+    protected static ArrayBlockingQueue<Packet> packetsToProcess = new ArrayBlockingQueue(300);
+    
     private static void startReceivingThread()
     {
+        datagramSocket = new DatagramSocket(56538 + 10);
+        new Thread()
+        {
+            public void run()
+            {
+                try
+                {
+                    while (true)
+                    {
+                        Packet packet = (Packet) in.readObject();
+                        String packetId = packet.getPacketId();
+                        boolean shouldProcess = validateAndAdd(packetId);
+                        if (shouldProcess)
+                            packetsToProcess.add(packet);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    System.err.println("Exception for user " + username);
+                    if (exception instanceof IllegalStateException)
+                    {
+                        System.err.println("Processing queue backed up; client "
+                            + "is sending commands too fast");
+                    }
+                    exception.printStackTrace();
+                }
+                try
+                {
+                    packetsToProcess.put(new StopPacket());
+                }
+                catch (InterruptedException e)
+                {
+                    e.printStackTrace();
+                    System.err
+                        .println("InterruptedException encountered while trying to stop "
+                            + "controller handler. The controller thread will not "
+                            + "terminate. Restart 6jet Server in order to fix this.");
+                }
+            }
+        }.start();
         new Thread()
         {
             public void run()
@@ -298,4 +353,45 @@ public class SixjetController
         send(message);
         mainFrame.getChatTextField().setText("");
     }
+    
+    /**
+     * Validates that the packet specified is not in the processed packets list.
+     * If it is not in the list, then it is added, and the list is trimmed back
+     * to the maximum list size (currently 300).
+     * 
+     * @param packetId
+     *            The id of the packet to check
+     * @return True if this packet has not yet been processed, and should
+     *         therefore be processed, or false if the packet has already been
+     *         processed, and should not be processed again
+     */
+    public boolean validateAndAdd(String packetId)
+    {
+        synchronized (processedPacketIds)
+        {
+            boolean alreadyReceived = processedPacketIds.contains(packetId);
+            if (alreadyReceived)
+                return false;
+            /*
+             * The packet is new. We'll add it, trim the list, and return true.
+             */
+            processedPacketIds.add(packetId);
+            /*
+             * numOver is the number of elements in the list in excess of the
+             * maximum number (300)
+             */
+            int numOver = processedPacketIds.size() - 300;
+            if (numOver > 0)
+            {
+                Iterator iter = processedPacketIds.iterator();
+                for (int i = 0; i < numOver; i++)
+                {
+                    iter.next();
+                    iter.remove();
+                }
+            }
+            return true;
+        }
+    }
+    
 }
