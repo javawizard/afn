@@ -21,9 +21,11 @@ import org.opengroove.sixjet.common.com.StopPacket;
 import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
+import org.opengroove.sixjet.common.com.packets.PopupNotification;
 import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
 import org.opengroove.sixjet.common.com.packets.playlist.AddPlaylist;
 import org.opengroove.sixjet.common.com.packets.playlist.AddPlaylistItem;
+import org.opengroove.sixjet.common.com.packets.playlist.DeletePlaylist;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
@@ -392,6 +394,44 @@ public class ControllerHandler extends Thread
             processNopPacket((NopPacket) packet);
         else if (packet instanceof ChatMessage)
             processChatMessage((ChatMessage) packet);
+        else if (packet instanceof AddPlaylist)
+            processAddPlaylist((AddPlaylist) packet);
+        else if (packet instanceof AddPlaylistItem)
+            processAddPlaylistItem((AddPlaylistItem) packet);
+        else if (packet instanceof DeletePlaylist)
+            processDeletePlaylist((DeletePlaylist) packet);
+    }
+    
+    private void processAddPlaylist(AddPlaylist packet)
+    {
+        String name = packet.getName();
+        File file = new File(SixjetServer.playlistsFolder, name + ".6jl.txt");
+        if (file.exists())
+        {
+            send(new PopupNotification("A playlist with that name already exists."));
+            return;
+        }
+        try
+        {
+            file.createNewFile();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            send(new PopupNotification("Error while creating."));
+            return;
+        }
+        SixjetServer.controllerBroadcast(packet);
+    }
+    
+    private void processAddPlaylistItem(AddPlaylistItem packet)
+    {
+        send(new PopupNotification("Not added yet"));
+    }
+    
+    private void processDeletePlaylist(DeletePlaylist packet)
+    {
+        send(new PopupNotification("Not added yet"));
     }
     
     private void processChatMessage(ChatMessage packet)

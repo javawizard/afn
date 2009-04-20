@@ -16,4 +16,22 @@ import org.opengroove.sixjet.common.com.Packet;
 public class PopupNotification extends Packet
 {
     
+    private String message;
+    
+    public String getMessage()
+    {
+        return message;
+    }
+    
+    public void setMessage(String message)
+    {
+        this.message = message;
+    }
+    
+    public PopupNotification(String message)
+    {
+        super();
+        this.message = message;
+    }
+    
 }
