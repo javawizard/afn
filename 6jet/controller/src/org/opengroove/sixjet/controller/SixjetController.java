@@ -232,7 +232,15 @@ public class SixjetController
     
     private static void startReceivingThread()
     {
-        datagramSocket = new DatagramSocket(56538 + 10);
+        try
+        {
+            datagramSocket = new DatagramSocket(56538 + 10);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
         new Thread()
         {
             public void run()
@@ -278,7 +286,9 @@ public class SixjetController
                 {
                     while (mainFrame.isShowing())
                     {
-                        Packet packet = (Packet) inStream.readObject();
+                        Packet packet = (Packet) packetsToProcess.take();
+                        if (packet instanceof StopPacket)
+                            throw new Exception("Terminated on stop packet");
                         process(packet);
                     }
                 }
@@ -296,7 +306,7 @@ public class SixjetController
                 }
                 try
                 {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                 }
                 catch (Exception exception)
                 {
