@@ -19,6 +19,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import javax.swing.JOptionPane;
 
+import org.opengroove.sixjet.common.Constants;
 import org.opengroove.sixjet.common.com.Packet;
 import org.opengroove.sixjet.common.com.PacketSpooler;
 import org.opengroove.sixjet.common.com.StopPacket;
@@ -33,7 +34,6 @@ import org.opengroove.sixjet.common.ui.JetDisplayComponent;
 import org.opengroove.sixjet.common.ui.JetDisplayListener;
 import org.opengroove.sixjet.common.ui.LoginFrame;
 import org.opengroove.sixjet.controller.ui.frames.MainFrame;
-import org.opengroove.sixjet.server.ControllerHandler;
 
 public class SixjetController
 {
@@ -57,6 +57,8 @@ public class SixjetController
     
     public static LinkedHashSet<String> processedPacketIds =
         new LinkedHashSet<String>();
+    
+    public static String currentUsername = null;
     
     private static long authToken;
     
@@ -129,6 +131,7 @@ public class SixjetController
                 DescriptorFilePacket descriptorPacket =
                     (DescriptorFilePacket) inStream.readObject();
                 jetDescriptor = descriptorPacket.getFile();
+                currentUsername = loginFrame.getUsernameField().getText();
                 setupController();
                 return;
             }
@@ -174,9 +177,11 @@ public class SixjetController
         jetDisplay = new JetDisplayComponent(jetDescriptor);
         addJetDisplayListener();
         mainFrame.getJetDisplayPanel().add(jetDisplay);
-        spooler = new PacketSpooler(outStream, null, null, 0, 200);
-        spooler.start();
         startReceivingThread();
+        spooler =
+            new PacketSpooler(outStream, datagramSocket, socket.getInetAddress(),
+                Constants.SERVER_CONTROLLER_PORT, 200);
+        spooler.start();
         mainFrame.invalidate();
         mainFrame.validate();
         mainFrame.repaint();
@@ -225,6 +230,8 @@ public class SixjetController
     
     public static void send(Packet packet)
     {
+        packet.setIntendedToken(authToken);
+        packet.setIntendedUsername(currentUsername);
         if (!spooler.send(packet))
             throw new RuntimeException("Couldn't send packet "
                 + packet.getClass().getName() + " " + packet);
