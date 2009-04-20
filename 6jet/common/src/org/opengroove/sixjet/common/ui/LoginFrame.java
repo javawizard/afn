@@ -117,7 +117,7 @@ public class LoginFrame extends javax.swing.JFrame
                     {
                         serverField = new JTextField();
                         mainPanel.add(getServerField(), "1,0,2,0");
-                        serverField.setText("192.168.1.61");
+                        serverField.setText("localhost");
                         serverField.setColumns(12);
                         serverField
                             .setToolTipText("The server to connect to. To connect to Alex's 6jet server, use 192.168.1.61 for this field.");
