@@ -604,7 +604,6 @@ public class MainFrame extends javax.swing.JFrame
                                         manualControlToggleCheckbox.setText("Toggle");
                                         manualControlToggleCheckbox
                                             .setToolTipText("If checked, then clicking on a jet will toggle its state. If unchecked, clicking on a jet will simply fire it.");
-                                        manualControlToggleCheckbox.setSelected(true);
                                     }
                                     {
                                         manualControlFixedCheckbox = new JCheckBox();
