@@ -227,7 +227,8 @@ public class SixjetController
                 + packet.getClass().getName() + " " + packet);
     }
     
-    protected static ArrayBlockingQueue<Packet> packetsToProcess = new ArrayBlockingQueue(300);
+    protected static ArrayBlockingQueue<Packet> packetsToProcess =
+        new ArrayBlockingQueue(300);
     
     private static void startReceivingThread()
     {
@@ -240,7 +241,7 @@ public class SixjetController
                 {
                     while (true)
                     {
-                        Packet packet = (Packet) in.readObject();
+                        Packet packet = (Packet) inStream.readObject();
                         String packetId = packet.getPacketId();
                         boolean shouldProcess = validateAndAdd(packetId);
                         if (shouldProcess)
@@ -249,10 +250,9 @@ public class SixjetController
                 }
                 catch (Exception exception)
                 {
-                    System.err.println("Exception for user " + username);
                     if (exception instanceof IllegalStateException)
                     {
-                        System.err.println("Processing queue backed up; client "
+                        System.err.println("Processing queue backed up; server "
                             + "is sending commands too fast");
                     }
                     exception.printStackTrace();
@@ -266,8 +266,7 @@ public class SixjetController
                     e.printStackTrace();
                     System.err
                         .println("InterruptedException encountered while trying to stop "
-                            + "controller handler. The controller thread will not "
-                            + "terminate. Restart 6jet Server in order to fix this.");
+                            + "processor thread. Restart 6jet Controller immediately.");
                 }
             }
         }.start();
@@ -365,7 +364,7 @@ public class SixjetController
      *         therefore be processed, or false if the packet has already been
      *         processed, and should not be processed again
      */
-    public boolean validateAndAdd(String packetId)
+    public static boolean validateAndAdd(String packetId)
     {
         synchronized (processedPacketIds)
         {
