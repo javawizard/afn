@@ -1,4 +1,5 @@
 package org.opengroove.sixjet.controller.ui.frames;
+import info.clearthought.layout.TableLayout;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -44,6 +45,7 @@ public class MainFrame extends javax.swing.JFrame
 {
     private JPanel outerPanel;
     private JSplitPane topContentLeftSplit;
+    private JButton playlistRenameButton;
     private JButton aboutButton;
     private JScrollPane jScrollPane6;
     private JPanel jetDisplayPanel;
@@ -517,19 +519,17 @@ public class MainFrame extends javax.swing.JFrame
                                     }
                                     {
                                         scheduleSouth = new JPanel();
-                                        BorderLayout scheduleSouthLayout =
-                                            new BorderLayout();
+                                        TableLayout scheduleSouthLayout = new TableLayout(new double[][] {{TableLayout.FILL, TableLayout.FILL}, {TableLayout.FILL}});
+                                        scheduleSouthLayout.setHGap(0);
+                                        scheduleSouthLayout.setVGap(0);
                                         schedulePanel.add(scheduleSouth,
                                             BorderLayout.SOUTH);
                                         scheduleSouth.setLayout(scheduleSouthLayout);
                                         {
                                             scheduleAddButton = new JButton();
-                                            scheduleSouth.add(getScheduleAddButton(),
-                                                BorderLayout.NORTH);
+                                            scheduleSouth.add(scheduleAddButton, "0, 0");
                                             scheduleAddButton.setText("Add");
-                                            scheduleAddButton
-                                                .setMargin(new java.awt.Insets(0, 14,
-                                                    0, 14));
+                                            scheduleAddButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                             scheduleAddButton
                                                 .setToolTipText("<html>Adds the playlist selected in the <b>Playlists</b> pane to the schedule. <br/>You will be asked what date and time the playlist should begin playing. <br/>To schedule a single piece of music, create a playlist with just that music in it, <br/>and then schedule the playlist.");
                                             scheduleAddButton
@@ -544,13 +544,9 @@ public class MainFrame extends javax.swing.JFrame
                                         }
                                         {
                                             scheduleDeleteButton = new JButton();
-                                            scheduleSouth.add(
-                                                getScheduleDeleteButton(),
-                                                BorderLayout.SOUTH);
+                                            scheduleSouth.add(scheduleDeleteButton, "1, 0");
                                             scheduleDeleteButton.setText("Delete");
-                                            scheduleDeleteButton
-                                                .setMargin(new java.awt.Insets(0, 14,
-                                                    0, 14));
+                                            scheduleDeleteButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                             scheduleDeleteButton
                                                 .setToolTipText("Deletes the currently selected schedule item.");
                                             scheduleDeleteButton
@@ -727,18 +723,15 @@ public class MainFrame extends javax.swing.JFrame
                                 }
                                 {
                                     playlistsSouth = new JPanel();
-                                    BorderLayout playlistsSouthLayout =
-                                        new BorderLayout();
+                                    TableLayout playlistsSouthLayout = new TableLayout(new double[][] {{TableLayout.FILL, TableLayout.FILL}, {TableLayout.FILL, TableLayout.FILL}});
                                     playlistsPanel.add(playlistsSouth,
                                         BorderLayout.SOUTH);
                                     playlistsSouth.setLayout(playlistsSouthLayout);
                                     {
                                         playlistAddButton = new JButton();
-                                        playlistsSouth.add(playlistAddButton,
-                                            BorderLayout.NORTH);
+                                        playlistsSouth.add(playlistAddButton, "0, 0");
                                         playlistAddButton.setText("Add");
-                                        playlistAddButton
-                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistAddButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                         playlistAddButton
                                             .setToolTipText("Creates a new playlist. You will be asked for the name of the new playlist.");
                                         playlistAddButton
@@ -753,11 +746,9 @@ public class MainFrame extends javax.swing.JFrame
                                     }
                                     {
                                         playlistDeleteButton = new JButton();
-                                        playlistsSouth.add(playlistDeleteButton,
-                                            BorderLayout.CENTER);
+                                        playlistsSouth.add(playlistDeleteButton, "1, 0");
                                         playlistDeleteButton.setText("Delete");
-                                        playlistDeleteButton
-                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistDeleteButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                         playlistDeleteButton
                                             .setToolTipText("Deletes the selected playlist. You will be asked to confirm that you want to delete the selected playlist.");
                                         playlistDeleteButton
@@ -772,11 +763,9 @@ public class MainFrame extends javax.swing.JFrame
                                     }
                                     {
                                         playlistPlayButton = new JButton();
-                                        playlistsSouth.add(playlistPlayButton,
-                                            BorderLayout.SOUTH);
+                                        playlistsSouth.add(playlistPlayButton, "1, 1");
                                         playlistPlayButton.setText("Play");
-                                        playlistPlayButton
-                                            .setMargin(new java.awt.Insets(0, 14, 0, 14));
+                                        playlistPlayButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                         playlistPlayButton
                                             .setToolTipText("Plays the selected playlist, stopping any currently-playing music if necessary.");
                                         playlistPlayButton
@@ -788,6 +777,12 @@ public class MainFrame extends javax.swing.JFrame
                                                     playlistPlayButtonActionPerformed(evt);
                                                 }
                                             });
+                                    }
+                                    {
+                                        playlistRenameButton = new JButton();
+                                        playlistsSouth.add(getPlaylistRenameButton(), "0, 1");
+                                        playlistRenameButton.setText("Rename");
+                                        playlistRenameButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
                                     }
                                 }
                                 {
@@ -1238,4 +1233,8 @@ public class MainFrame extends javax.swing.JFrame
             + "Released under the terms of the GNU Lesser General Public License");
     }
     
+    public JButton getPlaylistRenameButton() {
+        return playlistRenameButton;
+    }
+
 }
