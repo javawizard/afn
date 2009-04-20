@@ -23,11 +23,13 @@ import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.NopPacket;
 import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
 import org.opengroove.sixjet.common.com.packets.playlist.AddPlaylist;
+import org.opengroove.sixjet.common.com.packets.playlist.AddPlaylistItem;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
 import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
 import org.opengroove.sixjet.common.format.l.PlaylistFile;
+import org.opengroove.sixjet.common.format.l.PlaylistFile.PlaylistItem;
 
 public class ControllerHandler extends Thread
 {
@@ -362,15 +364,23 @@ public class ControllerHandler extends Thread
                     + " on invalid extension");
                 continue;
             }
-            AddPlaylist packet = new AddPlaylist();
-            packet.setName(name.substring(0, name.length() - ".6jl.txt".length()));
-            send(packet);
+            AddPlaylist addPacket = new AddPlaylist();
+            addPacket.setName(name.substring(0, name.length() - ".6jl.txt".length()));
+            send(addPacket);
             /*
              * The playlist has been sent. Now we'll send its contents.
              */
             PlaylistFile file =
                 new PlaylistFile(new FileInputStream(new File(
                     SixjetServer.playlistsFolder, name)));
+            for (PlaylistItem item : file.getItems())
+            {
+                AddPlaylistItem addItemPacket = new AddPlaylistItem();
+                addItemPacket.setItem(item);
+                addItemPacket.setPlaylist(name.substring(0, name.length()
+                    - ".6jl.txt".length()));
+                send(addItemPacket);
+            }
         }
     }
     

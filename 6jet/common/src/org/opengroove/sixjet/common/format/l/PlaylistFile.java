@@ -107,4 +107,9 @@ public class PlaylistFile implements Serializable
             throw new RuntimeException(e);
         }
     }
+    
+    public ArrayList<PlaylistItem> getItems()
+    {
+        return items;
+    }
 }
