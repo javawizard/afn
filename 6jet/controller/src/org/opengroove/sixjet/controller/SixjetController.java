@@ -254,41 +254,44 @@ public class SixjetController
         final byte[] datagramBuffer = new byte[32768];
         final DatagramPacket datagram =
             new DatagramPacket(datagramBuffer, datagramBuffer.length);
-        new Thread()
+        if (datagramSocket != null)
         {
-            public void run()
+            new Thread()
             {
-                while (true)
+                public void run()
                 {
-                    try
+                    while (true)
                     {
-                        datagramSocket.receive(datagram);
-                        if (datagram.getLength() > datagramBuffer.length)
+                        try
                         {
-                            System.err
-                                .println("Datagram received that is too large ("
-                                    + datagram.getLength()
-                                    + " bytes). It will be dropped.");
-                            continue;
+                            datagramSocket.receive(datagram);
+                            if (datagram.getLength() > datagramBuffer.length)
+                            {
+                                System.err
+                                    .println("Datagram received that is too large ("
+                                        + datagram.getLength()
+                                        + " bytes). It will be dropped.");
+                                continue;
+                            }
+                            System.out.println("receiving datagram of length "
+                                + datagram.getLength() + " from address "
+                                + datagram.getAddress());
+                            ByteArrayInputStream byteIn =
+                                new ByteArrayInputStream(datagramBuffer, 0, datagram
+                                    .getLength());
+                            ObjectInputStream objectIn = new ObjectInputStream(byteIn);
+                            Packet packet = (Packet) objectIn.readObject();
+                            if (validateAndAdd(packet.getPacketId()))
+                                packetsToProcess.add(packet);
                         }
-                        System.out.println("receiving datagram of length "
-                            + datagram.getLength() + " from address "
-                            + datagram.getAddress());
-                        ByteArrayInputStream byteIn =
-                            new ByteArrayInputStream(datagramBuffer, 0, datagram
-                                .getLength());
-                        ObjectInputStream objectIn = new ObjectInputStream(byteIn);
-                        Packet packet = (Packet) objectIn.readObject();
-                        if (validateAndAdd(packet.getPacketId()))
-                            packetsToProcess.add(packet);
-                    }
-                    catch (Exception exception)
-                    {
-                        exception.printStackTrace();
+                        catch (Exception exception)
+                        {
+                            exception.printStackTrace();
+                        }
                     }
                 }
-            }
-        }.start();
+            }.start();
+        }
         new Thread()
         {
             public void run()
