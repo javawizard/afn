@@ -13,9 +13,14 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+
+import org.opengroove.sixjet.common.format.l.PlaylistFile.PlaylistItem;
 
 import javax.swing.JOptionPane;
 
@@ -26,6 +31,7 @@ import org.opengroove.sixjet.common.com.StopPacket;
 import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
 import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
+import org.opengroove.sixjet.common.com.packets.playlist.AddPlaylist;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
@@ -57,6 +63,11 @@ public class SixjetController
     
     public static LinkedHashSet<String> processedPacketIds =
         new LinkedHashSet<String>();
+    
+    public static ArrayList<String> currentPlaylists = new ArrayList<String>();
+    
+    public static HashMap<String, List<PlaylistItem>> currentPlaylistItems =
+        new HashMap<String, List<PlaylistItem>>();
     
     public static String currentUsername = null;
     
@@ -452,6 +463,35 @@ public class SixjetController
             }
             return true;
         }
+    }
+    
+    public static void playlistAddButtonActionPerformed()
+    {
+        String name =
+            JOptionPane.showInputDialog(mainFrame,
+                "Enter the name you'd like to use for the new playlist");
+        if (name == null)
+            return;
+        AddPlaylist packet = new AddPlaylist();
+        packet.setName(name);
+        send(packet);
+    }
+    
+    public static void playlistDeleteButtonActionPerformed()
+    {
+        int index = mainFrame.getPlaylistList().getSelectedIndex();
+        if (index == -1)
+        {
+            JOptionPane.showMessageDialog(mainFrame,
+                "You need to select a playlist to delete.");
+            return;
+        }
+        String playlistName = (String) mainFrame.getPlaylistList().getSelectedValue();
+        if (JOptionPane.showConfirmDialog(mainFrame,
+            "Are you sure you want to delete this playlist?", null,
+            JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
+            return;
+        
     }
     
 }

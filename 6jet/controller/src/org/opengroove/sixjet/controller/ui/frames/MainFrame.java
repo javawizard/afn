@@ -1145,14 +1145,12 @@ public class MainFrame extends javax.swing.JFrame
     
     private void playlistAddButtonActionPerformed(ActionEvent evt)
     {
-        System.out.println("playlistAddButton.actionPerformed, event=" + evt);
-        // TODO add your code for playlistAddButton.actionPerformed
+        SixjetController.playlistAddButtonActionPerformed();
     }
     
     private void playlistDeleteButtonActionPerformed(ActionEvent evt)
     {
-        System.out.println("playlistDeleteButton.actionPerformed, event=" + evt);
-        // TODO add your code for playlistDeleteButton.actionPerformed
+        SixjetController.playlistDeleteButtonActionPerformed();
     }
     
     private void playlistPlayButtonActionPerformed(ActionEvent evt)
