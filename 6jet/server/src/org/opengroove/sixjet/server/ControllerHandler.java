@@ -208,6 +208,11 @@ public class ControllerHandler extends Thread
          * Now we send any initial packets to inform the client of our state.
          */
         sendInitialState();
+        /*
+         * Now we'll sleep for a short time, to make sure that all udp status
+         * updates get in ahead of us.
+         */
+        Thread.sleep(400);
         send(new ServerChatMessage("You have successfully connected. You "
             + "can now use 6jet Controller.", "Server"));
         /*
