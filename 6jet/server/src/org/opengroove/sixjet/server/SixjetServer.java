@@ -177,6 +177,9 @@ public class SixjetServer
                                     + " bytes). It will be dropped.");
                             continue;
                         }
+                        System.out.println("receiving datagram of length "
+                            + datagram.getLength() + " from address "
+                            + datagram.getAddress());
                         ByteArrayInputStream byteIn =
                             new ByteArrayInputStream(datagramBuffer, 0, datagram
                                 .getLength());

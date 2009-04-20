@@ -97,7 +97,7 @@ public class ControllerHandler extends Thread
         spooler =
             new PacketSpooler(out, SixjetServer.controllerDatagramSocket, socket
                 .getInetAddress(),
-                SixjetServer.controllerDatagramSocket.getLocalPort(), QUEUE_SIZE);
+                SixjetServer.controllerDatagramSocket.getLocalPort() + 10, QUEUE_SIZE);
         spooler.start();
     }
     

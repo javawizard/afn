@@ -58,9 +58,9 @@ public class PacketSpooler extends Thread
                             ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
                             ObjectOutputStream objectOut =
                                 new ObjectOutputStream(byteOut);
-                            out.writeObject(packet);
-                            out.flush();
-                            out.close();
+                            objectOut.writeObject(packet);
+                            objectOut.flush();
+                            objectOut.close();
                             byte[] bytes = byteOut.toByteArray();
                             if (bytes.length < 32768)
                             {
