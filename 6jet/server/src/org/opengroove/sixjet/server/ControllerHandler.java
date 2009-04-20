@@ -1,5 +1,7 @@
 package org.opengroove.sixjet.server;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -25,6 +27,7 @@ import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
 import org.opengroove.sixjet.common.format.d.DescriptorFile.DescriptorFileJet;
+import org.opengroove.sixjet.common.format.l.PlaylistFile;
 
 public class ControllerHandler extends Thread
 {
@@ -312,7 +315,7 @@ public class ControllerHandler extends Thread
         }
     }
     
-    private void sendInitialState()
+    private void sendInitialState() throws IOException
     {
         /*
          * First up is the current jet status. There is currently a potential
@@ -353,20 +356,21 @@ public class ControllerHandler extends Thread
          */
         for (String name : SixjetServer.playlistsFolder.list())
         {
-            if (!name.endsWith(""))
+            if (!name.endsWith(".6jl.txt"))
             {
                 System.err.println("Skipping playlist file " + name
                     + " on invalid extension");
                 continue;
             }
             AddPlaylist packet = new AddPlaylist();
-            packet.setName(name);
+            packet.setName(name.substring(0, name.length() - ".6jl.txt".length()));
             send(packet);
             /*
              * The playlist has been sent. Now we'll send its contents.
-             * 
-             * TODO: actually do this
              */
+            PlaylistFile file =
+                new PlaylistFile(new FileInputStream(new File(
+                    SixjetServer.playlistsFolder, name)));
         }
     }
     
