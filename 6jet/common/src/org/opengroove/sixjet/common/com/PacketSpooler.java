@@ -53,7 +53,7 @@ public class PacketSpooler extends Thread
                 {
                     try
                     {
-                        if (datagramSocket != null)
+                        if (datagramSocket != null && packet != null)
                         {
                             ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
                             ObjectOutputStream objectOut =
