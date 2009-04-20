@@ -2,12 +2,14 @@ package org.opengroove.sixjet.controller;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.ByteArrayInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
@@ -31,6 +33,7 @@ import org.opengroove.sixjet.common.ui.JetDisplayComponent;
 import org.opengroove.sixjet.common.ui.JetDisplayListener;
 import org.opengroove.sixjet.common.ui.LoginFrame;
 import org.opengroove.sixjet.controller.ui.frames.MainFrame;
+import org.opengroove.sixjet.server.ControllerHandler;
 
 public class SixjetController
 {
@@ -241,6 +244,44 @@ public class SixjetController
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+        final byte[] datagramBuffer = new byte[32768];
+        final DatagramPacket datagram =
+            new DatagramPacket(datagramBuffer, datagramBuffer.length);
+        new Thread()
+        {
+            public void run()
+            {
+                while (true)
+                {
+                    try
+                    {
+                        datagramSocket.receive(datagram);
+                        if (datagram.getLength() > datagramBuffer.length)
+                        {
+                            System.err
+                                .println("Datagram received that is too large ("
+                                    + datagram.getLength()
+                                    + " bytes). It will be dropped.");
+                            continue;
+                        }
+                        System.out.println("receiving datagram of length "
+                            + datagram.getLength() + " from address "
+                            + datagram.getAddress());
+                        ByteArrayInputStream byteIn =
+                            new ByteArrayInputStream(datagramBuffer, 0, datagram
+                                .getLength());
+                        ObjectInputStream objectIn = new ObjectInputStream(byteIn);
+                        Packet packet = (Packet) objectIn.readObject();
+                        if (validateAndAdd(packet.getPacketId()))
+                            packetsToProcess.add(packet);
+                    }
+                    catch (Exception exception)
+                    {
+                        exception.printStackTrace();
+                    }
+                }
+            }
+        }.start();
         new Thread()
         {
             public void run()
