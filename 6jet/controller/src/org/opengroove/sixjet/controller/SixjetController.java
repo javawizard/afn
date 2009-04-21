@@ -14,6 +14,7 @@ import java.net.DatagramSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -30,8 +31,10 @@ import org.opengroove.sixjet.common.com.PacketSpooler;
 import org.opengroove.sixjet.common.com.StopPacket;
 import org.opengroove.sixjet.common.com.packets.ChatMessage;
 import org.opengroove.sixjet.common.com.packets.JetControlPacket;
+import org.opengroove.sixjet.common.com.packets.PopupNotification;
 import org.opengroove.sixjet.common.com.packets.ServerChatMessage;
 import org.opengroove.sixjet.common.com.packets.playlist.AddPlaylist;
+import org.opengroove.sixjet.common.com.packets.playlist.DeletePlaylist;
 import org.opengroove.sixjet.common.com.packets.setup.DescriptorFilePacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginPacket;
 import org.opengroove.sixjet.common.com.packets.setup.LoginResponse;
@@ -385,6 +388,39 @@ public class SixjetController
             processJetControlPacket((JetControlPacket) packet);
         else if (packet instanceof ServerChatMessage)
             processServerChatMessage((ServerChatMessage) packet);
+        else if (packet instanceof PopupNotification)
+            processPopupNotification((PopupNotification) packet);
+        else if (packet instanceof AddPlaylist)
+            processAddPlaylist((AddPlaylist) packet);
+        else if (packet instanceof DeletePlaylist)
+            processDeletePlaylist((DeletePlaylist) packet);
+    }
+    
+    private static void processPopupNotification(PopupNotification packet)
+    {
+        JOptionPane.showMessageDialog(mainFrame, packet.getMessage());
+    }
+    
+    private static void processAddPlaylist(AddPlaylist packet)
+    {
+        currentPlaylists.add(packet.getName());
+        currentPlaylistItems.put(packet.getName(), new ArrayList<PlaylistItem>());
+        reloadPlaylistList();
+    }
+    
+    public static void reloadPlaylistList()
+    {
+        Collections.sort(currentPlaylists);
+        String selection = (String) mainFrame.getPlaylistList().getSelectedValue();
+        mainFrame.getPlaylistList().setListData(currentPlaylists.toArray());
+        mainFrame.getPlaylistList().setSelectedValue(selection, true);
+    }
+    
+    private static void processDeletePlaylist(DeletePlaylist packet)
+    {
+        currentPlaylists.remove(packet.getName());
+        currentPlaylistItems.remove(packet.getName());
+        reloadPlaylistList();
     }
     
     private static void processServerChatMessage(ServerChatMessage packet)
@@ -491,7 +527,9 @@ public class SixjetController
             "Are you sure you want to delete this playlist?", null,
             JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
             return;
-        
+        DeletePlaylist packet = new DeletePlaylist();
+        packet.setName(playlistName);
+        send(packet);
     }
     
 }
