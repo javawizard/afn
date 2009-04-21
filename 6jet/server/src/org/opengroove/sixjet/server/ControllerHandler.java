@@ -62,7 +62,12 @@ public class ControllerHandler extends Thread
      */
     public void scheduleForProcessing(Packet packet)
     {
-        packetsToProcess.add(packet);
+        if (validateAndAdd(packet.getPacketId()))
+        {
+            System.out.println("processing packet (udp) "
+                + packet.getClass().getSimpleName());
+            packetsToProcess.add(packet);
+        }
     }
     
     public void trySend(Packet packet)
@@ -237,7 +242,11 @@ public class ControllerHandler extends Thread
                         String packetId = packet.getPacketId();
                         boolean shouldProcess = validateAndAdd(packetId);
                         if (shouldProcess)
+                        {
+                            System.out.println("processing packet "
+                                + packet.getClass().getSimpleName());
                             packetsToProcess.add(packet);
+                        }
                     }
                 }
                 catch (Exception exception)
@@ -405,6 +414,8 @@ public class ControllerHandler extends Thread
     private void processAddPlaylist(AddPlaylist packet)
     {
         String name = packet.getName();
+        System.out.println("processing add playlist " + name);
+        new Exception("stack for playlist add " + name).printStackTrace(System.out);
         File file = new File(SixjetServer.playlistsFolder, name + ".6jl.txt");
         if (file.exists())
         {
@@ -431,7 +442,8 @@ public class ControllerHandler extends Thread
     
     private void processDeletePlaylist(DeletePlaylist packet)
     {
-        send(new PopupNotification("Not added yet"));
+        new File(SixjetServer.playlistsFolder, packet.getName() + ".6jl.txt").delete();
+        SixjetServer.controllerBroadcast(packet);
     }
     
     private void processChatMessage(ChatMessage packet)
