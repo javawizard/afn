@@ -43,7 +43,11 @@ package org.opengroove.jzbot.com;
  * 
  * If a protocol has other events besides the standard join and part events that
  * it wants to allow jzbot to create a factoid for, then it should provide these
- * via the getExtendedEvents method. Then, when one of these events occurs, it should 
+ * via the getExtendedEvents method. Then, when one of these events occurs, it
+ * should call JZBot.runExtendedEvent. This will run the factoid by the event's
+ * name, if one exists, and notify any plugins For example, bzflag defines an
+ * extended event called "ontk", which is triggered when a user on the server
+ * kills a teammate.
  * 
  * @author Alexander Boyd
  * 
