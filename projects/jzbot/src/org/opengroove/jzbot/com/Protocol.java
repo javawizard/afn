@@ -24,7 +24,21 @@ package org.opengroove.jzbot.com;
  * their nickname form and their hostname or cloak as the authenticated portion
  * of the user. The bzflag protocol uses the user's callsign as both the
  * nickname and the authenticated nickname, unless the user is not globally
- * identified, in which case the authenticated name is null.
+ * identified, in which case the authenticated name is null.<br/>
+ * <br/>
+ * 
+ * A protocol should be able to return a list of operators in a specific room.
+ * What exactly an operator is is specific to a room. For example, bzflag
+ * operators are those who are admins on a server or those who have identified
+ * with /password. irc operators are channel ops. This functionality is only
+ * partially used right now, in that room operators can kick jzbot from the room
+ * or ban him (which causes jzbot to decline all requests to rejoin for a
+ * specific amount of time).<br/>
+ * <br/>
+ * 
+ * A protocol is responsible for notifying jzbot when a user joins or leaves a
+ * room. It is also responsible for notifying jzbot when a message is sent in
+ * the room.
  * 
  * @author Alexander Boyd
  * 
