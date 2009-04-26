@@ -38,7 +38,12 @@ package org.opengroove.jzbot.com;
  * 
  * A protocol is responsible for notifying jzbot when a user joins or leaves a
  * room. It is also responsible for notifying jzbot when a message is sent in
- * the room.
+ * the room.<br/>
+ * <br/>
+ * 
+ * If a protocol has other events besides the standard join and part events that
+ * it wants to allow jzbot to create a factoid for, then it should provide these
+ * via the getExtendedEvents method. Then, when one of these events occurs, it should 
  * 
  * @author Alexander Boyd
  * 
