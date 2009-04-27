@@ -47,12 +47,26 @@ package org.opengroove.jzbot.com;
  * should call JZBot.runExtendedEvent. This will run the factoid by the event's
  * name, if one exists, and notify any plugins about the extended event. For
  * example, bzflag defines an extended event called "ontk", which is triggered
- * when a user on the server kills a teammate.
+ * when a user on the server kills a teammate.<br/>
+ * <br/>
+ * 
+ * Protocols are also responsible for handling kicks and bans by jzbot, and
+ * reporting to the bot whether it is authorized to kick and ban. Additionally,
+ * the protocol is responsible for making jzbot aware of whether a ban duration
+ * can be set, or whether all bans are indefinite, and whether or not a ban
+ * message can be specified.<br/>
+ * <br/>
+ * 
+ * Only one instance of this class is created per protocol.
  * 
  * @author Alexander Boyd
  * 
  */
 public interface Protocol
 {
+    public String getName();
     
+    public boolean banDurationAllowed();
+    
+    public boolean banMessageAllowed();
 }
