@@ -96,22 +96,94 @@ import java.net.URL;
 public interface Protocol
 {
     /**
-     * Gets the name of the protocol. This is w
+     * Gets the name of the protocol. This is what should appear in the scheme
+     * part of all urls for this protocol.
+     * 
      * @return
      */
     public String getName();
     
+    /**
+     * Returns true if a duration can be specified on a ban. If this is false,
+     * then any bans will be indefinite, regardless of the duration specified.
+     * 
+     * @return
+     */
     public boolean banDurationAllowed();
     
+    /**
+     * Returns true if this protocol supports ban messages. What exactly this
+     * means is specific to the protocol. BZFlag servers, for example, tell the
+     * user the ban message when the user tries to join but has been banned.
+     * 
+     * @return
+     */
     public boolean banMessageAllowed();
+    
+    /**
+     * Connects to the specified server, but doesn't join any rooms.
+     * 
+     * @param requester
+     *            The requester of the join, or null if this is being called at
+     *            system startup
+     * @param server
+     *            The server to join
+     * @return null if this was successful, or the reason why if this failed
+     */
+    public String connect(URI requester, URI server);
     
     /**
      * Joins a particular room. If the join is because a serverop or a superop
      * used the join command, then <tt>requester</tt> is the url of the person
-     * who requested the join.
+     * who requested the join. If the join is because JZBot is starting up and
+     * this is a room that JZBot is supposed to join, then <tt>requester</tt> is
+     * null.
      * 
      * @param requester
+     *            The requester that requested the join
      * @param room
+     *            The room to join
+     * @return null if the join was successful, or the reason why if the join
+     *         failed.
      */
-    public void join(URI requester, URI room);
+    public String join(URI requester, URI room);
+    
+    /**
+     * Leaves the specified room. This may or may not be called right before
+     * shutdown, depending on what caused the shutdown.
+     * 
+     * @param requester
+     *            The requester. This is the person that used the leave command,
+     *            or the person that started a shutdown.
+     * @param room
+     *            The room to leave
+     * @param isShutdown
+     *            true if this is because a user requested shutdown, false if
+     *            this is because of the leave command being used
+     * @return
+     */
+    public String leave(URI requester, URI room, boolean isShutdown);
+    
+    /**
+     * Returns null if the specified user is allowed to be added as an op for
+     * the specified target. JZBot will validate that the requester is an op for
+     * the target, so this does not need to be done here.
+     * 
+     * @param requester
+     *            The person attempting to add a new op. This person will be an
+     *            op for the target specified.
+     * @param user
+     *            The user that is to be added as an op. This will always be an
+     *            authenticated url.
+     * @param target
+     *            The target. This is the url that the user will be an op at.
+     * @param server
+     *            True if this user is being added as a serverop (and
+     *            <tt>target</tt> will be a server url, not a room url), false
+     *            if this user is being added as a standard op (and
+     *            <tt>target</tt> will be a room url, not a server url).
+     * @return null if the user is allowed to be added as an op, and the reason
+     *         why if the user is not allowed to become an op.
+     */
+    public String allowAddOp(URI requester, URI user, URI target, boolean server);
 }
