@@ -62,12 +62,12 @@ import java.net.URL;
  * If a protocol has other events besides the standard join and part events that
  * it wants to allow jzbot to create a factoid for, then it should provide these
  * via the getExtendedEvents method. Then, when one of these events occurs, it
- * should call JZBot.runExtendedEvent. This will run the factoid by the event's
- * name (prefixed with the word "on"), if one exists, and notify any plugins
- * about the extended event. For example, bzflag defines an extended event
- * called "tk", which is triggered when a user on the server kills a teammate.
- * This would notify plugins that the "tk" extended event has been triggered,
- * and would run the factoid "ontk" if one exists.<br/>
+ * should call runExtendedEvent on the context. This will run the factoid by the
+ * event's name (prefixed with the word "on"), if one exists, and notify any
+ * plugins about the extended event. For example, bzflag defines an extended
+ * event called "tk", which is triggered when a user on the server kills a
+ * teammate. This would notify plugins that the "tk" extended event has been
+ * triggered, and would run the factoid "ontk" if one exists.<br/>
  * <br/>
  * 
  * Protocols are also responsible for handling kicks and bans by jzbot, and
@@ -95,6 +95,8 @@ import java.net.URL;
  */
 public interface Protocol
 {
+    public void init(ProtocolContext context);
+    
     /**
      * Gets the name of the protocol. This is what should appear in the scheme
      * part of all urls for this protocol.
@@ -121,7 +123,9 @@ public interface Protocol
     public boolean banMessageAllowed();
     
     /**
-     * Connects to the specified server, but doesn't join any rooms.
+     * Connects to the specified server, but doesn't join any rooms. This should
+     * only return once the protocol is reasonably certain that connecting to
+     * the server will be successful.
      * 
      * @param requester
      *            The requester of the join, or null if this is being called at
@@ -129,8 +133,22 @@ public interface Protocol
      * @param server
      *            The server to join
      * @return null if this was successful, or the reason why if this failed
+     *         (which could be because the user hasn't configured the protocol
+     *         with a username and password).
      */
     public String connect(URI requester, URI server);
+    
+    /**
+     * Disconnects from the specified server.
+     * 
+     * @param requester
+     *            The user that requested the disconnect, or null if one isn't
+     *            available
+     * @param server
+     *            The server to disconnect from
+     * @return True if the disconnect succeeded, or the reason why if it failed
+     */
+    public String disconnect(URI requester, URI server);
     
     /**
      * Joins a particular room. If the join is because a serverop or a superop
@@ -186,4 +204,40 @@ public interface Protocol
      *         why if the user is not allowed to become an op.
      */
     public String allowAddOp(URI requester, URI user, URI target, boolean server);
+    
+    /**
+     * Sends a message to all room ops at the specified room. IRC sends these as
+     * a pm to each room op at the specified channel, and bzflag sends these as
+     * messages to the admin team.
+     * 
+     * @param room
+     *            The room to send to
+     * @param message
+     *            The message to send
+     */
+    public void sendRoomOpMessage(URI room, String message);
+    
+    /**
+     * Same as sendRoomOpMesssage, but sends it as an action.
+     * 
+     * @param room
+     * @param message
+     */
+    public void sendRoomOpAction(URI room, String message);
+    
+    /**
+     * Sends a message to the room.
+     * 
+     * @param room
+     * @param message
+     */
+    public void sendMessage(URI room, String message);
+    
+    /**
+     * Sends an action to the room.
+     * 
+     * @param room
+     * @param message
+     */
+    public void sendAction(URI room, String message);
 }
