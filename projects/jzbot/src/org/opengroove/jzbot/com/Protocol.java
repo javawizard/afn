@@ -1,30 +1,48 @@
 package org.opengroove.jzbot.com;
 
+import java.net.URI;
+import java.net.URL;
+
 /**
  * A protocol that jzbot can use to connect to a server.<br/>
  * <br/>
  * 
- * A protocol is responsible for making a connection to a particular room, and
- * for asking the user for more info if not enough was provided. For example,
- * the url bzflag://2.bztraining.org:5167 would be enough for the bzflag
- * protocol to connect to that server (provided a default username and password
- * had been configured), but irc://irc.freenode.net:6667 wouldn't provide enough
- * information, since the irc protocol requires the name of a channel to connect
- * to. irc://irc.freenode.net:6667/##6jet would be enough to connect.<br/>
+ * A protocol is responsible for making a connection to a particular server and
+ * for joining rooms on that server. Protocols are always told to connect to a
+ * server before they are told to join a room on that server. Protocols must
+ * also validate that the room given is a valid one. The room can even be the
+ * empty string, if this is valid (as it is for the bzflag protocol, since each
+ * server is its own room).<br/>
  * <br/>
  * 
- * A protocol should automatically reconnect to any rooms that it might be
- * disconnected from. For an irc protocol, this would include rejoining all
- * rooms joined, and reauthenticating with nick services, if applicable.<br/>
+ * A protocol should automatically reconnect to a server or room if it is
+ * unexpectedly disconnected from one. It does not currently need to notify
+ * jzbot that it is doing this.<br/>
  * <br/>
  * 
- * A protocol is expected to provide a nickname form of any users it knows
- * about, and an authenticated, canonical form of any users that it can
- * authenticate. The irc connector, for example, uses the user's nickname as
- * their nickname form and their hostname or cloak as the authenticated portion
- * of the user. The bzflag protocol uses the user's callsign as both the
- * nickname and the authenticated nickname, unless the user is not globally
- * identified, in which case the authenticated name is null.<br/>
+ * Users are currently server-specific. There is no such thing as a user that
+ * only exists on a particular room, but would be a different user on another
+ * room. When referencing a user, the URL consists of the server that the user
+ * is on, and either the query parameter a or the query parameter n. n is the
+ * user's nickname and a is the user's authenticated name. Either form is valid,
+ * but if the user is authenticated, then the authenticated form should be used
+ * to validate authentication. For example, jcp at freenode could be referenced
+ * by either "irc://irc.freenode.net/?n=jcp" or
+ * "irc://irc.freenode.net/?a=unaffiliated/javawizard2539".<br/>
+ * <br/>
+ * 
+ * Users have both a nickname and an authenticated name. The authenticated name
+ * should be persistent; that is, it should not change for a particular user
+ * over multiple sessions. The nickname, however, can change, and is what is
+ * used when the bot needs to include a name for the user in some sort of text.
+ * The authenticated name should never be null. IRC uses the user's hostname or
+ * hostmask as the authenticated name, and <br/>
+ * <br/>
+ * 
+ * Wherever a textual URL is used, the pound sign is treated as a literal
+ * character instead of as the URL fragment character. This makes it so that a
+ * URL like "irc://irc.freenode.net/##6jet" is a legal URL that references the
+ * room ##6jet on the server irc.freenode.net.<br/>
  * <br/>
  * 
  * A protocol should be able to return a list of operators in a specific room.
@@ -45,9 +63,11 @@ package org.opengroove.jzbot.com;
  * it wants to allow jzbot to create a factoid for, then it should provide these
  * via the getExtendedEvents method. Then, when one of these events occurs, it
  * should call JZBot.runExtendedEvent. This will run the factoid by the event's
- * name, if one exists, and notify any plugins about the extended event. For
- * example, bzflag defines an extended event called "ontk", which is triggered
- * when a user on the server kills a teammate.<br/>
+ * name (prefixed with the word "on"), if one exists, and notify any plugins
+ * about the extended event. For example, bzflag defines an extended event
+ * called "tk", which is triggered when a user on the server kills a teammate.
+ * This would notify plugins that the "tk" extended event has been triggered,
+ * and would run the factoid "ontk" if one exists.<br/>
  * <br/>
  * 
  * Protocols are also responsible for handling kicks and bans by jzbot, and
@@ -57,16 +77,41 @@ package org.opengroove.jzbot.com;
  * message can be specified.<br/>
  * <br/>
  * 
- * Only one instance of this class is created per protocol.
+ * Operators are specified as being a superop, a serverop, or an op. A protocol
+ * is responsible for telling jzbot if a particular user is allowed as an op in
+ * one of these groups. For example, bzflag denies all requests to become a
+ * standard op, and only allows serverops. An op at one level is also an op at
+ * any level below that, so superops are serverops at every server, and
+ * serverops are standard ops at every room on that server.<br/>
+ * <br/>
+ * 
+ * Only one instance of this class is created per protocol.<br/>
+ * <br/>
+ * 
+ * 
  * 
  * @author Alexander Boyd
  * 
  */
 public interface Protocol
 {
+    /**
+     * Gets the name of the protocol. This is w
+     * @return
+     */
     public String getName();
     
     public boolean banDurationAllowed();
     
     public boolean banMessageAllowed();
+    
+    /**
+     * Joins a particular room. If the join is because a serverop or a superop
+     * used the join command, then <tt>requester</tt> is the url of the person
+     * who requested the join.
+     * 
+     * @param requester
+     * @param room
+     */
+    public void join(URI requester, URI room);
 }
