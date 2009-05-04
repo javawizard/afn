@@ -3,6 +3,8 @@ package org.opengroove.jzbot.com;
 import java.net.URI;
 import java.net.URL;
 
+import org.opengroove.jzbot.plugins.Message;
+
 /**
  * A protocol that jzbot can use to connect to a server.<br/>
  * <br/>
@@ -201,43 +203,63 @@ public interface Protocol
      *            if this user is being added as a standard op (and
      *            <tt>target</tt> will be a room url, not a server url).
      * @return null if the user is allowed to be added as an op, and the reason
-     *         why if the user is not allowed to become an op.
+     *         why if the user is not allowed to become an op. For example,
+     *         bzflag only allows serverops, not room ops on a server, since
+     *         there is only one room on a server.
      */
     public String allowAddOp(URI requester, URI user, URI target, boolean server);
     
     /**
-     * Sends a message to all room ops at the specified room. IRC sends these as
-     * a pm to each room op at the specified channel, and bzflag sends these as
-     * messages to the admin team.
+     * Sends the messages specified to all room ops in the specified room. IRC
+     * sends these as a pm to each room op, and bzflag sends these as a message
+     * to the admin team.
      * 
      * @param room
      *            The room to send to
      * @param message
      *            The message to send
      */
-    public void sendRoomOpMessage(URI room, String message);
+    public void sendRoomOpMessage(URI room, Message[] messages);
     
     /**
-     * Same as sendRoomOpMesssage, but sends it as an action.
+     * sends some messages to the specified room or user.
      * 
-     * @param room
+     * @param target
+     *            The target, which will either be a room or a user
      * @param message
      */
-    public void sendRoomOpAction(URI room, String message);
+    public void sendMessage(URI target, Message[] message);
     
     /**
-     * Sends a message to the room.
+     * Returns true if this protocol supports actions, and false if this
+     * protocol does not support actions. Actions can still be handed to the
+     * protocol, though, and it should convert these to standard messages
+     * however it likes. This is more of a hint to jzbot.
      * 
-     * @param room
-     * @param message
+     * @return
      */
-    public void sendMessage(URI room, String message);
+    public boolean isActionSupported();
     
     /**
-     * Sends an action to the room.
+     * Indicates that the user is attempting to run a protocol-specific command.
+     * Protocol-specific commands are executed by running the command
+     * "protocol PROTOCOLNAME COMMAND". Technically, the protocol itself would
+     * be able to see this and filter it out before it even gets to jzbot, but
+     * this method is preferred, since it allows jzbot to enforce that only
+     * superops can use the protocol command.<br/>
+     * <br/>
      * 
-     * @param room
-     * @param message
+     * The protocol should call its own sendMessage method to send a reply,
+     * passing in <tt>source</tt> as the target.
+     * 
+     * @param source
+     *            The source of the command. This is either a room, if the
+     *            command was sent to a room, or a user, if the command was sent
+     *            in a pm.
+     * @param user
+     *            The user that sent the command
+     * @param command
+     *            The command itself
      */
-    public void sendAction(URI room, String message);
+    public void protocolSpecificCommand(URI source, URI user, String command);
 }
