@@ -7,7 +7,7 @@ import net.sf.opengroove.common.proxystorage.Search;
 import net.sf.opengroove.common.proxystorage.StoredList;
 
 @ProxyBean
-public interface Channel
+public interface Room
 {
     @Property
     public String getName();
