@@ -1,0 +1,5 @@
+I've decided to redo jzbot. Right now, you implement the command interface to add a new command, and the only protocol supported is irc (and only one server at a time). 
+
+I'm going to make it so that new protocols can be added by implementing the Protocol interface. It's basically in charge of relaying messages, actions, kicks, bans, status updates, network info, and config from jzbot to the actual chat network. 
+
+Then you can add commands by implementing the new command interface, which is different from the old one. It is initialized, and can then register command names that will be delegated to it. It is then invoked for any of these commands, and it is supposed to pass all actions to the command invocation context passed into it, instead of calling those methods on jzbot directly. This will allow commands to import other commands.
