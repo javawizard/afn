@@ -38,6 +38,7 @@ import org.opengroove.jzbot.commands.TriggerCommand;
 import org.opengroove.jzbot.commands.WeatherCommand;
 import org.opengroove.jzbot.plugins.Command;
 import org.opengroove.jzbot.plugins.CommandInvocationContext;
+import org.opengroove.jzbot.plugins.Message;
 import org.opengroove.jzbot.plugins.NoSuchCommandException;
 import org.opengroove.jzbot.storage.*;
 
@@ -200,6 +201,32 @@ public class JZBot extends PircBot
     
     public static void executeCommandFromSource()
     {
+        
+    }
+    
+    public static void fromProtocolJoined(String protocolName, URI room, URI user)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public static void fromProtocolLeft(String protocolName, URI room, URI user)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public static void fromProtocolMessage(String protocolName, URI room, URI user,
+        Message[] messages)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public static void fromProtocolExtendedEvent(String protocolName, URI user,
+        URI room, String[] arguments)
+    {
+        // TODO Auto-generated method stub
         
     }
 }
