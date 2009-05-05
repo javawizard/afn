@@ -1,6 +1,6 @@
 package org.opengroove.jzbot;
 
-public interface Command
+public interface OldCommand
 {
     public String getName();
     

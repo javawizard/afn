@@ -242,8 +242,15 @@ public interface Protocol
      * 
      * @param target
      *            The target, which will either be a room or a user
-     * @param message
+     * @param messages
      *            The message to send
+     * @param source
+     *            An array of messages that is the exact same length as
+     *            <tt>messages</tt>. For each message in <tt>messages</tt>, the
+     *            message in <tt>source</tt> is the message that caused this one
+     *            to be sent, or null if the source message isn't from this user
+     *            or isn't known. This is typically present when the message
+     *            being sent here is in response to a command invocation.
      * @throws NotAllowedException
      *             if the protocol is not allowed to send a message to that
      *             target. For example, IRC users can't send messages to
@@ -251,7 +258,7 @@ public interface Protocol
      *             messages to users that haven't started a conversation with
      *             them and haven't added them to their buddy list.
      */
-    public void sendMessage(URI target, Message[] message);
+    public void sendMessage(URI target, Message[] messages, Message[] source);
     
     /**
      * Returns true if this protocol supports actions, and false if this

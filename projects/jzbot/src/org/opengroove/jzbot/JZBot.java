@@ -53,6 +53,7 @@ public class JZBot extends PircBot
     {
         proxyStorage = new ProxyStorage<Storage>(Storage.class, new File("storage/db"));
         storage = proxyStorage.getRoot();
+        
     }
     
     /**
