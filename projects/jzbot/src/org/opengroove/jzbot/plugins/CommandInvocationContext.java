@@ -94,7 +94,14 @@ public class CommandInvocationContext
     
     public void sendToSource(Message message)
     {
-        
+        checkNotFinished();
+        toSourceMessages.add(message);
+    }
+    
+    private void checkNotFinished()
+    {
+        if (finished)
+            throw new IllegalStateException("Context is already finished");
     }
     
     public void sendOther(URI target, boolean action, String message)
