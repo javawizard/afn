@@ -54,11 +54,11 @@ public interface Procedure
     
     /**
      * A list of persistent variables. These are variables created, retrieved,
-     * and deleted by use of the logo pmake, pget, and pdelete commands. These
-     * variables persist across server restarts, whereas global variables do
-     * not. Persistent variables are specific to a procedure. Procedures can use
-     * the pexternalget command to read persistent variables of other
-     * procedures, but they cannot write or delete these variables.
+     * and deleted by use of the logo pmake, pget, pnamelist, and pdelete
+     * commands. These variables persist across server restarts, whereas global
+     * variables do not. Persistent variables are specific to a procedure.
+     * Procedures can use the pexternalget command to read persistent variables
+     * of other procedures, but they cannot write or delete these variables.
      * 
      * @return
      */
