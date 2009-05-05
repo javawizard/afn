@@ -36,6 +36,7 @@ import org.opengroove.jzbot.commands.TriggerCommand;
 import org.opengroove.jzbot.commands.WeatherCommand;
 import org.opengroove.jzbot.plugins.Command;
 import org.opengroove.jzbot.plugins.CommandInvocationContext;
+import org.opengroove.jzbot.plugins.NoSuchCommandException;
 import org.opengroove.jzbot.storage.*;
 
 /**
@@ -43,7 +44,7 @@ import org.opengroove.jzbot.storage.*;
  */
 public class JZBot extends PircBot
 {
-    private ArrayList<Command> allCommands = new ArrayList<Command>();
+    private static ArrayList<Command> allCommands = new ArrayList<Command>();
     public static final JZBot bot = new JZBot();
     // numeric 320: is signed on as account
     private static ProxyStorage<Storage> proxyStorage;
@@ -159,9 +160,20 @@ public class JZBot extends PircBot
      * @param arguments
      */
     public static void executeCommandToContext(CommandInvocationContext context,
-        String command, String arguments)
+        String command, String arguments, URI source, URI user)
     {
-        
+        Command commandToRun = null;
+        for (Command c : allCommands)
+        {
+            if (c.canProcess(command, arguments, source, user))
+            {
+                commandToRun = c;
+                break;
+            }
+        }
+        if (commandToRun == null)
+            throw new NoSuchCommandException("No such command: " + command);
+        commandToRun.process(command, arguments, context);
     }
     
     public static void executeCommandFromSource()

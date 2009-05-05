@@ -39,5 +39,6 @@ public interface Command
      * @param source
      * @param user
      */
-    public void process(String command, String arguments, URI source, URI user);
+    public void process(String command, String arguments,
+        CommandInvocationContext context);
 }

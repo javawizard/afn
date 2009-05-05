@@ -195,7 +195,8 @@ public class CommandInvocationContext
     {
         CommandInvocationContext subcontext =
             new CommandInvocationContext(this, true, source, this.user);
-        JZBot.executeCommandToContext(subcontext, command, arguments);
+        JZBot
+            .executeCommandToContext(subcontext, command, arguments, this.user, source);
         subcontext.finish();
         Message[] capturedMessages = subcontext.getCapturedMessages();
         if (capturedMessages.length > 1)
