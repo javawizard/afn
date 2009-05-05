@@ -2,7 +2,7 @@ package org.opengroove.jzbot.commands;
 
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
-import org.opengroove.jzbot.storage.Channel;
+import org.opengroove.jzbot.storage.Room;
 import org.opengroove.jzbot.storage.Operator;
 
 public class OpCommand implements Command
@@ -29,7 +29,7 @@ public class OpCommand implements Command
         }
         String[] tokens = arguments.split(" ", 2);
         String subcommand = tokens[0];
-        Channel c = JZBot.storage.getChannel(channel);
+        Room c = JZBot.storage.getChannel(channel);
         if (c == null)
         {
             JZBot.bot.sendMessage(pm ? sender : channel, "Not a channel.");

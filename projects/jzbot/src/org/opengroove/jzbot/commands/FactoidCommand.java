@@ -5,7 +5,7 @@ import net.sf.opengroove.common.proxystorage.StoredList;
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
 import org.opengroove.jzbot.ResponseException;
-import org.opengroove.jzbot.storage.Channel;
+import org.opengroove.jzbot.storage.Room;
 import org.opengroove.jzbot.storage.Factoid;
 
 public class FactoidCommand implements Command
@@ -40,7 +40,7 @@ public class FactoidCommand implements Command
          * command is something like create, delete, isglobal, etc., and
          * afterCommand is the rest
          */
-        Channel c = null;
+        Room c = null;
         if (!isGlobal)
             c = JZBot.storage.getChannel(channel);
         if (command.equals("create"))

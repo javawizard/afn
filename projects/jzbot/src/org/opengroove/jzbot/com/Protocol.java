@@ -37,14 +37,19 @@ import org.opengroove.jzbot.plugins.Message;
  * should be persistent; that is, it should not change for a particular user
  * over multiple sessions. The nickname, however, can change, and is what is
  * used when the bot needs to include a name for the user in some sort of text.
- * The authenticated name should never be null. IRC uses the user's hostname or
- * hostmask as the authenticated name, and <br/>
+ * The authenticated name can be null if the user can't be authenticated. IRC
+ * uses the user's hostname or hostmask to authenticate them, and bzflag uses
+ * the user's callsign if they are globally identified (server-local
+ * identification does not count).<br/>
  * <br/>
  * 
- * Wherever a textual URL is used, the pound sign is treated as a literal
- * character instead of as the URL fragment character. This makes it so that a
- * URL like "irc://irc.freenode.net/##6jet" is a legal URL that references the
- * room ##6jet on the server irc.freenode.net.<br/>
+ * User URLs can contain a fragment portion, which generally represents
+ * information on how the user should be contacted, and is protocol-specific.
+ * The only protocol that uses this right now is Facebook, and it allows the
+ * fragment to be chat, message, or wall, which represent contacting the user
+ * (and being contacted by the user) by sending a chat message, sending a
+ * regular message, or posting on the user's wall, respectively. When comparing
+ * users for equality and authentication, the fragment portion is dropped.<br/>
  * <br/>
  * 
  * A protocol should be able to return a list of operators in a specific room.
@@ -136,9 +141,14 @@ public interface Protocol
      *            The server to join
      * @return null if this was successful, or the reason why if this failed
      *         (which could be because the user hasn't configured the protocol
-     *         with a username and password).
+     *         with a username and password). * @throws InvalidInputException if
+     *         <tt>options</tt> does not contain the options that this protocol
+     *         was expecting. The message of the exception will be sent back to
+     *         the user if this method call was a result of ~join, and if this
+     *         method call was an initial join, then the server will be
+     *         deactivated. ~proc edit jz_roulette
      */
-    public String connect(URI requester, URI server);
+    public String connect(URI requester, URI server, String options);
     
     /**
      * Disconnects from the specified server.
@@ -165,8 +175,14 @@ public interface Protocol
      *            The room to join
      * @return null if the join was successful, or the reason why if the join
      *         failed.
+     * @throws InvalidInputException
+     *             if <tt>options</tt> does not contain the options that this
+     *             protocol was expecting. The message of the exception will be
+     *             sent back to the user if this method call was a result of
+     *             ~join, and if this method call was an initial join, then the
+     *             server will be deactivated. ~proc edit jz_roulette
      */
-    public String join(URI requester, URI room);
+    public String join(URI requester, URI room, String options);
     
     /**
      * Leaves the specified room. This may or may not be called right before
@@ -227,6 +243,13 @@ public interface Protocol
      * @param target
      *            The target, which will either be a room or a user
      * @param message
+     *            The message to send
+     * @throws NotAllowedException
+     *             if the protocol is not allowed to send a message to that
+     *             target. For example, IRC users can't send messages to
+     *             channels they haven't joined, and AIM bots can't send
+     *             messages to users that haven't started a conversation with
+     *             them and haven't added them to their buddy list.
      */
     public void sendMessage(URI target, Message[] message);
     
@@ -262,4 +285,40 @@ public interface Protocol
      *            The command itself
      */
     public void protocolSpecificCommand(URI source, URI user, String command);
+    
+    /**
+     * Returns a normalized form of the specified server url. This should remove
+     * the port if it is the protocol's default port, and otherwise convert the
+     * url so that all urls that reference a given server are converted to the
+     * same url string. The returned url's path component should be empty.
+     * 
+     * @param uri
+     * @return
+     */
+    public URI normalizeServerUrl(URI uri);
+    
+    /**
+     * Returns an authenticated uri for the specified user uri. This should
+     * return null if the user cannot be authenticated. The returned uri should
+     * be canonical, and should not be a nickname uri.
+     * 
+     * @param uri
+     * @return
+     */
+    public URI getAuthenticatedUrl(URI uri);
+    
+    /**
+     * Returns a nickname uri from the specified uri. This should never return
+     * null, and should always return a canonical uri (meaning that two
+     * different uris that denote the same actual user should cause the same uri
+     * to be returned from this method).
+     * 
+     * @param uri
+     * @return
+     */
+    public URI getNicknameUrl(URI uri);
+    
+    public void validateNewServerOptions(URI server, String options);
+    
+    public void validateNewRoomOptions(URI room, String options);
 }

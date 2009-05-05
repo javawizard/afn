@@ -55,7 +55,7 @@ import org.opengroove.jw.jmlogo.lang.io.InterpreterOutputSink;
  * command [output sum 2 3 4] would output a result with it's type being
  * TYPE_OUTPUT and it's value being "9".
  * 
- * &#064;author Alexander Boyd
+ * @author Alexander Boyd
  * 
  */
 public class Interpreter

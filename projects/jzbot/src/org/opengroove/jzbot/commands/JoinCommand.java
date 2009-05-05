@@ -3,7 +3,7 @@ package org.opengroove.jzbot.commands;
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
 import org.opengroove.jzbot.ResponseException;
-import org.opengroove.jzbot.storage.Channel;
+import org.opengroove.jzbot.storage.Room;
 
 public class JoinCommand implements Command
 {
@@ -29,7 +29,7 @@ public class JoinCommand implements Command
         String name = arguments;
         if (JZBot.storage.getChannel(name) != null)
         {
-            Channel c = JZBot.storage.getChannel(name);
+            Room c = JZBot.storage.getChannel(name);
             if (c.isSuspended())
             {
                 c.setSuspended(false);
@@ -48,7 +48,7 @@ public class JoinCommand implements Command
             }
             return;
         }
-        Channel c = JZBot.storage.createChannel();
+        Room c = JZBot.storage.createChannel();
         c.setName(name);
         c.setTrigger("~");
         JZBot.storage.getChannels().add(c);

@@ -2,7 +2,7 @@ package org.opengroove.jzbot.commands;
 
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
-import org.opengroove.jzbot.storage.Channel;
+import org.opengroove.jzbot.storage.Room;
 
 public class TriggerCommand implements Command
 {
@@ -20,7 +20,7 @@ public class TriggerCommand implements Command
             JZBot.bot.sendMessage(pm ? sender : channel, "Need a channel");
             return;
         }
-        Channel c = JZBot.storage.getChannel(channel);
+        Room c = JZBot.storage.getChannel(channel);
         if (arguments.equals(""))
         {
             JZBot.bot.sendMessage(pm ? sender : channel, "The current trigger is "

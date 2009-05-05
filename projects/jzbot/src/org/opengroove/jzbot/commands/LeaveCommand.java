@@ -3,7 +3,7 @@ package org.opengroove.jzbot.commands;
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
 import org.opengroove.jzbot.ResponseException;
-import org.opengroove.jzbot.storage.Channel;
+import org.opengroove.jzbot.storage.Room;
 
 /**
  * Leave instructs the bot to depart from a channel and not come back until a
@@ -26,7 +26,7 @@ public class LeaveCommand implements Command
         if (channel == null)
             throw new ResponseException("You must specify a channel.");
         JZBot.bot.verifySuperop(hostname);
-        Channel c = JZBot.storage.getChannel(channel);
+        Room c = JZBot.storage.getChannel(channel);
         if (c == null)
             throw new ResponseException("I'm not a member of that channel.");
         if (c.isSuspended())

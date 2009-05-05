@@ -10,19 +10,19 @@ import net.sf.opengroove.common.proxystorage.StoredList;
 public interface Room
 {
     @Property
-    public String getName();
+    public String getUrl();
     
-    public void setName(String name);
+    public void setUrl(String url);
+    
+    @Property
+    public String getOptions();
+    
+    public void setOptions(String options);
     
     @Property
     public boolean isSuspended();
     
     public void setSuspended(boolean suspended);
-    
-    @Property
-    public String getJoinFactoid();
-    
-    public void setJoinFactoid(String name);
     
     @Property
     public String getTrigger();

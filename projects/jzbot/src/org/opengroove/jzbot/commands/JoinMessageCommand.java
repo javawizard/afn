@@ -3,7 +3,7 @@ package org.opengroove.jzbot.commands;
 import org.opengroove.jzbot.Command;
 import org.opengroove.jzbot.JZBot;
 import org.opengroove.jzbot.ResponseException;
-import org.opengroove.jzbot.storage.Channel;
+import org.opengroove.jzbot.storage.Room;
 
 public class JoinMessageCommand implements Command
 {
@@ -19,7 +19,7 @@ public class JoinMessageCommand implements Command
         arguments = arguments.trim();
         JZBot.bot.verifyOp(channel, hostname);
         String[] argumentTokens = arguments.split(" ", 2);
-        Channel c = JZBot.storage.getChannel(channel);
+        Room c = JZBot.storage.getChannel(channel);
         if (arguments.equals(""))
         {
             if (c.getJoinFactoid() != null)

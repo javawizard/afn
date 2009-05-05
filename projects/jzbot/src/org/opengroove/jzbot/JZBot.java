@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -106,4 +107,42 @@ public class JZBot extends PircBot
         return null;
     }
     
+    public static URI toNickForm(URI user)
+    {
+        return null;
+    }
+    
+    /**
+     * Checks to see if the users specified represent the same user. This
+     * involves converting both of them to a nickname form, removing the
+     * fragment, if any, and then comparing the urls.
+     * 
+     * @param user1
+     * @param user2
+     * @return
+     */
+    public static boolean usersEqual(URI user1, URI user2)
+    {
+        URI u1n = toNickForm(user1);
+        URI u2n = toNickForm(user2);
+        u1n = uriRemoveFragment(u1n);
+        u2n = uriRemoveFragment(u2n);
+        return u1n.equals(u2n);
+    }
+    
+    private static URI uriRemoveFragment(URI uri)
+    {
+        try
+        {
+            return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri
+                .getPort(), uri.getPath(), uri.getQuery(), null);
+        }
+        catch (URISyntaxException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage(),
+                e);
+        }
+    }
 }
