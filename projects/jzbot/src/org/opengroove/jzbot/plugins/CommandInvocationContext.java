@@ -98,14 +98,84 @@ public class CommandInvocationContext
         toSourceMessages.add(message);
     }
     
+    public void sendOther(URI target, boolean action, String message)
+    {
+        sendOther(new TargetedMessage(target, action, message));
+    }
+    
+    public void sendOther(URI target, String message)
+    {
+        sendOther(target, false, message);
+    }
+    
+    public void sendOther(TargetedMessage message)
+    {
+        checkNotFinished();
+        otherMessages.add(message);
+    }
+    
     private void checkNotFinished()
     {
         if (finished)
             throw new IllegalStateException("Context is already finished");
     }
     
-    public void sendOther(URI target, boolean action, String message)
+    private void checkFinished()
     {
-        
+        if (!finished)
+            throw new IllegalStateException("Context is not finished");
+    }
+    
+    public void finish()
+    {
+        checkNotFinished();
+        if (parent != null)
+        {
+            for (Message m : toSourceMessages)
+            {
+                parent.sendToSource(m);
+            }
+            if (!captureMode)
+            {
+                for (TargetedMessage m : otherMessages)
+                {
+                    parent.sendOther(m);
+                }
+            }
+        }
+        finished = true;
+    }
+    
+    public void checkNoParent()
+    {
+        if (parent != null)
+            throw new IllegalStateException("Context has a parent");
+    }
+    
+    public void checkParent()
+    {
+        if (parent == null)
+            throw new IllegalStateException("Context doesn't have a parent");
+    }
+    
+    public Message[] getCapturedMessages()
+    {
+        checkFinished();
+        checkParent();
+        return toSourceMessages.toArray(new Message[0]);
+    }
+    
+    public Message[] getToSourceMessages()
+    {
+        checkFinished();
+        checkNoParent();
+        return toSourceMessages.toArray(new Message[0]);
+    }
+    
+    public TargetedMessage[] getOtherMessages()
+    {
+        checkFinished();
+        checkNoParent();
+        return otherMessages.toArray(new TargetedMessage[0]);
     }
 }
