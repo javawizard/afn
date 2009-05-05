@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +34,8 @@ import org.opengroove.jzbot.commands.SuperopCommand;
 import org.opengroove.jzbot.commands.TTTCommand;
 import org.opengroove.jzbot.commands.TriggerCommand;
 import org.opengroove.jzbot.commands.WeatherCommand;
+import org.opengroove.jzbot.plugins.Command;
+import org.opengroove.jzbot.plugins.CommandInvocationContext;
 import org.opengroove.jzbot.storage.*;
 
 /**
@@ -40,8 +43,7 @@ import org.opengroove.jzbot.storage.*;
  */
 public class JZBot extends PircBot
 {
-    public static final HashMap<String, Command> commands =
-        new HashMap<String, Command>();
+    private ArrayList<Command> allCommands = new ArrayList<Command>();
     public static final JZBot bot = new JZBot();
     // numeric 320: is signed on as account
     private static ProxyStorage<Storage> proxyStorage;
@@ -145,5 +147,25 @@ public class JZBot extends PircBot
             throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage(),
                 e);
         }
+    }
+    
+    /**
+     * Executes the specified command, if one can process it. The command is
+     * executed in the context specified. The context is <b>not</b> finished
+     * after execution, so the caller should make sure and finish it.
+     * 
+     * @param context
+     * @param command
+     * @param arguments
+     */
+    public static void executeCommandToContext(CommandInvocationContext context,
+        String command, String arguments)
+    {
+        
+    }
+    
+    public static void executeCommandFromSource()
+    {
+        
     }
 }

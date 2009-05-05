@@ -19,10 +19,6 @@ public interface Command
      *            The command's arguments. This is the rest of the line after
      *            the command, or the empty string if only the command was
      *            given.
-     * @param line
-     *            The original line. This will include the bot's trigger
-     *            character if this was sent to a room, whereas the command will
-     *            not.
      * @param source
      *            The source of the command. This is a room if the command was
      *            sent to a room, or <tt>user</tt> if the command was sent in a
@@ -32,8 +28,7 @@ public interface Command
      * @return True if this command class can process the specified line, false
      *         if it cannot
      */
-    public boolean canProcess(String command, String arguments, String line,
-        URI source, URI user);
+    public boolean canProcess(String command, String arguments, URI source, URI user);
     
     /**
      * Processes the specified line, calling back to JZBot to send any response
@@ -41,10 +36,8 @@ public interface Command
      * 
      * @param command
      * @param arguments
-     * @param line
      * @param source
      * @param user
      */
-    public void process(String command, String arguments, String line, URI source,
-        URI user);
+    public void process(String command, String arguments, URI source, URI user);
 }

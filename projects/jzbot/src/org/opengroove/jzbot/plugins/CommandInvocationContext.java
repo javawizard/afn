@@ -3,6 +3,8 @@ package org.opengroove.jzbot.plugins;
 import java.net.URI;
 import java.util.ArrayList;
 
+import org.opengroove.jzbot.JZBot;
+
 public class CommandInvocationContext
 {
     /**
@@ -54,6 +56,9 @@ public class CommandInvocationContext
      */
     private boolean captureMode;
     
+    private URI source;
+    private URI user;
+    
     /**
      * Creates a command invocation context that is a child of the specified
      * context.
@@ -64,10 +69,13 @@ public class CommandInvocationContext
      *            True if this context is to be created in {@link #captureMode},
      *            false if it is to be created in normal mode
      */
-    public CommandInvocationContext(CommandInvocationContext parent, boolean captureMode)
+    public CommandInvocationContext(CommandInvocationContext parent,
+        boolean captureMode, URI source, URI user)
     {
         this.parent = parent;
         this.captureMode = captureMode;
+        this.source = source;
+        this.user = user;
     }
     
     /**
@@ -76,10 +84,9 @@ public class CommandInvocationContext
      * command in a message. Contexts without a parent are never created in
      * capture mode.
      */
-    public CommandInvocationContext()
+    public CommandInvocationContext(URI source, URI user)
     {
-        this.parent = null;// redundant
-        captureMode = false;// also redundant
+        this(null, false, source, user);
     }
     
     public void sendToSource(boolean action, String message)
@@ -177,5 +184,26 @@ public class CommandInvocationContext
         checkFinished();
         checkNoParent();
         return otherMessages.toArray(new TargetedMessage[0]);
+    }
+    
+    public Message invokeSingleCapture(String command, String arguments)
+    {
+        return invokeSingleCapture(command, arguments, this.source);
+    }
+    
+    public Message invokeSingleCapture(String command, String arguments, URI source)
+    {
+        CommandInvocationContext subcontext =
+            new CommandInvocationContext(this, true, source, this.user);
+        JZBot.executeCommandToContext(subcontext, command, arguments);
+        subcontext.finish();
+        Message[] capturedMessages = subcontext.getCapturedMessages();
+        if (capturedMessages.length > 1)
+            throw new ExcessiveResponseException("Command " + command
+                + " called in single capture mode but returned "
+                + capturedMessages.length + " to-source messages");
+        if (capturedMessages.length == 0)
+            return null;
+        return capturedMessages[0];
     }
 }
