@@ -36,4 +36,17 @@ public interface Storage
     
     @Search(listProperty = "operators", searchProperty = "hostname")
     public Operator getOperator(String hostname);
+    
+    @Property
+    @ListType(ProtocolSettings.class)
+    public StoredList<ProtocolSettings> getProtocolSettings();
+    
+    @Search(listProperty = "protocolSettings", searchProperty = "name", exact = true, anywhere = false)
+    public ProtocolSettings getProtocol(String name);
+    
+    @Constructor
+    public ProtocolSettings createProtocolSettings();
+    
+    @Constructor
+    public ConfigProperty createProperty();
 }
