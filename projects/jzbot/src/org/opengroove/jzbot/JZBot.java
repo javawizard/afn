@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.sf.opengroove.common.proxystorage.ProxyStorage;
@@ -16,6 +17,7 @@ import net.sf.opengroove.common.proxystorage.ProxyStorage;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
+import org.opengroove.jzbot.com.Protocol;
 import org.opengroove.jzbot.commands.CommandListCommand;
 import org.opengroove.jzbot.commands.ConfigCommand;
 import org.opengroove.jzbot.commands.FactoidCommand;
@@ -44,7 +46,8 @@ import org.opengroove.jzbot.storage.*;
  */
 public class JZBot extends PircBot
 {
-    private static ArrayList<Command> allCommands = new ArrayList<Command>();
+    private static List<Command> allCommands = new ArrayList<Command>();
+    private static Map<String, Protocol> allProtocols = new HashMap<String, Protocol>();
     public static final JZBot bot = new JZBot();
     // numeric 320: is signed on as account
     private static ProxyStorage<Storage> proxyStorage;
@@ -56,7 +59,26 @@ public class JZBot extends PircBot
     {
         proxyStorage = new ProxyStorage<Storage>(Storage.class, new File("storage/db"));
         storage = proxyStorage.getRoot();
+        Defaults.installDefaultProtocols();
+        Defaults.installDefaultCommands();
         
+    }
+    
+    public static void installCommand(Command command)
+    {
+        
+    }
+    
+    /**
+     * Creates a context for the specified protocol, initializes the protocol,
+     * and registers it to JZBot. It takes care of everything, so you can just
+     * do something like <tt>JZBot.installProtocol(new IRCProtocol());</tt>, and
+     * JZBot will take care of everything else.
+     * 
+     * @param protocol
+     */
+    public static void installProtocol(Protocol protocol)
+    {
     }
     
     /**
