@@ -6,18 +6,15 @@ import net.sf.opengroove.common.proxystorage.ProxyBean;
 import net.sf.opengroove.common.proxystorage.StoredList;
 
 @ProxyBean
-public interface Server
+public interface ProtocolSettings
 {
     @Property
-    public String getUrl();
+    public String getName();
     
-    public void setUrl(String url);
-    
-    @Property
-    @ListType(Operator.class)
-    public StoredList<Operator> getOperators();
+    public void setName(String name);
     
     @Property
-    @ListType(Room.class)
-    public StoredList<Room> getRooms();
+    @ListType(ConfigProperty.class)
+    public StoredList<ConfigProperty> getProperties();
+    
 }

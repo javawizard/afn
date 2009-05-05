@@ -4,11 +4,10 @@ import net.sf.opengroove.common.proxystorage.Property;
 import net.sf.opengroove.common.proxystorage.ProxyBean;
 
 @ProxyBean
-public interface Operator
+public interface StringHolder
 {
     @Property
-    public String getAuthenticatedUrl();
+    public String getValue();
     
-    public void setAuthenticatedUrl(String hostname);
-    
+    public void setValue(String value);
 }

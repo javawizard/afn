@@ -10,21 +10,6 @@ import net.sf.opengroove.common.proxystorage.StoredList;
 @ProxyBean
 public interface Storage
 {
-    @Property
-    @ListType(Room.class)
-    public StoredList<Room> getChannels();
-    
-    @Search(listProperty = "channels", searchProperty = "name")
-    public Room getChannel(String name);
-    
-    @Property
-    public Config getConfig();
-    
-    public void setConfig(Config config);
-    
-    @Constructor
-    public Config createConfig();
-    
     @Constructor
     public Factoid createFactoid();
     
@@ -32,7 +17,11 @@ public interface Storage
     public Operator createOperator();
     
     @Constructor
-    public Room createChannel();
+    public Room createRoom();
+    
+    @Property
+    @ListType(Server.class)
+    public StoredList<Server> getServers();
     
     @Property
     @ListType(Factoid.class)
