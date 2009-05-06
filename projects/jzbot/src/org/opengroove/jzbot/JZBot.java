@@ -132,12 +132,15 @@ public class JZBot extends PircBot
         boolean validQuery =
             uri.getQuery().startsWith("a=") || uri.getQuery().startsWith("n=");
         if (!(validPath && validQuery))
-            throw new InvalidURIException();
+            throw new InvalidURIException(uri.toString() + " is not a valid user uri");
     }
     
     public void validateRoomUri(URI uri)
     {
-        
+        /*
+         * Room uris have any sort of path and an empty query string. The path can be empty (such as a bzflag server which is its own room).
+         */
+        boolean 
     }
     
     public void validateServerUri(URI uri)
