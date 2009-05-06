@@ -86,7 +86,8 @@ public class ProtocolContext
     }
     
     /**
-     * Indicates to jzbot that a user in a room has lost room op status.
+     * Indicates to jzbot that a user in a room, possibly jzbot itself, has lost
+     * room op status.
      * 
      * @param room
      *            The room
@@ -99,15 +100,23 @@ public class ProtocolContext
     public void roomOpRemoved(URI room, URI user, URI from)
     {
         validate(room, user);
-        JZBot.fromProtocolRoomOpRemoved(room, user);
+        JZBot.fromProtocolRoomOpRemoved(room, user, from);
+    }
+    
+    public void roomOpAdded(URI room, URI user, URI from)
+    {
+        
     }
     
     /**
      * Indicates to jzbot that a user in a room was kicked off of the room.
      * 
      * @param room
+     *            The room
      * @param user
+     *            The user that was kicked
      * @param from
+     *            The user that kicked <tt>user</tt>
      */
     public void kicked(URI room, URI user, URI from)
     {
@@ -115,12 +124,31 @@ public class ProtocolContext
         JZBot.fromProtocolKicked(room, user, from);
     }
     
+    /**
+     * Indicates to jzbot that another user left the room specified.
+     * 
+     * @param room
+     *            The room
+     * @param user
+     *            The user that left
+     */
     public void left(URI room, URI user)
     {
         validate(room, user);
         JZBot.fromProtocolLeft(protocolName, room, user);
     }
     
+    /**
+     * Indicates that some messages were sent to the bot or to a room that it
+     * has joined.
+     * 
+     * @param room
+     *            The room, or null if the messages are private messages
+     * @param user
+     *            The user that sent the messages
+     * @param messages
+     *            The messages that the user sent
+     */
     public void message(URI room, URI user, Message[] messages)
     {
         validate(room, user);

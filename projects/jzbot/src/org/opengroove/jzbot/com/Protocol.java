@@ -163,6 +163,20 @@ public interface Protocol
     public String disconnect(URI requester, URI server);
     
     /**
+     * Returns the user uri that corresponds to this bot on the specified
+     * server. This should return a uri even if the bot is not connected to the
+     * server specified as long as it has been requested to. For example, if it
+     * has been instructed to join an IRC server, but the IRC server is still
+     * processing the request, then this method should sill return a uri,
+     * although it would probably be a nickname uri instead of an authenticated
+     * uri.
+     * 
+     * @param server
+     * @return
+     */
+    public URI getSelfUri(URI server);
+    
+    /**
      * Joins a particular room. If the join is because a serverop or a superop
      * used the join command, then <tt>requester</tt> is the url of the person
      * who requested the join. If the join is because JZBot is starting up and
@@ -325,7 +339,61 @@ public interface Protocol
      */
     public URI getNicknameUrl(URI uri);
     
+    /**
+     * Validates that the specified new options for the server specified are
+     * valid. This doesn't necessarily need to validate that any credentials
+     * specified are valid; only that the general format is valid. In
+     * otherwords, this method should not incure a request to the server.
+     * 
+     * @param server
+     * @param options
+     */
     public void validateNewServerOptions(URI server, String options);
     
+    /**
+     * Validates that the specified new room options are valid.
+     * 
+     * @param room
+     * @param options
+     */
     public void validateNewRoomOptions(URI room, String options);
+    
+    /**
+     * Requests that the user in question be kicked from the room in question.
+     * In general, this will only be called if jzbot is a room op at the
+     * specified room. IRC servers kick the user off the room, and bzflag
+     * servers kick the user off the server.
+     * 
+     * @param user
+     * @param room
+     * @param requester
+     *            The user that requested the kick, or null if one isn't known
+     *            (for example, if some internal function of the bot made the
+     *            decision to kick all on its own)
+     */
+    public void kick(URI user, URI room, URI requester);
+    
+    /**
+     * Requests that the user in question be banned from the room in question.
+     * In general, this will only be called when the bot is a room op at the
+     * specified room.
+     * 
+     * @param user
+     * @param room
+     * @param duration
+     * @param message
+     */
+    public void ban(URI user, URI room, URI requester, long duration, String message);
+    
+    /**
+     * Returns a display name for the specified user. This is the name that the
+     * user should be referenced as when referring to them in messages. This
+     * should also be a name that will ping the user, if the protocol supports
+     * it. It does not, however, have to be the user's nickname (as specified by
+     * the nickname uri), although it can be. IRC uses the user's nickname
+     * 
+     * @param user
+     * @return
+     */
+    public String getDisplayName(URI user);
 }

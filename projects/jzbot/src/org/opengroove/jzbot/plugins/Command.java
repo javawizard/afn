@@ -35,9 +35,12 @@ public interface Command
      * that might be needed.
      * 
      * @param command
+     *            The command
      * @param arguments
-     * @param source
-     * @param user
+     *            The arguments to the command
+     * @param context
+     *            The context of the command. This can be used to call other
+     *            commands, and it can be used to retrieve the source and user.
      */
     public void process(String command, String arguments,
         CommandInvocationContext context);

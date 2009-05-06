@@ -18,6 +18,7 @@ import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
 import org.opengroove.jzbot.com.Protocol;
+import org.opengroove.jzbot.com.ProtocolContext;
 import org.opengroove.jzbot.commands.CommandListCommand;
 import org.opengroove.jzbot.commands.ConfigCommand;
 import org.opengroove.jzbot.commands.FactoidCommand;
@@ -38,6 +39,8 @@ import org.opengroove.jzbot.commands.TriggerCommand;
 import org.opengroove.jzbot.commands.WeatherCommand;
 import org.opengroove.jzbot.plugins.Command;
 import org.opengroove.jzbot.plugins.CommandInvocationContext;
+import org.opengroove.jzbot.plugins.InvalidProtocolException;
+import org.opengroove.jzbot.plugins.InvalidURIException;
 import org.opengroove.jzbot.plugins.Message;
 import org.opengroove.jzbot.plugins.NoSuchCommandException;
 import org.opengroove.jzbot.storage.*;
@@ -67,7 +70,8 @@ public class JZBot extends PircBot
     
     public static void installCommand(Command command)
     {
-        
+        command.init();
+        allCommands.add(command);
     }
     
     /**
@@ -80,6 +84,28 @@ public class JZBot extends PircBot
      */
     public static void installProtocol(Protocol protocol)
     {
+        protocol.init(new ProtocolContext(protocol.getName()));
+        allProtocols.put(protocol.getName(), protocol);
+    }
+    
+    public static Protocol getProtocol(String name)
+    {
+        return allProtocols.get(name);
+    }
+    
+    /**
+     * Same as getProtocol, but instead of returning null, this method throws an
+     * exception.
+     * 
+     * @param name
+     * @return
+     */
+    public static Protocol getCheckedProtocol(String name)
+    {
+        Protocol p = getProtocol(name);
+        if (p == null)
+            throw new InvalidProtocolException("Protocol " + name + " does not exist");
+        return p;
     }
     
     /**
@@ -94,6 +120,39 @@ public class JZBot extends PircBot
     public static String getNickname(URI user)
     {
         return null;
+    }
+    
+    public void validateUserUri(URI uri)
+    {
+        /*
+         * User uris don't have a path (or have a path equal to "/") and have a
+         * query string that starts with "n=" or "a=".
+         */
+        boolean validPath = uri.getPath().equals("") || uri.getPath().equals("/");
+        boolean validQuery =
+            uri.getQuery().startsWith("a=") || uri.getQuery().startsWith("n=");
+        if (!(validPath && validQuery))
+            throw new InvalidURIException();
+    }
+    
+    public void validateRoomUri(URI uri)
+    {
+        
+    }
+    
+    public void validateServerUri(URI uri)
+    {
+        
+    }
+    
+    public void extractServerUri(URI uri)
+    {
+        
+    }
+    
+    public static String getDisplayName(URI target)
+    {
+        
     }
     
     /**
@@ -229,8 +288,14 @@ public class JZBot extends PircBot
         // TODO Auto-generated method stub
         
     }
-
-    public static void fromProtocolRoomOpRemoved(URI room, URI user)
+    
+    public static void fromProtocolRoomOpRemoved(URI room, URI user, URI from)
+    {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    public static void fromProtocolKicked(URI room, URI user, URI from)
     {
         // TODO Auto-generated method stub
         
