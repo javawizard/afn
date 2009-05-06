@@ -30,7 +30,7 @@ import org.opengroove.jzbot.plugins.Message;
  * but if the user is authenticated, then the authenticated form should be used
  * to validate authentication. For example, jcp at freenode could be referenced
  * by either "irc://irc.freenode.net/?n=jcp" or
- * "irc://irc.freenode.net/?a=unaffiliated/javawizard2539".<br/>
+ * "irc://irc.freenode.net/?a=jcp!unaffiliated/javawizard2539".<br/>
  * <br/>
  * 
  * Users have both a nickname and an authenticated name. The authenticated name
@@ -38,9 +38,9 @@ import org.opengroove.jzbot.plugins.Message;
  * over multiple sessions. The nickname, however, can change, and is what is
  * used when the bot needs to include a name for the user in some sort of text.
  * The authenticated name can be null if the user can't be authenticated. IRC
- * uses the user's hostname or hostmask to authenticate them, and bzflag uses
- * the user's callsign if they are globally identified (server-local
- * identification does not count).<br/>
+ * uses the user's nickname plus their hostname or hostmask to authenticate
+ * them, and bzflag uses the user's callsign if they are globally identified
+ * (server-local identification does not count).<br/>
  * <br/>
  * 
  * User URLs can contain a fragment portion, which generally represents

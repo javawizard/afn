@@ -229,4 +229,10 @@ public class JZBot extends PircBot
         // TODO Auto-generated method stub
         
     }
+
+    public static void fromProtocolRoomOpRemoved(URI room, URI user)
+    {
+        // TODO Auto-generated method stub
+        
+    }
 }
