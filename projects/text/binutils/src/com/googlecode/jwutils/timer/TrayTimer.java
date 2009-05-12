@@ -1,12 +1,17 @@
 package com.googlecode.jwutils.timer;
 
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.border.EmptyBorder;
+
+import com.googlecode.jwutils.timer.Timer.Direction;
 
 /**
  * A program that shows a tray icon. This tray icon allows for counting-up
@@ -41,6 +46,33 @@ public class TrayTimer
     
     private static JDialog dialog;
     
+    private static Thread timerThread = new Thread("timer-thread")
+    {
+        public void run()
+        {
+            while (true)
+            {
+                try
+                {
+                    Thread.sleep(1000 - (System.currentTimeMillis() % 1000));
+                }
+                catch (Exception exception)
+                {
+                    exception.printStackTrace();
+                }
+                doTimerUpdate();
+                try
+                {
+                    Thread.sleep(100);
+                }
+                catch (Exception exception)
+                {
+                    exception.printStackTrace();
+                }
+            }
+        }
+    };
+    
     /**
      * @param args
      */
@@ -50,6 +82,17 @@ public class TrayTimer
         currentTimersPanel
             .setLayout(new BoxLayout(currentTimersPanel, BoxLayout.Y_AXIS));
         
+    }
+    
+    public static synchronized void doTimerUpdate()
+    {
+        for(Timer timer : timers)
+        {
+            if(timer.getLabel().isSelected())
+            {
+                
+            }
+        }
     }
     
     public static void trayClicked()
@@ -75,13 +118,39 @@ public class TrayTimer
         if (currentTimersPanel.getComponentCount() > (index * 2))
             currentTimersPanel.remove(index * 2);
         timers.remove(index);
+        currentTimersPanel.revalidate();
     }
     
     public static synchronized void addTimer(String h, String m, String s, boolean up,
         String name)
     {
-        JPanel component = new JPanel();
-        component.setBorder(new EmptyBorder(3, 8, 3, 8));
-        component.setLayout(new FlowLayout());
+        TimerComponent component = new TimerComponent();
+        component.getNameLabel().setText(
+            "" + (up ? ((char) 8593) : ((char) 8595)) + " " + name);
+        component.getMainButton().setText(h + ":" + m + ":" + s);
+        final Timer timer = new Timer();
+        timer.setComponent(component);
+        timer.setDirection(up ? Direction.UP : Direction.DOWN);
+        timer.setLabel(component.getMainButton());
+        timer.setName(name);
+        int seconds = Integer.parseInt(s);
+        int minutes = Integer.parseInt(m);
+        int hours = Integer.parseInt(h);
+        timer.setValue((hours * 60 * 60) + (minutes * 60) + seconds);
+        component.getCancelButton().addActionListener(new ActionListener()
+        {
+            
+            public void actionPerformed(ActionEvent e)
+            {
+                synchronized (TrayTimer.class)
+                {
+                    removeTimer(timers.indexOf(timer));
+                }
+            }
+        });
+        timers.add(timer);
+        if (timers.size() > 0)
+            currentTimersPanel.add(new JSeparator());
+        currentTimersPanel.add(component);
     }
 }
