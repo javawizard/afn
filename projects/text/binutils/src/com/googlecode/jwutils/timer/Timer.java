@@ -2,6 +2,7 @@ package com.googlecode.jwutils.timer;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JToggleButton;
 
 public class Timer
 {
@@ -12,14 +13,14 @@ public class Timer
     
     private String name;
     private JComponent component;
-    private JLabel label;
+    private JToggleButton label;
     
     public JComponent getComponent()
     {
         return component;
     }
     
-    public JLabel getLabel()
+    public JToggleButton getLabel()
     {
         return label;
     }
@@ -29,7 +30,7 @@ public class Timer
         this.component = component;
     }
     
-    public void setLabel(JLabel label)
+    public void setLabel(JToggleButton label)
     {
         this.label = label;
     }

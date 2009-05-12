@@ -1,6 +1,12 @@
 package com.googlecode.jwutils.timer;
 
+import java.awt.FlowLayout;
 import java.util.ArrayList;
+
+import javax.swing.BoxLayout;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 /**
  * A program that shows a tray icon. This tray icon allows for counting-up
@@ -29,15 +35,20 @@ import java.util.ArrayList;
  */
 public class TrayTimer
 {
-    private ArrayList<Timer> timers = new ArrayList<Timer>();
+    private static ArrayList<Timer> timers = new ArrayList<Timer>();
     
-    private JPanel currentTimersPanel;
+    private static JPanel currentTimersPanel;
+    
+    private static JDialog dialog;
     
     /**
      * @param args
      */
     public static void main(String[] args)
     {
+        currentTimersPanel = new JPanel();
+        currentTimersPanel
+            .setLayout(new BoxLayout(currentTimersPanel, BoxLayout.Y_AXIS));
         
     }
     
@@ -46,4 +57,31 @@ public class TrayTimer
         
     }
     
+    /**
+     * Removes the specified timer. This involves removing it from the UI,
+     * removing it from <tt>timers</tt>, and telling it not to receive events
+     * anymore.
+     * 
+     * @param index
+     */
+    public static synchronized void removeTimer(int index)
+    {
+        /*
+         * Widgets to remove: remove index * 2. Then, if there is another
+         * component that has shifted to index * 2 (the separator), remove it
+         * too.
+         */
+        currentTimersPanel.remove(index * 2);
+        if (currentTimersPanel.getComponentCount() > (index * 2))
+            currentTimersPanel.remove(index * 2);
+        timers.remove(index);
+    }
+    
+    public static synchronized void addTimer(String h, String m, String s, boolean up,
+        String name)
+    {
+        JPanel component = new JPanel();
+        component.setBorder(new EmptyBorder(3, 8, 3, 8));
+        component.setLayout(new FlowLayout());
+    }
 }
