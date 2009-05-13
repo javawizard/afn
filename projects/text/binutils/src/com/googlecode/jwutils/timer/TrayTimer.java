@@ -134,9 +134,9 @@ public class TrayTimer
                 addTimer(dialog.getUpHours().getText(),
                     dialog.getUpMinutes().getText(), dialog.getUpSeconds().getText(),
                     true, dialog.getUpName().getText());
-                dialog.getUpHours().setText("");
-                dialog.getUpMinutes().setText("");
-                dialog.getUpSeconds().setText("");
+                dialog.getUpHours().setText("0");
+                dialog.getUpMinutes().setText("0");
+                dialog.getUpSeconds().setText("0");
                 dialog.getUpName().setText("");
             }
         });
@@ -148,9 +148,9 @@ public class TrayTimer
                 addTimer(dialog.getDownHours().getText(), dialog.getDownMinutes()
                     .getText(), dialog.getDownSeconds().getText(), false, dialog
                     .getDownName().getText());
-                dialog.getDownHours().setText("");
-                dialog.getDownMinutes().setText("");
-                dialog.getDownSeconds().setText("");
+                dialog.getDownHours().setText("0");
+                dialog.getDownMinutes().setText("0");
+                dialog.getDownSeconds().setText("0");
                 dialog.getDownName().setText("");
             }
         });
