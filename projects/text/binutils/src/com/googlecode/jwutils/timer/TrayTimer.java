@@ -131,9 +131,12 @@ public class TrayTimer
             
             public void actionPerformed(ActionEvent e)
             {
+                String name = dialog.getUpName().getText();
+                if (name.trim().equals(""))
+                    name = generateName();
                 addTimer(dialog.getUpHours().getText(),
                     dialog.getUpMinutes().getText(), dialog.getUpSeconds().getText(),
-                    true, dialog.getUpName().getText());
+                    true, name);
                 dialog.getUpHours().setText("0");
                 dialog.getUpMinutes().setText("0");
                 dialog.getUpSeconds().setText("0");
@@ -145,9 +148,11 @@ public class TrayTimer
             
             public void actionPerformed(ActionEvent e)
             {
+                String name = dialog.getDownName().getText();
+                if (name.trim().equals(""))
+                    name = generateName();
                 addTimer(dialog.getDownHours().getText(), dialog.getDownMinutes()
-                    .getText(), dialog.getDownSeconds().getText(), false, dialog
-                    .getDownName().getText());
+                    .getText(), dialog.getDownSeconds().getText(), false, name);
                 dialog.getDownHours().setText("0");
                 dialog.getDownMinutes().setText("0");
                 dialog.getDownSeconds().setText("0");
@@ -229,6 +234,28 @@ public class TrayTimer
         tray.add(icon);
     }
     
+    protected static synchronized String generateName()
+    {
+        int number = 0;
+        while (true)
+        {
+            number += 1;
+            String name = "Timer " + number;
+            boolean exists = false;
+            for (Timer t : timers)
+            {
+                if (t.getName().trim().equals(name))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+            if (exists)
+                continue;
+            return name;
+        }
+    }
+    
     public static void showTrayDialog()
     {
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -238,6 +265,8 @@ public class TrayTimer
         Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
         dialog.setLocation((size.width - insets.right) - dialog.getWidth(),
             (size.height - insets.bottom) - dialog.getHeight());
+        dialog.show();
+        dialog.toFront();
         dialog.show();
     }
     
