@@ -4,6 +4,12 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JToggleButton;
 
+/**
+ * Holds information and state related to an actual timer.
+ * 
+ * @author Alexander Boyd
+ * 
+ */
 public class Timer
 {
     public static enum Direction

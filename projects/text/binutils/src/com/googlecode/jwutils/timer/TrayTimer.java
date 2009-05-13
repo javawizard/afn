@@ -351,11 +351,14 @@ public class TrayTimer
         /*
          * Widgets to remove: remove index * 2. Then, if there is another
          * component that has shifted to index * 2 (the separator), remove it
-         * too.
+         * too. Then, if there isn't, and there is more than one component, then
+         * remove (index * 2) - 1.
          */
         currentTimersPanel.remove(index * 2);
         if (currentTimersPanel.getComponentCount() > (index * 2))
             currentTimersPanel.remove(index * 2);
+        else if (currentTimersPanel.getComponentCount() > 0)
+            currentTimersPanel.remove((index * 2) - 1);
         timers.remove(index);
         currentTimersPanel.invalidate();
         currentTimersPanel.validate();
