@@ -134,6 +134,10 @@ public class TrayTimer
                 addTimer(dialog.getUpHours().getText(),
                     dialog.getUpMinutes().getText(), dialog.getUpSeconds().getText(),
                     true, dialog.getUpName().getText());
+                dialog.getUpHours().setText("");
+                dialog.getUpMinutes().setText("");
+                dialog.getUpSeconds().setText("");
+                dialog.getUpName().setText("");
             }
         });
         dialog.getDownGo().addActionListener(new ActionListener()
@@ -144,6 +148,10 @@ public class TrayTimer
                 addTimer(dialog.getDownHours().getText(), dialog.getDownMinutes()
                     .getText(), dialog.getDownSeconds().getText(), false, dialog
                     .getDownName().getText());
+                dialog.getDownHours().setText("");
+                dialog.getDownMinutes().setText("");
+                dialog.getDownSeconds().setText("");
+                dialog.getDownName().setText("");
             }
         });
         SystemTray tray = SystemTray.getSystemTray();
