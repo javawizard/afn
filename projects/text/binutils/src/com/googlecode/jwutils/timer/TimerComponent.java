@@ -57,7 +57,6 @@ public class TimerComponent extends javax.swing.JPanel
             thisLayout.setHGap(5);
             thisLayout.setVGap(5);
             this.setLayout(thisLayout);
-            setPreferredSize(new Dimension(400, 300));
             {
                 mainButton = new JToggleButton();
                 this.add(mainButton, "1, 3");

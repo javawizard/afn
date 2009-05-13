@@ -2,6 +2,10 @@ package com.googlecode.jwutils.timer;
 
 import info.clearthought.layout.TableLayout;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import javax.swing.BorderFactory;
+
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 
@@ -11,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.LineBorder;
 
 /**
  * This code was edited or generated using CloudGarden's Jigloo SWT/Swing GUI
@@ -27,6 +32,7 @@ public class TrayTimerDialog extends javax.swing.JDialog
     private JPanel jPanel1;
     private JScrollPane jScrollPane1;
     private JLabel jLabel5;
+    private JPanel jPanel3;
     private JTextField downName;
     private JTextField upName;
     private JButton downGo;
@@ -106,14 +112,27 @@ public class TrayTimerDialog extends javax.swing.JDialog
                 { 3.0, TableLayout.FILL, 3.0 } });
         thisLayout.setHGap(5);
         thisLayout.setVGap(5);
-        getContentPane().setLayout(thisLayout);
+        JPanel p = new JPanel();
+        p.setLayout(thisLayout);
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(p);
+        p.setBorder(new LineBorder(Color.GRAY));
         {
             jPanel1 = new JPanel();
-            TableLayout jPanel1Layout = new TableLayout(new double[][] {{TableLayout.FILL, TableLayout.PREFERRED, TableLayout.PREFERRED, TableLayout.PREFERRED, 3.0, TableLayout.PREFERRED, 3.0, TableLayout.PREFERRED, TableLayout.FILL}, {TableLayout.FILL, TableLayout.PREFERRED, 6.0, TableLayout.PREFERRED, 6.0, TableLayout.PREFERRED, TableLayout.FILL, TableLayout.PREFERRED, 6.0, TableLayout.PREFERRED, 6.0, TableLayout.PREFERRED, TableLayout.FILL}});
+            TableLayout jPanel1Layout =
+                new TableLayout(new double[][] {
+                    { TableLayout.FILL, TableLayout.PREFERRED, TableLayout.PREFERRED,
+                        TableLayout.PREFERRED, 3.0, TableLayout.PREFERRED, 3.0,
+                        TableLayout.PREFERRED, TableLayout.FILL },
+                    { TableLayout.FILL, TableLayout.PREFERRED, 6.0,
+                        TableLayout.PREFERRED, 6.0, TableLayout.PREFERRED,
+                        TableLayout.FILL, TableLayout.PREFERRED, 6.0,
+                        TableLayout.PREFERRED, 6.0, TableLayout.PREFERRED,
+                        TableLayout.FILL } });
             jPanel1Layout.setHGap(5);
             jPanel1Layout.setVGap(5);
             jPanel1.setLayout(jPanel1Layout);
-            getContentPane().add(jPanel1, "3, 1");
+            p.add(jPanel1, "3, 1");
             {
                 jLabel1 = new JLabel();
                 jPanel1.add(jLabel1, "1,1,8,1");
@@ -207,16 +226,26 @@ public class TrayTimerDialog extends javax.swing.JDialog
             jPanel2 = new JPanel();
             BorderLayout jPanel2Layout = new BorderLayout();
             jPanel2.setLayout(jPanel2Layout);
-            getContentPane().add(jPanel2, "1, 1");
+            p.add(jPanel2, "1, 1");
             {
                 jScrollPane1 = new JScrollPane();
                 jPanel2.add(jScrollPane1, BorderLayout.CENTER);
                 {
-                    currentTimerPanel = new JPanel();
-                    BoxLayout currentTimerPanelLayout =
-                        new BoxLayout(currentTimerPanel, javax.swing.BoxLayout.Y_AXIS);
-                    jScrollPane1.setViewportView(getCurrentTimerPanel());
-                    currentTimerPanel.setLayout(currentTimerPanelLayout);
+                    jPanel3 = new JPanel();
+                    BorderLayout jPanel3Layout = new BorderLayout();
+                    jPanel3.setLayout(jPanel3Layout);
+                    jScrollPane1.setViewportView(jPanel3);
+                    {
+                        currentTimerPanel = new JPanel();
+                        jPanel3.add(currentTimerPanel, BorderLayout.NORTH);
+                        BoxLayout currentTimerPanelLayout =
+                            new BoxLayout(currentTimerPanel,
+                                javax.swing.BoxLayout.Y_AXIS);
+                        currentTimerPanel.setLayout(currentTimerPanelLayout);
+                        currentTimerPanel.setEnabled(false);
+                        currentTimerPanel.setBorder(BorderFactory.createEmptyBorder(4,
+                            4, 4, 4));
+                    }
                 }
             }
         }
@@ -253,12 +282,19 @@ public class TrayTimerDialog extends javax.swing.JDialog
         return downGo;
     }
     
-    public JTextField getUpName() {
+    public JTextField getUpName()
+    {
         return upName;
     }
     
-    public JTextField getDownName() {
+    public JTextField getDownName()
+    {
         return downName;
     }
-
+    
+    public JPanel getCurrentSurround()
+    {
+        return jPanel3;
+    }
+    
 }

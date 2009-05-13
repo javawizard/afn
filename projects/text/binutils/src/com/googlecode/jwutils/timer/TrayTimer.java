@@ -1,16 +1,26 @@
 package com.googlecode.jwutils.timer;
 
+import java.awt.AWTException;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
 import java.awt.Toolkit;
+import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -20,6 +30,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.border.EmptyBorder;
@@ -92,8 +103,9 @@ public class TrayTimer
     
     /**
      * @param args
+     * @throws AWTException
      */
-    public static void main(String[] args)
+    public static void main(String[] args) throws AWTException
     {
         threadPool.allowCoreThreadTimeOut(true);
         dialog = new TrayTimerDialog(null);
@@ -119,8 +131,9 @@ public class TrayTimer
             
             public void actionPerformed(ActionEvent e)
             {
-                addTimer(dialog.getUpHours().getText(), dialog.getUpHours().getText(),
-                    dialog.getUpHours().getText(), true, dialog.getUpName().getText());
+                addTimer(dialog.getUpHours().getText(),
+                    dialog.getUpMinutes().getText(), dialog.getUpSeconds().getText(),
+                    true, dialog.getUpName().getText());
             }
         });
         dialog.getDownGo().addActionListener(new ActionListener()
@@ -128,11 +141,84 @@ public class TrayTimer
             
             public void actionPerformed(ActionEvent e)
             {
-                addTimer(dialog.getDownHours().getText(), dialog.getDownHours()
-                    .getText(), dialog.getDownHours().getText(), false, dialog
+                addTimer(dialog.getDownHours().getText(), dialog.getDownMinutes()
+                    .getText(), dialog.getDownSeconds().getText(), false, dialog
                     .getDownName().getText());
             }
         });
+        SystemTray tray = SystemTray.getSystemTray();
+        BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        for (int x = 0; x < image.getWidth(); x++)
+        {
+            for (int y = 0; y < image.getHeight(); y++)
+            {
+                image.setRGB(x, y, new Color(0, 0, 0, 0).getRGB());
+            }
+        }
+        g.setColor(Color.WHITE);
+        g.fillOval(0, 0, 15, 15);
+        g.setColor(Color.BLACK);
+        g.drawOval(0, 0, 15, 15);
+        TrayIcon icon = new TrayIcon(image, "TrayTimer - click to show timers");
+        icon.addMouseListener(new MouseListener()
+        {
+            
+            public void mouseClicked(MouseEvent e)
+            {
+                if (!e.isPopupTrigger())
+                    showTrayDialog();
+            }
+            
+            public void mouseEntered(MouseEvent e)
+            {
+                // TODO Auto-generated method stub
+                
+            }
+            
+            public void mouseExited(MouseEvent e)
+            {
+                // TODO Auto-generated method stub
+                
+            }
+            
+            public void mousePressed(MouseEvent e)
+            {
+                // TODO Auto-generated method stub
+                
+            }
+            
+            public void mouseReleased(MouseEvent e)
+            {
+                // TODO Auto-generated method stub
+                
+            }
+        });
+        PopupMenu menu = new PopupMenu();
+        MenuItem exit = new MenuItem("Exit");
+        menu.add(exit);
+        exit.addActionListener(new ActionListener()
+        {
+            
+            public void actionPerformed(ActionEvent e)
+            {
+                JFrame f = new JFrame("TrayTimer");
+                f.setLocationRelativeTo(null);
+                f.show();
+                if (JOptionPane.showConfirmDialog(f,
+                    "Are you sure you want to exit TrayTimer?", null,
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+                {
+                    System.exit(0);
+                }
+                else
+                {
+                    f.dispose();
+                }
+            }
+        });
+        icon.setPopupMenu(menu);
+        tray.add(icon);
     }
     
     public static void showTrayDialog()
@@ -182,11 +268,16 @@ public class TrayTimer
     private static synchronized void doTimerExpired(Timer timer)
     {
         JFrame f = new JFrame("" + timer.getName() + ": Time's up");
-        JLabel l = new JLabel("" + timer.getName() + ": Time's up");
+        f.setDefaultCloseOperation(f.DISPOSE_ON_CLOSE);
+        JLabel l =
+            new JLabel("" + timer.getName()
+                + (timer.getName().trim().equals("") ? "" : ": ") + "Time's up");
         l.setBorder(new EmptyBorder(20, 20, 20, 20));
         f.getContentPane().add(l);
         f.pack();
         f.setLocationRelativeTo(null);
+        f.show();
+        f.toFront();
         f.show();
         removeTimer(timers.indexOf(timer));
     }
@@ -225,7 +316,12 @@ public class TrayTimer
         if (currentTimersPanel.getComponentCount() > (index * 2))
             currentTimersPanel.remove(index * 2);
         timers.remove(index);
-        currentTimersPanel.revalidate();
+        currentTimersPanel.invalidate();
+        currentTimersPanel.validate();
+        currentTimersPanel.repaint();
+        dialog.getCurrentSurround().invalidate();
+        dialog.getCurrentSurround().validate();
+        dialog.getCurrentSurround().repaint();
     }
     
     public static synchronized void addTimer(String h, String m, String s, boolean up,
@@ -255,9 +351,15 @@ public class TrayTimer
                 }
             }
         });
-        timers.add(timer);
         if (timers.size() > 0)
             currentTimersPanel.add(new JSeparator());
+        timers.add(timer);
         currentTimersPanel.add(component);
+        currentTimersPanel.invalidate();
+        currentTimersPanel.validate();
+        currentTimersPanel.repaint();
+        dialog.getCurrentSurround().invalidate();
+        dialog.getCurrentSurround().validate();
+        dialog.getCurrentSurround().repaint();
     }
 }
