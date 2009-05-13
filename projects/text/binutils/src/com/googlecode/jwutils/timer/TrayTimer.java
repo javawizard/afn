@@ -120,7 +120,7 @@ public class TrayTimer
             public void actionPerformed(ActionEvent e)
             {
                 addTimer(dialog.getUpHours().getText(), dialog.getUpHours().getText(),
-                    dialog.getUpHours().getText(), true, "");
+                    dialog.getUpHours().getText(), true, dialog.getUpName().getText());
             }
         });
         dialog.getDownGo().addActionListener(new ActionListener()
@@ -128,8 +128,9 @@ public class TrayTimer
             
             public void actionPerformed(ActionEvent e)
             {
-                // TODO Auto-generated method stub
-                
+                addTimer(dialog.getDownHours().getText(), dialog.getDownHours()
+                    .getText(), dialog.getDownHours().getText(), false, dialog
+                    .getDownName().getText());
             }
         });
     }
