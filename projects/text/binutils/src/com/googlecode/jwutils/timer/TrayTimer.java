@@ -1,12 +1,25 @@
 package com.googlecode.jwutils.timer;
 
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.BoxLayout;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.border.EmptyBorder;
@@ -44,7 +57,11 @@ public class TrayTimer
     
     private static JPanel currentTimersPanel;
     
-    private static JDialog dialog;
+    private static ThreadPoolExecutor threadPool =
+        new ThreadPoolExecutor(3, 10, 10, TimeUnit.SECONDS,
+            new ArrayBlockingQueue<Runnable>(100));
+    
+    private static TrayTimerDialog dialog;
     
     private static Thread timerThread = new Thread("timer-thread")
     {
@@ -78,21 +95,110 @@ public class TrayTimer
      */
     public static void main(String[] args)
     {
-        currentTimersPanel = new JPanel();
-        currentTimersPanel
-            .setLayout(new BoxLayout(currentTimersPanel, BoxLayout.Y_AXIS));
-        
+        threadPool.allowCoreThreadTimeOut(true);
+        dialog = new TrayTimerDialog(null);
+        dialog.setUndecorated(true);
+        dialog.addWindowFocusListener(new WindowFocusListener()
+        {
+            
+            public void windowGainedFocus(WindowEvent e)
+            {
+                // TODO Auto-generated method stub
+                
+            }
+            
+            public void windowLostFocus(WindowEvent e)
+            {
+                dialog.dispose();
+            }
+        });
+        currentTimersPanel = dialog.getCurrentTimerPanel();
+        timerThread.start();
+        dialog.getUpGo().addActionListener(new ActionListener()
+        {
+            
+            public void actionPerformed(ActionEvent e)
+            {
+                addTimer(dialog.getUpHours().getText(), dialog.getUpHours().getText(),
+                    dialog.getUpHours().getText(), true, "");
+            }
+        });
+        dialog.getDownGo().addActionListener(new ActionListener()
+        {
+            
+            public void actionPerformed(ActionEvent e)
+            {
+                // TODO Auto-generated method stub
+                
+            }
+        });
+    }
+    
+    public static void showTrayDialog()
+    {
+        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice dv = env.getDefaultScreenDevice();
+        GraphicsConfiguration cfg = dv.getDefaultConfiguration();
+        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(cfg);
+        Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+        dialog.setLocation((size.width - insets.right) - dialog.getWidth(),
+            (size.height - insets.bottom) - dialog.getHeight());
+        dialog.show();
     }
     
     public static synchronized void doTimerUpdate()
     {
-        for(Timer timer : timers)
+        for (Timer timer : new ArrayList<Timer>(timers))
         {
-            if(timer.getLabel().isSelected())
+            /*
+             * We need to create a new list up there since we will be modifying
+             * the list to remove expired timers in this loop, which will cause
+             * a concurrent modification exception
+             */
+            if (timer.getLabel().isSelected())
             {
-                
+                if (timer.getDirection() == Direction.UP)
+                {
+                    timer.setValue(timer.getValue() + 1);
+                    updateTimerLabel(timer);
+                }
+                else
+                {
+                    if (timer.getValue() <= 0)
+                    {
+                        doTimerExpired(timer);
+                    }
+                    else
+                    {
+                        timer.setValue(timer.getValue() - 1);
+                        updateTimerLabel(timer);
+                    }
+                }
             }
         }
+    }
+    
+    private static synchronized void doTimerExpired(Timer timer)
+    {
+        JFrame f = new JFrame("" + timer.getName() + ": Time's up");
+        JLabel l = new JLabel("" + timer.getName() + ": Time's up");
+        l.setBorder(new EmptyBorder(20, 20, 20, 20));
+        f.getContentPane().add(l);
+        f.pack();
+        f.setLocationRelativeTo(null);
+        f.show();
+        removeTimer(timers.indexOf(timer));
+    }
+    
+    private static void updateTimerLabel(Timer timer)
+    {
+        int value = timer.getValue();
+        int seconds = value % 60;
+        value /= 60;
+        int minutes = value % 60;
+        value /= 60;
+        int hours = value;
+        timer.getLabel().setText("" + hours + ":" + minutes + ":" + seconds);
     }
     
     public static void trayClicked()
