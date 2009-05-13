@@ -4,6 +4,8 @@ import info.clearthought.layout.TableLayout;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 
 import javax.swing.BoxLayout;
@@ -215,11 +217,25 @@ public class TrayTimerDialog extends javax.swing.JDialog
                 upName = new JTextField();
                 jPanel1.add(getUpName(), "1,3,7,3");
                 upName.setToolTipText("Type a name for the timer");
+                upName.addActionListener(new ActionListener()
+                {
+                    public void actionPerformed(ActionEvent evt)
+                    {
+                        upNameActionPerformed(evt);
+                    }
+                });
             }
             {
                 downName = new JTextField();
                 jPanel1.add(getDownName(), "1,9,7,9");
                 downName.setToolTipText("Type a name for the timer");
+                downName.addActionListener(new ActionListener()
+                {
+                    public void actionPerformed(ActionEvent evt)
+                    {
+                        downNameActionPerformed(evt);
+                    }
+                });
             }
         }
         {
@@ -295,6 +311,16 @@ public class TrayTimerDialog extends javax.swing.JDialog
     public JPanel getCurrentSurround()
     {
         return jPanel3;
+    }
+    
+    private void upNameActionPerformed(ActionEvent evt)
+    {
+        upGo.doClick();
+    }
+    
+    private void downNameActionPerformed(ActionEvent evt)
+    {
+        downGo.doClick();
     }
     
 }

@@ -8,9 +8,11 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
+import java.awt.RenderingHints;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
@@ -160,7 +162,7 @@ public class TrayTimer
             }
         });
         SystemTray tray = SystemTray.getSystemTray();
-        BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage image = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
         for (int x = 0; x < image.getWidth(); x++)
         {
@@ -169,11 +171,13 @@ public class TrayTimer
                 image.setRGB(x, y, new Color(0, 0, 0, 0).getRGB());
             }
         }
-        g.setColor(Color.WHITE);
-        g.fillOval(0, 0, 15, 15);
         g.setColor(Color.BLACK);
-        g.drawOval(0, 0, 15, 15);
-        TrayIcon icon = new TrayIcon(image, "TrayTimer - click to show timers");
+        g.drawOval(0, 0, 63, 63);
+        g.setColor(Color.WHITE);
+        g.fillOval(4, 4, 55, 55);
+        TrayIcon icon =
+            new TrayIcon(image.getScaledInstance(16, 16, Image.SCALE_AREA_AVERAGING),
+                "TrayTimer - click to show timers");
         icon.addMouseListener(new MouseListener()
         {
             
