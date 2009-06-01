@@ -1,5 +1,7 @@
 package org.opengroove.jzbot.storage;
 
+import java.net.URI;
+
 import net.sf.opengroove.common.proxystorage.ListType;
 import net.sf.opengroove.common.proxystorage.Property;
 import net.sf.opengroove.common.proxystorage.ProxyBean;
@@ -40,5 +42,8 @@ public interface Server
     public boolean isSuspended();
     
     public void setSuspended(boolean suspended);
+    
+    @Search(listProperty = "rooms", searchProperty = "url", exact = true, anywhere = false)
+    public Room getRoom(URI room);
     
 }

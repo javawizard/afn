@@ -44,4 +44,27 @@ public interface Command
      */
     public void process(String command, String arguments,
         CommandInvocationContext context);
+    
+    /**
+     * Indicates to this command that a particular extended event has been
+     * called. If this command knows what to do with the event, then it should
+     * complete all processing here, returning any messages that are to be sent
+     * in response to the event.
+     * 
+     * @param event
+     *            The event that occured. This is protocol-specific.
+     * @param room
+     *            The room that the event occured on, if the event is one that
+     *            would generally occur on a room
+     * @param user
+     *            The user that the event occured on, if the event is one that
+     *            would generally occur on a user. At least one of <tt>user</tt>
+     *            or <tt>room</tt> will not be null.
+     * @param arguments
+     *            Any additional arguments. The format of these arguments is
+     *            specific to the extended event.
+     * @return Any messages that are to be sent in response to the message
+     */
+    public TargetedMessage[] extendedEvent(String event, URI room, URI user,
+        String arguments);
 }

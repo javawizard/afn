@@ -1,0 +1,7 @@
+This document contains information on how the various protocols differ, and how their differences can be merged into one interface.
+
+So far, all protocols allow messages with an individual user. They differ, however, on how that works. For example, IRC messages can be exchanged between a user directly. MSN or AIM (I can't remember which one), however, requires a room to be set up just to talk with two people, and any old instant message acts as a room and can have people added to it. In IRC, therefore, it's marlen's option to join a room when he wants, and it has a name. With AIM, marlen might be forced into a room by a prvmsg chat having someone added to it. AIM rooms also aren't persistent (meaning that factoids shouldn't be stored on a per-room basis, and rooms should not be rejoined on reconnect), whereas IRC rooms are persistent. 
+
+The main issue with that is that marlen's parsing rules change significantly depending on whether he's chatting with one person or with a group of people. With a group of people, he requires a trigger for most (but not all) commands.
+
+However, having all instant message sessions function as rooms isn't a complete solution either, as this would cause marlen to enter prvmsg mode whenever there was only one other person in a room besides him, something that he probably shouldn't do. This seems to call for a protocol-specific distinction between a room that is definitely a room and a room that could be an instant message. 

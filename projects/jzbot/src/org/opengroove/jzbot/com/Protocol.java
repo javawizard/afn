@@ -132,7 +132,10 @@ public interface Protocol
     /**
      * Connects to the specified server, but doesn't join any rooms. This should
      * only return once the protocol is reasonably certain that connecting to
-     * the server will be successful.
+     * the server will be successful.<br/>
+     * <br/>
+     * 
+     * 
      * 
      * @param requester
      *            The requester of the join, or null if this is being called at
@@ -141,12 +144,13 @@ public interface Protocol
      *            The server to join
      * @return null if this was successful, or the reason why if this failed
      *         (which could be because the user hasn't configured the protocol
-     *         with a username and password). * @throws InvalidInputException if
-     *         <tt>options</tt> does not contain the options that this protocol
-     *         was expecting. The message of the exception will be sent back to
-     *         the user if this method call was a result of ~join, and if this
-     *         method call was an initial join, then the server will be
-     *         deactivated. ~proc edit jz_roulette
+     *         with a username and password).
+     * @throws InvalidInputException
+     *             if <tt>options</tt> does not contain the options that this
+     *             protocol was expecting. The message of the exception will be
+     *             sent back to the user if this method call was a result of
+     *             ~join, and if this method call was an initial join, then the
+     *             server will be deactivated. ~proc edit jz_roulette
      */
     public String connect(URI requester, URI server, String options);
     

@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import org.opengroove.jzbot.plugins.InvalidProtocolException;
 import org.opengroove.jzbot.plugins.InvalidURIException;
 import org.opengroove.jzbot.plugins.Message;
 import org.opengroove.jzbot.plugins.NoSuchCommandException;
+import org.opengroove.jzbot.plugins.TargetedMessage;
 import org.opengroove.jzbot.storage.*;
 
 /**
@@ -122,40 +124,65 @@ public class JZBot extends PircBot
         return null;
     }
     
-    public void validateUserUri(URI uri)
+    public static void validateUserUri(URI uri)
     {
         /*
-         * User uris don't have a path (or have a path equal to "/") and have a
-         * query string that starts with "n=" or "a=".
+         * User uris don't have a path and have a query string that starts with
+         * "n=" or "a=".
          */
-        boolean validPath = uri.getPath().equals("") || uri.getPath().equals("/");
+        boolean validPath = uri.getPath().equals("");
         boolean validQuery =
-            uri.getQuery().startsWith("a=") || uri.getQuery().startsWith("n=");
+            uri.getQuery() != null
+                && (uri.getQuery().startsWith("a=") || uri.getQuery().startsWith("n="));
         if (!(validPath && validQuery))
             throw new InvalidURIException(uri.toString() + " is not a valid user uri");
     }
     
-    public void validateRoomUri(URI uri)
+    public static void validateRoomUri(URI uri)
     {
         /*
-         * Room uris have any sort of path and an empty query string. The path can be empty (such as a bzflag server which is its own room).
+         * Room uris have any sort of path and an empty query string. The path
+         * can be empty (such as a bzflag server which is its own room).
          */
-        boolean 
+        if (!(uri.getQuery() == null))
+            throw new InvalidURIException(uri.toString() + " is not a valid room uri");
     }
     
     public void validateServerUri(URI uri)
     {
-        
+        /*
+         * Server uris have an empty query and an empty path.
+         */
+        boolean validQuery = uri.getQuery() == null;
+        if (!(validQuery && uri.getPath().equals("")))
+            throw new InvalidURIException(uri.toString() + " is not a valid server uri");
     }
     
-    public void extractServerUri(URI uri)
+    /**
+     * Extracts a server uri from a room or user uri.
+     * 
+     * @param uri
+     */
+    public static URI extractServerUri(URI uri)
     {
-        
+        try
+        {
+            return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri
+                .getPort(), "", null, null);
+        }
+        catch (URISyntaxException e)
+        {
+            e.printStackTrace();
+            throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage(),
+                e);
+        }
     }
     
     public static String getDisplayName(URI target)
     {
-        
+        validateUserUri(target);
+        Protocol p = getCheckedProtocol(target.getScheme());
+        return p.getDisplayName(target);
     }
     
     /**
@@ -180,7 +207,11 @@ public class JZBot extends PircBot
      */
     public static String getAuthname(URI user)
     {
-        return null;
+        validateUserUri(user);
+        if (user.getQuery().startsWith("a="))
+            return user.getQuery().substring(2);
+        return getCheckedProtocol(user.getScheme()).getAuthenticatedUrl(user)
+            .getQuery().substring(2);
     }
     
     /**
@@ -193,12 +224,18 @@ public class JZBot extends PircBot
      */
     public static URI toAuthForm(URI user)
     {
-        return null;
+        validateUserUri(user);
+        if (user.getQuery().startsWith("a="))
+            return user;
+        return getCheckedProtocol(user.getScheme()).getAuthenticatedUrl(user);
     }
     
     public static URI toNickForm(URI user)
     {
-        return null;
+        validateUserUri(user);
+        if (user.getQuery().startsWith("n="))
+            return user;
+        return getCheckedProtocol(user.getScheme()).getNicknameUrl(user);
     }
     
     /**
@@ -261,44 +298,135 @@ public class JZBot extends PircBot
         commandToRun.process(command, arguments, context);
     }
     
-    public static void executeCommandFromSource()
+    /**
+     * Executes the specified command directly from a source, sending to-source
+     * messages and other messages on their way after the command has finished
+     * executing.<br/>
+     * <br/>
+     * 
+     * This should not be called from a command when it is trying to include
+     * another command.<br/>
+     * <br/>
+     * 
+     * This throws an exception if a problem happens while trying to run the
+     * command. Whatever calls this should handle such exceptions by, for
+     * example, pastebinning the message and sending the paste as a response.
+     * 
+     * @param source
+     *            The source of the command, which is either a room or
+     *            <tt>user</tt>
+     * @param user
+     *            The user that initiated the command
+     * @param command
+     *            The command itself
+     * @param arguments
+     *            The command's arguments
+     */
+    public static void executeCommandFromSource(URI room, URI user, String command,
+        String arguments, Message original)
     {
-        
+        URI source;
+        if (room == null)
+            source = user;
+        else
+            source = room;
+        CommandInvocationContext context = new CommandInvocationContext(source, user);
+        executeCommandToContext(context, command, arguments, source, user);
+        context.finish();
+        Message[] toSourceMessages = context.getToSourceMessages();
+        TargetedMessage[] otherMessages = context.getOtherMessages();
+        /*
+         * TODO: This doesn't preserve ordering of to-source messages mixed with
+         * other messages. Consider storing them as one array in the context,
+         * but with some sort of flag set so that they're different, like have a
+         * wrapper class or something.
+         * 
+         * For now, we'll send other messages first, and then to-source
+         * messages. And we'll send each other message in a separate call to the
+         * protocol, but we'll send all to-source messages in the same call.
+         */
+        for (TargetedMessage m : otherMessages)
+        {
+            Protocol p = getCheckedProtocol(m.getTarget().getScheme());
+            p.sendMessage(m.getTarget(), new Message[] { m },
+                new Message[] { original });
+        }
+        /*
+         * Now we'll send the to-source messages.
+         */
+        Protocol p = getCheckedProtocol(source.getScheme());
+        Message[] sourceMessageSources = new Message[toSourceMessages.length];
+        Arrays.fill(sourceMessageSources, original);
+        p.sendMessage(source, toSourceMessages, sourceMessageSources);
     }
     
-    public static void fromProtocolJoined(String protocolName, URI room, URI user)
+    public static synchronized void fromProtocolJoined(String protocolName, URI room,
+        URI user)
     {
         // TODO Auto-generated method stub
         
     }
     
-    public static void fromProtocolLeft(String protocolName, URI room, URI user)
+    public static synchronized void fromProtocolLeft(String protocolName, URI room,
+        URI user)
     {
         // TODO Auto-generated method stub
         
     }
     
-    public static void fromProtocolMessage(String protocolName, URI room, URI user,
-        Message[] messages)
+    public static synchronized void fromProtocolMessage(String protocolName, URI room,
+        URI user, Message[] messages)
+    {
+        /*
+         * For each message, we'll try to parse it. If it is a prvmsg, then we
+         * parse and run as a command. If it is a room message, then we fetch
+         * the room and check to see if the command starts with the room's
+         * trigger, and if it does, then we parse and run it as a command.
+         */
+        boolean roomMessage = room != null;
+        Room storedRoom = null;
+        if (roomMessage)
+        {
+            Server server = storage.getServer(extractServerUri(room));
+            if (server == null)
+                throw new RuntimeException("Invalid server ref from room " + room
+                    + " as " + extractServerUri(room));
+            storedRoom = server.getRoom(room);
+            if (server == null)
+                throw new RuntimeException("Invalid room ref " + room);
+        }
+        String trigger = "";
+        if (roomMessage)
+            trigger = storedRoom.getTrigger();
+        for (Message message : messages)
+        {
+            String text = message.getMessage();
+            if (text.trim().equals(""))
+                continue;
+            String[] textSplit = text.split(" ", 2);
+            String command = textSplit[0];
+            String arguments = textSplit.length > 1 ? textSplit[1] : "";
+            if (command.startsWith(trigger))
+                executeCommandFromSource(room, user, command
+                    .substring(trigger.length()), arguments, message);
+        }
+    }
+    
+    public static synchronized void fromProtocolExtendedEvent(String protocolName,
+        String event, URI user, URI room, String[] arguments)
     {
         // TODO Auto-generated method stub
         
     }
     
-    public static void fromProtocolExtendedEvent(String protocolName, URI user,
-        URI room, String[] arguments)
+    public static synchronized void fromProtocolRoomOpRemoved(URI room, URI user,
+        URI from)
     {
         // TODO Auto-generated method stub
         
     }
     
-    public static void fromProtocolRoomOpRemoved(URI room, URI user, URI from)
-    {
-        // TODO Auto-generated method stub
-        
-    }
-    
-    public static void fromProtocolKicked(URI room, URI user, URI from)
+    public static synchronized void fromProtocolKicked(URI room, URI user, URI from)
     {
         // TODO Auto-generated method stub
         

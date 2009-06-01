@@ -1,5 +1,7 @@
 package org.opengroove.jzbot.storage;
 
+import java.net.URI;
+
 import net.sf.opengroove.common.proxystorage.Constructor;
 import net.sf.opengroove.common.proxystorage.ListType;
 import net.sf.opengroove.common.proxystorage.Property;
@@ -49,4 +51,7 @@ public interface Storage
     
     @Constructor
     public ConfigProperty createProperty();
+    
+    @Search(listProperty = "servers", searchProperty = "url", exact = true, anywhere = false)
+    public Server getServer(URI extractServerUri);
 }

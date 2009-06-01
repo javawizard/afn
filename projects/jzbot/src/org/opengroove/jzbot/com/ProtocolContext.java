@@ -155,10 +155,10 @@ public class ProtocolContext
         JZBot.fromProtocolMessage(protocolName, room, user, messages);
     }
     
-    public void runExtendedEvent(URI user, URI room, String[] arguments)
+    public void runExtendedEvent(String event, URI user, URI room, String[] arguments)
     {
         validate(user, room);
-        JZBot.fromProtocolExtendedEvent(protocolName, user, room, arguments);
+        JZBot.fromProtocolExtendedEvent(protocolName, event, user, room, arguments);
     }
     
     /**
