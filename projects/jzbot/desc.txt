@@ -1,0 +1,66 @@
+Another re-write of JZBot.
+
+In the 2nd jzbot, everything had to be given as a full url. This was tiring (for example, /msg Marlen_Jackson irc://irc.freenode.net:6667/#nerdsunleashed.com say Hello everyone). So in the new one, aliases will be used. You can *only* refer to a room by its alias. Aliases always start with a pound sign, and are created by means of the alias command, which only works for superops. This also makes it so that if you pm marlen something, you can put an alias at the beginning, before the command, and if you're a superop then he will execute that as having come from that room.
+
+If marlen is instructed to join a server by itself, without a room specified, then he will join a room called _default. Essentially, specifying a server where a room was expected results in the room _default on that server. The library that provides the rooms for a given alias to the code is responsible for translating that (IE you ask the library for the room for an alias, and it will add _default onto the end if the alias is a server instead of a room).
+
+Servers themselves are also specified in terms of aliases. The command should choose how to interpret it (as a server or as a _default room on that server).
+
+Leaving all rooms on a server does not cause marlen to disconnect from the server. The disconnect command must be used for that.
+
+Arguments can't be given to a connect or join. The protocol can, however, register a command to configure the protocol. For example, both bzflag and irc have commands named after them that allow the username, password, and real name to be configured. They then store this information in the storage provided to them by jzbot.
+
+Rooms are always named. JZBot doesn't currently support protocols with unnamed rooms, and JZBot doesn't support invitations to rooms either. JZBot does, however, support one-time server connections and one-time room joins (a non-one-time room join on a one-time server connection will automatically join when the server is connected but the connection itself will still be one-time). Factoids for a one-time server and room are retained after departure, but the room and server will not be rejoined/reconnected. 
+
+The special alias #. indicates the default room on the current server, or the current server. This is useful on bzflag servers, to shorten the say command. The special alias #! indicates the current chat room, and is only applicable to messages sent in a chat room.   
+
+Users are referred to by either $nickname, &authname, #alias/$nickname or #alias/&authname. This is called the alias form. The url form is the server, plus ?n=nickname or ?a=authname.
+
+Multiple nicknames at a time can match an authname, so there isn't a way to translate from an authname to a nickname.  Therefore, nicknames should generally be used, and authnames should only be used when it is known that the command won't try to translate the name to a nickname. Sending messages to a user can be done by authname, and the message will be sent to all nicknames that are signed on for that authname. If there are none, an exception will be thrown, same as when you try to send a message to a nickname not signed on.
+
+Names should be persisted in their url form, in case the alias for a url changes later on. Names that are to be persisted for a long amount of time, or names that are to be used for security purposes (such as ops), should be persisted as authurls and never as nickurls. Nickurls are suitable for short-term persisting, for example keeping track of roulette statistics.
+
+For example:
+
+bzflag callsign Marlen_Jackson
+bzflag password ...
+alias #bztraining-overlord bzflag://3.bztraining.org:5167
+join #bztraining-overlord once slient
+--- Successfully joined.
+#bztraining-overlord say Hello everyone, I'm a bot called marlen.
+(on the bztraining overlord server) --- Hello everyone, I'm a bot called marlen.
+
+Ops are added as definite aliases, which are the target, and an authname pattern (or a full nickname). This pattern can contain regular expressions, and anyone whose authname matches the pattern is granted op status. For example, `op add #!/&unaffiliated/javawizard2539(/.*)?` would add unaffiliated/javawizard2539 and unaffiliated/javawizard2539/??? (where ??? is any string) as an op to the current channel. These expressions are resolved when testing for op permissions, not when the op is added. Nickurl to authurl resolving, however, is done when the op is added. 
+
+If an exception occurs while running a command, the exception stack trace and other information will be pastebinned and sent to the sender of the command. If an exception occurs while handing a timed event, the info will be sent to all online superops and the pastebin url (which will have a month duration) entered into the system log. In the future, a mail will probably also be sent to all superops.
+
+Factoids are regular expressions, not names. The factoid has an implicit "$" prepended to it (which indicates to the regular expression that it must match at the start of the line). If the factoid name starts with <action>, then it will only match /me messages, otherwise it will only match regular messages.
+
+Factoids are stored in one single flat list instead of hierarchically under channels. They are then scoped by way of the +global and +server tags.
+
+Factoids are created like `factoid create `factname` +tag1 +tag2 factoid content`. Note the backticks surrounding the name. These are optional, but if they are not present then the name cannot contain spaces. The name is a regular expression. As many tags as are wanted can be added to the factoid.
+
+Factoid commands that operate on a single factoid (such as `factoid delete`) take their arguments in the exact same form as the factoid create command. `factoid resolve` is an exception to this, however, as it takes the string after it and prints out a list of the factoid names that match it, along with their tags.
+
+Factoid literal takes the regex of a factoid, plus any tags that might be helpful in tracking down the factoid. These are only needed if the literal form of a factoid that is overridden by another factoid is needed. For example, if a factoid called 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
