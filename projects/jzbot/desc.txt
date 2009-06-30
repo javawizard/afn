@@ -42,7 +42,17 @@ Factoids are created like `factoid create `factname` +tag1 +tag2 factoid content
 
 Factoid commands that operate on a single factoid (such as `factoid delete`) take their arguments in the exact same form as the factoid create command. `factoid resolve` is an exception to this, however, as it takes the string after it and prints out a list of the factoid names that match it, along with their tags.
 
-Factoid literal takes the regex of a factoid, plus any tags that might be helpful in tracking down the factoid. These are only needed if the literal form of a factoid that is overridden by another factoid is needed. For example, if a factoid called 
+Factoid literal takes the regex of a factoid, plus any tags that might be helpful in tracking down the factoid. These are only needed if the literal form of a factoid that is overridden by another factoid is needed. For example, if `factoid create testfact +global ...` and `factoid create testfact ...` are used, the result will be that an invocation of testfact will call the channel-scoped one, and factoid literal will result in the same thing, but `factoid literal testfact +global` would return the global version.
+
+If two factoids match the same input, one of them will be arbitrarily selected.
+
+
+
+
+
+
+
+
 
 
 
