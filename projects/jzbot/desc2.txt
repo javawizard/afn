@@ -1,0 +1,99 @@
+So now I'm thinking that the ideas in desc.txt have some problems, and are getting somewhat confusing. 
+
+I think the main abilities I want the bot to have come down to these:
+
+    Ability to create factoids without much programming knowledge, IE ones that match the factoid's literal name and don't contain special characters
+    
+    Ability to create factoids that match based on regex, and ability for the factoid to get the content of matcher groups in the expression
+    
+    Ability to program the bot (or parts of it) via logo using pastebin, with the ability for programs to be triggered off of join, part, kick, ban, message, external event, and schedule (IE a program somehow registers that it should be triggered every X seconds or once X seconds into the future) events, and the ability for programs such as these to store temporary data, persistent data, and communicate with users on other protocols, servers, and rooms
+    
+    Ability to scope factoids to a particular protocol, server, or room
+    
+    Ability to restrict access to programs and highly-privileged factoid commands
+    
+    Ability to call commands and other factoids from within a factoid, possibly somewhat restricted (maybe just superop-created factoids can do that)
+    
+    Ability for programs to communicate with the outside world, maybe by urlfetch, to allow for the current weather factoid to be written as a program
+    
+    Ability for text sent to the bot in pm and text sent to a channel (with and without a trigger) to be filtered out by factoids/programs, regardless of whether or not it would trigger a command, and an escape sequence that can be used to force interpretation as a command, when the input in question would constitute a command with the escape sequence removed, to avoid a problem where, for example, a factoid is created that overrides deleting of factoids, thereby preventing itself and any other factoid from being deleted (consider !!! for this purpose)
+    
+    Ability for programs to be stateful with respect to a single user, probably an extension of the storage provided to programs but probably with additional bot-provided facilities allowing data for that particular user to be stored in such a manner that it will be cleared after a time if not accessed
+    
+    Ability for the bot's data (factoids and programs), optionally including program storage, to be exported into some sort of human-readable format by a superop (and then probably posted to pastebin)
+    
+    Ability for a particular user on a server to be contacted in multiple, protocol-specific ways, and the ability of programs (and possibly factoids) to detect this and respond using the same method. An example of this would be facebook's ability for users to communicate with the bot by sending it a chat message, sending it a facebook message, and posting on its wall. The bot's friends' posting updates on their own wall would be seen as a special event by the bot, not a message. This might also call for multi-line messages to be held as a single unit, so that in a chat message they are sent as multiple chat messages but in a wall post they are sent as the same post (if facebook allows newlines in wall posts).
+    
+    Ability for protocol-specific options to be specified in a factoid reply (and possibly ability for calling factoids to choose whether or not to inherit these somehow). An example is a facebook-specific option to delete a wall post once the reply has been sent for it.
+    
+    Ability for some sort of special factoid or program that can be given access to an entire message to attempt to process, even one containing newlines, and then the message will be tokenized into lines afterward if it could not be processed as a whole\
+    
+    Ability for protocols to instruct the bot to process special, protocol-specific events, and programs (and maybe even factoids) can be run for these events. These events might be filterable to improve speed (since logo code execution is somewhat slow and logo is the interpreted language that I think I'm going to go with for now). For example, facebook should be able to alert the bot when someone asks it to be friends, or when a friend sends an invitation or receives an update (such as the friend posting a photo or some videos), and bzflag should be able to alert the bot when a user is kicked or banned, a user's ip address info when a user joins (if the bot is a bzflag administrator at the server in question), when a variable is changed, or when a flag capture occurs and maybe, if the system is fast enough, when a kill takes place. If filtering is fast enough, then an event on a flag pick up or drop would be useful, so that the bot could announce when a player grabs the genocide flag.
+    
+    Ability for a room's trigger to be configured, and for programs and factoids to be able to have access to this so that some factoids can require the trigger if it's at a room and some factoids can not require the trigger at all
+   
+
+    
+Ultimately, there are some programs that I'd like to be able to write for the bot. I'd like to be able to have the bot itself not have any of these programs built in; these programs would then be written for the bot in logo via pastebin so that the programs themselves could be altered at any time.
+
+    A reminder service, so that a user can ask to be reminded about a particular event at a particular time. This might also call for a shared-user linking system, so that a user with an authenticated name at one server might link it with an authenticated name at another server, thereby allowing reminders scheduled at one server to be sent to the user when they are signed on to other servers. It might also be nice if a one-time service could somehow be linked in such away that the bot would sign back on to the one-time service to notify the user about the event and then promptly sign off again. This would have to be restricted somehow to prevent join spamming of one-time services.
+    
+    Some games such as roulette and mastermind, which can be played on a channel (where they remember state based on the room) or via privmsg (where they remember state based on the user, whether that's based on their authenticated name or nickname has not yet been decided but I'm leaning toward the nickname since only irc allows that to change during a session). These games might want to remember statistics (such as how often a particular player gets hit for roulette and which players guess most accurately for mastermind).
+    
+    A weather-providing service, which would hopefully be location-independent (IE works for english postal codes too)
+    
+    Ability for cross-server communications, possibly restricted to a list of users that have permission to do such. This would be in the form of two things: 1, sending a message to a particular user on a particular server via the bot, and 2, watching a room on a different server via the bot, either at a room (where the bot says everything said on the listening room to the target room), or via privmsg (where the bot pm's everything said at the listening room to a particular user)
+    
+    Allow the bot to join a bzflag server and summarily kick/ban for language. The language file should be configured on a per-server basis, and perhaps a shared language file can be set up for a set of servers by a superop or someone granted permissions on that language file and server.
+    
+    Allow the bot to join a bzflag server and provide extra, interactive, tools for admins. One of these would be a tool that tells admins if a user signed on and they have been on in the last, say, hour with the same ip but a different callsign (for example, "javawizard2539 has used 1 other callsign in the last hour, '~cih 10.20.30.40' for info", cih stands for Callsign/IP History). Another useful one would be the ability for the bot to send messages containing lang that are sent to teamchat or privmsg to admins (which would require a server plugin that would send a special message to the bot). 
+    
+    Some sort of integration of the bot and bznetwork, to provide various services such as warnings that the server is going to go down shortly
+    
+    
+    
+    
+    
+Protocols that I'd like to support:
+
+    IRC
+    Facebook
+    AIM
+    MSN
+    GTalk (and probably any XMPP server)
+    MS Groove*
+    
+* would require a vm with windows on it. Consider using Windows 7 for now until it expires on the downstairs computer, and then have the bot listen for connections from a groove adapter program that talks with the bot and with a Groove instance running locally via the groove api to exchange data.
+   
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
