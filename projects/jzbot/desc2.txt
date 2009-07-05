@@ -48,7 +48,13 @@ Ultimately, there are some programs that I'd like to be able to write for the bo
     
     Allow the bot to join a bzflag server and provide extra, interactive, tools for admins. One of these would be a tool that tells admins if a user signed on and they have been on in the last, say, hour with the same ip but a different callsign (for example, "javawizard2539 has used 1 other callsign in the last hour, '~cih 10.20.30.40' for info", cih stands for Callsign/IP History). Another useful one would be the ability for the bot to send messages containing lang that are sent to teamchat or privmsg to admins (which would require a server plugin that would send a special message to the bot). 
     
-    Some sort of integration of the bot and bznetwork, to provide various services such as warnings that the server is going to go down shortly
+    Some sort of integration of the bot and bznetwork, to provide various services such as warnings that the server is going to go down shortly.
+    
+    A simple equation evaluator, so you could do "~calc (5+3)-6" and the bot would respond with "(5+3)-6=2"
+    
+    Some sort of botmail. This could also allow sending to a user that has linked accounts (see the first item in this list), and the user will receive the message on any of those accounts until they acknowledge it, including in real time.
+    
+    A student program (see UCBLogo's student.lgo). This is essentially a story-problem solver, and would have to be somewhat stateful due to student.lgo requiring more input if not enough is given. I'd like to find an alternate program for that (which might need to be written in native java and then interfaced to via a bot logo program), since student.lgo has some bugs and runs dead slow.
     
     
     
@@ -62,6 +68,10 @@ Protocols that I'd like to support:
     MSN
     GTalk (and probably any XMPP server)
     MS Groove*
+    Email (you send an email to, I'm thinking, marlenjackson@opengroove.org)
+    Web (you visit a site and enter commands)
+    BZFlag
+    Yahoo
     
 * would require a vm with windows on it. Consider using Windows 7 for now until it expires on the downstairs computer, and then have the bot listen for connections from a groove adapter program that talks with the bot and with a Groove instance running locally via the groove api to exchange data.
    
