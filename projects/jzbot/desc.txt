@@ -46,7 +46,7 @@ Factoid literal takes the regex of a factoid, plus any tags that might be helpfu
 
 If two factoids match the same input, one of them will be arbitrarily selected.
 
-
+UPDATE: factoids are referred to by their numeric id.
 
 
 
