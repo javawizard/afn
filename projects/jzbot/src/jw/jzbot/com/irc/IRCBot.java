@@ -4,5 +4,8 @@ import org.jibble.pircbot.PircBot;
 
 public class IRCBot extends PircBot
 {
-    
+    public IRCBot()
+    {
+        
+    }
 }
