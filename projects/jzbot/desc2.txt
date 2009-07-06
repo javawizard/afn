@@ -6,7 +6,7 @@ I think the main abilities I want the bot to have come down to these:
     
     Ability to create factoids that match based on regex, and ability for the factoid to get the content of matcher groups in the expression
     
-    Ability to program the bot (or parts of it) via logo using pastebin, with the ability for programs to be triggered off of join, part, kick, ban, message, external event, and schedule (IE a program somehow registers that it should be triggered every X seconds or once X seconds into the future) events, and the ability for programs such as these to store temporary data, persistent data, and communicate with users on other protocols, servers, and rooms
+    Ability to program the bot (or parts of it) via javascript using pastebin, with the ability for programs to be triggered off of join, part, kick, ban, message, external event, and schedule (IE a program somehow registers that it should be triggered every X seconds or once X seconds into the future) events, and the ability for programs such as these to store temporary data, persistent data, and communicate with users on other protocols, servers, and rooms
     
     Ability to scope factoids to a particular protocol, server, or room
     
@@ -26,15 +26,17 @@ I think the main abilities I want the bot to have come down to these:
     
     Ability for protocol-specific options to be specified in a factoid reply (and possibly ability for calling factoids to choose whether or not to inherit these somehow). An example is a facebook-specific option to delete a wall post once the reply has been sent for it.
     
-    Ability for some sort of special factoid or program that can be given access to an entire message to attempt to process, even one containing newlines, and then the message will be tokenized into lines afterward if it could not be processed as a whole\
+    Ability for some sort of special factoid or program that can be given access to an entire message to attempt to process, even one containing newlines, and then the message will be tokenized into lines afterward if it could not be processed as a whole
     
-    Ability for protocols to instruct the bot to process special, protocol-specific events, and programs (and maybe even factoids) can be run for these events. These events might be filterable to improve speed (since logo code execution is somewhat slow and logo is the interpreted language that I think I'm going to go with for now). For example, facebook should be able to alert the bot when someone asks it to be friends, or when a friend sends an invitation or receives an update (such as the friend posting a photo or some videos), and bzflag should be able to alert the bot when a user is kicked or banned, a user's ip address info when a user joins (if the bot is a bzflag administrator at the server in question), when a variable is changed, or when a flag capture occurs and maybe, if the system is fast enough, when a kill takes place. If filtering is fast enough, then an event on a flag pick up or drop would be useful, so that the bot could announce when a player grabs the genocide flag.
+    Ability for protocols to instruct the bot to process special, protocol-specific events, and programs (and maybe even factoids) can be run for these events. These events might be filterable to improve speed (since javascript code execution is somewhat slow and javascript is the interpreted language that I think I'm going to go with for now). For example, facebook should be able to alert the bot when someone asks it to be friends, or when a friend sends an invitation or receives an update (such as the friend posting a photo or some videos), and bzflag should be able to alert the bot when a user is kicked or banned, a user's ip address info when a user joins (if the bot is a bzflag administrator at the server in question), when a variable is changed, or when a flag capture occurs and maybe, if the system is fast enough, when a kill takes place. If filtering is fast enough, then an event on a flag pick up or drop would be useful, so that the bot could announce when a player grabs the genocide flag.
     
     Ability for a room's trigger to be configured, and for programs and factoids to be able to have access to this so that some factoids can require the trigger if it's at a room and some factoids can not require the trigger at all
+    
+    Ability to ban users based on their authenticated name or nickname, which would be protocol-independent, and also using a custom, protocol-specific, string, to take advantage of protocol-specific options (like bzflag's ban duration and irc's wildcard support)
    
 
     
-Ultimately, there are some programs that I'd like to be able to write for the bot. I'd like to be able to have the bot itself not have any of these programs built in; these programs would then be written for the bot in logo via pastebin so that the programs themselves could be altered at any time.
+Ultimately, there are some programs that I'd like to be able to write for the bot. I'd like to be able to have the bot itself not have any of these programs built in; these programs would then be written for the bot in javascript via pastebin so that the programs themselves could be altered at any time.
 
     A reminder service, so that a user can ask to be reminded about a particular event at a particular time. This might also call for a shared-user linking system, so that a user with an authenticated name at one server might link it with an authenticated name at another server, thereby allowing reminders scheduled at one server to be sent to the user when they are signed on to other servers. It might also be nice if a one-time service could somehow be linked in such away that the bot would sign back on to the one-time service to notify the user about the event and then promptly sign off again. This would have to be restricted somehow to prevent join spamming of one-time services.
     
@@ -54,7 +56,7 @@ Ultimately, there are some programs that I'd like to be able to write for the bo
     
     Some sort of botmail. This could also allow sending to a user that has linked accounts (see the first item in this list), and the user will receive the message on any of those accounts until they acknowledge it, including in real time.
     
-    A student program (see UCBLogo's student.lgo). This is essentially a story-problem solver, and would have to be somewhat stateful due to student.lgo requiring more input if not enough is given. I'd like to find an alternate program for that (which might need to be written in native java and then interfaced to via a bot logo program), since student.lgo has some bugs and runs dead slow.
+    A student program (see UCBLogo's student.lgo). This is essentially a story-problem solver, and would have to be somewhat stateful due to student.lgo requiring more input if not enough is given. I'd like to find an alternate program for that (which might need to be written in native java and then interfaced to via a bot logo program), since student.lgo has some bugs and runs dead slow. Also, the planned scripting language for the bot was logo but is not javascript, so a logo interpreter might have to be included (I wrote one a while back for JMLogo) in java and then appropriate calls in javascript added, so that javascript code can call into logo code and possibly vice versa.
     
     
     
@@ -73,8 +75,66 @@ Protocols that I'd like to support:
     BZFlag
     Yahoo
     
-* would require a vm with windows on it. Consider using Windows 7 for now until it expires on the downstairs computer, and then have the bot listen for connections from a groove adapter program that talks with the bot and with a Groove instance running locally via the groove api to exchange data.
+* would require a vm with windows on it. Consider using Windows 7 for now until it expires on the downstairs computer, running in virtualbox, and then have the bot listen for connections from a groove adapter program that talks with the bot and with a Groove instance running locally via the groove api to exchange data.
    
+   
+   
+Ok, so now I'm getting a good idea that previously wasn't a good idea because of some problems that I just resolved. I'm thinking that all of the bot, except for protocol implementations which require a level of access to java classes that I wouldn't like to give to javascript code, and a simple master interface, would be coded in javascript. The main issue before with this was that a javascript error could result in the bot being nonfunctional until someone could ssh into the server that it runs on and edit the script files to fix the problem. With the master interface, however, that isn't a problem anymore, since the master interface can only be configured by hand-editing a configuration file, thereby making it impossible to mess anything up.
+
+The only way to edit the bot's javascript files is through the master interface. The current master interface only supports the IRC protocol. I'm thinking that Marlen_Jackson will connect as MJ_master to ##jzbot for marlen's master interface. Since freenode can be accessed simply by visiting webchat.freenode.net, this allows marlen to be programmed from any location that has an internet connection and a browser.
+
+The master interface has its own set of ops, independent of superops (which are going to be a javascript-specific feature, so that the java code has no concept of ops or anything of the like), that are allowed to program it. These don't need to worry about the whole authname/nickname protocol independence thing since the master interface only supports irc for now.
+
+The master interface is accessed by joining an irc channel in which the master interface has joined (Marlen will join ##jzbot as MJ_master for this purpose) and sending "~!! <mastername> command ..." to the channel. The master interface does not have support for pms at the moment. For example, the command "~!! MJ_master list files" would list all of the scripts currently installed.
+
+The bot is programmed by a number of script files. At startup, the scripts are loaded (and executed, thereby defining any functions present in them) in this order:
+
+init.js (if it exists)
+all other scripts in an undefined order
+start.js (if it exists)
+
+Init.js is therefore intended to set up facilities for registering commands and such, and possibly for loading storage. Start.js is intended to finalize everything and make the connections to the actual servers. On shutdown, the global function shutdown will be called, if it exists. It will be instruction limited (instruction count tbd) so that it can't permanently freeze the bot, or it might be time-limited. The function should take one argument, which will be a boolean indicating whether the shutdown was because of a reload. If it is false, then it means that the bot is shutting down, and true means a reload. All connections to servers will be terminated by the java side of the bot after shutdown returns, so it's not necessary for it to disconnect those if it doesn't want to.
+
+All scripts must currently have names that end with ".js". They must not contain any characters other than letters, numbers, and the hyphen and underscore characters.
+
+The master interface provides these commands:
+
+list files: Lists all scripts currently present. This might include scripts that have not yet been installed due to reload having not yet been run. The result will be space delimited.
+
+list functions: Lists all global functions currently loaded. This does not include functions that have been defined in script files but that have not yet been activated by the reload command. 
+
+export scripts: Exports all script files in a format suitable for passing back in to the import command. This can be used to copy the program from one bot to another, or to back up the bot's program. Until versioning control is implemented in the server, this should frequently be used to back up the bot's program. The exported text will be pastebinned, and the url sent to the user.
+
+import scripts: Imports a file generated by the export command. The sole argument should be a pastebin url that points to the file to import. This should be used with care, as it will overwrite all of the scripts currently loaded into the bot.
+
+get: Gets the script file named, and returns it as a pastebin url.
+
+save: Saves the script file named. The first word is the script file name, and the second word is the pastebin url. If the file already exists, it will be overwritten.
+
+delete: Deletes the script file named.
+
+reload: Reloads the script files. This causes the bot to disconnect from all networks, shut down, start back up, load all script files, and reconnect.
+
+export data: exports the bot's persistent data. The resulting pastebin will be in base-64 format.
+
+import data: imports data exported with export data. Thsi destroys all persistent data (and replaces it with the specified data) so it should be used with care. The argument is a pastebin url.
+
+revisions (future): prints out the number of revisions that have occured.
+
+export revision (future): Same format as export scripts, but exports what the scripts looked like at the specified revision.
+
+list revisions (future): Lists all revisions in the specified range, which should be greater than 0 and less than the revisions command outputs. For example, "list revisions 20-30". The dates and messages will be printed.
+
+create revision (future): Creates a new revision. This basically means that the working copy will be committed. Conflicts must be manually resolved if any occur. The arguments are the commit message.
+
+
+
+
+
+
+
+
+
     
     
 
