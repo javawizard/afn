@@ -95,9 +95,9 @@ All scripts must currently have names that end with ".js". They must not contain
 
 The master interface provides these commands:
 
-list files: Lists all scripts currently present. This might include scripts that have not yet been installed due to reload having not yet been run. The result will be space delimited.
+list: Lists all scripts currently present. This might include scripts that have not yet been installed due to reload having not yet been run. The result will be space delimited.
 
-list functions: Lists all global functions currently loaded. This does not include functions that have been defined in script files but that have not yet been activated by the reload command. 
+list functions: Lists all global functions currently loaded. This does not include functions that have been defined in script files but that have not yet been activated by the reload command. TODO: is this needed? It could very easily be written in a script itself, although it might be useful for debugging when a script isn't connecting properly.
 
 export scripts: Exports all script files in a format suitable for passing back in to the import command. This can be used to copy the program from one bot to another, or to back up the bot's program. Until versioning control is implemented in the server, this should frequently be used to back up the bot's program. The exported text will be pastebinned, and the url sent to the user.
 
@@ -111,10 +111,6 @@ delete: Deletes the script file named.
 
 reload: Reloads the script files. This causes the bot to disconnect from all networks, shut down, start back up, load all script files, and reconnect.
 
-export data: exports the bot's persistent data. The resulting pastebin will be in base-64 format.
-
-import data: imports data exported with export data. Thsi destroys all persistent data (and replaces it with the specified data) so it should be used with care. The argument is a pastebin url.
-
 revisions (future): prints out the number of revisions that have occured.
 
 export revision (future): Same format as export scripts, but exports what the scripts looked like at the specified revision.
@@ -122,6 +118,24 @@ export revision (future): Same format as export scripts, but exports what the sc
 list revisions (future): Lists all revisions in the specified range, which should be greater than 0 and less than the revisions command outputs. For example, "list revisions 20-30". The dates and messages will be printed.
 
 create revision (future): Creates a new revision. This basically means that the working copy will be committed. Conflicts must be manually resolved if any occur. The arguments are the commit message.
+
+download (future): Takes two arguments, a name and a url. The first is the name of a script to create (this refuses to overwrite existing scripts). The second is a url to download a script from. This will download the script at the url specified (a normal url, not a pastebin url) and install it as a script with the specified name.
+
+directory (future): Searches the public script directory for scripts, searching in the name and description.
+
+install (future): Installs a script from the public directory, using the script's name. This method will not overwrite existing scripts; they must be deleted first.
+
+
+
+I'm thinking I'll maintain a public script directory that allows for bot owners to download and install publicly-available scripts into their bot. For example, the default init.js (which would be required for just about any other script, see script-convention.txt) would be available at this directory. Other scripts, such as a roulette command and a factoid system, would also be available here.
+
+There would be master interface commands built in for downloading and installing these scripts, and searching the public directory. I might also add a public directory of factoids (or factoid packs), but that would be implemented as a script itself and the master interface wouldn't need to have any knowledge of it.
+
+Scripts on the public directory would have a name and a description, as well as the script itself. A script can then be installed by specifying its name. An optional argument can be given to the install command, which is the name to store the script as (in case the script's name is already the name of a lcoal script).
+
+I'm also thinking scripts might have a short description about themselves which is shown in the search, and then info on the script returns more information on it.
+
+Public directory script names are always prefixed with "pd_", including the default init.js (which is therefore called pd_init.js). Installing the default init.js requires use of the second argument to the install command, like "install pd_init.js init.js".
 
 
 
