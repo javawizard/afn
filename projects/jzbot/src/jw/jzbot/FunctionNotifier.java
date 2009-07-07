@@ -52,4 +52,9 @@ public class FunctionNotifier
     {
         functions.remove(listener);
     }
+    
+    public void clear()
+    {
+        functions.clear();
+    }
 }

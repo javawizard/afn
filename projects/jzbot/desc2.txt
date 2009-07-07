@@ -87,13 +87,9 @@ The master interface has its own set of ops, independent of superops (which are 
 
 The master interface is accessed by joining an irc channel in which the master interface has joined (Marlen will join ##jzbot as MJ_master for this purpose) and sending "~!! <mastername> command ..." to the channel. The master interface does not have support for pms at the moment. For example, the command "~!! MJ_master list files" would list all of the scripts currently installed.
 
-The bot is programmed by a number of script files. At startup, the scripts are loaded (and executed, thereby defining any functions present in them) in this order:
+The bot is programmed by a number of script files. At startup, the script init.js is run. This script can (and usually does) read the property jzbot.scripts to get an array of strings representing all scripts (including init.js), and can then call jzbot.load(script), passing in the script's name, to load the script. If an error occurs while initializing, it will be sent to the master interface, but everything else will continue to run. If the bot attempts to load the same script more than once, the results are undefined.
 
-init.js (if it exists)
-all other scripts in an undefined order
-start.js (if it exists)
-
-Init.js is therefore intended to set up facilities for registering commands and such, and possibly for loading storage. Start.js is intended to finalize everything and make the connections to the actual servers. On shutdown, the global function shutdown will be called, if it exists. It will be instruction limited (instruction count tbd) so that it can't permanently freeze the bot, or it might be time-limited. The function should take one argument, which will be a boolean indicating whether the shutdown was because of a reload. If it is false, then it means that the bot is shutting down, and true means a reload. All connections to servers will be terminated by the java side of the bot after shutdown returns, so it's not necessary for it to disconnect those if it doesn't want to.
+On shutdown, the global function shutdown will be called, if it exists. It will be instruction limited (instruction count tbd) so that it can't permanently freeze the bot, or it might be time-limited. The function should take one argument, which will be a boolean indicating whether the shutdown was because of a reload. If it is false, then it means that the bot is shutting down, and true means a reload. All connections to servers will be terminated by the java side of the bot after shutdown returns, so it's not necessary for it to disconnect those if it doesn't want to.
 
 All scripts must currently have names that end with ".js". They must not contain any characters other than letters, numbers, and the hyphen and underscore characters.
 

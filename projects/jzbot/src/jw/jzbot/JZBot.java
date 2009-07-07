@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.Random;
@@ -32,6 +33,13 @@ public class JZBot
     
     public static ProtocolProvider currentProtocolProvider;
     
+    public static Properties masterBotProperties = new Properties();
+    
+    public static MasterBot masterBot;
+    
+    public static File persistentStorageFolder;
+    public static File scriptStorageFolder;
+    
     /**
      * @param args
      */
@@ -52,6 +60,23 @@ public class JZBot
                     }
                 });
         BotScriptContextFactory.load();
+        /*
+         * Initial setup. First we'll load the configuration for the master
+         * interface. And while we're at it, we'll load the default file paths
+         * as well.
+         */
+        persistentStorageFolder = new File("storage/persistent");
+        scriptStorageFolder = new File("storage/scripts");
+        masterBotProperties.load(new FileInputStream(
+                "storage/masterconfig.props"));
+        /*
+         * Now we'll create the master interface and connect it.
+         */
+        masterBot = new MasterBot();
+        masterBot.setAutoNickChange(true);
+        masterBot.publicSetLogin(masterBotProperties.getProperty("nick"));
+        masterBot.publicSetName(masterBotProperties.getProperty("nick"));
+        masterBot.setChannelName(masterBotProperties.getProperty("room"));
     }
     
     private static void doInitialSetup() throws IOException
@@ -80,6 +105,9 @@ public class JZBot
             }
             masterProps.store(new FileOutputStream(new File(storage,
                     "masterconfig.props")), "generated");
+            new File(storage, "persistent").mkdirs();
+            System.out.println("Everything's been set up.");
+            System.out.println();
         }
     }
     
@@ -91,7 +119,16 @@ public class JZBot
         return string;
     }
     
-    private static Scriptable globalScope;
+    /**
+     * The volatile storage object. Unlike the global scope, this is persisted
+     * throughout script reloads, but unlike
+     */
+    public static Scriptable volatileStorageObject;
+    /**
+     * The global scope for scripts. This is re-created every time the scripts
+     * are reloaded.
+     */
+    public static Scriptable globalScope;
     
     /**
      * Calls the specified script function synchronously. To prevent threading
@@ -140,4 +177,13 @@ public class JZBot
         e.printStackTrace();
     }
     
+    public static boolean isMasterScriptOp(String hostname)
+    {
+        String scriptOpString = masterBotProperties.getProperty("scriptops");
+        if (scriptOpString == null || scriptOpString.trim().equals(""))
+            return false;
+        if (Arrays.asList(scriptOpString.split("\\&")).contains(hostname))
+            return true;
+        return false;
+    }
 }

@@ -1012,7 +1012,7 @@ public class IRCLink extends PircBot implements ProtocolLink
     @Override
     public void shutdown()
     {
-        // TODO Auto-generated method stub
-        
+        notifierOnDisconnect.clear();
+        disconnect();
     }
 }

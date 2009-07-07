@@ -10,12 +10,12 @@ import org.jibble.pircbot.PircBot;
  */
 public class MasterBot extends PircBot
 {
+    private String channelName;
     
     @Override
     protected void onConnect()
     {
-        // TODO Auto-generated method stub
-        super.onConnect();
+        joinChannel(channelName);
     }
     
     @Override
@@ -50,14 +50,45 @@ public class MasterBot extends PircBot
         // FIXME: process the message
     }
     
+    public void publicSetName(String name)
+    {
+        super.setName(name);
+    }
+    
+    public void publicSetLogin(String login)
+    {
+        super.setLogin(login);
+    }
+    
     @Override
     protected void onPrivateMessage(String sender, String login,
             String hostname, String message)
     {
-        sendMessage(
-                sender,
+        if (message.equals("rejoin"))
+        {
+            if (JZBot.isMasterScriptOp(hostname))
+            {
+                joinChannel(channelName);
+                sendMessage(sender, "joined.");
+            }
+            else
+            {
+                sendMessage(sender, "you're not a scriptop.");
+            }
+            return;
+        }
+        sendMessage(sender,
                 "Currently, the master interface can only be controlled in a "
-                        + "channel. Use \"~!! <nick> commands ...\" in the channel.");
+                        + "channel. Use \"~!! " + getNick()
+                        + " ...\" in the channel.");
+        sendMessage(sender,
+                "You can, however, pm rejoin to tell the bot to try to rejoin "
+                        + "the channel, in case it was previously kicked.");
+    }
+    
+    public void setChannelName(String property)
+    {
+        this.channelName = property;
     }
     
 }

@@ -24,3 +24,10 @@ nick=master_{random}
 # their master interfaces to, so feel free to leave this as the default, unless you have a specific
 # reason for wanting your bot to join another room.
 room=##jzbot
+
+# The hostnames of the people that can use the master interface. This is empty by default, so you'll
+# need to add some people before you can do anything with the bot. Hostnames are separated by
+# ampersands, and can be urlencoded if the hostnames themselves need to contain ampersands. For
+# example, scriptops=unaffiliated/javawizard2539&unaffiliated/javawizard2539/bot/marlen
+scriptops=
+
