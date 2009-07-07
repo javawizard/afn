@@ -1,6 +1,18 @@
 package jw.jzbot;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Properties;
+import java.util.Random;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import jw.jzbot.com.script.ProtocolProvider;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
@@ -16,14 +28,18 @@ public class JZBot
 {
     public static final Object javascriptLock = new Object();
     
+    public static final int URL_TIMEOUT = 20 * 1000;
+    
+    public static ProtocolProvider currentProtocolProvider;
+    
     /**
      * @param args
      */
-    public static void main(String[] args)
+    public static void main(String[] args) throws Throwable
     {
-        /*
-         * 
-         */
+        System.out.println("JZBot version 0.2, written by javawizard2539");
+        doInitialSetup();
+        HttpsURLConnection.setDefaultAllowUserInteraction(false);
         Thread
                 .setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler()
                 {
@@ -36,6 +52,43 @@ public class JZBot
                     }
                 });
         BotScriptContextFactory.load();
+    }
+    
+    private static void doInitialSetup() throws IOException
+    {
+        if (!new File("storage").exists())
+        {
+            System.out
+                    .println("The storage folder doesn't exist. This means this is JZBot's "
+                            + "first time running.");
+            System.out.println("Setting up the storage folder...");
+            Random random = new Random();
+            File storage = new File("storage");
+            storage.mkdirs();
+            File scripts = new File(storage, "scripts");
+            scripts.mkdirs();
+            Properties masterProps = new Properties();
+            masterProps.load(new FileInputStream("default-masterconfig.props"));
+            for (Object s : masterProps.keySet())
+            {
+                String key = (String) s;
+                String value = masterProps.getProperty(key);
+                value = value.replace("{random}", padToPreceding(Integer
+                        .toHexString(random.nextInt(Integer.MAX_VALUE - 1)), 8,
+                        "0"));
+                masterProps.setProperty(key, value);
+            }
+            masterProps.store(new FileOutputStream(new File(storage,
+                    "masterconfig.props")), "generated");
+        }
+    }
+    
+    private static CharSequence padToPreceding(String string, int length,
+            String padding)
+    {
+        while (string.length() < length)
+            string = padding + string;
+        return string;
     }
     
     private static Scriptable globalScope;

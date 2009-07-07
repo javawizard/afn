@@ -8,7 +8,7 @@ import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
 import org.mozilla.javascript.Function;
 
-public class IRCLink extends PircBot
+public class IRCLink extends PircBot implements ProtocolLink
 {
     
     @Override
@@ -1007,5 +1007,12 @@ public class IRCLink extends PircBot
     public void removeVoiceListener(Function listener)
     {
         notifierOnVoice.remove(listener);
+    }
+
+    @Override
+    public void shutdown()
+    {
+        // TODO Auto-generated method stub
+        
     }
 }

@@ -1,0 +1,26 @@
+# This file contains some default settings for the master interface. On JZBot's first, run, it
+# will copy this file into storage, rename it to masterconfig.props, and replace any occurences
+# of {random} in values with a random 8-character hex string. 
+
+# This specifies the master interface protocol. Only IRC is supported at the moment, so this is
+# somewhat redundant.
+protocol=irc
+
+# This specifies the server to connect to.
+server=irc.freenode.net
+
+# The port for the server, typically 6667.
+port=6667
+
+# The nickname to use. This value will cause a nickname with some random characters to be generated
+# for the bot. You can change this later.
+nick=master_{random}
+
+# The password that the master interface should use to identify to services. Comment out to indicate
+# that the master interface should not authenticate (which is not recommended).
+#password=your-secret-password
+
+# The room that the master interface should connect to. I run ##jzbot specifically for bots to connect
+# their master interfaces to, so feel free to leave this as the default, unless you have a specific
+# reason for wanting your bot to join another room.
+room=##jzbot
