@@ -1,6 +1,6 @@
 package jw.jzbot.com.script;
 
-public class BZFlagProtocol
+public class BZFlagLink
 {
     
 }

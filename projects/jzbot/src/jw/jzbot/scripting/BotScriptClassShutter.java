@@ -18,6 +18,7 @@ public class BotScriptClassShutter implements ClassShutter
                 || fullClassName.equals("jw.jzbot.scripting.BotScriptObject")
                 || fullClassName.startsWith("java.util.")
                 || fullClassName.equals("java.lang.Thread")
-                || fullClassName.startsWith("jw.jzbot.com.script.");
+                || fullClassName.startsWith("jw.jzbot.com.script.")
+                || fullClassName.startsWith("jw.jzbot.utils.script.");
     }
 }

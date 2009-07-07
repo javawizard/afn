@@ -1,6 +1,7 @@
 package jw.jzbot;
 
 import jw.jzbot.scripting.BotScriptClassShutter;
+import jw.jzbot.security.SandboxWrapFactory;
 
 import org.mozilla.javascript.*;
 
@@ -29,6 +30,7 @@ public class BotScriptContextFactory extends ContextFactory
         cx.setMaximumInterpreterStackDepth(1024);
         cx.setOptimizationLevel(-1);
         cx.setInstructionObserverThreshold(10000);
+        cx.setWrapFactory(new SandboxWrapFactory());
         return cx;
     }
     
@@ -58,7 +60,7 @@ public class BotScriptContextFactory extends ContextFactory
         long currentTime = System.currentTimeMillis();
         if (currentTime - mcx.startTime > 120 * 1000)
         {
-            // More then 10 seconds from Context creation time:
+            // More then 120 seconds from Context creation time:
             // it is time to stop the script.
             // Throw Error instance to ensure that script will never
             // get control back through catch or finally.

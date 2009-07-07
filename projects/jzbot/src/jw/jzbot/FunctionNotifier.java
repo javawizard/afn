@@ -47,4 +47,9 @@ public class FunctionNotifier
             }
         }
     }
+    
+    public void remove(Function listener)
+    {
+        functions.remove(listener);
+    }
 }
