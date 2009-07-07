@@ -14,7 +14,7 @@ public class SandboxNativeJavaObject extends NativeJavaObject
     @Override
     public Object get(String name, Scriptable start)
     {
-        if (name.equals("getClass"))
+        if (name.equals("getClass") || name.equals("class"))
         {
             return NOT_FOUND;
         }
