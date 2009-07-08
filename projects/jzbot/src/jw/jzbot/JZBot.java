@@ -77,6 +77,41 @@ public class JZBot
         masterBot.publicSetLogin(masterBotProperties.getProperty("nick"));
         masterBot.publicSetName(masterBotProperties.getProperty("nick"));
         masterBot.setChannelName(masterBotProperties.getProperty("room"));
+        try
+        {
+            masterBot.connect(masterBotProperties.getProperty("server"),
+                    Integer.parseInt(masterBotProperties.getProperty("port")),
+                    masterBotProperties.getProperty("password"));
+        }
+        catch (Exception e)
+        {
+            System.err
+                    .println("The master interface could not establish an initial connection. "
+                            + "The bot will not start up until the master interface "
+                            + "can establish an initial connection.");
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        /*
+         * The master interface is up and running. Now we set up the volatile
+         * storage.
+         */
+        Context volatileCreationContext = Context.enter();
+        try
+        {
+            volatileStorageObject = volatileCreationContext
+                    .newObject(volatileCreationContext.initStandardObjects());
+        }
+        finally
+        {
+            Context.exit();
+        }
+        /*
+         * The volatile storage is now set up. Now we need to load the initial
+         * scripts, bot script object, persistent storage, script engine, and
+         * protocol provider. This, however, is also needed in the reload
+         * method, so we'll do it in a separate method.
+         */
     }
     
     private static void doInitialSetup() throws IOException

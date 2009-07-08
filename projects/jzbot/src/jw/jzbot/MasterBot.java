@@ -19,7 +19,7 @@ public class MasterBot extends PircBot
     }
     
     @Override
-    protected void onDisconnect()
+    public void onDisconnect()
     {
         while (!isConnected())
         {
