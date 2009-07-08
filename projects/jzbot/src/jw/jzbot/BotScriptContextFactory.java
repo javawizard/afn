@@ -26,9 +26,9 @@ public class BotScriptContextFactory extends ContextFactory
         BotScriptContext cx = new BotScriptContext();
         // Make Rhino runtime to call observeInstructionCount
         // each 10000 bytecode instructions
+        cx.setOptimizationLevel(-1);
         cx.setClassShutter(new BotScriptClassShutter());
         cx.setMaximumInterpreterStackDepth(1024);
-        cx.setOptimizationLevel(-1);
         cx.setInstructionObserverThreshold(10000);
         cx.setWrapFactory(new SandboxWrapFactory());
         return cx;

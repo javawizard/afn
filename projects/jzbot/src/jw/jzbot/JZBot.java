@@ -47,6 +47,7 @@ public class JZBot
     {
         System.out.println("JZBot version 0.2, written by javawizard2539");
         doInitialSetup();
+        System.out.println("Initializing...");
         HttpsURLConnection.setDefaultAllowUserInteraction(false);
         Thread
                 .setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler()
@@ -60,6 +61,7 @@ public class JZBot
                     }
                 });
         BotScriptContextFactory.load();
+        System.out.println("Loading storage...");
         /*
          * Initial setup. First we'll load the configuration for the master
          * interface. And while we're at it, we'll load the default file paths
@@ -72,6 +74,7 @@ public class JZBot
         /*
          * Now we'll create the master interface and connect it.
          */
+        System.out.println("Loading MasterBot...");
         masterBot = new MasterBot();
         masterBot.setAutoNickChange(true);
         masterBot.publicSetLogin(masterBotProperties.getProperty("nick"));
@@ -92,6 +95,7 @@ public class JZBot
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+        System.out.println("Setting up volatile storage...");
         /*
          * The master interface is up and running. Now we set up the volatile
          * storage.
@@ -112,6 +116,31 @@ public class JZBot
          * protocol provider. This, however, is also needed in the reload
          * method, so we'll do it in a separate method.
          */
+        System.out.println("JZBot has loaded. Running initial scripts...");
+        startupScripts();
+        System.out
+                .println("Initial startup has completed. JZBot is now up and running.");
+    }
+    
+    /**
+     * This method shuts down scripts by calling the global shutdown function if
+     * it exists, terminating all timers, shutting down the protocol provider,
+     * and discarding the global scope object.
+     */
+    public static void shutdownScripts(boolean reload)
+    {
+        
+    }
+    
+    /**
+     * This method loads the persistent storage, the bot script object, and the
+     * protocol provider. It then loads the interpreter, creating a global
+     * scope, setting the bot script object on it, and instructing it to load
+     * and execute init.js.
+     */
+    public static void startupScripts()
+    {
+        
     }
     
     private static void doInitialSetup() throws IOException
