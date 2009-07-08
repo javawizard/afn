@@ -19,6 +19,7 @@ import java.util.Random;
 import javax.net.ssl.HttpsURLConnection;
 
 import jw.jzbot.com.script.ProtocolProvider;
+import jw.jzbot.utils.script.BotScriptObject;
 import jw.jzbot.utils.script.Pastebin;
 
 import org.mozilla.javascript.Context;
@@ -170,8 +171,6 @@ public class JZBot
              * Now we'll load the protocol provider.
              */
             protocolProvider = new ProtocolProvider();
-            if (true)
-                throw new RuntimeException();
             /*
              * Now we'll start constructing the script engine.
              */

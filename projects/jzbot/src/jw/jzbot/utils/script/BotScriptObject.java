@@ -1,7 +1,8 @@
-package jw.jzbot;
+package jw.jzbot.utils.script;
 
 import java.sql.Connection;
 
+import jw.jzbot.JZBot;
 import jw.jzbot.com.script.ProtocolLink;
 
 import org.mozilla.javascript.Scriptable;
