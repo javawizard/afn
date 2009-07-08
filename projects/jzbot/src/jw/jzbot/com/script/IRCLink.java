@@ -16,7 +16,7 @@ public class IRCLink extends PircBot implements ProtocolLink
             String target, String action)
     {
         
-        notifierOnAction.call();
+        notifierOnAction.call(sender, login, hostname, target, action);
     }
     
     private FunctionNotifier notifierOnAction = new FunctionNotifier();
@@ -35,7 +35,7 @@ public class IRCLink extends PircBot implements ProtocolLink
     protected void onChannelInfo(String channel, int userCount, String topic)
     {
         
-        notifierOnChannelInfo.call();
+        notifierOnChannelInfo.call(channel, userCount, topic);
     }
     
     private FunctionNotifier notifierOnChannelInfo = new FunctionNotifier();
@@ -70,52 +70,12 @@ public class IRCLink extends PircBot implements ProtocolLink
     }
     
     @Override
-    protected void onDccChatRequest(String sourceNick, String sourceLogin,
-            String sourceHostname, long address, int port)
-    {
-        
-        notifierOnDccChatRequest.call();
-    }
-    
-    private FunctionNotifier notifierOnDccChatRequest = new FunctionNotifier();
-    
-    public void addDccChatRequestListener(Function listener)
-    {
-        notifierOnDccChatRequest.add(listener);
-    }
-    
-    public void removeDccChatRequestListener(Function listener)
-    {
-        notifierOnDccChatRequest.remove(listener);
-    }
-    
-    @Override
-    protected void onDccSendRequest(String sourceNick, String sourceLogin,
-            String sourceHostname, String filename, long address, int port,
-            int size)
-    {
-        
-        notifierOnDccSendRequest.call();
-    }
-    
-    private FunctionNotifier notifierOnDccSendRequest = new FunctionNotifier();
-    
-    public void addDccSendRequestListener(Function listener)
-    {
-        notifierOnDccSendRequest.add(listener);
-    }
-    
-    public void removeDccSendRequestListener(Function listener)
-    {
-        notifierOnDccSendRequest.remove(listener);
-    }
-    
-    @Override
     protected void onDeop(String channel, String sourceNick,
             String sourceLogin, String sourceHostname, String recipient)
     {
         
-        notifierOnDeop.call();
+        notifierOnDeop.call(channel, sourceNick, sourceLogin, sourceHostname,
+                recipient);
     }
     
     private FunctionNotifier notifierOnDeop = new FunctionNotifier();
@@ -135,7 +95,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname, String recipient)
     {
         
-        notifierOnDeVoice.call();
+        notifierOnDeVoice.call(channel, sourceNick, sourceLogin,
+                sourceHostname, recipient);
     }
     
     private FunctionNotifier notifierOnDeVoice = new FunctionNotifier();
@@ -170,88 +131,12 @@ public class IRCLink extends PircBot implements ProtocolLink
     }
     
     @Override
-    protected void onFileTransferFinished(DccFileTransfer transfer, Exception e)
-    {
-        
-        notifierOnFileTransferFinished.call();
-    }
-    
-    private FunctionNotifier notifierOnFileTransferFinished = new FunctionNotifier();
-    
-    public void addFileTransferFinishedListener(Function listener)
-    {
-        notifierOnFileTransferFinished.add(listener);
-    }
-    
-    public void removeFileTransferFinishedListener(Function listener)
-    {
-        notifierOnFileTransferFinished.remove(listener);
-    }
-    
-    @Override
-    protected void onFinger(String sourceNick, String sourceLogin,
-            String sourceHostname, String target)
-    {
-        
-        notifierOnFinger.call();
-    }
-    
-    private FunctionNotifier notifierOnFinger = new FunctionNotifier();
-    
-    public void addFingerListener(Function listener)
-    {
-        notifierOnFinger.add(listener);
-    }
-    
-    public void removeFingerListener(Function listener)
-    {
-        notifierOnFinger.remove(listener);
-    }
-    
-    @Override
-    protected void onIncomingChatRequest(DccChat chat)
-    {
-        
-        notifierOnIncomingChatRequest.call();
-    }
-    
-    private FunctionNotifier notifierOnIncomingChatRequest = new FunctionNotifier();
-    
-    public void addIncomingChatRequestListener(Function listener)
-    {
-        notifierOnIncomingChatRequest.add(listener);
-    }
-    
-    public void removeIncomingChatRequestListener(Function listener)
-    {
-        notifierOnIncomingChatRequest.remove(listener);
-    }
-    
-    @Override
-    protected void onIncomingFileTransfer(DccFileTransfer transfer)
-    {
-        
-        notifierOnIncomingFileTransfer.call();
-    }
-    
-    private FunctionNotifier notifierOnIncomingFileTransfer = new FunctionNotifier();
-    
-    public void addIncomingFileTransferListener(Function listener)
-    {
-        notifierOnIncomingFileTransfer.add(listener);
-    }
-    
-    public void removeIncomingFileTransferListener(Function listener)
-    {
-        notifierOnIncomingFileTransfer.remove(listener);
-    }
-    
-    @Override
     protected void onInvite(String targetNick, String sourceNick,
             String sourceLogin, String sourceHostname, String channel)
     {
         
-        notifierOnInvite.call();
+        notifierOnInvite.call(targetNick, sourceNick, sourceLogin,
+                sourceHostname, channel);
     }
     
     private FunctionNotifier notifierOnInvite = new FunctionNotifier();
@@ -271,7 +156,7 @@ public class IRCLink extends PircBot implements ProtocolLink
             String hostname)
     {
         
-        notifierOnJoin.call();
+        notifierOnJoin.call(channel, sender, login, hostname);
     }
     
     private FunctionNotifier notifierOnJoin = new FunctionNotifier();
@@ -292,7 +177,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String reason)
     {
         
-        notifierOnKick.call();
+        notifierOnKick.call(channel, kickerNick, kickerLogin, kickerHostname,
+                recipientNick, reason);
     }
     
     private FunctionNotifier notifierOnKick = new FunctionNotifier();
@@ -312,7 +198,7 @@ public class IRCLink extends PircBot implements ProtocolLink
             String hostname, String message)
     {
         
-        notifierOnMessage.call();
+        notifierOnMessage.call(channel, sender, login, hostname, message);
     }
     
     private FunctionNotifier notifierOnMessage = new FunctionNotifier();
@@ -332,7 +218,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname, String mode)
     {
         
-        notifierOnMode.call();
+        notifierOnMode.call(channel, sourceNick, sourceLogin, sourceHostname,
+                mode);
     }
     
     private FunctionNotifier notifierOnMode = new FunctionNotifier();
@@ -352,7 +239,7 @@ public class IRCLink extends PircBot implements ProtocolLink
             String newNick)
     {
         
-        notifierOnNickChange.call();
+        notifierOnNickChange.call(oldNick, login, hostname, newNick);
     }
     
     private FunctionNotifier notifierOnNickChange = new FunctionNotifier();
@@ -372,7 +259,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceHostname, String target, String notice)
     {
         
-        notifierOnNotice.call();
+        notifierOnNotice.call(sourceNick, sourceLogin, sourceHostname, target,
+                notice);
     }
     
     private FunctionNotifier notifierOnNotice = new FunctionNotifier();
@@ -392,7 +280,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceHostname, String recipient)
     {
         
-        notifierOnOp.call();
+        notifierOnOp.call(channel, sourceNick, sourceLogin, sourceHostname,
+                recipient);
     }
     
     private FunctionNotifier notifierOnOp = new FunctionNotifier();
@@ -412,7 +301,7 @@ public class IRCLink extends PircBot implements ProtocolLink
             String hostname)
     {
         
-        notifierOnPart.call();
+        notifierOnPart.call(channel, sender, login, hostname);
     }
     
     private FunctionNotifier notifierOnPart = new FunctionNotifier();
@@ -442,7 +331,7 @@ public class IRCLink extends PircBot implements ProtocolLink
             String hostname, String message)
     {
         
-        notifierOnPrivateMessage.call();
+        notifierOnPrivateMessage.call(sender, login, hostname, message);
     }
     
     private FunctionNotifier notifierOnPrivateMessage = new FunctionNotifier();
@@ -462,7 +351,7 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceHostname, String reason)
     {
         
-        notifierOnQuit.call();
+        notifierOnQuit.call(sourceNick, sourceLogin, sourceHostname, reason);
     }
     
     private FunctionNotifier notifierOnQuit = new FunctionNotifier();
@@ -482,7 +371,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname, String hostmask)
     {
         
-        notifierOnRemoveChannelBan.call();
+        notifierOnRemoveChannelBan.call(channel, sourceNick, sourceLogin,
+                sourceHostname, hostmask);
     }
     
     private FunctionNotifier notifierOnRemoveChannelBan = new FunctionNotifier();
@@ -502,7 +392,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname, String key)
     {
         
-        notifierOnRemoveChannelKey.call();
+        notifierOnRemoveChannelKey.call(channel, sourceNick, sourceLogin,
+                sourceHostname, key);
     }
     
     private FunctionNotifier notifierOnRemoveChannelKey = new FunctionNotifier();
@@ -522,7 +413,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnRemoveChannelLimit.call();
+        notifierOnRemoveChannelLimit.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
     }
     
     private FunctionNotifier notifierOnRemoveChannelLimit = new FunctionNotifier();
@@ -542,7 +434,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnRemoveInviteOnly.call();
+        notifierOnRemoveInviteOnly.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
     }
     
     private FunctionNotifier notifierOnRemoveInviteOnly = new FunctionNotifier();
@@ -562,7 +455,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnRemoveModerated.call();
+        notifierOnRemoveModerated.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
     }
     
     private FunctionNotifier notifierOnRemoveModerated = new FunctionNotifier();
@@ -582,7 +476,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceNick, String sourceLogin, String sourceHostname)
     {
         
-        notifierOnRemoveNoExternalMessages.call();
+        notifierOnRemoveNoExternalMessages.call(channel, sourceNick,
+                sourceLogin, sourceHostname);
     }
     
     private FunctionNotifier notifierOnRemoveNoExternalMessages = new FunctionNotifier();
@@ -602,7 +497,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnRemovePrivate.call();
+        notifierOnRemovePrivate.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
     }
     
     private FunctionNotifier notifierOnRemovePrivate = new FunctionNotifier();
@@ -622,7 +518,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnRemoveSecret.call();
+        notifierOnRemoveSecret.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
     }
     
     private FunctionNotifier notifierOnRemoveSecret = new FunctionNotifier();
@@ -642,7 +539,9 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnRemoveTopicProtection.call();
+        notifierOnRemoveSecret.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
+        
     }
     
     private FunctionNotifier notifierOnRemoveTopicProtection = new FunctionNotifier();
@@ -658,29 +557,10 @@ public class IRCLink extends PircBot implements ProtocolLink
     }
     
     @Override
-    protected void onServerPing(String response)
-    {
-        
-        notifierOnServerPing.call();
-    }
-    
-    private FunctionNotifier notifierOnServerPing = new FunctionNotifier();
-    
-    public void addServerPingListener(Function listener)
-    {
-        notifierOnServerPing.add(listener);
-    }
-    
-    public void removeServerPingListener(Function listener)
-    {
-        notifierOnServerPing.remove(listener);
-    }
-    
-    @Override
     protected void onServerResponse(int code, String response)
     {
         
-        notifierOnServerResponse.call();
+        notifierOnServerResponse.call(code, response);
     }
     
     private FunctionNotifier notifierOnServerResponse = new FunctionNotifier();
@@ -700,7 +580,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname, String hostmask)
     {
         
-        notifierOnSetChannelBan.call();
+        notifierOnSetChannelBan.call(channel, sourceNick, sourceLogin,
+                sourceHostname, hostmask);
     }
     
     private FunctionNotifier notifierOnSetChannelBan = new FunctionNotifier();
@@ -720,7 +601,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname, String key)
     {
         
-        notifierOnSetChannelKey.call();
+        notifierOnSetChannelKey.call(channel, sourceNick, sourceLogin,
+                sourceHostname, key);
     }
     
     private FunctionNotifier notifierOnSetChannelKey = new FunctionNotifier();
@@ -740,7 +622,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname, int limit)
     {
         
-        notifierOnSetChannelLimit.call();
+        notifierOnSetChannelLimit.call(channel, sourceNick, sourceLogin,
+                sourceHostname, limit);
     }
     
     private FunctionNotifier notifierOnSetChannelLimit = new FunctionNotifier();
@@ -760,7 +643,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnSetInviteOnly.call();
+        notifierOnSetInviteOnly.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
     }
     
     private FunctionNotifier notifierOnSetInviteOnly = new FunctionNotifier();
@@ -780,7 +664,8 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnSetModerated.call();
+        notifierOnSetModerated.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
     }
     
     private FunctionNotifier notifierOnSetModerated = new FunctionNotifier();
@@ -800,7 +685,9 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnSetNoExternalMessages.call();
+        notifierOnRemoveSecret.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
+        
     }
     
     private FunctionNotifier notifierOnSetNoExternalMessages = new FunctionNotifier();
@@ -820,7 +707,9 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnSetPrivate.call();
+        notifierOnRemoveSecret.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
+        
     }
     
     private FunctionNotifier notifierOnSetPrivate = new FunctionNotifier();
@@ -840,7 +729,9 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnSetSecret.call();
+        notifierOnRemoveSecret.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
+        
     }
     
     private FunctionNotifier notifierOnSetSecret = new FunctionNotifier();
@@ -860,7 +751,9 @@ public class IRCLink extends PircBot implements ProtocolLink
             String sourceLogin, String sourceHostname)
     {
         
-        notifierOnSetTopicProtection.call();
+        notifierOnRemoveSecret.call(channel, sourceNick, sourceLogin,
+                sourceHostname);
+        
     }
     
     private FunctionNotifier notifierOnSetTopicProtection = new FunctionNotifier();
@@ -876,31 +769,11 @@ public class IRCLink extends PircBot implements ProtocolLink
     }
     
     @Override
-    protected void onTime(String sourceNick, String sourceLogin,
-            String sourceHostname, String target)
-    {
-        
-        notifierOnTime.call();
-    }
-    
-    private FunctionNotifier notifierOnTime = new FunctionNotifier();
-    
-    public void addTimeListener(Function listener)
-    {
-        notifierOnTime.add(listener);
-    }
-    
-    public void removeTimeListener(Function listener)
-    {
-        notifierOnTime.remove(listener);
-    }
-    
-    @Override
     protected void onTopic(String channel, String topic, String setBy,
             long date, boolean changed)
     {
         
-        notifierOnTopic.call();
+        notifierOnTopic.call(channel, topic, setBy, date, changed);
     }
     
     private FunctionNotifier notifierOnTopic = new FunctionNotifier();
@@ -919,7 +792,7 @@ public class IRCLink extends PircBot implements ProtocolLink
     protected void onUnknown(String line)
     {
         
-        notifierOnUnknown.call();
+        notifierOnUnknown.call(line);
     }
     
     private FunctionNotifier notifierOnUnknown = new FunctionNotifier();
@@ -937,7 +810,7 @@ public class IRCLink extends PircBot implements ProtocolLink
     @Override
     protected void onUserList(String channel, User[] users)
     {
-        notifierOnUserList.call();
+        notifierOnUserList.call(channel, users);
     }
     
     private FunctionNotifier notifierOnUserList = new FunctionNotifier();
@@ -956,7 +829,8 @@ public class IRCLink extends PircBot implements ProtocolLink
     protected void onUserMode(String targetNick, String sourceNick,
             String sourceLogin, String sourceHostname, String mode)
     {
-        notifierOnUserMode.call();
+        notifierOnUserMode.call(targetNick, sourceNick, sourceLogin,
+                sourceHostname, mode);
     }
     
     private FunctionNotifier notifierOnUserMode = new FunctionNotifier();
@@ -972,29 +846,11 @@ public class IRCLink extends PircBot implements ProtocolLink
     }
     
     @Override
-    protected void onVersion(String sourceNick, String sourceLogin,
-            String sourceHostname, String target)
-    {
-        notifierOnVersion.call();
-    }
-    
-    private FunctionNotifier notifierOnVersion = new FunctionNotifier();
-    
-    public void addVersionListener(Function listener)
-    {
-        notifierOnVersion.add(listener);
-    }
-    
-    public void removeVersionListener(Function listener)
-    {
-        notifierOnVersion.remove(listener);
-    }
-    
-    @Override
     protected void onVoice(String channel, String sourceNick,
             String sourceLogin, String sourceHostname, String recipient)
     {
-        notifierOnVoice.call();
+        notifierOnVoice.call(channel, sourceNick, sourceLogin, sourceHostname,
+                recipient);
     }
     
     private FunctionNotifier notifierOnVoice = new FunctionNotifier();
