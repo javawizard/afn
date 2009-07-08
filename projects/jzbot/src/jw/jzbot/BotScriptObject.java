@@ -4,6 +4,7 @@ import java.sql.Connection;
 
 import jw.jzbot.com.script.ProtocolLink;
 
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
@@ -19,21 +20,21 @@ public class BotScriptObject
 {
     public Connection getPersistent()
     {
-        return null;
+        return JZBot.persistentStorageConnection;
     }
     
-    public ScriptableObject getVolatile()
+    public Scriptable getVolatile()
     {
-        return null;
+        return JZBot.volatileStorageObject;
     }
     
     public ProtocolLink createLink(String protocol)
     {
-        return null;
+        return JZBot.currentProtocolProvider.createLink(protocol);
     }
     
     public void shutdownLink(ProtocolLink link)
     {
-        
+        JZBot.currentProtocolProvider.shutdown(link);
     }
 }

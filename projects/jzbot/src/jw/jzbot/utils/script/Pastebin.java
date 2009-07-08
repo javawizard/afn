@@ -43,8 +43,8 @@ public class Pastebin
      *         "http://pastebin.com/" to obtain a url that can be used to view
      *         the post.
      */
-    public String createPost(String poster, String post, Duration duration,
-            String parent)
+    public static String createPost(String poster, String post,
+            Duration duration, String parent)
     {
         if (parent == null)
             parent = "";

@@ -10,7 +10,7 @@ import org.jibble.pircbot.PircBot;
  */
 public class MasterBot extends PircBot
 {
-    private String channelName;
+    String channelName;
     
     @Override
     protected void onConnect()

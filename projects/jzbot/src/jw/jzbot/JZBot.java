@@ -3,8 +3,13 @@ package jw.jzbot;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,10 +19,12 @@ import java.util.Random;
 import javax.net.ssl.HttpsURLConnection;
 
 import jw.jzbot.com.script.ProtocolProvider;
+import jw.jzbot.utils.script.Pastebin;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 /**
  * The main class that you run to start jzbot.
@@ -31,6 +38,12 @@ public class JZBot
     
     public static final int URL_TIMEOUT = 20 * 1000;
     
+    private static final String ERROR_REPORT_PREFIX = "================================================\n"
+            + "JZBot Error Report\n"
+            + "================================================\n"
+            + "\n"
+            + "An internal error has occured. Here's the stack trace:\n\n";
+    
     public static ProtocolProvider currentProtocolProvider;
     
     public static Properties masterBotProperties = new Properties();
@@ -38,7 +51,10 @@ public class JZBot
     public static MasterBot masterBot;
     
     public static File persistentStorageFolder;
+    public static Connection persistentStorageConnection;
     public static File scriptStorageFolder;
+    
+    private static ProtocolProvider protocolProvider;
     
     /**
      * @param args
@@ -140,7 +156,82 @@ public class JZBot
      */
     public static void startupScripts()
     {
-        
+        try
+        {
+            /*
+             * First, load the database connection.
+             */
+            Class.forName("org.h2.Driver");
+            persistentStorageConnection = DriverManager.getConnection(
+                    "jdbc:h2:"
+                            + persistentStorageFolder.getAbsolutePath()
+                                    .replace("\\", "/"), "sa", "");
+            /*
+             * Now we'll load the protocol provider.
+             */
+            protocolProvider = new ProtocolProvider();
+            if (true)
+                throw new RuntimeException();
+            /*
+             * Now we'll start constructing the script engine.
+             */
+            Context context = Context.enter();
+            try
+            {
+                /*
+                 * Create the scope
+                 */
+                globalScope = context.initStandardObjects();
+                /*
+                 * Set the jzbot object
+                 */
+                ScriptableObject.putProperty(globalScope, "jzbot", Context
+                        .javaToJS(new BotScriptObject(), globalScope));
+                /*
+                 * That's all done, and everything's ready for scripts to begin
+                 * running. Now we load init.js, if it exists, and if it doesn't
+                 * we issue a warning to the master bot (but leave the script
+                 * system running)
+                 */
+                File initScriptFile = new File(scriptStorageFolder, "init.js");
+                if (!initScriptFile.exists())
+                {
+                    masterBot
+                            .sendMessage(
+                                    masterBot.channelName,
+                                    "init.js does not exist, so the bot has not been "
+                                            + "started, Try reload to get the bot to start again "
+                                            + "once you've fixed this.");
+                }
+                else
+                {
+                    context.compileReader(new FileReader(initScriptFile),
+                            "init.js", 1, null).exec(context, globalScope);
+                }
+            }
+            finally
+            {
+                Context.exit();
+            }
+        }
+        catch (Throwable e)
+        {
+            e.printStackTrace();
+            String pastebinUrl = pastebinStackTrace(e);
+            masterBot.sendMessage(masterBot.channelName,
+                    "An exception occured while loading scripts: http://pastebin.com/"
+                            + pastebinUrl);
+            throw new RuntimeException(e);
+        }
+        masterBot.sendMessage(masterBot.channelName, "Scripts loaded.");
+    }
+    
+    public static String pastebinStackTrace(Throwable e)
+    {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw, true));
+        return Pastebin.createPost("jz_master_interface", ERROR_REPORT_PREFIX
+                + sw.toString(), Pastebin.Duration.DAY, null);
     }
     
     private static void doInitialSetup() throws IOException
