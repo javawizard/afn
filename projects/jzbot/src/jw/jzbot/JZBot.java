@@ -165,7 +165,7 @@ public class JZBot
             persistentStorageConnection = DriverManager.getConnection(
                     "jdbc:h2:"
                             + persistentStorageFolder.getAbsolutePath()
-                                    .replace("\\", "/"), "sa", "");
+                                    .replace("\\", "/") + "/db", "sa", "");
             /*
              * Now we'll load the protocol provider.
              */
@@ -200,7 +200,7 @@ public class JZBot
                             .sendMessage(
                                     masterBot.channelName,
                                     "init.js does not exist, so the bot has not been "
-                                            + "started, Try reload to get the bot to start again "
+                                            + "started. Try reload to get the bot to start again "
                                             + "once you've fixed this.");
                 }
                 else
@@ -263,6 +263,10 @@ public class JZBot
             new File(storage, "persistent").mkdirs();
             System.out.println("Everything's been set up.");
             System.out.println();
+        }
+        else
+        {
+            System.out.println("JZBot has been run before.");
         }
     }
     

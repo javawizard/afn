@@ -37,4 +37,9 @@ public class BotScriptObject
     {
         JZBot.currentProtocolProvider.shutdown(link);
     }
+    
+    public void sendToMaster(String text)
+    {
+        JZBot.masterBot.sendMessage(JZBot.masterBot.channelName, text);
+    }
 }
