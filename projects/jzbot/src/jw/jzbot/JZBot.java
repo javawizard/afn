@@ -45,8 +45,6 @@ public class JZBot
             + "\n"
             + "An internal error has occured. Here's the stack trace:\n\n";
     
-    public static ProtocolProvider currentProtocolProvider;
-    
     public static Properties masterBotProperties = new Properties();
     
     public static MasterBot masterBot;
@@ -55,7 +53,7 @@ public class JZBot
     public static Connection persistentStorageConnection;
     public static File scriptStorageFolder;
     
-    private static ProtocolProvider protocolProvider;
+    public static ProtocolProvider protocolProvider;
     
     /**
      * @param args
@@ -157,6 +155,8 @@ public class JZBot
      */
     public static void startupScripts()
     {
+        masterBot.sendMessage(masterBot.channelName,
+                "Entering startupScripts...");
         try
         {
             /*
@@ -204,8 +204,11 @@ public class JZBot
                 }
                 else
                 {
-                    context.compileReader(new FileReader(initScriptFile),
-                            "init.js", 1, null).exec(context, globalScope);
+                    synchronized (javascriptLock)
+                    {
+                        context.compileReader(new FileReader(initScriptFile),
+                                "init.js", 1, null).exec(context, globalScope);
+                    }
                 }
             }
             finally

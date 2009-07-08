@@ -1008,11 +1008,26 @@ public class IRCLink extends PircBot implements ProtocolLink
     {
         notifierOnVoice.remove(listener);
     }
-
+    
     @Override
     public void shutdown()
     {
         notifierOnDisconnect.clear();
         disconnect();
+    }
+    
+    public String toString()
+    {
+        return "IRCLink instance (" + super.toString() + ")";
+    }
+    
+    public void setPublicName(String name)
+    {
+        super.setName(name);
+    }
+    
+    public void setPublicLogin(String login)
+    {
+        super.setLogin(login);
     }
 }
