@@ -65,8 +65,7 @@ public class BotScriptObject
     
     public void load(String script)
     {
-        if (script.contains("..") || script.contains("/")
-                || script.contains("\\") || !script.endsWith(".js"))
+        if (!script.matches("[^\\/\\\\\\:]+\\.js"))
             throw new RuntimeException("Invalid script name to load: " + script);
         Context context = Context.enter();
         try

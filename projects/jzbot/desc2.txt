@@ -111,6 +111,10 @@ delete: Deletes the script file named.
 
 reload: Reloads the script files. This causes the bot to disconnect from all networks, shut down, start back up, load all script files, and reconnect.
 
+gc: Instructs the bot to garbage collect.
+
+memory: Instructs the bot to print out memory usage.
+
 add scriptop (future): Adds a new scriptop by hostname.
 
 remove scriptop (future): Removes a scriptop by hostname. You can't remove yourself.
