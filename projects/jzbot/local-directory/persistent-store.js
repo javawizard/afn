@@ -26,7 +26,7 @@ persistence.selectList = function(query, parameter)
 	{
 		statement.setObject(i + 1, parameter[set.values[i]]);
 	}
-	var resultSet = statement.executeUpdate();
+	var resultSet = statement.executeQuery();
 	var index = 0;
 	var results = [];
 	var metadata = resultSet.getMetaData();
@@ -41,7 +41,7 @@ persistence.selectList = function(query, parameter)
 		var result = new Object();
 		for ( var i = 0; i < columnNames.length; i++)
 		{
-			result[columnNames[i]] = resultSet.getObject();
+			result[columnNames[i]] = resultSet.getObject(i+1);
 		}
 		results[index++] = result;
 	}
@@ -59,10 +59,10 @@ persistence.selectSingleList = function(query, parameter)
 {
 	var original = this.selectList(query, parameter);
 	var results = [];
-	for(var i = 0; i < original.length; i++)
+	for ( var i = 0; i < original.length; i++)
 	{
 		var result = null;
-		for(var col in original[i])
+		for ( var col in original[i])
 		{
 			result = col;
 			break;
@@ -77,8 +77,8 @@ persistence.selectSingleList = function(query, parameter)
  */
 persistence.selectObject = function(query, parameter)
 {
-	var result = selectList(query,parameter);
-	if(result.length == 0)
+	var result = this.selectList(query, parameter);
+	if (result.length == 0)
 		return null;
 	return result[0];
 };
@@ -88,8 +88,8 @@ persistence.selectObject = function(query, parameter)
  */
 persistence.selectSingleObject = function(query, parameter)
 {
-	var result = selectSingleList(query,parameter);
-	if(result.length == 0)
+	var result = this.selectSingleList(query, parameter);
+	if (result.length == 0)
 		return null;
 	return result[0];
 };
@@ -117,7 +117,7 @@ persistence.update = function(query, parameter)
  * from test where col1 = ? and col2 = ?",values=["firstvalue","secondvalue"]}
  * to be returned.
  */
-persistence.p_parseParameters(query)
+persistence.p_parseParameters = function(query)
 {
 	var values = [];
 	var items = query.split('#');
@@ -138,11 +138,12 @@ persistence.p_parseParameters(query)
 			newQuery += items[i];
 		}
 	}
-	return
+	var result =
 	{
 		"query" :newQuery,
 		"values" :values
 	};
+	return result;
 }
 
 /*

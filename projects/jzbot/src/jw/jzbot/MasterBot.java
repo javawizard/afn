@@ -176,6 +176,20 @@ public class MasterBot extends PircBot
             JZBot.startupScripts(channel);
             sendMessage(channel, "Reload complete.");
         }
+        else if (message.startsWith("import local "))
+        {
+            String name = message.substring("import local ".length());
+            if (!name.matches("[^\\/\\\\\\:]+\\.js"))
+            {
+                sendMessage(channel, "invalid name characters");
+                return;
+            }
+            String content = StringUtils.readFile(new File("local-directory",
+                    name));
+            StringUtils.writeFile(content, new File(JZBot.scriptStorageFolder,
+                    name));
+            sendMessage(channel, "Done.");
+        }
         else
         {
             sendMessage(channel, "Invalid command. Pm \"help\" for more info.");

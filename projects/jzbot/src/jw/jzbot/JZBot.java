@@ -24,6 +24,7 @@ import jw.jzbot.utils.script.Pastebin;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -91,6 +92,7 @@ public class JZBot
          */
         System.out.println("Loading MasterBot...");
         masterBot = new MasterBot();
+        masterBot.setMessageDelay(100);
         masterBot.setAutoNickChange(true);
         masterBot.publicSetLogin(masterBotProperties.getProperty("nick"));
         masterBot.publicSetName(masterBotProperties.getProperty("nick"));
@@ -221,7 +223,8 @@ public class JZBot
                             + pastebinStackTrace(e));
         }
         globalScope = null;
-        masterBot.sendMessage(sender, "Shutdown was successful.");
+        if (!reload)
+            masterBot.sendMessage(sender, "Shutdown was successful.");
     }
     
     /**
@@ -232,8 +235,6 @@ public class JZBot
      */
     public static void startupScripts(String sender)
     {
-        masterBot.sendMessage(masterBot.channelName,
-                "Entering startupScripts...");
         try
         {
             /*
@@ -311,6 +312,22 @@ public class JZBot
     {
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw, true));
+        Throwable c = e;
+        while (c != null)
+        {
+            if (c instanceof RhinoException)
+            {
+                RhinoException re = (RhinoException) c;
+                sw
+                        .append("\n\n================================================\n\n"
+                                + "This exception ("
+                                + re.getClass().getName()
+                                + ") appears to have originated in "
+                                + "javascript code. The javascript stack trace is:\n\n");
+                sw.append(re.getScriptStackTrace());
+            }
+            c = c.getCause();
+        }
         return Pastebin.createPost("jz_master_interface", ERROR_REPORT_PREFIX
                 + sw.toString(), Pastebin.Duration.DAY, null);
     }
