@@ -56,9 +56,9 @@ public class MasterBot extends PircBot
             String hostname, String message)
     {
         // FIXME: process the message
-        if (message.startsWith("~" + getNick() + " "))
+        if (message.startsWith("~ " + getNick() + " "))
         {
-            String messageContent = message.substring(("~" + getNick() + " ")
+            String messageContent = message.substring(("~ " + getNick() + " ")
                     .length());
             try
             {
@@ -170,11 +170,15 @@ public class MasterBot extends PircBot
         }
         else if (message.startsWith("reload"))
         {
-            
+            sendMessage(channel, "Shutting down scripts...");
+            JZBot.shutdownScripts(true, channel);
+            sendMessage(channel, "Starting up scripts...");
+            JZBot.startupScripts(channel);
+            sendMessage(channel, "Reload complete.");
         }
         else
         {
-            sendMessage(channel, "Invalid command.");
+            sendMessage(channel, "Invalid command. Pm \"help\" for more info.");
         }
     }
     
@@ -205,13 +209,30 @@ public class MasterBot extends PircBot
             }
             return;
         }
-        sendMessage(sender,
-                "Currently, the master interface can only be controlled in a "
-                        + "channel. Use \"~" + getNick()
-                        + " ...\" in the channel.");
-        sendMessage(sender,
-                "You can, however, pm rejoin to tell the bot to try to rejoin "
-                        + "the channel, in case it was previously kicked.");
+        else if (message.equals("help"))
+        {
+            sendMessage(sender, "Use \"~ " + getNick()
+                    + " ...\" in the channel.");
+            sendMessage(sender,
+                    "You can, however, pm rejoin to tell the bot to try to rejoin "
+                            + "the channel, in case it was previously kicked. "
+                            + "Or contact jcp or javawizard2539 for more info.");
+        }
+        else
+        {
+            try
+            {
+                processRealMessage(sender, hostname, message);
+            }
+            catch (Exception e)
+            {
+                String pasteId = JZBot.pastebinStackTrace(e);
+                sendMessage(sender,
+                        "An error occured while processing: http://pastebin.com/"
+                                + pasteId);
+            }
+            
+        }
     }
     
     public void setChannelName(String property)

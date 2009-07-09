@@ -132,7 +132,7 @@ public class JZBot
          * method, so we'll do it in a separate method.
          */
         System.out.println("JZBot has loaded. Running initial scripts...");
-        startupScripts();
+        startupScripts(masterBot.channelName);
         System.out
                 .println("Initial startup has completed. JZBot is now up and running.");
     }
@@ -140,11 +140,88 @@ public class JZBot
     /**
      * This method shuts down scripts by calling the global shutdown function if
      * it exists, terminating all timers, shutting down the protocol provider,
-     * and discarding the global scope object.
+     * closing the database connection, and discarding the global scope object.
      */
-    public static void shutdownScripts(boolean reload)
+    public static void shutdownScripts(boolean reload, String sender)
+            throws Exception
     {
-        
+        Object globalShutdownFunction = ScriptableObject.getProperty(
+                globalScope, "shutdown");
+        if (globalShutdownFunction == null)
+            masterBot.sendMessage(sender,
+                    "No global shutdown function present. Skipping "
+                            + "to internal shutdown...");
+        else if (!(globalShutdownFunction instanceof Function))
+            masterBot.sendMessage(sender, "Global shutdown property is not a "
+                    + "function. Skipping to internal shutdown...");
+        else
+        {
+            Context context = Context.enter();
+            try
+            {
+                Function f = (Function) globalShutdownFunction;
+                synchronized (javascriptLock)
+                {
+                    f.call(context, globalScope, null, new Object[]
+                    {
+                        new Boolean(reload)
+                    });
+                }
+                masterBot.sendMessage(sender,
+                        "Global shutdown function completed. "
+                                + "Performing internal shutdown...");
+            }
+            catch (Exception e)
+            {
+                masterBot
+                        .sendMessage(
+                                sender,
+                                "An error occured while running the global "
+                                        + "shutdown function. Internal shutdown will still be "
+                                        + "attempted. Stack trace: "
+                                        + pastebinStackTrace(e));
+            }
+            finally
+            {
+                Context.exit();
+            }
+        }
+        /*
+         * First, we'll terminate all periodic timers. In the future, we should
+         * probably do this before the internal shutdown function to prevent
+         * some problems that can occur when a timer runs after shutdown.
+         */
+        /*
+         * Now we shut down the database connection.
+         */
+        try
+        {
+            persistentStorageConnection.close();
+        }
+        catch (Exception e)
+        {
+            masterBot.sendMessage(sender,
+                    "An error occured while shutting down the database. "
+                            + "Shutdown will continue. Stack trace: "
+                            + pastebinStackTrace(e));
+        }
+        persistentStorageConnection = null;
+        /*
+         * Now the existing protocol connections.
+         */
+        try
+        {
+            protocolProvider.shutdownAll();
+        }
+        catch (Exception e)
+        {
+            masterBot.sendMessage(sender,
+                    "An error occured while shutting down the protocol provider. "
+                            + "Shutdown will continue. Stack trace: "
+                            + pastebinStackTrace(e));
+        }
+        globalScope = null;
+        masterBot.sendMessage(sender, "Shutdown was successful.");
     }
     
     /**
@@ -153,7 +230,7 @@ public class JZBot
      * scope, setting the bot script object on it, and instructing it to load
      * and execute init.js.
      */
-    public static void startupScripts()
+    public static void startupScripts(String sender)
     {
         masterBot.sendMessage(masterBot.channelName,
                 "Entering startupScripts...");
@@ -181,6 +258,8 @@ public class JZBot
                  * Create the scope
                  */
                 globalScope = context.initStandardObjects();
+                ScriptableObject
+                        .putProperty(globalScope, "Global", globalScope);
                 /*
                  * Set the jzbot object
                  */

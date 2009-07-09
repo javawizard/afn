@@ -89,4 +89,9 @@ public class BotScriptObject
             Context.exit();
         }
     }
+    
+    public long getTime()
+    {
+        return System.currentTimeMillis();
+    }
 }

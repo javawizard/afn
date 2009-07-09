@@ -48,7 +48,7 @@ public class Pastebin
      */
     private static final int MAX_READ_LENGTH = 1024 * 150;
     
-    private static final String START_READ_SEQUENCE = "<textarea id=\"code\" class=\"codeedit\" name=\"code2\" cols=\"80\" rows=\"10\" onkeydown=\"return onTextareaKey(this,event)\">";
+    private static final String START_READ_SEQUENCE = " onkeydown=\"return onTextareaKey(this,event)\">";
     private static final String END_READ_SEQUENCE = "</textarea>";
     
     /**
