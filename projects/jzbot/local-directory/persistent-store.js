@@ -41,7 +41,7 @@ persistence.selectList = function(query, parameter)
 		var result = new Object();
 		for ( var i = 0; i < columnNames.length; i++)
 		{
-			result[columnNames[i]] = resultSet.getObject(i+1);
+			result[columnNames[i]] = resultSet.getObject(i + 1);
 		}
 		results[index++] = result;
 	}
@@ -64,7 +64,7 @@ persistence.selectSingleList = function(query, parameter)
 		var result = null;
 		for ( var col in original[i])
 		{
-			result = col;
+			result = original[i][col];
 			break;
 		}
 		results[i] = result;
@@ -103,6 +103,8 @@ persistence.update = function(query, parameter)
 	var statement = jzbot.persistent.prepareStatement(set.query);
 	for ( var i = 0; i < set.values.length; i++)
 	{
+		jzbot.sendToMaster("Parameter." + set.values[i] + " is "
+				+ parameter[set.values[i]]);
 		statement.setObject(i + 1, parameter[set.values[i]]);
 	}
 	statement.executeUpdate();

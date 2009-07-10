@@ -61,7 +61,7 @@ public class JZBot
      */
     public static void main(String[] args) throws Throwable
     {
-        System.out.println("JZBot version 0.2, written by javawizard2539");
+        System.out.println("JZBot version 0.2.1, written by javawizard2539");
         doInitialSetup();
         System.out.println("Initializing...");
         HttpsURLConnection.setDefaultAllowUserInteraction(false);
@@ -137,6 +137,7 @@ public class JZBot
         startupScripts(masterBot.channelName);
         System.out
                 .println("Initial startup has completed. JZBot is now up and running.");
+        
     }
     
     /**
@@ -147,84 +148,96 @@ public class JZBot
     public static void shutdownScripts(boolean reload, String sender)
             throws Exception
     {
-        Object globalShutdownFunction = ScriptableObject.getProperty(
-                globalScope, "shutdown");
-        if (globalShutdownFunction == null)
-            masterBot.sendMessage(sender,
-                    "No global shutdown function present. Skipping "
-                            + "to internal shutdown...");
-        else if (!(globalShutdownFunction instanceof Function))
-            masterBot.sendMessage(sender, "Global shutdown property is not a "
-                    + "function. Skipping to internal shutdown...");
-        else
+        try
         {
-            Context context = Context.enter();
+            Object globalShutdownFunction = ScriptableObject.getProperty(
+                    globalScope, "shutdown");
+            if (globalShutdownFunction == null)
+                masterBot.sendMessage(sender,
+                        "No global shutdown function present. Skipping "
+                                + "to internal shutdown...");
+            else if (!(globalShutdownFunction instanceof Function))
+                masterBot.sendMessage(sender,
+                        "Global shutdown property is not a "
+                                + "function. Skipping to internal shutdown...");
+            else
+            {
+                Context context = Context.enter();
+                try
+                {
+                    Function f = (Function) globalShutdownFunction;
+                    synchronized (javascriptLock)
+                    {
+                        f.call(context, globalScope, null, new Object[]
+                        {
+                            new Boolean(reload)
+                        });
+                    }
+                    masterBot.sendMessage(sender,
+                            "Global shutdown function completed. "
+                                    + "Performing internal shutdown...");
+                }
+                catch (Exception e)
+                {
+                    masterBot
+                            .sendMessage(
+                                    sender,
+                                    "An error occured while running the global "
+                                            + "shutdown function. Internal shutdown will still be "
+                                            + "attempted. Stack trace: "
+                                            + pastebinStackTrace(e));
+                }
+                finally
+                {
+                    Context.exit();
+                }
+            }
+            /*
+             * First, we'll terminate all periodic timers. In the future, we
+             * should probably do this before the internal shutdown function to
+             * prevent some problems that can occur when a timer runs after
+             * shutdown.
+             */
+            /*
+             * Now we shut down the database connection.
+             */
             try
             {
-                Function f = (Function) globalShutdownFunction;
-                synchronized (javascriptLock)
-                {
-                    f.call(context, globalScope, null, new Object[]
-                    {
-                        new Boolean(reload)
-                    });
-                }
-                masterBot.sendMessage(sender,
-                        "Global shutdown function completed. "
-                                + "Performing internal shutdown...");
+                persistentStorageConnection.close();
             }
             catch (Exception e)
             {
-                masterBot
-                        .sendMessage(
-                                sender,
-                                "An error occured while running the global "
-                                        + "shutdown function. Internal shutdown will still be "
-                                        + "attempted. Stack trace: "
-                                        + pastebinStackTrace(e));
+                masterBot.sendMessage(sender,
+                        "An error occured while shutting down the database. "
+                                + "Shutdown will continue. Stack trace: "
+                                + pastebinStackTrace(e));
             }
-            finally
+            persistentStorageConnection = null;
+            /*
+             * Now the existing protocol connections.
+             */
+            try
             {
-                Context.exit();
+                protocolProvider.shutdownAll();
             }
-        }
-        /*
-         * First, we'll terminate all periodic timers. In the future, we should
-         * probably do this before the internal shutdown function to prevent
-         * some problems that can occur when a timer runs after shutdown.
-         */
-        /*
-         * Now we shut down the database connection.
-         */
-        try
-        {
-            persistentStorageConnection.close();
+            catch (Exception e)
+            {
+                masterBot.sendMessage(sender,
+                        "An error occured while shutting down the protocol provider. "
+                                + "Shutdown will continue. Stack trace: "
+                                + pastebinStackTrace(e));
+            }
+            globalScope = null;
+            if (!reload)
+                masterBot.sendMessage(sender, "Shutdown was successful.");
         }
         catch (Exception e)
         {
             masterBot.sendMessage(sender,
-                    "An error occured while shutting down the database. "
-                            + "Shutdown will continue. Stack trace: "
+                    "A fatal shutdown error occured. JZBot should be "
+                            + "restarted as soon as possible. Stack trace: "
                             + pastebinStackTrace(e));
         }
-        persistentStorageConnection = null;
-        /*
-         * Now the existing protocol connections.
-         */
-        try
-        {
-            protocolProvider.shutdownAll();
-        }
-        catch (Exception e)
-        {
-            masterBot.sendMessage(sender,
-                    "An error occured while shutting down the protocol provider. "
-                            + "Shutdown will continue. Stack trace: "
-                            + pastebinStackTrace(e));
-        }
-        globalScope = null;
-        if (!reload)
-            masterBot.sendMessage(sender, "Shutdown was successful.");
     }
     
     /**
