@@ -1,0 +1,5 @@
+Documents on the CPI (Common Protocol Interface), and specifically, it's methods.
+
+The Common Protocol Interface is a javascript api for communicating with a particular instant messaging protocol in such a way that a different protocol can be swapped in its place without code that uses it having to be changed at all. The default scripts use it to wrap the specific protocol implementations.
+
+The interface provides for connecting to a server, joining a named room, 

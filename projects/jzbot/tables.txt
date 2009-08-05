@@ -1,0 +1,4 @@
+This file documents the tables that the default jzbot uses.
+
+
+

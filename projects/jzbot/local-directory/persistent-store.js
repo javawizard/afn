@@ -103,8 +103,6 @@ persistence.update = function(query, parameter)
 	var statement = jzbot.persistent.prepareStatement(set.query);
 	for ( var i = 0; i < set.values.length; i++)
 	{
-		jzbot.sendToMaster("Parameter." + set.values[i] + " is "
-				+ parameter[set.values[i]]);
 		statement.setObject(i + 1, parameter[set.values[i]]);
 	}
 	statement.executeUpdate();
