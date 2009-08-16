@@ -25,6 +25,8 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class BotScriptObject
 {
+    private static final PastebinWrapper pastebinWrapper = new PastebinWrapper();
+    
     public Connection getPersistent()
     {
         return JZBot.persistentStorageConnection;
@@ -93,5 +95,10 @@ public class BotScriptObject
     public long getTime()
     {
         return System.currentTimeMillis();
+    }
+    
+    public PastebinWrapper getPastebin()
+    {
+        return pastebinWrapper;
     }
 }

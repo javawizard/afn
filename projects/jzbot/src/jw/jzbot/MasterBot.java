@@ -55,7 +55,6 @@ public class MasterBot extends PircBot
     protected void onMessage(String channel, String sender, String login,
             String hostname, String message)
     {
-        // FIXME: process the message
         if (message.startsWith("~ " + getNick() + " "))
         {
             String messageContent = message.substring(("~ " + getNick() + " ")

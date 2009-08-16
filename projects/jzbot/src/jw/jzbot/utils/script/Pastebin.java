@@ -39,7 +39,7 @@ public class Pastebin
 {
     public static enum Duration
     {
-        DAY, MONTH, YEAR
+        DAY, MONTH, FOREVER
     }
     
     /**
@@ -129,6 +129,12 @@ public class Pastebin
     {
         try
         {
+            if (!postUrl.startsWith("http://pastebin.com/"))
+                throw new RuntimeException(
+                        "Invalid url, needs to start with \"http://pastebin.com/\": "
+                                + postUrl);
+            postUrl = postUrl.substring("http://pastebin.com/".length());
+            postUrl = "http://pastebin.com/pastebin.php?dl=" + postUrl;
             URL url = new URL(postUrl);
             InputStream stream = url.openStream();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -146,22 +152,7 @@ public class Pastebin
             out.flush();
             out.close();
             String result = new String(out.toByteArray());
-            out = null;
-            int startSequenceIndex = result.indexOf(START_READ_SEQUENCE);
-            if (startSequenceIndex == -1)
-                throw new RuntimeException("Start sequence not found in result");
-            int endSequenceIndex = result.indexOf(END_READ_SEQUENCE,
-                    startSequenceIndex);
-            if (endSequenceIndex == -1)
-                throw new RuntimeException("End sequence not found in result");
-            String resultEncoded = result.substring(startSequenceIndex
-                    + START_READ_SEQUENCE.length(), endSequenceIndex);
-            /*
-             * The document stuff here is to resolve entities, since the
-             * pastebin website would have to escape text with entities to
-             * prevent the page from interpreting it
-             */
-            return decodeXml(resultEncoded);
+            return result;
         }
         catch (Exception e)
         {
