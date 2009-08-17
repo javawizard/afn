@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.sql.Connection;
 
 import jw.jzbot.JZBot;
+import jw.jzbot.JZUtils;
+import jw.jzbot.com.script.IRCLink;
 import jw.jzbot.com.script.ProtocolLink;
 
 import org.mozilla.javascript.Context;
@@ -100,5 +102,16 @@ public class BotScriptObject
     public PastebinWrapper getPastebin()
     {
         return pastebinWrapper;
+    }
+    
+    public String[] ircDelimited(String[] items, String delimiter)
+    {
+        return JZUtils.ircDelimited(items, delimiter);
+    }
+    
+    public void ircSendDelimited(String[] items, String delimiter,
+            IRCLink link, String recipient)
+    {
+        JZUtils.ircSendDelimited(items, delimiter, link, recipient);
     }
 }

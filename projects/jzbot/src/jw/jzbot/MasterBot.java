@@ -23,7 +23,7 @@ public class MasterBot extends PircBot
     protected void onConnect()
     {
         joinChannel(channelName);
-        sendMessage(channelName, "MasterBot/JZBot master interface 0.2");
+        sendMessage(channelName, "MasterBot/JZBot master interface 0.3");
     }
     
     @Override
