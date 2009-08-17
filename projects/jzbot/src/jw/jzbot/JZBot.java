@@ -20,6 +20,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 import jw.jzbot.com.script.ProtocolProvider;
 import jw.jzbot.utils.script.BotScriptObject;
+import jw.jzbot.utils.script.MasterBotScriptObject;
 import jw.jzbot.utils.script.Pastebin;
 
 import org.mozilla.javascript.Context;
@@ -279,6 +280,11 @@ public class JZBot
                  */
                 ScriptableObject.putProperty(globalScope, "jzbot", Context
                         .javaToJS(new BotScriptObject(), globalScope));
+                /*
+                 * Set the masterbot object
+                 */
+                ScriptableObject.putProperty(globalScope, "masterbot", Context
+                        .javaToJS(new MasterBotScriptObject(), globalScope));
                 /*
                  * That's all done, and everything's ready for scripts to begin
                  * running. Now we load init.js, if it exists, and if it doesn't

@@ -114,4 +114,55 @@ public class BotScriptObject
     {
         JZUtils.ircSendDelimited(items, delimiter, link, recipient);
     }
+    
+    public String delete(String name)
+    {
+        if (!name.matches("[^\\/\\\\\\:]+\\.js"))
+        {
+            return "Invalid name characters";
+        }
+        File file = new File(JZBot.scriptStorageFolder, name);
+        if (!file.exists())
+        {
+            return "Doesn't exist";
+        }
+        if (!file.delete())
+        {
+            return "Error while deleting";
+        }
+        return null;
+    }
+    
+    public void reload()
+    {
+        reload("UNKNOWN");
+    }
+    
+    public void reload(final String sender)
+    {
+        new Thread()
+        {
+            public void run()
+            {
+                try
+                {
+                    JZBot.masterBot.sendMessage(JZBot.masterBot.channelName,
+                    "Shutting down scripts at request of " + sender + "...");
+                    JZBot.shutdownScripts(true, JZBot.masterBot.channelName);
+                    JZBot.masterBot.sendMessage(JZBot.masterBot.channelName,
+                            "Starting up scripts...");
+                    JZBot.startupScripts(JZBot.masterBot.channelName);
+                    JZBot.masterBot.sendMessage(JZBot.masterBot.channelName,
+                            "Reload complete.");
+                }
+                catch (Exception e)
+                {
+                    String pasteId = JZBot.pastebinStackTrace(e);
+                    JZBot.masterBot.sendMessage(JZBot.masterBot.channelName,
+                            "An error occured while processing: http://pastebin.com/"
+                                    + pasteId);
+                }
+            }
+        }.start();
+    }
 }

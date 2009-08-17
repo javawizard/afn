@@ -147,7 +147,7 @@ public class MasterBot extends PircBot
         }
         else if (message.startsWith("delete "))
         {
-            String name = message.substring("get ".length());
+            String name = message.substring("delete ".length());
             if (!name.matches("[^\\/\\\\\\:]+\\.js"))
             {
                 sendMessage(channel, "invalid name characters");
