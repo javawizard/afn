@@ -42,4 +42,9 @@ public class MasterBotScriptObject
         StringUtils.writeFile(content, file);
         return null;
     }
+    
+    public boolean isMasterScriptOp(String hostname)
+    {
+        return JZBot.isMasterScriptOp(hostname);
+    }
 }
