@@ -415,7 +415,6 @@ public class ControllerHandler extends Thread
     {
         String name = packet.getName();
         System.out.println("processing add playlist " + name);
-        new Exception("stack for playlist add " + name).printStackTrace(System.out);
         File file = new File(SixjetServer.playlistsFolder, name + ".6jl.txt");
         if (file.exists())
         {

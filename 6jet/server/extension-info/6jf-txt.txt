@@ -6,22 +6,50 @@ The first line of the file is a number, which is the amount of time that the fil
 
 The second line is the number of milliseconds into this file at which to start playing the music. There must be at least 1 second at the start of the file before any jets can fire, so this is typically 1000 to have the music start at the moment when jets can begin firing (even if they don't actually fire then).
 
-Every line after that starts with a number, which is the number of milliseconds into file playback that the line should be run. The rest of the line is made up of pairs of tokens (tokens are delimited by spaces), consisting of the jet number to set the state of, and the state to set it to (either "on" or "off").
-
-These lines must be ordered in chronological order. If they are not, the results are unspecified.
+Every line after that consists of either the character "." (which instructs the server to flush the jet status to the controller board), the character ">" followed by a number (which indicates that the firing pattern should be delayed until that number of milliseconds into playback have been encountered), or the character "+" or the character "-", followed by a number (which indicates that the jet named by that number is to be turned on or off, respectively). The file is almost always made up of sequences of ">" lines, "+" and "-" lines, and then a "." line, although this is not required.
 
 There should generally be a second after the last jet event in the file before the end of the file, or some jets may get skipped. It's ok if the firing pattern goes beyond the end of the music.
 
-Here's an example file that causes jets 1 and 4 to fire, then 2 and 5, then 3 and 6, then all of them together, with a small delay before all of them firing at the same time. This example delays whatever music might be playing with it by 2000 milliseconds, so that the music will not being to play until 2 seconds of the jet firing pattern have elapsed. 
+Here's an example file that causes jets 0 and 3 to fire, then 1 and 4, then 2 and 5, then all of them together, with a small delay before all of them firing at the same time. This example delays whatever music might be playing with it by 2000 milliseconds, so that the music will not being to play until 2 seconds of the jet firing pattern have elapsed. 
 
 4500
 2000
-1000 1 on 4 on
-1500 1 off 4 off 2 on 5 on
-2000 2 off 5 off 3 on 6 on
-2500 3 off 6 off
-3000 1 on 2 on 3 on 4 on 5 on 6 on
-3500 1 off 2 off 3 off 4 off 5 off 6 off
+>1000
++0
++3
+.
+>1500
+-0
+-3
++1
++4
+.
+>2000
+-1
+-4
++2
++5
+.
+>2500
+-2
+-5
+.
+>3000
++0
++1
++2
++3
++4
++5
+.
+>3500
+-0
+-1
+-2
+-3
+-4
+-5
+.
 
 
 
