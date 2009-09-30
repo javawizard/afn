@@ -40,8 +40,8 @@ public class Test02
         float targetWidth = 3;
         float pageMiddle = pageWidth / 2;
         float targetMiddle = targetWidth / 2;
-        attributes.add(new MediaPrintableArea(pageMiddle - targetMiddle, 0, 3,
-                5, INCHES));
+        attributes.add(new MediaPrintableArea((pageMiddle - targetMiddle)+0.25f, 0.25f, 3-0.5f,
+                5-0.5f, INCHES));
         DocAttributeSet docAttributes = new HashDocAttributeSet();
         SimpleDoc doc = new SimpleDoc(createData(), DocFlavor.BYTE_ARRAY.PNG,
                 docAttributes);
