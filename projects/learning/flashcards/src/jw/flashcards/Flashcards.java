@@ -109,7 +109,7 @@ public class Flashcards
     }
     
     public static final int OPERATOR_SPACING = 0;
-    public static final int FROM_SIDE = 25;
+    public static final int FROM_SIDE = 45;
     public static final int MAX_NUMBER_WIDTH = (300 - FROM_SIDE)
             - OPERATOR_SPACING;
     public static final int MAX_NUMBER_HEIGHT = 175;
