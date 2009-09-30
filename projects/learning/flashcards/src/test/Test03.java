@@ -11,18 +11,32 @@ public class Test03
     /**
      * @param args
      */
-    public static void main(String[] args)
+    public static void main(String[] args) throws Throwable
     {
         int first = 3;
         int second = 5;
         Operation operation = Operation.multiply;
+        String mode = "s";
+        if (args.length > 0)
+            mode = args[0];
         
-        BufferedImage image = Flashcards.createFlashcardFrontImage(first,
+        BufferedImage front = Flashcards.createFlashcardFrontImage(first,
                 second, operation);
-        Flashcards.showImageInFrame(image);
-        BufferedImage image2 = Flashcards.createFlashcardBackImage(first,
-                second, operation);
-        Flashcards.showImageInFrame(image2);
+        BufferedImage back = Flashcards.createFlashcardBackImage(first, second,
+                operation);
+        if (mode.equals("s"))
+        {
+            Flashcards.showImageInFrame(back);
+            Flashcards.showImageInFrame(front);
+        }
+        else if (mode.equals("f"))
+        {
+            Flashcards.printImage(front);
+        }
+        else if (mode.equals("b"))
+        {
+            Flashcards.printImage(back);
+        }
     }
     
 }
