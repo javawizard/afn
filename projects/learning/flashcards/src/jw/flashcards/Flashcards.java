@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -119,6 +120,10 @@ public class Flashcards
     private static final Font DEFAULT_FONT = Font.decode(null);
     public static final int LINE_START = 25;
     public static final int LINE_END = 300 - LINE_START;
+    public static final int ANSWER_HEIGHT = 25;
+    public static final int ANSWER_WIDTH = 50;
+    public static final int ANSWER_X = 25;
+    public static final int ANSWER_Y = 25;
     
     public static BufferedImage createFlashcardFrontImage(int first,
             int second, Operation operation)
@@ -169,6 +174,22 @@ public class Flashcards
         {
             g.drawLine(LINE_START, lineY + i, LINE_END, lineY + i);
         }
+        // Now we'll draw the box to hide the answer.
+        g.fillRect((300 - ANSWER_X) - ANSWER_WIDTH, (totalHeight - ANSWER_Y)
+                - ANSWER_HEIGHT, ANSWER_WIDTH, ANSWER_HEIGHT);
+        return image;
+    }
+    
+    public static BufferedImage createFlashcardBackImage(int first, int second,
+            Operation operation)
+    {
+        BufferedImage image = newImage();
+        Graphics2D g = image.createGraphics();
+        g.setColor(Color.black);
+        g.setFont(DEFAULT_FONT.deriveFont(ANSWER_HEIGHT * 1f));
+        g.drawString(operation.compute(first, second), ANSWER_X, image
+                .getHeight()
+                - ANSWER_Y);
         return image;
     }
     

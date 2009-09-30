@@ -13,9 +13,16 @@ public class Test03
      */
     public static void main(String[] args)
     {
-        BufferedImage image = Flashcards.createFlashcardFrontImage(19, 13,
-                Operation.subtract);
+        int first = 3;
+        int second = 5;
+        Operation operation = Operation.multiply;
+        
+        BufferedImage image = Flashcards.createFlashcardFrontImage(first,
+                second, operation);
         Flashcards.showImageInFrame(image);
+        BufferedImage image2 = Flashcards.createFlashcardBackImage(first,
+                second, operation);
+        Flashcards.showImageInFrame(image2);
     }
     
 }
