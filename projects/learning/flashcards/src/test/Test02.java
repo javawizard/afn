@@ -13,6 +13,7 @@ import javax.print.attribute.standard.MediaSizeName;
 
 public class Test02
 {
+    public static final int INCHES = Size2DSyntax.INCH;
     
     /**
      * @param args
@@ -22,12 +23,10 @@ public class Test02
         PrintService service = PrintServiceLookup.lookupDefaultPrintService();
         DocPrintJob job = service.createPrintJob();
         HashPrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
-        attributes.add(MediaSizeName.ISO_B7);
-        MediaPrintableArea[] area = (MediaPrintableArea[]) service
-                .getSupportedAttributeValues(MediaPrintableArea.class, null,
-                        attributes);
-        System.out.println(Arrays.asList(area));
-        // job.print(doc, attributes);
-        System.out.println(MediaSize.findMedia(3, 5, Size2DSyntax.INCH));
+        attributes.add(MediaSizeName.NA_LETTER);
+        MediaSize mediaSize = MediaSize
+                .getMediaSizeForName(MediaSizeName.NA_LETTER);
+        float pageWidth = mediaSize.getX(INCHES);
+        System.out.println(pageWidth);
     }
 }
