@@ -1,5 +1,7 @@
 package test;
 
+import java.util.Arrays;
+
 import javax.print.DocPrintJob;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
@@ -21,13 +23,10 @@ public class Test02
         DocPrintJob job = service.createPrintJob();
         HashPrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
         attributes.add(MediaSizeName.ISO_B7);
-         MediaPrintableArea area = (MediaPrintableArea) service
-         .getSupportedAttributeValues(MediaPrintableArea.class, null,
-         attributes);
-         System.out.println(area.getX(Size2DSyntax.INCH) + " "
-         + area.getY(Size2DSyntax.INCH) + " "
-         + area.getWidth(Size2DSyntax.INCH) + " "
-         + area.getHeight(Size2DSyntax.INCH));
+        MediaPrintableArea[] area = (MediaPrintableArea[]) service
+                .getSupportedAttributeValues(MediaPrintableArea.class, null,
+                        attributes);
+        System.out.println(Arrays.asList(area));
         // job.print(doc, attributes);
         System.out.println(MediaSize.findMedia(3, 5, Size2DSyntax.INCH));
     }
