@@ -14,7 +14,7 @@ public class Test03
     public static void main(String[] args)
     {
         BufferedImage image = Flashcards.createFlashcardFrontImage(12, 5,
-                Operation.multiply);
+                Operation.add);
         Flashcards.showImageInFrame(image);
     }
     
