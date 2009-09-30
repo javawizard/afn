@@ -167,7 +167,7 @@ public class Flashcards
         int lineY = 375;
         for (int i = 0; i < 8; i++)
         {
-            g.drawLine(0, lineY + i, 300, lineY + i);
+            g.drawLine(LINE_START, lineY + i, LINE_END, lineY + i);
         }
         return image;
     }
