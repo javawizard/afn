@@ -109,7 +109,7 @@ public class Flashcards
     }
     
     public static final int OPERATOR_SPACING = 0;
-    public static final int FROM_SIDE = 45;
+    public static final int FROM_SIDE = 50;
     public static final int MAX_NUMBER_WIDTH = (300 - FROM_SIDE)
             - OPERATOR_SPACING;
     public static final int MAX_NUMBER_HEIGHT = 175;
@@ -117,6 +117,8 @@ public class Flashcards
     
     public static final double SYMBOL_MULTIPLIER = 0.75d;
     private static final Font DEFAULT_FONT = Font.decode(null);
+    public static final int LINE_START = 25;
+    public static final int LINE_END = 300 - LINE_START;
     
     public static BufferedImage createFlashcardFrontImage(int first,
             int second, Operation operation)
