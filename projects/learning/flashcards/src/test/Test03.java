@@ -13,7 +13,7 @@ public class Test03
      */
     public static void main(String[] args)
     {
-        BufferedImage image = Flashcards.createFlashcardFrontImage(12, 5,
+        BufferedImage image = Flashcards.createFlashcardFrontImage(3, 5,
                 Operation.multiply);
         Flashcards.showImageInFrame(image);
     }
