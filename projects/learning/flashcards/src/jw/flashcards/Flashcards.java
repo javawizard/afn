@@ -23,6 +23,10 @@ import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaSizeName;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.border.LineBorder;
 
 public class Flashcards
 {
@@ -44,7 +48,7 @@ public class Flashcards
                 return "" + (first - second);
             }
         },
-        multiply("\u00D7")
+        multiply("\u00D7")// u00D7
         {
             @Override
             public String compute(int first, int second)
@@ -92,7 +96,7 @@ public class Flashcards
         BufferedImage image = newImage();
         Graphics2D g = image.createGraphics();
         g.setColor(Color.black);
-        g.setFont(Font.decode(null).deriveFont(18f));
+        g.setFont(DEFAULT_FONT.deriveFont(18f));
         for (int i = 1; i < 300; i += 49)
         {
             g.drawLine(i, 0, i, 500);
@@ -104,14 +108,20 @@ public class Flashcards
         return image;
     }
     
-    public static final int OPERATOR_SPACING = 20;
-    public static final int MAX_NUMBER_WIDTH = 250 - OPERATOR_SPACING;
-    public static final int MAX_NUMBER_HEIGHT = 150 - OPERATOR_SPACING;
-    public static final int STARTING_SIZE = 150;
+    public static final int OPERATOR_SPACING = 0;
+    public static final int FROM_SIDE = 25;
+    public static final int MAX_NUMBER_WIDTH = (300 - FROM_SIDE)
+            - OPERATOR_SPACING;
+    public static final int MAX_NUMBER_HEIGHT = 175;
+    public static final int STARTING_SIZE = 200;
+    
+    public static final double SYMBOL_MULTIPLIER = 0.75d;
+    private static final Font DEFAULT_FONT = Font.decode(null);
     
     public static BufferedImage createFlashcardFrontImage(int first,
             int second, Operation operation)
     {
+        double symbolMultiplier = SYMBOL_MULTIPLIER;
         BufferedImage image = newImage();
         Graphics2D g = image.createGraphics();
         int totalWidth = image.getWidth();
@@ -129,15 +139,34 @@ public class Flashcards
         /*
          * We need to set the font size to allow the numbers to correctly fit
          */
-        g.setFont(maxFontForSize(g, STARTING_SIZE, MAX_NUMBER_WIDTH,
-                MAX_NUMBER_HEIGHT, operatorString, firstString, secondString));
+        Font normalFont = maxFontForSize(g, STARTING_SIZE, MAX_NUMBER_WIDTH,
+                MAX_NUMBER_HEIGHT, operatorString, firstString, secondString,
+                symbolMultiplier);
+        Font symbolFont = normalFont
+                .deriveFont((float) (normalFont.getSize2D() * symbolMultiplier));
+        g.setFont(normalFont);
         /*
          * Font size is set. Now we determine the position to start drawing each
          * sequence from.
          */
-        int firstNumberX = getFromRight(g, firstString, totalWidth - 50);
-        int firstNumberY = 25;
-        int secondNumberX = getFromRight(g, secondString, totalWidth - 50);
+        int firstNumberX = getFromRight(g, firstString, totalWidth - FROM_SIDE);
+        int firstNumberY = 175;
+        int secondNumberX = getFromRight(g, secondString, totalWidth
+                - FROM_SIDE);
+        int secondNumberY = 350;
+        g.drawString(firstString, firstNumberX, firstNumberY);
+        g.drawString(secondString, secondNumberX, secondNumberY);
+        g.setFont(symbolFont);
+        int operatorX = getFromRight(g, operatorString, Math.min(firstNumberX,
+                secondNumberX)
+                - OPERATOR_SPACING);
+        int operatorY = secondNumberY;
+        g.drawString(operatorString, operatorX, operatorY);
+        int lineY = 375;
+        for (int i = 0; i < 8; i++)
+        {
+            g.drawLine(0, lineY + i, 300, lineY + i);
+        }
         return image;
     }
     
@@ -166,7 +195,7 @@ public class Flashcards
      * @return a font
      */
     public static Font maxFontForSize(Graphics g, int size, int w, int h,
-            String symbol, String first, String second)
+            String symbol, String first, String second, double symbolMultiplier)
     {
         if (w == -1)
             w = Integer.MAX_VALUE;
@@ -174,21 +203,28 @@ public class Flashcards
             h = Integer.MAX_VALUE;
         while (size > 0)
         {
-            Font font = Font.decode(null).deriveFont(size * 1f);
+            Font font = DEFAULT_FONT.deriveFont(size * 1f);
             FontMetrics metrics = g.getFontMetrics(font);
             int symbolW = metrics.stringWidth(symbol);
+            symbolW = (int) ((symbolW * 1d) * symbolMultiplier);
             int firstW = metrics.stringWidth(first);
             int secondW = metrics.stringWidth(second);
             int rw = Math.max(firstW, secondW) + symbolW;
             int rh = metrics.getAscent();
-            if (w <= rw && h <= rh)
+            if (w >= rw && h >= rh)
+            {
+                System.out.println("Corrected ascent: " + metrics.getAscent()
+                        + ", requested w: " + w + ", real w: " + rw
+                        + ", first w: " + firstW + ", secondW: " + secondW
+                        + ", rh: " + rh + ", h: " + h);
                 return font;
+            }
             size -= 1;
         }
         if (size <= 0)
             throw new IllegalArgumentException(
                     "The font couldn't fit into that box.");
-        return Font.decode(null).deriveFont(size * 1f);
+        return DEFAULT_FONT.deriveFont(size * 1f);
     }
     
     public static BufferedImage newImage()
@@ -229,6 +265,19 @@ public class Flashcards
         SimpleDoc doc = new SimpleDoc(data, DocFlavor.BYTE_ARRAY.PNG,
                 docAttributes);
         job.print(doc, attributes);
+    }
+    
+    public static void showImageInFrame(BufferedImage image)
+    {
+        JFrame f = new JFrame("Flashcards");
+        f.setDefaultCloseOperation(f.DISPOSE_ON_CLOSE);
+        JLabel l = new JLabel();
+        l.setBorder(new LineBorder(Color.LIGHT_GRAY));
+        l.setIcon(new ImageIcon(image));
+        f.getContentPane().add(l);
+        f.pack();
+        f.setLocationRelativeTo(null);
+        f.show();
     }
     
 }
