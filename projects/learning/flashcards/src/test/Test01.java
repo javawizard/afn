@@ -27,6 +27,8 @@ public class Test01
             g.fillRect((int) format.getImageableX(), (int) format
                     .getImageableY(), (int) format.getImageableWidth(),
                     (int) format.getImageableHeight());
+            g.setColor(Color.BLACK);
+            g.drawString("H", 5, 105);
             return PAGE_EXISTS;
         }
     }
