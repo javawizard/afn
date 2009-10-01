@@ -13,12 +13,12 @@ public class Test03
      */
     public static void main(String[] args) throws Throwable
     {
-        int first = 3;
-        int second = 5;
-        Operation operation = Operation.multiply;
+        int first = Integer.parseInt(args[0]);
+        int second = Integer.parseInt(args[2]);
+        Operation operation = Operation.valueOf(args[1]);
         String mode = "s";
-        if (args.length > 0)
-            mode = args[0];
+        if (args.length > 3)
+            mode = args[3];
         
         BufferedImage front = Flashcards.createFlashcardFrontImage(first,
                 second, operation);
