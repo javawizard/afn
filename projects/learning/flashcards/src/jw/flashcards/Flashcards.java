@@ -6,9 +6,13 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.imageio.ImageIO;
 import javax.print.DocFlavor;
@@ -27,6 +31,7 @@ import javax.print.attribute.standard.MediaSizeName;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.border.LineBorder;
 
 public class Flashcards
@@ -89,7 +94,95 @@ public class Flashcards
      */
     public static void main(String[] args) throws Exception
     {
-        printImage(createLineImage());
+        final ChoiceFrame frame = new ChoiceFrame();
+        frame.setTitle("Flashcards");
+        frame.setLocationRelativeTo(null);
+        frame.show();
+        frame.getGoButton().addActionListener(new ActionListener()
+        {
+            
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                frame.getGoButton().setEnabled(false);
+                new Thread()
+                {
+                    public void run()
+                    {
+                        doStartPrint(frame);
+                    }
+                }.start();
+            }
+        });
+    }
+    
+    protected static void doStartPrint(ChoiceFrame frame)
+    {
+        frame.getFirstStart().setEnabled(false);
+        frame.getFirstEnd().setEnabled(false);
+        frame.getSecondStart().setEnabled(false);
+        frame.getSecondEnd().setEnabled(false);
+        frame.getOperationField().setEnabled(false);
+        frame.getSideField().setEnabled(false);
+        frame.getGoButton().setEnabled(false);
+        try
+        {
+            int firstStart = Integer.parseInt(frame.getFirstStart().getText());
+            int firstEnd = Integer.parseInt(frame.getFirstEnd().getText());
+            int secondStart = Integer
+                    .parseInt(frame.getSecondStart().getText());
+            int secondEnd = Integer.parseInt(frame.getSecondEnd().getText());
+            Operation operation = Operation.valueOf(""
+                    + frame.getOperationField().getSelectedItem());
+            boolean front = frame.getSideField().getSelectedIndex() == 0;
+            boolean back = !front;
+            ArrayList<int[]> items = new ArrayList<int[]>();
+            for (int first = firstStart; first <= firstEnd; first++)
+            {
+                for (int second = secondStart; second <= secondEnd; second++)
+                {
+                    items.add(new int[]
+                    {
+                            first, second
+                    });
+                }
+            }
+            if (back)
+                Collections.reverse(items);
+            if (JOptionPane.showConfirmDialog(frame,
+                    "Are you sure you want to print the "
+                            + (front ? "front" : "back") + " side for "
+                            + items.size() + " cards?", null,
+                    JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+                return;
+            for (int[] item : items)
+            {
+                int first = item[0];
+                int second = item[1];
+                System.gc();
+                BufferedImage image = front ? createFlashcardFrontImage(first,
+                        second, operation) : createFlashcardBackImage(first,
+                        second, operation);
+                printImage(image);
+            }
+            JOptionPane.showMessageDialog(frame, "Successfully printed.");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "An error occured: "
+                    + e.getClass().getName() + ": " + e.getMessage());
+        }
+        finally
+        {
+            frame.getFirstStart().setEnabled(true);
+            frame.getFirstEnd().setEnabled(true);
+            frame.getSecondStart().setEnabled(true);
+            frame.getSecondEnd().setEnabled(true);
+            frame.getOperationField().setEnabled(true);
+            frame.getSideField().setEnabled(true);
+            frame.getGoButton().setEnabled(true);
+        }
     }
     
     public static BufferedImage createLineImage()
