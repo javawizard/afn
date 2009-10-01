@@ -109,21 +109,25 @@ public class Flashcards
         return image;
     }
     
+    public static final int IMAGE_WIDTH = 1200;
+    public static final int IMAGE_HEIGHT = (IMAGE_WIDTH / 3) * 5;
+    public static final int GM = IMAGE_WIDTH / 6;
+    public static final int GMH = GM / 2;
     public static final int OPERATOR_SPACING = 0;
-    public static final int FROM_SIDE = 50;
-    public static final int MAX_NUMBER_WIDTH = (300 - FROM_SIDE)
+    public static final int FROM_SIDE = gm(1);
+    public static final int MAX_NUMBER_WIDTH = (IMAGE_WIDTH - FROM_SIDE)
             - OPERATOR_SPACING;
-    public static final int MAX_NUMBER_HEIGHT = 175;
-    public static final int STARTING_SIZE = 200;
+    public static final int MAX_NUMBER_HEIGHT = gm(3.5);
+    public static final int STARTING_SIZE = gm(4);
     
     public static final double SYMBOL_MULTIPLIER = 0.75d;
     private static final Font DEFAULT_FONT = Font.decode(null);
-    public static final int LINE_START = 25;
-    public static final int LINE_END = 300 - LINE_START;
-    public static final int ANSWER_HEIGHT = 25;
-    public static final int ANSWER_WIDTH = 50;
-    public static final int ANSWER_X = 25;
-    public static final int ANSWER_Y = 25;
+    public static final int LINE_START = gm(0.5);
+    public static final int LINE_END = gm(6) - LINE_START;
+    public static final int ANSWER_HEIGHT = gm(0.5);
+    public static final int ANSWER_WIDTH = gm(1);
+    public static final int ANSWER_X = gm(0.5);
+    public static final int ANSWER_Y = gm(0.5);
     
     public static BufferedImage createFlashcardFrontImage(int first,
             int second, Operation operation)
@@ -157,10 +161,10 @@ public class Flashcards
          * sequence from.
          */
         int firstNumberX = getFromRight(g, firstString, totalWidth - FROM_SIDE);
-        int firstNumberY = 175;
+        int firstNumberY = gm(3.5);
         int secondNumberX = getFromRight(g, secondString, totalWidth
                 - FROM_SIDE);
-        int secondNumberY = 350;
+        int secondNumberY = gm(7);
         g.drawString(firstString, firstNumberX, firstNumberY);
         g.drawString(secondString, secondNumberX, secondNumberY);
         g.setFont(symbolFont);
@@ -169,15 +173,20 @@ public class Flashcards
                 - OPERATOR_SPACING);
         int operatorY = secondNumberY;
         g.drawString(operatorString, operatorX, operatorY);
-        int lineY = 375;
-        for (int i = 0; i < 8; i++)
+        int lineY = gm(7.5);
+        for (int i = 0; i < gm(0.1666); i++)
         {
             g.drawLine(LINE_START, lineY + i, LINE_END, lineY + i);
         }
         // Now we'll draw the box to hide the answer.
-        g.fillRect((300 - ANSWER_X) - ANSWER_WIDTH, (totalHeight - ANSWER_Y)
+        g.fillRect((gm(6) - ANSWER_X) - ANSWER_WIDTH, (totalHeight - ANSWER_Y)
                 - ANSWER_HEIGHT, ANSWER_WIDTH, ANSWER_HEIGHT);
         return image;
+    }
+    
+    public static int gm(double multiplier)
+    {
+        return (int) ((GM * 1d) * multiplier);
     }
     
     public static BufferedImage createFlashcardBackImage(int first, int second,
@@ -252,11 +261,11 @@ public class Flashcards
     
     public static BufferedImage newImage()
     {
-        BufferedImage image = new BufferedImage(300, 500,
+        BufferedImage image = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT,
                 BufferedImage.TYPE_INT_ARGB);
         Graphics g = image.getGraphics();
         g.setColor(Color.WHITE);
-        g.fillRect(0, 0, 300, 500);
+        g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
         return image;
     }
     
