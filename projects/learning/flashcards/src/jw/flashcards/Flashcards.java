@@ -199,6 +199,9 @@ public class Flashcards
         g.drawString(operation.compute(first, second), ANSWER_X, image
                 .getHeight()
                 - ANSWER_Y);
+        String problemString = "" + first + operation.toString() + second;
+        g.drawString(problemString, getFromRight(g, problemString, IMAGE_WIDTH
+                - ANSWER_X), ANSWER_Y + ANSWER_HEIGHT);
         return image;
     }
     
