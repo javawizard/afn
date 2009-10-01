@@ -155,8 +155,11 @@ public class Flashcards
                             + items.size() + " cards?", null,
                     JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
                 return;
+            int index = 0;
             for (int[] item : items)
             {
+                index++;
+                System.out.println("Item " + index + " of " + items.size());
                 int first = item[0];
                 int second = item[1];
                 System.gc();
