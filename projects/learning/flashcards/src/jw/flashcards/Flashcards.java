@@ -29,9 +29,11 @@ import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaSizeName;
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.border.LineBorder;
 
 public class Flashcards
@@ -125,6 +127,7 @@ public class Flashcards
         frame.getOperationField().setEnabled(false);
         frame.getSideField().setEnabled(false);
         frame.getGoButton().setEnabled(false);
+        JDialog dialog = null;
         try
         {
             int firstStart = Integer.parseInt(frame.getFirstStart().getText());
@@ -155,11 +158,33 @@ public class Flashcards
                             + items.size() + " cards?", null,
                     JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
                 return;
+            dialog = new JDialog(frame, true);
+            final JDialog fDialog = dialog;
+            dialog.setTitle("Progress");
+            JProgressBar progress = new JProgressBar();
+            progress.setMaximum(items.size());
+            progress.setMinimum(0);
+            progress.setValue(0);
+            progress.setStringPainted(true);
+            progress.setString("Initializing...");
+            dialog.getContentPane().add(progress);
+            dialog.pack();
+            dialog.setLocationRelativeTo(null);
+            new Thread()
+            {
+                public void run()
+                {
+                    fDialog.show();
+                }
+            }.start();
             int index = 0;
             for (int[] item : items)
             {
                 index++;
                 System.out.println("Item " + index + " of " + items.size());
+                progress.setValue(index);
+                progress.setString("Printing card " + index + " of "
+                        + items.size());
                 int first = item[0];
                 int second = item[1];
                 System.gc();
@@ -185,6 +210,8 @@ public class Flashcards
             frame.getOperationField().setEnabled(true);
             frame.getSideField().setEnabled(true);
             frame.getGoButton().setEnabled(true);
+            if (dialog != null)
+                dialog.dispose();
         }
     }
     
