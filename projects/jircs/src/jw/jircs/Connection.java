@@ -235,8 +235,10 @@ public class Connection implements Runnable
                 synchronized (mutex)
                 {
                     Channel channel = channelMap.get(channelName);
+                    boolean added = false;
                     if (channel == null)
                     {
+                        added = true;
                         channel = new Channel();
                         channel.name = channelName;
                         channelMap.put(channelName, channel);
@@ -248,8 +250,14 @@ public class Connection implements Runnable
                         return;
                     }
                     channel.channelMembers.add(con);
-                    con.send(":" + con.getRepresentation() + " JOIN "
+                    channel.send(":" + con.getRepresentation() + " JOIN "
                             + channelName);
+                    if (added)
+                        con.sendGlobal("MODE " + channelName + " +nt");
+                    // This is commented out because channel.send takes care of
+                    // this for us
+                    // con.send(":" + con.getRepresentation() + " JOIN "
+                    // + channelName);
                     if (channel.topic != null)
                         con
                                 .sendGlobal("332 " + con.nick + " :"
@@ -258,13 +266,11 @@ public class Connection implements Runnable
                         con.sendGlobal("331 " + con.nick + " :No topic is set");
                     for (Connection channelMember : channel.channelMembers)
                     {// 353,366
-                        con.sendGlobal("353 " + con.nick + " " + channelName
+                        con.sendGlobal("353 " + con.nick + " = " + channelName
                                 + " :" + channelMember.nick);
                     }
                     con.sendGlobal("366 " + con.nick + " " + channelName
                             + " :End of /NAMES list");
-                    channel.send(":" + con.getRepresentation() + " JOIN "
-                            + channelName);
                 }
             }
         },
@@ -324,6 +330,133 @@ public class Connection implements Runnable
                 con.sendGlobal("302 " + con.nick + " :"
                         + delimited(replies.toArray(new String[0]), " "));
             }
+        },
+        MODE(0, 2)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                if (arguments.length == 1)
+                {
+                    if (arguments[0].startsWith("#"))
+                    {
+                        con.sendGlobal("324 " + con.nick + " " + arguments[0]
+                                + " +nt");
+                    }
+                    else
+                    {
+                        con
+                                .sendSelfNotice("User mode querying not supported yet.");
+                    }
+                }
+                else if (arguments.length == 2
+                        && (arguments[1].equals("+b") || arguments[1]
+                                .equals("+e")))
+                {
+                    if (arguments[0].startsWith("#"))
+                    {// 368,349
+                        if (arguments[1].equals("+b"))
+                        {
+                            con.sendGlobal("368 " + con.nick + " "
+                                    + arguments[0]
+                                    + " :End of channel ban list");
+                        }
+                        else
+                        {
+                            con.sendGlobal("349 " + con.nick + " "
+                                    + arguments[0]
+                                    + " :End of channel exception list");
+                        }
+                    }
+                    else
+                    {
+                        con
+                                .sendSelfNotice("User mode setting not supported yet for +b or +e.");
+                    }
+                }
+                else
+                {
+                    con.sendSelfNotice("Specific modes not supported yet.");
+                }
+            }
+        },
+        PART(1, 1)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                String[] channels = arguments[0].split(",");
+                for (String channelName : channels)
+                {
+                    synchronized (mutex)
+                    {
+                        Channel channel = channelMap.get(channelName);
+                        if (channelName == null)
+                            con
+                                    .sendSelfNotice("You're not a member of the channel "
+                                            + channelName
+                                            + ", so you can't part it.");
+                        else
+                        {
+                            channel.send(":" + con.getRepresentation()
+                                    + " PART " + channelName);
+                            channel.channelMembers.remove(con);
+                            if (channel.channelMembers.size() == 0)
+                                channelMap.remove(channelName);
+                        }
+                    }
+                }
+            }
+        },
+        QUIT(1, 1)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                con.sendQuit("Quit: " + arguments[0]);
+            }
+        },
+        PRIVMSG(2, 2)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                String[] recipients = arguments[0].split(",");
+                String message = arguments[1];
+                for (String recipient : recipients)
+                {
+                    if (recipient.startsWith("#"))
+                    {
+                        Channel channel = channelMap.get(recipient);
+                        if (channel == null)
+                            con
+                                    .sendSelfNotice("No such channel, so can't send "
+                                            + "a message to it: " + recipient);
+                        else if (!channel.channelMembers.contains(con))
+                            con.sendSelfNotice("You can't send messages to "
+                                    + "channels you're not at.");
+                        else
+                            channel.send(":" + con.getRepresentation()
+                                    + " PRIVMSG " + recipient + " :" + message);
+                    }
+                    else
+                    {
+                        Connection recipientConnection = connectionMap
+                                .get(recipient);
+                        if (recipientConnection == null)
+                            con.sendSelfNotice("The user " + recipient
+                                    + " is not online.");
+                        else
+                            recipientConnection.send(":"
+                                    + con.getRepresentation() + " PRIVMSG "
+                                    + recipient + " :" + message);
+                    }
+                }
+            }
         };
         private int minArgumentCount;
         private int maxArgumentCount;
@@ -363,6 +496,23 @@ public class Connection implements Runnable
         return response.toString();
     }
     
+    protected void sendQuit(String quitMessage)
+    {
+        synchronized (mutex)
+        {
+            for (String channelName : new ArrayList<String>(channelMap.keySet()))
+            {
+                Channel channel = channelMap.get(channelName);
+                channel.channelMembers.remove(this);
+                channel
+                        .send(":" + getRepresentation() + " QUIT "
+                                + quitMessage);
+                if (channel.channelMembers.size() == 0)
+                    channelMap.remove(channel.name);
+            }
+        }
+    }
+    
     @Override
     public void run()
     {
@@ -385,7 +535,7 @@ public class Connection implements Runnable
         {
             if (nick != null && connectionMap.get(nick) == this)
             {
-                doNickRemoved();
+                sendQuit("Client disconnected");
             }
         }
     }
@@ -393,19 +543,6 @@ public class Connection implements Runnable
     protected void sendGlobal(String string)
     {
         send(":" + globalServerName + " " + string);
-    }
-    
-    private void doNickRemoved()
-    {
-        synchronized (mutex)
-        {
-            connectionMap.remove(nick);
-            for (Channel c : new ArrayList<Channel>(channelMap.values()))
-            {
-                if (c.channelMembers.contains(nick))
-                    c.memberQuit(nick);
-            }
-        }
     }
     
     private LinkedBlockingQueue<String> outQueue = new LinkedBlockingQueue<String>(
