@@ -77,6 +77,7 @@ public class Connection implements Runnable
         if (args.length == 0)
         {
             System.out.println("Usage: java jw.jircs.Connection <servername>");
+            return;
         }
         globalServerName = args[0];
         ServerSocket ss = new ServerSocket(6898);
@@ -109,6 +110,8 @@ public class Connection implements Runnable
                 {
                     String oldNick = con.nick;
                     con.nick = filterAllowedNick(nick);
+                    connectionMap.remove(oldNick);
+                    connectionMap.put(con.nick, con);
                     /*
                      * Now we need to notify all channels that we are on
                      */
@@ -125,12 +128,9 @@ public class Connection implements Runnable
                     throws InterruptedException
             {
                 con.nick = filterAllowedNick(nick);
-                if (con.username == null)
+                synchronized (mutex)
                 {
-                    con.send("NOTICE AUTH :You must send USER before you "
-                            + "send NICK. You will be disconnected.");
-                    Thread.sleep(1000);
-                    throw new RuntimeException();
+                    connectionMap.put(con.nick, con);
                 }
                 /*
                  * Now we send the user a welcome message and everything.
@@ -248,13 +248,81 @@ public class Connection implements Runnable
                         return;
                     }
                     channel.channelMembers.add(con);
+                    con.send(":" + con.getRepresentation() + " JOIN "
+                            + channelName);
                     if (channel.topic != null)
                         con
                                 .sendGlobal("332 " + con.nick + " :"
                                         + channel.topic);
                     else
                         con.sendGlobal("331 " + con.nick + " :No topic is set");
+                    for (Connection channelMember : channel.channelMembers)
+                    {// 353,366
+                        con.sendGlobal("353 " + con.nick + " " + channelName
+                                + " :" + channelMember.nick);
+                    }
+                    con.sendGlobal("366 " + con.nick + " " + channelName
+                            + " :End of /NAMES list");
+                    channel.send(":" + con.getRepresentation() + " JOIN "
+                            + channelName);
                 }
+            }
+        },
+        WHO(0, 2)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                if (arguments.length > 1)
+                    con
+                            .sendSelfNotice("Filtering by operator only using the WHO "
+                                    + "command isn't yet supported. WHO will act "
+                                    + "as if \"o\" has not been specified.");
+                String person = "";
+                if (arguments.length > 0)
+                    person = arguments[0];
+                synchronized (mutex)
+                {
+                    Channel channel = channelMap.get(person);
+                    if (channel != null)
+                    {
+                        for (Connection channelMember : channel.channelMembers)
+                        {
+                            con.sendGlobal("352 " + con.nick + " " + person
+                                    + " " + con.username + " " + con.hostname
+                                    + " " + globalServerName + " " + con.nick
+                                    + " H :0 " + con.description);
+                        }
+                    }
+                    else
+                    {
+                        con
+                                .sendSelfNotice("WHO with something other than a channel "
+                                        + "as arguments is not supported right now. "
+                                        + "WHO will display an empty list of people.");
+                    }
+                }
+                con.send("315 " + con.nick + " " + person
+                        + " :End of /WHO list.");
+            }
+        },
+        USERHOST(1, 5)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                ArrayList<String> replies = new ArrayList<String>();
+                for (String s : arguments)
+                {
+                    Connection user = connectionMap.get(s);
+                    if (user != null)
+                        replies.add(user.nick + "=+" + user.username + "@"
+                                + user.hostname);
+                }
+                con.sendGlobal("302 " + con.nick + " :"
+                        + delimited(replies.toArray(new String[0]), " "));
             }
         };
         private int minArgumentCount;
@@ -278,6 +346,21 @@ public class Connection implements Runnable
         
         public abstract void run(Connection con, String prefix,
                 String[] arguments) throws Exception;
+    }
+    
+    public static String delimited(String[] items, String delimiter)
+    {
+        StringBuffer response = new StringBuffer();
+        boolean first = true;
+        for (String s : items)
+        {
+            if (first)
+                first = false;
+            else
+                response.append(delimiter);
+            response.append(s);
+        }
+        return response.toString();
     }
     
     @Override
@@ -380,6 +463,7 @@ public class Connection implements Runnable
     
     private void processLine(String line) throws Exception
     {
+        System.out.println("Processing line from " + nick + ": " + line);
         String prefix = "";
         if (line.startsWith(":"))
         {
@@ -396,7 +480,8 @@ public class Connection implements Runnable
         if (tokens2.length > 1)
             trailing = tokens2[1];
         ArrayList<String> argumentList = new ArrayList<String>();
-        argumentList.addAll(Arrays.asList(line.split(" ")));
+        if (!line.equals(""))
+            argumentList.addAll(Arrays.asList(line.split(" ")));
         if (trailing != null)
             argumentList.add(trailing);
         String[] arguments = argumentList.toArray(new String[0]);
@@ -405,9 +490,24 @@ public class Connection implements Runnable
          */
         if (command.matches("[0-9][0-9][0-9]"))
             command = "n" + command;
-        Command commandObject = Command.valueOf(command.toLowerCase());
+        Command commandObject = null;
+        try
+        {
+            Command.valueOf(command.toLowerCase());
+        }
+        catch (Exception e)
+        {
+        }
         if (commandObject == null)
-            commandObject = Command.valueOf(command.toUpperCase());
+        {
+            try
+            {
+                commandObject = Command.valueOf(command.toUpperCase());
+            }
+            catch (Exception e)
+            {
+            }
+        }
         if (commandObject == null)
         {
             sendSelfNotice("That command (" + command
@@ -464,6 +564,9 @@ public class Connection implements Runnable
     {
         Queue<String> testQueue = outQueue;
         if (testQueue != null)
+        {
+            System.out.println("Sending line to " + nick + ": " + s);
             testQueue.add(s);
+        }
     }
 }
