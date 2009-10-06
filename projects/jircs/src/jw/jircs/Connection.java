@@ -26,10 +26,11 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Connection implements Runnable
 {
-    public class Channel
+    public static class Channel
     {
         private ArrayList<Connection> channelMembers = new ArrayList<Connection>();
         private String topic;
+        protected String name;
         
         public void send(String toSend)
         {
@@ -153,6 +154,107 @@ public class Connection implements Runnable
                 String forDescription = arguments.length > 3 ? arguments[3]
                         : "(no description)";
                 con.description = forDescription;
+                /*
+                 * Now we'll send the user their initial information.
+                 */
+                con.sendGlobal("001 " + con.nick + " :Welcome to "
+                        + globalServerName + ", a Jircs-powered IRC network.");
+                con.sendGlobal("375 " + con.nick + " :- " + globalServerName
+                        + " Message of the Day -");
+                con.sendGlobal("372 " + con.nick + " :- Hello. Welcome to "
+                        + globalServerName + ", a Jircs-powered IRC network.");
+                con
+                        .sendGlobal("372 "
+                                + con.nick
+                                + " :- See http://code.google.com/p/jwutils/wiki/Jircs "
+                                + "for more info on Jircs.");
+                con.sendGlobal("376 " + con.nick + " :End of /MOTD command.");
+            }
+        },
+        PING(1, 1)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                con.send(":" + globalServerName + " PONG " + globalServerName
+                        + " :" + arguments[0]);
+            }
+        },
+        JOIN(1, 2)
+        {
+            
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                if (arguments.length == 2)
+                {
+                    con.sendSelfNotice("This server does not support "
+                            + "channel keys at "
+                            + "this time. JOIN will act as if you "
+                            + "hadn't specified any keys.");
+                }
+                String[] channelNames = arguments[0].split(",");
+                for (String channelName : channelNames)
+                {
+                    if (!channelName.startsWith("#"))
+                    {
+                        con.sendSelfNotice("This server only allows "
+                                + "channel names that "
+                                + "start with a # sign.");
+                        return;
+                    }
+                    if (channelName.contains(" "))
+                    {
+                        con.sendSelfNotice("This server does not allow spaces "
+                                + "in channel names.");
+                        return;
+                    }
+                }
+                for (String channelName : channelNames)
+                {
+                    doJoin(con, channelName);
+                }
+            }
+            
+            public void doJoin(Connection con, String channelName)
+            {
+                if (!channelName.startsWith("#"))
+                {
+                    con
+                            .sendSelfNotice("This server only allows channel names that "
+                                    + "start with a # sign.");
+                    return;
+                }
+                if (channelName.contains(" "))
+                {
+                    con
+                            .sendSelfNotice("This server does not allow spaces in channel names.");
+                }
+                synchronized (mutex)
+                {
+                    Channel channel = channelMap.get(channelName);
+                    if (channel == null)
+                    {
+                        channel = new Channel();
+                        channel.name = channelName;
+                        channelMap.put(channelName, channel);
+                    }
+                    if (channel.channelMembers.contains(con))
+                    {
+                        con.sendSelfNotice("You're already a member of "
+                                + channelName);
+                        return;
+                    }
+                    channel.channelMembers.add(con);
+                    if (channel.topic != null)
+                        con
+                                .sendGlobal("332 " + con.nick + " :"
+                                        + channel.topic);
+                    else
+                        con.sendGlobal("331 " + con.nick + " :No topic is set");
+                }
             }
         };
         private int minArgumentCount;
@@ -203,6 +305,11 @@ public class Connection implements Runnable
                 doNickRemoved();
             }
         }
+    }
+    
+    protected void sendGlobal(String string)
+    {
+        send(":" + globalServerName + " " + string);
     }
     
     private void doNickRemoved()
