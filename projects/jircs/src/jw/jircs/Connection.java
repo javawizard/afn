@@ -32,15 +32,21 @@ public class Connection implements Runnable
         private String topic;
         protected String name;
         
-        public void send(String toSend)
+        public void sendNot(Connection not, String toSend)
         {
             synchronized (mutex)
             {
                 for (Connection con : channelMembers)
                 {
-                    con.send(toSend);
+                    if (con != not)
+                        con.send(toSend);
                 }
             }
+        }
+        
+        public void send(String toSend)
+        {
+            sendNot(null, toSend);
         }
         
         public void memberQuit(String nick)
@@ -381,7 +387,7 @@ public class Connection implements Runnable
                 }
             }
         },
-        PART(1, 1)
+        PART(1, 2)
         {
             @Override
             public void run(Connection con, String prefix, String[] arguments)
@@ -440,7 +446,7 @@ public class Connection implements Runnable
                             con.sendSelfNotice("You can't send messages to "
                                     + "channels you're not at.");
                         else
-                            channel.send(":" + con.getRepresentation()
+                            channel.sendNot(con, ":" + con.getRepresentation()
                                     + " PRIVMSG " + recipient + " :" + message);
                     }
                     else
@@ -504,9 +510,8 @@ public class Connection implements Runnable
             {
                 Channel channel = channelMap.get(channelName);
                 channel.channelMembers.remove(this);
-                channel
-                        .send(":" + getRepresentation() + " QUIT "
-                                + quitMessage);
+                channel.send(":" + getRepresentation() + " QUIT :"
+                        + quitMessage);
                 if (channel.channelMembers.size() == 0)
                     channelMap.remove(channel.name);
             }
