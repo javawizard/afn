@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
+
 /**
  * Jircs: Java IRC Server. This is a simplistic IRC server. It's not designed
  * for production environments; I mainly wrote it to allow me to test out an IRC
@@ -86,7 +88,7 @@ public class Connection implements Runnable
             return;
         }
         globalServerName = args[0];
-        ServerSocket ss = new ServerSocket(6898);
+        ServerSocket ss = new ServerSocket(6667);
         while (true)
         {
             Socket s = ss.accept();
@@ -265,11 +267,11 @@ public class Connection implements Runnable
                     // con.send(":" + con.getRepresentation() + " JOIN "
                     // + channelName);
                     if (channel.topic != null)
-                        con
-                                .sendGlobal("332 " + con.nick + " :"
-                                        + channel.topic);
+                        con.sendGlobal("332 " + con.nick + " " + channel.name
+                                + " :" + channel.topic);
                     else
-                        con.sendGlobal("331 " + con.nick + " :No topic is set");
+                        con.sendGlobal("331 " + con.nick + " " + channel.name
+                                + " :No topic is set");
                     for (Connection channelMember : channel.channelMembers)
                     {// 353,366
                         con.sendGlobal("353 " + con.nick + " = " + channelName
@@ -461,6 +463,42 @@ public class Connection implements Runnable
                                     + con.getRepresentation() + " PRIVMSG "
                                     + recipient + " :" + message);
                     }
+                }
+            }
+        },
+        TOPIC(1, 2)
+        {
+            @Override
+            public void run(Connection con, String prefix, String[] arguments)
+                    throws Exception
+            {
+                Channel channel = channelMap.get(arguments[0]);
+                if (channel == null)
+                {
+                    con.sendSelfNotice("No such channel for topic viewing: "
+                            + arguments[0]);
+                    return;
+                }
+                if (arguments.length == 1)
+                {
+                    /*
+                     * The user wants to see the channel topic.
+                     */
+                    if (channel.topic != null)
+                        con.sendGlobal("332 " + con.nick + " " + channel.name
+                                + " :" + channel.topic);
+                    else
+                        con.sendGlobal("331 " + con.nick + " " + channel.name
+                                + " :No topic is set");
+                }
+                else
+                {
+                    /*
+                     * The user wants to set the channel topic.
+                     */
+                    channel.topic = arguments[1];
+                    channel.sendNot(con, ":" + con.getRepresentation()
+                            + " TOPIC " + channel.name + " :" + channel.topic);
                 }
             }
         };
