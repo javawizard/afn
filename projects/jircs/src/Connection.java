@@ -1,6 +1,3 @@
-
-
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,8 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
 
 /**
  * Jircs: Java IRC Server. This is a simplistic IRC server. It's not designed
