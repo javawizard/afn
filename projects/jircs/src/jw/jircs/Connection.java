@@ -1,9 +1,11 @@
 package jw.jircs;
 
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -120,14 +122,18 @@ public class Connection implements Runnable
                     con.nick = filterAllowedNick(nick);
                     connectionMap.remove(oldNick);
                     connectionMap.put(con.nick, con);
+                    con.send(":" + oldNick + "!" + con.username + "@"
+                            + con.hostname + " NICK :" + con.nick);
                     /*
                      * Now we need to notify all channels that we are on
                      */
                     for (Channel c : channelMap.values())
                     {
-                        if (c.channelMembers.contains(this))
-                            c.send(":" + oldNick + "!" + con.username + "@"
-                                    + con.hostname + " NICK :" + con.nick);
+                        if (c.channelMembers.contains(con))
+                            c
+                                    .sendNot(con, ":" + oldNick + "!"
+                                            + con.username + "@" + con.hostname
+                                            + " NICK :" + con.nick);
                     }
                 }
             }
@@ -167,6 +173,8 @@ public class Connection implements Runnable
                  */
                 con.sendGlobal("001 " + con.nick + " :Welcome to "
                         + globalServerName + ", a Jircs-powered IRC network.");
+                con.sendGlobal("004 " + con.nick + " " + globalServerName
+                        + " Jircs");
                 con.sendGlobal("375 " + con.nick + " :- " + globalServerName
                         + " Message of the Day -");
                 con.sendGlobal("372 " + con.nick + " :- Hello. Welcome to "
@@ -304,9 +312,9 @@ public class Connection implements Runnable
                         for (Connection channelMember : channel.channelMembers)
                         {
                             con.sendGlobal("352 " + con.nick + " " + person
-                                    + " " + con.username + " " + con.hostname
-                                    + " " + globalServerName + " " + con.nick
-                                    + " H :0 " + con.description);
+                                    + " " + channelMember.username + " " + channelMember.hostname
+                                    + " " + globalServerName + " " + channelMember.nick
+                                    + " H :0 " + channelMember.description);
                         }
                     }
                     else
@@ -627,7 +635,9 @@ public class Connection implements Runnable
     
     private void doServer() throws Exception
     {
-        hostname = socket.getRemoteSocketAddress().toString();
+        InetSocketAddress address = (InetSocketAddress) socket
+                .getRemoteSocketAddress();
+        hostname = address.getAddress().getHostAddress();
         System.out.println("Connection from host " + hostname);
         outThread.start();
         InputStream socketIn = socket.getInputStream();
