@@ -1,11 +1,14 @@
 package com.googlecode.jwutils.mailnotify;
 
+import java.io.File;
 import java.util.Properties;
 
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.Session;
 import javax.mail.Store;
+
+import net.sf.opengroove.common.utils.StringUtils;
 
 public class MailNotifier
 {
@@ -16,8 +19,8 @@ public class MailNotifier
     public static void main(String[] args) throws Throwable
     {
         String host = "imap.gmail.com";
-        String username = "";
-        String password = "";
+        String username = StringUtils.readFile(new File("storage/username"));
+        String password = StringUtils.readFile(new File("storage/password"));
         
         // Create empty properties
         Properties props = new Properties();
