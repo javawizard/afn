@@ -40,26 +40,23 @@ import javax.swing.border.EmptyBorder;
 import com.googlecode.jwutils.timer.Timer.Direction;
 
 /**
- * A program that shows a tray icon. This tray icon allows for counting-up
- * timers and counting-down timers to be used, and the program will show a
- * "Time's up" window when a counting down timer finishes. When any timers are
- * running, the tray icon shows a circle with a line that rotates in it, kind of
- * like a clock hand rotating on a clock. When no timers are running, the clock
- * is frozen in place.<br/>
- * <br/>
+ * A program that shows a tray icon. This tray icon allows for counting-up timers and
+ * counting-down timers to be used, and the program will show a "Time's up" window when a
+ * counting down timer finishes. When any timers are running, the tray icon shows a circle
+ * with a line that rotates in it, kind of like a clock hand rotating on a clock. When no
+ * timers are running, the clock is frozen in place.<br/> <br/>
  * 
- * When you click on the tray icon, a swing dialog that closes when focus is
- * lost shows up, like when you click on the clock in Windows Vista. This has
- * two columns in it. The right one shows to rows, labeled "up" and "down". They
- * have text fields for hours, minutes, and seconds, and a button to create it.
- * The left column has currently-created timers in it. When a timer is created,
- * it adds it to this. This is in a scroll pane. There is a button for pausing
- * the timer, and there is a button for cancelling it. Upbound timers never stop
- * until they are canceled, and downbound timers are deleted when time is up
- * (and a new window is created that says time's up).
+ * When you click on the tray icon, a swing dialog that closes when focus is lost shows
+ * up, like when you click on the clock in Windows Vista. This has two columns in it. The
+ * right one shows to rows, labeled "up" and "down". They have text fields for hours,
+ * minutes, and seconds, and a button to create it. The left column has currently-created
+ * timers in it. When a timer is created, it adds it to this. This is in a scroll pane.
+ * There is a button for pausing the timer, and there is a button for cancelling it.
+ * Upbound timers never stop until they are canceled, and downbound timers are deleted
+ * when time is up (and a new window is created that says time's up).
  * 
- * When you create a timer, you can enter it's name. This is shown on the time's
- * up window, and also in the left pane.
+ * When you create a timer, you can enter it's name. This is shown on the time's up
+ * window, and also in the left pane.
  * 
  * @author Alexander Boyd
  * 
@@ -70,9 +67,8 @@ public class TrayTimer
     
     private static JPanel currentTimersPanel;
     
-    private static ThreadPoolExecutor threadPool =
-        new ThreadPoolExecutor(3, 10, 10, TimeUnit.SECONDS,
-            new ArrayBlockingQueue<Runnable>(100));
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 10, 10,
+            TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(100));
     
     private static TrayTimerDialog dialog;
     
@@ -136,9 +132,8 @@ public class TrayTimer
                 String name = dialog.getUpName().getText();
                 if (name.trim().equals(""))
                     name = generateName();
-                addTimer(dialog.getUpHours().getText(),
-                    dialog.getUpMinutes().getText(), dialog.getUpSeconds().getText(),
-                    true, name);
+                addTimer(dialog.getUpHours().getText(), dialog.getUpMinutes().getText(),
+                        dialog.getUpSeconds().getText(), true, name);
                 dialog.getUpHours().setText("0");
                 dialog.getUpMinutes().setText("0");
                 dialog.getUpSeconds().setText("0");
@@ -153,8 +148,9 @@ public class TrayTimer
                 String name = dialog.getDownName().getText();
                 if (name.trim().equals(""))
                     name = generateName();
-                addTimer(dialog.getDownHours().getText(), dialog.getDownMinutes()
-                    .getText(), dialog.getDownSeconds().getText(), false, name);
+                addTimer(dialog.getDownHours().getText(),
+                        dialog.getDownMinutes().getText(), dialog.getDownSeconds()
+                                .getText(), false, name);
                 dialog.getDownHours().setText("0");
                 dialog.getDownMinutes().setText("0");
                 dialog.getDownSeconds().setText("0");
@@ -175,9 +171,8 @@ public class TrayTimer
         g.drawOval(0, 0, 63, 63);
         g.setColor(Color.WHITE);
         g.fillOval(4, 4, 55, 55);
-        TrayIcon icon =
-            new TrayIcon(image.getScaledInstance(16, 16, Image.SCALE_AREA_AVERAGING),
-                "TrayTimer - click to show timers");
+        TrayIcon icon = new TrayIcon(image.getScaledInstance(16, 16,
+                Image.SCALE_AREA_AVERAGING), "TrayTimer - click to show timers");
         icon.addMouseListener(new MouseListener()
         {
             
@@ -223,8 +218,8 @@ public class TrayTimer
                 f.setLocationRelativeTo(null);
                 f.show();
                 if (JOptionPane.showConfirmDialog(f,
-                    "Are you sure you want to exit TrayTimer?", null,
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+                        "Are you sure you want to exit TrayTimer?", null,
+                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
                 {
                     System.exit(0);
                 }
@@ -268,7 +263,7 @@ public class TrayTimer
         Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(cfg);
         Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
         dialog.setLocation((size.width - insets.right) - dialog.getWidth(),
-            (size.height - insets.bottom) - dialog.getHeight());
+                (size.height - insets.bottom) - dialog.getHeight());
         dialog.show();
         dialog.toFront();
         dialog.show();
@@ -279,9 +274,9 @@ public class TrayTimer
         for (Timer timer : new ArrayList<Timer>(timers))
         {
             /*
-             * We need to create a new list up there since we will be modifying
-             * the list to remove expired timers in this loop, which will cause
-             * a concurrent modification exception
+             * We need to create a new list up there since we will be modifying the list
+             * to remove expired timers in this loop, which will cause a concurrent
+             * modification exception
              */
             if (timer.getLabel().isSelected())
             {
@@ -308,10 +303,9 @@ public class TrayTimer
     
     private static synchronized void doTimerExpired(Timer timer)
     {
-        JFrame f = new JFrame("" + timer.getName() + ": Time's up");
+        final JFrame f = new JFrame("" + timer.getName() + ": Time's up");
         f.setDefaultCloseOperation(f.DISPOSE_ON_CLOSE);
-        JLabel l =
-            new JLabel("" + timer.getName()
+        JLabel l = new JLabel("" + timer.getName()
                 + (timer.getName().trim().equals("") ? "" : ": ") + "Time's up");
         l.setBorder(new EmptyBorder(20, 20, 20, 20));
         f.getContentPane().add(l);
@@ -321,6 +315,24 @@ public class TrayTimer
         f.toFront();
         f.show();
         removeTimer(timers.indexOf(timer));
+        new Thread()
+        {
+            public void run()
+            {
+                while (f.isShowing())
+                {
+                    try
+                    {
+                        Thread.sleep(1000);
+                    }
+                    catch (InterruptedException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    Toolkit.getDefaultToolkit().beep();
+                }
+            }
+        }.start();
     }
     
     private static void updateTimerLabel(Timer timer)
@@ -340,19 +352,17 @@ public class TrayTimer
     }
     
     /**
-     * Removes the specified timer. This involves removing it from the UI,
-     * removing it from <tt>timers</tt>, and telling it not to receive events
-     * anymore.
+     * Removes the specified timer. This involves removing it from the UI, removing it
+     * from <tt>timers</tt>, and telling it not to receive events anymore.
      * 
      * @param index
      */
     public static synchronized void removeTimer(int index)
     {
         /*
-         * Widgets to remove: remove index * 2. Then, if there is another
-         * component that has shifted to index * 2 (the separator), remove it
-         * too. Then, if there isn't, and there is more than one component, then
-         * remove (index * 2) - 1.
+         * Widgets to remove: remove index 2. Then, if there is another component that has
+         * shifted to index 2 (the separator), remove it too. Then, if there isn't, and
+         * there is more than one component, then remove (index 2) - 1.
          */
         currentTimersPanel.remove(index * 2);
         if (currentTimersPanel.getComponentCount() > (index * 2))
@@ -369,11 +379,11 @@ public class TrayTimer
     }
     
     public static synchronized void addTimer(String h, String m, String s, boolean up,
-        String name)
+            String name)
     {
         TimerComponent component = new TimerComponent();
         component.getNameLabel().setText(
-            "" + (up ? ((char) 8593) : ((char) 8595)) + " " + name);
+                "" + (up ? ((char) 8593) : ((char) 8595)) + " " + name);
         component.getMainButton().setText(h + ":" + m + ":" + s);
         final Timer timer = new Timer();
         timer.setComponent(component);
