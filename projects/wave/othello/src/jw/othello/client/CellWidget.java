@@ -2,6 +2,7 @@ package jw.othello.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FocusPanel;
@@ -64,7 +65,14 @@ public class CellWidget extends Composite
             @Override
             public void onClick(ClickEvent event)
             {
-                listener.cellClicked(CellWidget.this);
+                try
+                {
+                    listener.cellClicked(CellWidget.this);
+                }
+                catch (Exception e)
+                {
+                    Window.alert("" + e);
+                }
             }
         });
     }
