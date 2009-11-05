@@ -13,6 +13,9 @@ public class BoardWidget extends Composite
     {
         this.board = board;
         grid = new Grid(8, 8);
+        grid.setCellPadding(0);
+        grid.setCellSpacing(0);
+        grid.setBorderWidth(0);
         grid.addStyleName("othello-board-grid");
         for (int row = 0; row < 8; row++)
         {
