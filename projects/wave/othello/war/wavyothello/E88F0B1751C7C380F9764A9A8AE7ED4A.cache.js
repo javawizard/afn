@@ -4,8 +4,8 @@ var $wnd = window;
 var $doc = $wnd.document;
 var $moduleName, $moduleBase;
 var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
-$stats && $stats({moduleName:'jw.othello.OthelloGadget',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
-var $intern_21 = '', $intern_29 = ', Size: ', $intern_27 = ':', $intern_18 = 'DOMMouseScroll', $intern_34 = 'Hello world!!!!', $intern_28 = 'Index: ', $intern_38 = 'Object;', $intern_36 = 'Widget;', $intern_35 = '[Lcom.google.gwt.user.client.ui.', $intern_37 = '[Ljava.lang.', $intern_0 = 'blur', $intern_1 = 'change', $intern_25 = 'className', $intern_2 = 'click', $intern_19 = 'contextmenu', $intern_3 = 'dblclick', $intern_24 = 'div', $intern_16 = 'error', $intern_4 = 'focus', $intern_26 = 'gwt-Label', $intern_33 = 'jw.othello.client.OthelloGadget', $intern_5 = 'keydown', $intern_6 = 'keypress', $intern_7 = 'keyup', $intern_20 = 'left', $intern_8 = 'load', $intern_9 = 'losecapture', $intern_31 = 'moduleStartup', $intern_10 = 'mousedown', $intern_11 = 'mousemove', $intern_12 = 'mouseout', $intern_13 = 'mouseover', $intern_14 = 'mouseup', $intern_17 = 'mousewheel', $intern_32 = 'onModuleLoadStart', $intern_23 = 'position', $intern_15 = 'scroll', $intern_30 = 'startup', $intern_22 = 'top';
+$stats && $stats({moduleName:'wavyothello',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
+var $intern_37 = '', $intern_44 = '$', $intern_47 = ', Size: ', $intern_45 = ':', $intern_20 = 'DOMMouseScroll', $intern_52 = 'Hello world!!!!', $intern_46 = 'Index: ', $intern_56 = 'Object;', $intern_54 = 'Widget;', $intern_53 = '[Lcom.google.gwt.user.client.ui.', $intern_55 = '[Ljava.lang.', $intern_43 = '\\', $intern_1 = '__gwt_initWindowCloseHandler', $intern_2 = 'blur', $intern_3 = 'change', $intern_41 = 'className', $intern_4 = 'click', $intern_21 = 'contextmenu', $intern_5 = 'dblclick', $intern_40 = 'div', $intern_18 = 'error', $intern_6 = 'focus', $intern_34 = 'function', $intern_35 = 'function ', $intern_42 = 'gwt-Label', $intern_51 = 'jw.othello.client.OthelloGadget', $intern_7 = 'keydown', $intern_8 = 'keypress', $intern_9 = 'keyup', $intern_36 = 'left', $intern_10 = 'load', $intern_11 = 'losecapture', $intern_49 = 'moduleStartup', $intern_12 = 'mousedown', $intern_13 = 'mousemove', $intern_14 = 'mouseout', $intern_15 = 'mouseover', $intern_16 = 'mouseup', $intern_19 = 'mousewheel', $intern_50 = 'onModuleLoadStart', $intern_31 = 'onblur', $intern_22 = 'onclick', $intern_33 = 'oncontextmenu', $intern_32 = 'ondblclick', $intern_30 = 'onfocus', $intern_27 = 'onkeydown', $intern_28 = 'onkeypress', $intern_29 = 'onkeyup', $intern_23 = 'onmousedown', $intern_25 = 'onmousemove', $intern_24 = 'onmouseup', $intern_26 = 'onmousewheel', $intern_39 = 'position', $intern_0 = 'script', $intern_17 = 'scroll', $intern_48 = 'startup', $intern_38 = 'top';
 var _;
 function java_lang_Object_equals__Ljava_lang_Object_2(other){
   return this === (other == null?null:other);
@@ -32,69 +32,18 @@ function com_google_gwt_core_client_JavaScriptObject_hashCode_1_1devirtual$__Lja
 }
 
 var com_google_gwt_core_client_impl_Impl_sNextHashId = 0;
-function com_google_gwt_dom_client_DOMImpl_$clinit__(){
-  com_google_gwt_dom_client_DOMImpl_$clinit__ = nullMethod;
-  com_google_gwt_dom_client_DOMImplSafari_$clinit__();
-  new com_google_gwt_dom_client_DOMImplSafari();
+function com_google_gwt_dom_client_DOMImpl_$createScriptElement__Lcom_google_gwt_dom_client_DOMImpl_2Lcom_google_gwt_dom_client_Document_2Ljava_lang_String_2(doc, source){
+  var elem;
+  elem = doc.createElement($intern_0);
+  elem.text = source;
+  return elem;
 }
 
-function com_google_gwt_dom_client_DOMImpl_$getParentElement__Lcom_google_gwt_dom_client_DOMImpl_2Lcom_google_gwt_dom_client_Element_2(elem){
-  var parent = elem.parentNode;
-  if (parent == null) {
-    return null;
-  }
-  if (parent.nodeType != 1)
-    parent = null;
-  return parent;
+function com_google_gwt_dom_client_DOMImplIE6_$isOrHasChild__Lcom_google_gwt_dom_client_DOMImplIE6_2Lcom_google_gwt_dom_client_Element_2Lcom_google_gwt_dom_client_Element_2(parent, child){
+  return parent === child || parent.contains(child);
 }
 
-function com_google_gwt_dom_client_DOMImpl_$setInnerText__Lcom_google_gwt_dom_client_DOMImpl_2Lcom_google_gwt_dom_client_Element_2Ljava_lang_String_2(elem, text){
-  while (elem.firstChild) {
-    elem.removeChild(elem.firstChild);
-  }
-  if (text != null) {
-    elem.appendChild(elem.ownerDocument.createTextNode(text));
-  }
-}
-
-function com_google_gwt_dom_client_DOMImpl(){
-}
-
-_ = com_google_gwt_dom_client_DOMImpl.prototype = new java_lang_Object();
-_.java_lang_Object_typeId$ = 0;
-function com_google_gwt_dom_client_DOMImplStandard_$clinit__(){
-  com_google_gwt_dom_client_DOMImplStandard_$clinit__ = nullMethod;
-  com_google_gwt_dom_client_DOMImpl_$clinit__();
-}
-
-function com_google_gwt_dom_client_DOMImplStandard(){
-}
-
-_ = com_google_gwt_dom_client_DOMImplStandard.prototype = new com_google_gwt_dom_client_DOMImpl();
-_.java_lang_Object_typeId$ = 0;
-function com_google_gwt_dom_client_DOMImplSafari_$clinit__(){
-  com_google_gwt_dom_client_DOMImplSafari_$clinit__ = nullMethod;
-  com_google_gwt_dom_client_DOMImplStandard_$clinit__();
-}
-
-function com_google_gwt_dom_client_DOMImplSafari_$isOrHasChild__Lcom_google_gwt_dom_client_DOMImplSafari_2Lcom_google_gwt_dom_client_Element_2Lcom_google_gwt_dom_client_Element_2(parent, child){
-  while (child) {
-    if (parent == child) {
-      return true;
-    }
-    child = child.parentNode;
-    if (child && child.nodeType != 1) {
-      child = null;
-    }
-  }
-  return false;
-}
-
-function com_google_gwt_dom_client_DOMImplSafari(){
-}
-
-_ = com_google_gwt_dom_client_DOMImplSafari.prototype = new com_google_gwt_dom_client_DOMImplStandard();
-_.java_lang_Object_typeId$ = 0;
+var com_google_gwt_dom_client_DOMImplIE6_currentEventTarget = null;
 function com_google_gwt_event_shared_GwtEvent(){
 }
 
@@ -355,7 +304,7 @@ var com_google_gwt_lang_Cast_typeIdArray = [{}, {}, {1:1}, {10:1}, {10:1}, {10:1
 function com_google_gwt_user_client_DOM_dispatchEventImpl__Lcom_google_gwt_user_client_Event_2Lcom_google_gwt_user_client_Element_2Lcom_google_gwt_user_client_EventListener_2(evt, elem, listener){
   var prevCurrentEvent;
   if (elem == com_google_gwt_user_client_DOM_sCaptureElem) {
-    if (com_google_gwt_user_client_impl_DOMImpl_$eventGetTypeInt__Lcom_google_gwt_user_client_impl_DOMImpl_2Ljava_lang_String_2((com_google_gwt_dom_client_DOMImpl_$clinit__() , evt).type) == 8192) {
+    if (com_google_gwt_user_client_impl_DOMImpl_$eventGetTypeInt__Lcom_google_gwt_user_client_impl_DOMImpl_2Ljava_lang_String_2(evt.type) == 8192) {
       com_google_gwt_user_client_DOM_sCaptureElem = null;
     }
   }
@@ -369,9 +318,13 @@ function com_google_gwt_user_client_DOM_dispatchEventImpl__Lcom_google_gwt_user_
   }
 }
 
+function com_google_gwt_user_client_DOM_previewEvent__Lcom_google_gwt_user_client_Event_2(evt){
+  return true;
+}
+
 function com_google_gwt_user_client_DOM_sinkEvents__Lcom_google_gwt_user_client_Element_2I(elem, eventBits){
   com_google_gwt_user_client_impl_DOMImpl_$maybeInitializeEventSystem__Lcom_google_gwt_user_client_impl_DOMImpl_2();
-  com_google_gwt_user_client_impl_DOMImplStandard_$sinkEventsImpl__Lcom_google_gwt_user_client_impl_DOMImplStandard_2Lcom_google_gwt_user_client_Element_2I(elem, eventBits);
+  com_google_gwt_user_client_impl_DOMImplIE6_$sinkEventsImpl__Lcom_google_gwt_user_client_impl_DOMImplIE6_2Lcom_google_gwt_user_client_Element_2I(elem, eventBits);
 }
 
 var com_google_gwt_user_client_DOM_currentEvent = null, com_google_gwt_user_client_DOM_sCaptureElem = null;
@@ -415,7 +368,7 @@ function com_google_gwt_user_client_Window_getHandlers__(){
 
 function com_google_gwt_user_client_Window_maybeInitializeCloseHandlers__(){
   if (!com_google_gwt_user_client_Window_closeHandlersInitialized) {
-    com_google_gwt_user_client_impl_WindowImpl_$initWindowCloseHandler__Lcom_google_gwt_user_client_impl_WindowImpl_2();
+    com_google_gwt_user_client_impl_WindowImplIE_$initHandler__Lcom_google_gwt_user_client_impl_WindowImplIE_2Ljava_lang_String_2Ljava_lang_String_2Lcom_google_gwt_user_client_Command_2(com_google_gwt_user_client_impl_WindowImplIE_$getWindowCloseHandlerMethodString__Lcom_google_gwt_user_client_impl_WindowImplIE_2(), $intern_1);
     com_google_gwt_user_client_Window_closeHandlersInitialized = true;
   }
 }
@@ -456,184 +409,216 @@ _ = com_google_gwt_user_client_Window$WindowHandlers.prototype = new com_google_
 _.java_lang_Object_typeId$ = 8;
 function com_google_gwt_user_client_impl_DOMImpl_$eventGetTypeInt__Lcom_google_gwt_user_client_impl_DOMImpl_2Ljava_lang_String_2(eventType){
   switch (eventType) {
-    case $intern_0:
-      return 4096;
-    case $intern_1:
-      return 1024;
     case $intern_2:
-      return 1;
+      return 4096;
     case $intern_3:
-      return 2;
+      return 1024;
     case $intern_4:
-      return 2048;
+      return 1;
     case $intern_5:
-      return 128;
+      return 2;
     case $intern_6:
-      return 256;
+      return 2048;
     case $intern_7:
-      return 512;
+      return 128;
     case $intern_8:
-      return 32768;
+      return 256;
     case $intern_9:
-      return 8192;
+      return 512;
     case $intern_10:
-      return 4;
+      return 32768;
     case $intern_11:
-      return 64;
+      return 8192;
     case $intern_12:
-      return 32;
+      return 4;
     case $intern_13:
-      return 16;
+      return 64;
     case $intern_14:
-      return 8;
+      return 32;
     case $intern_15:
-      return 16384;
+      return 16;
     case $intern_16:
-      return 65536;
+      return 8;
     case $intern_17:
-      return 131072;
+      return 16384;
     case $intern_18:
-      return 131072;
+      return 65536;
     case $intern_19:
+      return 131072;
+    case $intern_20:
+      return 131072;
+    case $intern_21:
       return 262144;
   }
 }
 
 function com_google_gwt_user_client_impl_DOMImpl_$maybeInitializeEventSystem__Lcom_google_gwt_user_client_impl_DOMImpl_2(){
   if (!com_google_gwt_user_client_impl_DOMImpl_eventSystemIsInitialized) {
-    com_google_gwt_user_client_impl_DOMImplStandard_$initEventSystem__Lcom_google_gwt_user_client_impl_DOMImplStandard_2();
+    com_google_gwt_user_client_impl_DOMImplIE6_$initEventSystem__Lcom_google_gwt_user_client_impl_DOMImplIE6_2();
     com_google_gwt_user_client_impl_DOMImpl_eventSystemIsInitialized = true;
   }
 }
 
-function com_google_gwt_user_client_impl_DOMImpl_isMyListener__Ljava_lang_Object_2(object){
-  return !(object != null && (object.java_lang_Object_typeMarker$ != nullMethod && object.java_lang_Object_typeId$ != 2)) && (object != null && com_google_gwt_lang_Cast_canCast__II(object.java_lang_Object_typeId$, 5));
-}
-
 var com_google_gwt_user_client_impl_DOMImpl_eventSystemIsInitialized = false;
-function com_google_gwt_user_client_impl_DOMImplStandard_$initEventSystem__Lcom_google_gwt_user_client_impl_DOMImplStandard_2(){
-  com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent = function(evt){
-    if (com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent(evt)) {
-      var cap = com_google_gwt_user_client_impl_DOMImplStandard_captureElem;
-      if (cap && cap.__listener) {
-        if (com_google_gwt_user_client_impl_DOMImpl_isMyListener__Ljava_lang_Object_2(cap.__listener)) {
-          com_google_gwt_user_client_DOM_dispatchEventImpl__Lcom_google_gwt_user_client_Event_2Lcom_google_gwt_user_client_Element_2Lcom_google_gwt_user_client_EventListener_2(evt, cap, cap.__listener);
-          evt.stopPropagation();
-        }
+function com_google_gwt_user_client_impl_DOMImplIE6_$initEventSystem__Lcom_google_gwt_user_client_impl_DOMImplIE6_2(){
+  com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent = function(){
+    var oldEventTarget = com_google_gwt_dom_client_DOMImplIE6_currentEventTarget;
+    com_google_gwt_dom_client_DOMImplIE6_currentEventTarget = this;
+    if ($wnd.event.returnValue == null) {
+      $wnd.event.returnValue = true;
+      if (!com_google_gwt_user_client_DOM_previewEvent__Lcom_google_gwt_user_client_Event_2($wnd.event)) {
+        com_google_gwt_dom_client_DOMImplIE6_currentEventTarget = oldEventTarget;
+        return;
       }
     }
-  }
-  ;
-  com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent = function(evt){
-    return true;
-  }
-  ;
-  com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent = function(evt){
     var listener, curElem = this;
     while (curElem && !(listener = curElem.__listener)) {
-      curElem = curElem.parentNode;
-    }
-    if (curElem && curElem.nodeType != 1) {
-      curElem = null;
+      curElem = curElem.parentElement;
     }
     if (listener) {
-      if (com_google_gwt_user_client_impl_DOMImpl_isMyListener__Ljava_lang_Object_2(listener)) {
-        com_google_gwt_user_client_DOM_dispatchEventImpl__Lcom_google_gwt_user_client_Event_2Lcom_google_gwt_user_client_Element_2Lcom_google_gwt_user_client_EventListener_2(evt, curElem, listener);
+      if (!(listener != null && (listener.java_lang_Object_typeMarker$ != nullMethod && listener.java_lang_Object_typeId$ != 2)) && (listener != null && com_google_gwt_lang_Cast_canCast__II(listener.java_lang_Object_typeId$, 5))) {
+        com_google_gwt_user_client_DOM_dispatchEventImpl__Lcom_google_gwt_user_client_Event_2Lcom_google_gwt_user_client_Element_2Lcom_google_gwt_user_client_EventListener_2($wnd.event, curElem, listener);
       }
+    }
+    com_google_gwt_dom_client_DOMImplIE6_currentEventTarget = oldEventTarget;
+  }
+  ;
+  com_google_gwt_user_client_impl_DOMImplIE6_dispatchDblClickEvent = function(){
+    var newEvent = $doc.createEventObject();
+    if ($wnd.event.returnValue == null) {
+      $wnd.event.srcElement.fireEvent($intern_22, newEvent);
+    }
+    if (this.__eventBits & 2) {
+      com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent.call(this);
+    }
+     else if ($wnd.event.returnValue == null) {
+      $wnd.event.returnValue = true;
+      com_google_gwt_user_client_DOM_previewEvent__Lcom_google_gwt_user_client_Event_2($wnd.event);
     }
   }
   ;
-  $wnd.addEventListener($intern_2, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_3, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_10, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_14, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_11, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_13, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_12, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_17, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent, true);
-  $wnd.addEventListener($intern_5, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent, true);
-  $wnd.addEventListener($intern_7, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent, true);
-  $wnd.addEventListener($intern_6, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent, true);
+  var bodyDispatcher = function(){
+    com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent.call($doc.body);
+  }
+  ;
+  var bodyDblClickDispatcher = function(){
+    com_google_gwt_user_client_impl_DOMImplIE6_dispatchDblClickEvent.call($doc.body);
+  }
+  ;
+  $doc.body.attachEvent($intern_22, bodyDispatcher);
+  $doc.body.attachEvent($intern_23, bodyDispatcher);
+  $doc.body.attachEvent($intern_24, bodyDispatcher);
+  $doc.body.attachEvent($intern_25, bodyDispatcher);
+  $doc.body.attachEvent($intern_26, bodyDispatcher);
+  $doc.body.attachEvent($intern_27, bodyDispatcher);
+  $doc.body.attachEvent($intern_28, bodyDispatcher);
+  $doc.body.attachEvent($intern_29, bodyDispatcher);
+  $doc.body.attachEvent($intern_30, bodyDispatcher);
+  $doc.body.attachEvent($intern_31, bodyDispatcher);
+  $doc.body.attachEvent($intern_32, bodyDblClickDispatcher);
+  $doc.body.attachEvent($intern_33, bodyDispatcher);
 }
 
-function com_google_gwt_user_client_impl_DOMImplStandard_$sinkEventsImpl__Lcom_google_gwt_user_client_impl_DOMImplStandard_2Lcom_google_gwt_user_client_Element_2I(elem, bits){
+function com_google_gwt_user_client_impl_DOMImplIE6_$sinkEventsImpl__Lcom_google_gwt_user_client_impl_DOMImplIE6_2Lcom_google_gwt_user_client_Element_2I(elem, bits){
   var chMask = (elem.__eventBits || 0) ^ bits;
   elem.__eventBits = bits;
   if (!chMask)
     return;
   if (chMask & 1)
-    elem.onclick = bits & 1?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  if (chMask & 2)
-    elem.ondblclick = bits & 2?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onclick = bits & 1?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
+  if (chMask & 3)
+    elem.ondblclick = bits & 3?com_google_gwt_user_client_impl_DOMImplIE6_dispatchDblClickEvent:null;
   if (chMask & 4)
-    elem.onmousedown = bits & 4?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onmousedown = bits & 4?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 8)
-    elem.onmouseup = bits & 8?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onmouseup = bits & 8?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 16)
-    elem.onmouseover = bits & 16?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onmouseover = bits & 16?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 32)
-    elem.onmouseout = bits & 32?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onmouseout = bits & 32?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 64)
-    elem.onmousemove = bits & 64?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onmousemove = bits & 64?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 128)
-    elem.onkeydown = bits & 128?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onkeydown = bits & 128?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 256)
-    elem.onkeypress = bits & 256?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onkeypress = bits & 256?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 512)
-    elem.onkeyup = bits & 512?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onkeyup = bits & 512?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 1024)
-    elem.onchange = bits & 1024?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onchange = bits & 1024?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 2048)
-    elem.onfocus = bits & 2048?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onfocus = bits & 2048?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 4096)
-    elem.onblur = bits & 4096?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onblur = bits & 4096?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 8192)
-    elem.onlosecapture = bits & 8192?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onlosecapture = bits & 8192?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 16384)
-    elem.onscroll = bits & 16384?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onscroll = bits & 16384?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 32768)
-    elem.onload = bits & 32768?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onload = bits & 32768?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 65536)
-    elem.onerror = bits & 65536?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onerror = bits & 65536?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 131072)
-    elem.onmousewheel = bits & 131072?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.onmousewheel = bits & 131072?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
   if (chMask & 262144)
-    elem.oncontextmenu = bits & 262144?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+    elem.oncontextmenu = bits & 262144?com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent:null;
 }
 
-var com_google_gwt_user_client_impl_DOMImplStandard_captureElem = null, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent = null, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent = null, com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent = null;
-function com_google_gwt_user_client_impl_WindowImpl_$initWindowCloseHandler__Lcom_google_gwt_user_client_impl_WindowImpl_2(){
-  var oldOnBeforeUnload = $wnd.onbeforeunload;
-  var oldOnUnload = $wnd.onunload;
-  $wnd.onbeforeunload = function(evt){
-    var ret, oldRet;
-    try {
-      ret = com_google_gwt_user_client_Window_fireClosingImpl__();
+var com_google_gwt_user_client_impl_DOMImplIE6_dispatchDblClickEvent = null, com_google_gwt_user_client_impl_DOMImplIE6_dispatchEvent = null;
+function com_google_gwt_user_client_impl_WindowImplIE_$getWindowCloseHandlerMethodString__Lcom_google_gwt_user_client_impl_WindowImplIE_2(){
+  return function(beforeunload, unload){
+    var wnd = window, oldOnBeforeUnload = wnd.onbeforeunload, oldOnUnload = wnd.onunload;
+    wnd.onbeforeunload = function(evt){
+      var ret, oldRet;
+      try {
+        ret = beforeunload();
+      }
+       finally {
+        oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
+      }
+      if (ret != null) {
+        return ret;
+      }
+      if (oldRet != null) {
+        return oldRet;
+      }
     }
-     finally {
-      oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
+    ;
+    wnd.onunload = function(evt){
+      try {
+        unload();
+      }
+       finally {
+        oldOnUnload && oldOnUnload(evt);
+        wnd.onresize = null;
+        wnd.onscroll = null;
+        wnd.onbeforeunload = null;
+        wnd.onunload = null;
+      }
     }
-    if (ret != null) {
-      return ret;
-    }
-    if (oldRet != null) {
-      return oldRet;
-    }
+    ;
+    wnd.__gwt_initWindowCloseHandler = undefined;
   }
-  ;
-  $wnd.onunload = function(evt){
-    try {
-      com_google_gwt_user_client_Window_fireClosedImpl__();
-    }
-     finally {
-      oldOnUnload && oldOnUnload(evt);
-      $wnd.onresize = null;
-      $wnd.onscroll = null;
-      $wnd.onbeforeunload = null;
-      $wnd.onunload = null;
-    }
+  .toString();
+}
+
+function com_google_gwt_user_client_impl_WindowImplIE_$initHandler__Lcom_google_gwt_user_client_impl_WindowImplIE_2Ljava_lang_String_2Ljava_lang_String_2Lcom_google_gwt_user_client_Command_2(initFunc, funcName){
+  var scriptElem;
+  initFunc = java_lang_String_$replaceFirst__Ljava_lang_String_2Ljava_lang_String_2Ljava_lang_String_2(initFunc, $intern_34, $intern_35 + funcName);
+  scriptElem = com_google_gwt_dom_client_DOMImpl_$createScriptElement__Lcom_google_gwt_dom_client_DOMImpl_2Lcom_google_gwt_dom_client_Document_2Ljava_lang_String_2($doc, initFunc);
+  $doc.body.appendChild(scriptElem);
+  com_google_gwt_user_client_impl_WindowImplIE_$initWindowCloseHandlerImpl__Lcom_google_gwt_user_client_impl_WindowImplIE_2();
+  $doc.body.removeChild(scriptElem);
+}
+
+function com_google_gwt_user_client_impl_WindowImplIE_$initWindowCloseHandlerImpl__Lcom_google_gwt_user_client_impl_WindowImplIE_2(){
+  $wnd.__gwt_initWindowCloseHandler(function(){
+    return com_google_gwt_user_client_Window_fireClosingImpl__();
   }
-  ;
+  , function(){
+    com_google_gwt_user_client_Window_fireClosedImpl__();
+  }
+  );
 }
 
 function com_google_gwt_user_client_ui_UIObject(){
@@ -725,11 +710,11 @@ function com_google_gwt_user_client_ui_Widget_doDetachChildren__(){
 
 function com_google_gwt_user_client_ui_Widget_onBrowserEvent__Lcom_google_gwt_user_client_Event_2(event){
   var related;
-  switch (com_google_gwt_user_client_impl_DOMImpl_$eventGetTypeInt__Lcom_google_gwt_user_client_impl_DOMImpl_2Ljava_lang_String_2((com_google_gwt_dom_client_DOMImpl_$clinit__() , event).type)) {
+  switch (com_google_gwt_user_client_impl_DOMImpl_$eventGetTypeInt__Lcom_google_gwt_user_client_impl_DOMImpl_2Ljava_lang_String_2(event.type)) {
     case 16:
     case 32:
-      related = event.relatedTarget;
-      if (!!related && com_google_gwt_dom_client_DOMImplSafari_$isOrHasChild__Lcom_google_gwt_dom_client_DOMImplSafari_2Lcom_google_gwt_dom_client_Element_2Lcom_google_gwt_dom_client_Element_2(this.com_google_gwt_user_client_ui_UIObject_element, related)) {
+      related = event.relatedTarget || (event.type == $intern_14?event.toElement:event.fromElement);
+      if (!!related && com_google_gwt_dom_client_DOMImplIE6_$isOrHasChild__Lcom_google_gwt_dom_client_DOMImplIE6_2Lcom_google_gwt_dom_client_Element_2Lcom_google_gwt_dom_client_Element_2(this.com_google_gwt_user_client_ui_UIObject_element, related)) {
         return;
       }
 
@@ -800,7 +785,7 @@ function com_google_gwt_user_client_ui_ComplexPanel_$remove__Lcom_google_gwt_use
   }
   com_google_gwt_user_client_ui_Widget_$setParent__Lcom_google_gwt_user_client_ui_Widget_2Lcom_google_gwt_user_client_ui_Widget_2(w, null);
   elem = w.com_google_gwt_user_client_ui_UIObject_element;
-  com_google_gwt_dom_client_DOMImpl_$getParentElement__Lcom_google_gwt_dom_client_DOMImpl_2Lcom_google_gwt_dom_client_Element_2((com_google_gwt_dom_client_DOMImpl_$clinit__() , elem)).removeChild(elem);
+  elem.parentElement.removeChild(elem);
   com_google_gwt_user_client_ui_WidgetCollection_$remove__Lcom_google_gwt_user_client_ui_WidgetCollection_2Lcom_google_gwt_user_client_ui_Widget_2(this$static.com_google_gwt_user_client_ui_ComplexPanel_children, w);
   return true;
 }
@@ -829,9 +814,9 @@ function com_google_gwt_user_client_ui_AbsolutePanel_$remove__Lcom_google_gwt_us
 }
 
 function com_google_gwt_user_client_ui_AbsolutePanel_changeToStaticPositioning__Lcom_google_gwt_user_client_Element_2(elem){
-  elem.style[$intern_20] = $intern_21;
-  elem.style[$intern_22] = $intern_21;
-  elem.style[$intern_23] = $intern_21;
+  elem.style[$intern_36] = $intern_37;
+  elem.style[$intern_38] = $intern_37;
+  elem.style[$intern_39] = $intern_37;
 }
 
 function com_google_gwt_user_client_ui_AbsolutePanel(){
@@ -840,9 +825,9 @@ function com_google_gwt_user_client_ui_AbsolutePanel(){
 _ = com_google_gwt_user_client_ui_AbsolutePanel.prototype = new com_google_gwt_user_client_ui_ComplexPanel();
 _.java_lang_Object_typeId$ = 13;
 function com_google_gwt_user_client_ui_Label_$Label__Lcom_google_gwt_user_client_ui_Label_2Ljava_lang_String_2(this$static, text){
-  this$static.com_google_gwt_user_client_ui_UIObject_element = (com_google_gwt_dom_client_DOMImpl_$clinit__() , $doc).createElement($intern_24);
-  this$static.com_google_gwt_user_client_ui_UIObject_element[$intern_25] = $intern_26;
-  com_google_gwt_dom_client_DOMImpl_$setInnerText__Lcom_google_gwt_dom_client_DOMImpl_2Lcom_google_gwt_dom_client_Element_2Ljava_lang_String_2(this$static.com_google_gwt_user_client_ui_UIObject_element, text);
+  this$static.com_google_gwt_user_client_ui_UIObject_element = $doc.createElement($intern_40);
+  this$static.com_google_gwt_user_client_ui_UIObject_element[$intern_41] = $intern_42;
+  this$static.com_google_gwt_user_client_ui_UIObject_element.innerText = text || $intern_37;
   return this$static;
 }
 
@@ -1067,6 +1052,29 @@ function java_lang_IndexOutOfBoundsException(){
 
 _ = java_lang_IndexOutOfBoundsException.prototype = new java_lang_RuntimeException();
 _.java_lang_Object_typeId$ = 24;
+function java_lang_String_$replaceFirst__Ljava_lang_String_2Ljava_lang_String_2Ljava_lang_String_2(this$static, regex, replace){
+  replace = java_lang_String__1_1translateReplaceString__Ljava_lang_String_2(replace);
+  return this$static.replace(RegExp(regex), replace);
+}
+
+function java_lang_String_$substring__Ljava_lang_String_2I(this$static, beginIndex){
+  return this$static.substr(beginIndex, this$static.length - beginIndex);
+}
+
+function java_lang_String__1_1translateReplaceString__Ljava_lang_String_2(replaceStr){
+  var pos;
+  pos = 0;
+  while (0 <= (pos = replaceStr.indexOf($intern_43, pos))) {
+    if (replaceStr.charCodeAt(pos + 1) == 36) {
+      replaceStr = replaceStr.substr(0, pos - 0) + $intern_44 + java_lang_String_$substring__Ljava_lang_String_2I(replaceStr, ++pos);
+    }
+     else {
+      replaceStr = replaceStr.substr(0, pos - 0) + java_lang_String_$substring__Ljava_lang_String_2I(replaceStr, ++pos);
+    }
+  }
+  return replaceStr;
+}
+
 function java_lang_String_equals__Ljava_lang_Object_2(other){
   if (!(other != null && com_google_gwt_lang_Cast_canCast__II(other.java_lang_Object_typeId$, 1))) {
     return false;
@@ -1103,7 +1111,7 @@ function java_lang_String$HashCache_compute__Ljava_lang_String_2(str){
 
 function java_lang_String$HashCache_getHashCode__Ljava_lang_String_2(str){
   java_lang_String$HashCache_$clinit__();
-  var key = $intern_27 + str;
+  var key = $intern_45 + str;
   var result = java_lang_String$HashCache_front[key];
   if (result != null) {
     return result;
@@ -1184,7 +1192,7 @@ function java_util_AbstractMap_equals__Ljava_lang_Object_2(obj){
     if (!(otherKey == null?com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13).java_util_AbstractHashMap_nullSlotLive:otherKey != null && com_google_gwt_lang_Cast_canCast__II(otherKey.java_lang_Object_typeId$, 1)?java_util_AbstractHashMap_$hasStringValue__Ljava_util_AbstractHashMap_2Ljava_lang_String_2(com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13), com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(otherKey, 1)):java_util_AbstractHashMap_$hasHashValue__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2I(com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13), otherKey, ~~com_google_gwt_core_client_JavaScriptObject_hashCode_1_1devirtual$__Ljava_lang_Object_2(otherKey)))) {
       return false;
     }
-    if (!java_util_Utility_equalsWithNullCheck__Ljava_lang_Object_2Ljava_lang_Object_2(otherValue, otherKey == null?com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13).java_util_AbstractHashMap_nullSlot:otherKey != null && com_google_gwt_lang_Cast_canCast__II(otherKey.java_lang_Object_typeId$, 1)?com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13).java_util_AbstractHashMap_stringMap[$intern_27 + com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(otherKey, 1)]:java_util_AbstractHashMap_$getHashValue__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2I(com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13), otherKey, ~~com_google_gwt_core_client_JavaScriptObject_hashCode_1_1devirtual$__Ljava_lang_Object_2(otherKey)))) {
+    if (!java_util_Utility_equalsWithNullCheck__Ljava_lang_Object_2Ljava_lang_Object_2(otherValue, otherKey == null?com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13).java_util_AbstractHashMap_nullSlot:otherKey != null && com_google_gwt_lang_Cast_canCast__II(otherKey.java_lang_Object_typeId$, 1)?com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13).java_util_AbstractHashMap_stringMap[$intern_45 + com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(otherKey, 1)]:java_util_AbstractHashMap_$getHashValue__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2I(com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(this, 13), otherKey, ~~com_google_gwt_core_client_JavaScriptObject_hashCode_1_1devirtual$__Ljava_lang_Object_2(otherKey)))) {
       return false;
     }
   }
@@ -1244,7 +1252,7 @@ function java_util_AbstractHashMap_$containsKey__Ljava_util_AbstractHashMap_2Lja
 }
 
 function java_util_AbstractHashMap_$get__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2(this$static, key){
-  return key == null?this$static.java_util_AbstractHashMap_nullSlot:key != null && com_google_gwt_lang_Cast_canCast__II(key.java_lang_Object_typeId$, 1)?this$static.java_util_AbstractHashMap_stringMap[$intern_27 + com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(key, 1)]:java_util_AbstractHashMap_$getHashValue__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2I(this$static, key, ~~com_google_gwt_core_client_JavaScriptObject_hashCode_1_1devirtual$__Ljava_lang_Object_2(key));
+  return key == null?this$static.java_util_AbstractHashMap_nullSlot:key != null && com_google_gwt_lang_Cast_canCast__II(key.java_lang_Object_typeId$, 1)?this$static.java_util_AbstractHashMap_stringMap[$intern_45 + com_google_gwt_lang_Cast_dynamicCast__Ljava_lang_Object_2I(key, 1)]:java_util_AbstractHashMap_$getHashValue__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2I(this$static, key, ~~com_google_gwt_core_client_JavaScriptObject_hashCode_1_1devirtual$__Ljava_lang_Object_2(key));
 }
 
 function java_util_AbstractHashMap_$getHashValue__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2I(this$static, key, hashCode){
@@ -1276,7 +1284,7 @@ function java_util_AbstractHashMap_$hasHashValue__Ljava_util_AbstractHashMap_2Lj
 }
 
 function java_util_AbstractHashMap_$hasStringValue__Ljava_util_AbstractHashMap_2Ljava_lang_String_2(this$static, key){
-  return $intern_27 + key in this$static.java_util_AbstractHashMap_stringMap;
+  return $intern_45 + key in this$static.java_util_AbstractHashMap_stringMap;
 }
 
 function java_util_AbstractHashMap_$put__Ljava_util_AbstractHashMap_2Ljava_lang_Object_2Ljava_lang_Object_2(this$static, key, value){
@@ -1318,7 +1326,7 @@ function java_util_AbstractHashMap_$putNullSlot__Ljava_util_AbstractHashMap_2Lja
 
 function java_util_AbstractHashMap_$putStringValue__Ljava_util_AbstractHashMap_2Ljava_lang_String_2Ljava_lang_Object_2(this$static, key, value){
   var result, stringMap = this$static.java_util_AbstractHashMap_stringMap;
-  key = $intern_27 + key;
+  key = $intern_45 + key;
   if (key in stringMap) {
     result = stringMap[key];
   }
@@ -1558,7 +1566,7 @@ function java_util_AbstractHashMap$MapEntryString_getKey__(){
 }
 
 function java_util_AbstractHashMap$MapEntryString_getValue__(){
-  return this.java_util_AbstractHashMap$MapEntryString_this$0.java_util_AbstractHashMap_stringMap[$intern_27 + this.java_util_AbstractHashMap$MapEntryString_key];
+  return this.java_util_AbstractHashMap$MapEntryString_this$0.java_util_AbstractHashMap_stringMap[$intern_45 + this.java_util_AbstractHashMap$MapEntryString_key];
 }
 
 function java_util_AbstractHashMap$MapEntryString_new__Ljava_util_AbstractHashMap_2Ljava_lang_String_2(this$outer, key){
@@ -1627,7 +1635,7 @@ function java_util_AbstractList_hashCode__(){
 }
 
 function java_util_AbstractList_indexOutOfBounds__II(index, size){
-  throw java_lang_IndexOutOfBoundsException_$IndexOutOfBoundsException__Ljava_lang_IndexOutOfBoundsException_2Ljava_lang_String_2(new java_lang_IndexOutOfBoundsException(), $intern_28 + index + $intern_29 + size);
+  throw java_lang_IndexOutOfBoundsException_$IndexOutOfBoundsException__Ljava_lang_IndexOutOfBoundsException_2Ljava_lang_String_2(new java_lang_IndexOutOfBoundsException(), $intern_46 + index + $intern_47 + size);
 }
 
 function java_util_AbstractList_iterator__(){
@@ -1876,8 +1884,8 @@ function java_util_Utility_equalsWithNullCheck__Ljava_lang_Object_2Ljava_lang_Ob
 }
 
 function init(){
-  !!$stats && $stats({moduleName:$moduleName, subSystem:$intern_30, evtGroup:$intern_31, millis:(new Date()).getTime(), type:$intern_32, className:$intern_33});
-  com_google_gwt_user_client_ui_AbsolutePanel_$add__Lcom_google_gwt_user_client_ui_AbsolutePanel_2Lcom_google_gwt_user_client_ui_Widget_2((com_google_gwt_user_client_ui_RootPanel_$clinit__() , com_google_gwt_user_client_ui_RootPanel_get__Ljava_lang_String_2(null)), com_google_gwt_user_client_ui_Label_$Label__Lcom_google_gwt_user_client_ui_Label_2Ljava_lang_String_2(new com_google_gwt_user_client_ui_Label(), $intern_34));
+  !!$stats && $stats({moduleName:$moduleName, subSystem:$intern_48, evtGroup:$intern_49, millis:(new Date()).getTime(), type:$intern_50, className:$intern_51});
+  com_google_gwt_user_client_ui_AbsolutePanel_$add__Lcom_google_gwt_user_client_ui_AbsolutePanel_2Lcom_google_gwt_user_client_ui_Widget_2((com_google_gwt_user_client_ui_RootPanel_$clinit__() , com_google_gwt_user_client_ui_RootPanel_get__Ljava_lang_String_2(null)), com_google_gwt_user_client_ui_Label_$Label__Lcom_google_gwt_user_client_ui_Label_2Ljava_lang_String_2(new com_google_gwt_user_client_ui_Label(), $intern_52));
 }
 
 function gwtOnLoad(errFn, modName, modBase){
@@ -1898,7 +1906,7 @@ function gwtOnLoad(errFn, modName, modBase){
 function nullMethod(){
 }
 
-var com_google_gwt_lang_ClassLiteralHolder__13Lcom_1google_1gwt_1user_1client_1ui_1Widget_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_35, $intern_36), com_google_gwt_lang_ClassLiteralHolder__13Ljava_1lang_1Object_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_37, $intern_38);
-$stats && $stats({moduleName:'jw.othello.OthelloGadget',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
-if (jw_othello_OthelloGadget) jw_othello_OthelloGadget.onScriptLoad(gwtOnLoad);
+var com_google_gwt_lang_ClassLiteralHolder__13Lcom_1google_1gwt_1user_1client_1ui_1Widget_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_53, $intern_54), com_google_gwt_lang_ClassLiteralHolder__13Ljava_1lang_1Object_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_55, $intern_56);
+$stats && $stats({moduleName:'wavyothello',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
+if (wavyothello) wavyothello.onScriptLoad(gwtOnLoad);
 })();

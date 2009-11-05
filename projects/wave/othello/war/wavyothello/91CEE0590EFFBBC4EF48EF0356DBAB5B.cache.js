@@ -4,7 +4,7 @@ var $wnd = window;
 var $doc = $wnd.document;
 var $moduleName, $moduleBase;
 var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
-$stats && $stats({moduleName:'jw.othello.OthelloGadget',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
+$stats && $stats({moduleName:'wavyothello',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 var $intern_21 = '', $intern_29 = ', Size: ', $intern_27 = ':', $intern_18 = 'DOMMouseScroll', $intern_34 = 'Hello world!!!!', $intern_28 = 'Index: ', $intern_38 = 'Object;', $intern_36 = 'Widget;', $intern_35 = '[Lcom.google.gwt.user.client.ui.', $intern_37 = '[Ljava.lang.', $intern_0 = 'blur', $intern_1 = 'change', $intern_25 = 'className', $intern_2 = 'click', $intern_19 = 'contextmenu', $intern_3 = 'dblclick', $intern_24 = 'div', $intern_16 = 'error', $intern_4 = 'focus', $intern_26 = 'gwt-Label', $intern_33 = 'jw.othello.client.OthelloGadget', $intern_5 = 'keydown', $intern_6 = 'keypress', $intern_7 = 'keyup', $intern_20 = 'left', $intern_8 = 'load', $intern_9 = 'losecapture', $intern_31 = 'moduleStartup', $intern_10 = 'mousedown', $intern_11 = 'mousemove', $intern_12 = 'mouseout', $intern_13 = 'mouseover', $intern_14 = 'mouseup', $intern_17 = 'mousewheel', $intern_32 = 'onModuleLoadStart', $intern_23 = 'position', $intern_15 = 'scroll', $intern_30 = 'startup', $intern_22 = 'top';
 var _;
 function java_lang_Object_equals__Ljava_lang_Object_2(other){
@@ -34,8 +34,8 @@ function com_google_gwt_core_client_JavaScriptObject_hashCode_1_1devirtual$__Lja
 var com_google_gwt_core_client_impl_Impl_sNextHashId = 0;
 function com_google_gwt_dom_client_DOMImpl_$clinit__(){
   com_google_gwt_dom_client_DOMImpl_$clinit__ = nullMethod;
-  com_google_gwt_dom_client_DOMImplOpera_$clinit__();
-  new com_google_gwt_dom_client_DOMImplOpera();
+  com_google_gwt_dom_client_DOMImplSafari_$clinit__();
+  new com_google_gwt_dom_client_DOMImplSafari();
 }
 
 function com_google_gwt_dom_client_DOMImpl_$getParentElement__Lcom_google_gwt_dom_client_DOMImpl_2Lcom_google_gwt_dom_client_Element_2(elem){
@@ -72,15 +72,28 @@ function com_google_gwt_dom_client_DOMImplStandard(){
 
 _ = com_google_gwt_dom_client_DOMImplStandard.prototype = new com_google_gwt_dom_client_DOMImpl();
 _.java_lang_Object_typeId$ = 0;
-function com_google_gwt_dom_client_DOMImplOpera_$clinit__(){
-  com_google_gwt_dom_client_DOMImplOpera_$clinit__ = nullMethod;
+function com_google_gwt_dom_client_DOMImplSafari_$clinit__(){
+  com_google_gwt_dom_client_DOMImplSafari_$clinit__ = nullMethod;
   com_google_gwt_dom_client_DOMImplStandard_$clinit__();
 }
 
-function com_google_gwt_dom_client_DOMImplOpera(){
+function com_google_gwt_dom_client_DOMImplSafari_$isOrHasChild__Lcom_google_gwt_dom_client_DOMImplSafari_2Lcom_google_gwt_dom_client_Element_2Lcom_google_gwt_dom_client_Element_2(parent, child){
+  while (child) {
+    if (parent == child) {
+      return true;
+    }
+    child = child.parentNode;
+    if (child && child.nodeType != 1) {
+      child = null;
+    }
+  }
+  return false;
 }
 
-_ = com_google_gwt_dom_client_DOMImplOpera.prototype = new com_google_gwt_dom_client_DOMImplStandard();
+function com_google_gwt_dom_client_DOMImplSafari(){
+}
+
+_ = com_google_gwt_dom_client_DOMImplSafari.prototype = new com_google_gwt_dom_client_DOMImplStandard();
 _.java_lang_Object_typeId$ = 0;
 function com_google_gwt_event_shared_GwtEvent(){
 }
@@ -358,26 +371,7 @@ function com_google_gwt_user_client_DOM_dispatchEventImpl__Lcom_google_gwt_user_
 
 function com_google_gwt_user_client_DOM_sinkEvents__Lcom_google_gwt_user_client_Element_2I(elem, eventBits){
   com_google_gwt_user_client_impl_DOMImpl_$maybeInitializeEventSystem__Lcom_google_gwt_user_client_impl_DOMImpl_2();
-  elem.__eventBits = eventBits;
-  elem.onclick = eventBits & 1?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.ondblclick = eventBits & 2?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onmousedown = eventBits & 4?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onmouseup = eventBits & 8?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onmouseover = eventBits & 16?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onmouseout = eventBits & 32?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onmousemove = eventBits & 64?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onkeydown = eventBits & 128?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onkeypress = eventBits & 256?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onkeyup = eventBits & 512?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onchange = eventBits & 1024?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onfocus = eventBits & 2048?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onblur = eventBits & 4096?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onlosecapture = eventBits & 8192?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onscroll = eventBits & 16384?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onload = eventBits & 32768?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onerror = eventBits & 65536?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.onmousewheel = eventBits & 131072?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
-  elem.oncontextmenu = eventBits & 262144?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  com_google_gwt_user_client_impl_DOMImplStandard_$sinkEventsImpl__Lcom_google_gwt_user_client_impl_DOMImplStandard_2Lcom_google_gwt_user_client_Element_2I(elem, eventBits);
 }
 
 var com_google_gwt_user_client_DOM_currentEvent = null, com_google_gwt_user_client_DOM_sCaptureElem = null;
@@ -562,6 +556,51 @@ function com_google_gwt_user_client_impl_DOMImplStandard_$initEventSystem__Lcom_
   $wnd.addEventListener($intern_6, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent, true);
 }
 
+function com_google_gwt_user_client_impl_DOMImplStandard_$sinkEventsImpl__Lcom_google_gwt_user_client_impl_DOMImplStandard_2Lcom_google_gwt_user_client_Element_2I(elem, bits){
+  var chMask = (elem.__eventBits || 0) ^ bits;
+  elem.__eventBits = bits;
+  if (!chMask)
+    return;
+  if (chMask & 1)
+    elem.onclick = bits & 1?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 2)
+    elem.ondblclick = bits & 2?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 4)
+    elem.onmousedown = bits & 4?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 8)
+    elem.onmouseup = bits & 8?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 16)
+    elem.onmouseover = bits & 16?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 32)
+    elem.onmouseout = bits & 32?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 64)
+    elem.onmousemove = bits & 64?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 128)
+    elem.onkeydown = bits & 128?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 256)
+    elem.onkeypress = bits & 256?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 512)
+    elem.onkeyup = bits & 512?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 1024)
+    elem.onchange = bits & 1024?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 2048)
+    elem.onfocus = bits & 2048?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 4096)
+    elem.onblur = bits & 4096?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 8192)
+    elem.onlosecapture = bits & 8192?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 16384)
+    elem.onscroll = bits & 16384?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 32768)
+    elem.onload = bits & 32768?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 65536)
+    elem.onerror = bits & 65536?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 131072)
+    elem.onmousewheel = bits & 131072?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+  if (chMask & 262144)
+    elem.oncontextmenu = bits & 262144?com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent:null;
+}
+
 var com_google_gwt_user_client_impl_DOMImplStandard_captureElem = null, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedEvent = null, com_google_gwt_user_client_impl_DOMImplStandard_dispatchCapturedMouseEvent = null, com_google_gwt_user_client_impl_DOMImplStandard_dispatchEvent = null;
 function com_google_gwt_user_client_impl_WindowImpl_$initWindowCloseHandler__Lcom_google_gwt_user_client_impl_WindowImpl_2(){
   var oldOnBeforeUnload = $wnd.onbeforeunload;
@@ -690,7 +729,7 @@ function com_google_gwt_user_client_ui_Widget_onBrowserEvent__Lcom_google_gwt_us
     case 16:
     case 32:
       related = event.relatedTarget;
-      if (!!related && this.com_google_gwt_user_client_ui_UIObject_element.contains(related)) {
+      if (!!related && com_google_gwt_dom_client_DOMImplSafari_$isOrHasChild__Lcom_google_gwt_dom_client_DOMImplSafari_2Lcom_google_gwt_dom_client_Element_2Lcom_google_gwt_dom_client_Element_2(this.com_google_gwt_user_client_ui_UIObject_element, related)) {
         return;
       }
 
@@ -1860,6 +1899,6 @@ function nullMethod(){
 }
 
 var com_google_gwt_lang_ClassLiteralHolder__13Lcom_1google_1gwt_1user_1client_1ui_1Widget_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_35, $intern_36), com_google_gwt_lang_ClassLiteralHolder__13Ljava_1lang_1Object_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_37, $intern_38);
-$stats && $stats({moduleName:'jw.othello.OthelloGadget',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
-if (jw_othello_OthelloGadget) jw_othello_OthelloGadget.onScriptLoad(gwtOnLoad);
+$stats && $stats({moduleName:'wavyothello',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
+if (wavyothello) wavyothello.onScriptLoad(gwtOnLoad);
 })();

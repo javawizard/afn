@@ -4,7 +4,7 @@ var $wnd = window;
 var $doc = $wnd.document;
 var $moduleName, $moduleBase;
 var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
-$stats && $stats({moduleName:'jw.othello.OthelloGadget',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
+$stats && $stats({moduleName:'wavyothello',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 var $intern_23 = '', $intern_31 = ', Size: ', $intern_29 = ':', $intern_18 = 'DOMMouseScroll', $intern_36 = 'Hello world!!!!', $intern_30 = 'Index: ', $intern_21 = 'MouseEvents', $intern_40 = 'Object;', $intern_38 = 'Widget;', $intern_37 = '[Lcom.google.gwt.user.client.ui.', $intern_39 = '[Ljava.lang.', $intern_0 = 'blur', $intern_1 = 'change', $intern_27 = 'className', $intern_2 = 'click', $intern_19 = 'contextmenu', $intern_3 = 'dblclick', $intern_26 = 'div', $intern_16 = 'error', $intern_4 = 'focus', $intern_28 = 'gwt-Label', $intern_20 = 'html', $intern_35 = 'jw.othello.client.OthelloGadget', $intern_5 = 'keydown', $intern_6 = 'keypress', $intern_7 = 'keyup', $intern_22 = 'left', $intern_8 = 'load', $intern_9 = 'losecapture', $intern_33 = 'moduleStartup', $intern_10 = 'mousedown', $intern_11 = 'mousemove', $intern_12 = 'mouseout', $intern_13 = 'mouseover', $intern_14 = 'mouseup', $intern_17 = 'mousewheel', $intern_34 = 'onModuleLoadStart', $intern_25 = 'position', $intern_15 = 'scroll', $intern_32 = 'startup', $intern_24 = 'top';
 var _;
 function java_lang_Object_equals__Ljava_lang_Object_2(other){
@@ -1923,6 +1923,6 @@ function nullMethod(){
 }
 
 var com_google_gwt_lang_ClassLiteralHolder__13Lcom_1google_1gwt_1user_1client_1ui_1Widget_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_37, $intern_38), com_google_gwt_lang_ClassLiteralHolder__13Ljava_1lang_1Object_12_1classLit = java_lang_Class_createForArray__Ljava_lang_String_2Ljava_lang_String_2($intern_39, $intern_40);
-$stats && $stats({moduleName:'jw.othello.OthelloGadget',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
-if (jw_othello_OthelloGadget) jw_othello_OthelloGadget.onScriptLoad(gwtOnLoad);
+$stats && $stats({moduleName:'wavyothello',subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
+if (wavyothello) wavyothello.onScriptLoad(gwtOnLoad);
 })();
