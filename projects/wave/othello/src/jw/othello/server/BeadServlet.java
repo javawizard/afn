@@ -49,6 +49,15 @@ public class BeadServlet extends HttpServlet
         g.fillOval(ovalX, ovalY, ovalWidth, ovalHeight);
         g.setColor(outline);
         g.drawOval(ovalX, ovalY, ovalWidth, ovalHeight);
+        g.setColor(borderColor);
+        if (borders.contains("t"))
+            g.drawLine(0, 0, width, 0);
+        if (borders.contains("r"))
+            g.drawLine(width, 0, width, height);
+        if (borders.contains("b"))
+            g.drawLine(0, height, width, height);
+        if (borders.contains("l"))
+            g.drawLine(0, 0, 0, height);
     }
     
     public static Color colorFromHex(String hex)
