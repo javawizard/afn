@@ -17,7 +17,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-@ModulePrefs(author = "Alexander Boyd", height = 100, title = "Othello")
+@ModulePrefs(author = "Alexander Boyd", height = 230, title = "Othello")
 @SuppressWarnings("deprecation")
 public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
         StateUpdateEventHandler, ParticipantUpdateEventHandler
@@ -35,6 +35,7 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
         RootPanel.get().add(initialLoadingLabel);
         wave.addParticipantUpdateEventHandler(this);
         wave.addStateUpdateEventHandler(this);
+        wave.getState().
     }
     
     @Override
