@@ -17,6 +17,7 @@ public class Test01
         board.cellAt(4, 4).setValue(1);
         board.cellAt(3, 4).setValue(2);
         board.cellAt(4, 3).setValue(2);
+        System.out.println(board.capture(1, board.cellAt(3, 5), true));
     }
     
 }

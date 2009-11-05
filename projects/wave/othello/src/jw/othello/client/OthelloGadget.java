@@ -106,13 +106,10 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
                     @Override
                     public void cellClicked(CellWidget cell)
                     {
-                        Window.alert("clicked");
                         exampleCurrentPlayer = (exampleCurrentPlayer == 1 ? 2 : 1);
                         CaptureResult result = cell.getBoard().capture(
                                 exampleCurrentPlayer, cell.getCell(), true);
-                        Window.alert("refreshing");
                         cell.getBoardWidget().refresh();
-                        Window.alert("calculating result");
                         if (result == CaptureResult.nocapture)
                             Window.alert("You can't capture any beads if you "
                                     + "place a bead there.");

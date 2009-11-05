@@ -82,7 +82,7 @@ public class Cell
     public Cell next(Direction direction)
     {
         int newRow = row + direction.getDeltaR();
-        int newCol = row + direction.getDeltaC();
+        int newCol = col + direction.getDeltaC();
         if (newRow < 0 || newRow >= 8)
             return null;
         if (newCol < 0 || newCol >= 8)

@@ -210,7 +210,6 @@ public class Board
      */
     public CaptureResult capture(int player, Cell cell, boolean capture)
     {
-        Window.alert("capturing for " + player);
         /*
          * First we'll make sure there isn't already a bead at that location.
          */
