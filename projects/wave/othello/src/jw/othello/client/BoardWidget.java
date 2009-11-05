@@ -45,4 +45,29 @@ public class BoardWidget extends Composite
             }
         }
     }
+    
+    public int getCellWidth()
+    {
+        return 30;
+    }
+    
+    public String getCellBackground()
+    {
+        return "ffffff";
+    }
+    
+    public int getCellHeight()
+    {
+        return 30;
+    }
+    
+    public String getCellOutline()
+    {
+        return "000000";
+    }
+    
+    public String getCellBorder()
+    {
+        return "000000";
+    }
 }
