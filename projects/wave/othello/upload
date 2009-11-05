@@ -1,4 +1,8 @@
 #!/bin/bash
+echo Deleting existing files
 ssh root@trivergia.com rm -rf /var/www/wavyothello
+echo Uploading new files
 scp -r war/wavyothello root@trivergia.com:/var/www/wavyothello
+echo Changing files to be readable by everyone
 ssh root@trivergia.com chmod -R a+r /var/www/wavyothello
+echo Done.
