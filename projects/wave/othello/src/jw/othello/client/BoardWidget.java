@@ -53,7 +53,7 @@ public class BoardWidget extends Composite
     
     public int getCellWidth()
     {
-        return 30;
+        return 35;
     }
     
     public String getCellBackground()
@@ -63,7 +63,7 @@ public class BoardWidget extends Composite
     
     public int getCellHeight()
     {
-        return 30;
+        return 35;
     }
     
     public String getCellOutline()

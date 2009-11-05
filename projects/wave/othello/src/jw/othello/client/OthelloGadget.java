@@ -87,6 +87,12 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
                 initialized = true;
                 RootPanel.get().clear();
                 Board board = new Board();
+                board.setColor1("00ff00");
+                board.setColor2("0077ff");
+                board.cellAt(4, 6).setValue(1);
+                board.cellAt(4, 7).setValue(2);
+                board.cellAt(0, 3).setValue(2);
+                board.cellAt(7, 2).setValue(1);
                 BoardWidget widget = new BoardWidget(board);
                 widget.refresh();
                 RootPanel.get().add(widget);

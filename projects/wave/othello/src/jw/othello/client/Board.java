@@ -180,4 +180,24 @@ public class Board
     {
         return cells[row][col];
     }
+    
+    public void setPlayer1(String player1)
+    {
+        this.player1 = player1;
+    }
+    
+    public void setColor1(String color1)
+    {
+        this.color1 = color1;
+    }
+    
+    public void setPlayer2(String player2)
+    {
+        this.player2 = player2;
+    }
+    
+    public void setColor2(String color2)
+    {
+        this.color2 = color2;
+    }
 }
