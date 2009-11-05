@@ -22,6 +22,7 @@ public class BoardWidget extends Composite
                 grid.setWidget(row, col, cellWidget);
             }
         }
+        initWidget(grid);
     }
     
     public void refresh()
