@@ -58,4 +58,10 @@ public class BeadUtils
     {
         return generateUrl(width, height, color, color, color, "", "");
     }
+    
+    public static String generateFilledBoxUrl(int width, int height, String color,
+            String bordercolor, String borders)
+    {
+        return generateUrl(width, height, color, color, color, bordercolor, borders);
+    }
 }

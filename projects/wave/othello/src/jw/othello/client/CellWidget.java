@@ -39,7 +39,8 @@ public class CellWidget extends Composite
     {
         if (state == 0)
             return BeadUtils.generateFilledBoxUrl(boardWidget.getCellWidth(), boardWidget
-                    .getCellHeight(), boardWidget.getCellBackground());
+                    .getCellHeight(), boardWidget.getCellBackground(), boardWidget
+                    .getCellBorder(), "tl");
         String playerColor = (state == 1 ? board.getColor1() : board.getColor2());
         return BeadUtils.generateUrl(boardWidget.getCellWidth(), boardWidget
                 .getCellHeight(), boardWidget.getCellBackground(), playerColor, boardWidget

@@ -7,6 +7,8 @@ import org.cobogw.gwt.waveapi.gadget.client.StateUpdateEvent;
 import org.cobogw.gwt.waveapi.gadget.client.StateUpdateEventHandler;
 import org.cobogw.gwt.waveapi.gadget.client.WaveFeature;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.gadgets.client.Gadget;
 import com.google.gwt.gadgets.client.UserPreferences;
 import com.google.gwt.gadgets.client.Gadget.ModulePrefs;
@@ -35,6 +37,17 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     @Override
     protected void init(UserPreferences preferences)
     {
+        GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler()
+        {
+            
+            @Override
+            public void onUncaughtException(Throwable e)
+            {
+                Window.alert("Uncaught exception: " + e.getClass().getName() + ": "
+                        + e.getMessage());
+                Window.alert("Details: " + e);
+            }
+        });
         singleton = this;
         RootPanel.get().add(initialLoadingLabel);
         wave.addParticipantUpdateEventHandler(this);
@@ -69,11 +82,24 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     {
         if (hasState && hasParticipants && !initialized)
         {
-            initialized = true;
-            RootPanel.get().clear();
-            Board board = new Board();
-            BoardWidget widget = new BoardWidget(board);
-            RootPanel.get().add(widget);
+            try
+            {
+                initialized = true;
+                RootPanel.get().clear();
+                Window.alert("creating board");
+                Board board = new Board();
+                BoardWidget widget = new BoardWidget(board);
+                widget.refresh();
+                Window.alert("adding to root panel");
+                RootPanel.get().add(widget);
+                Window.alert("added");
+            }
+            catch (Exception e)
+            {
+                Window.alert("Uncaught exception: " + e.getClass().getName() + ": "
+                        + e.getMessage());
+                Window.alert("Details: " + e);
+            }
         }
     }
     
