@@ -1,8 +1,13 @@
 package jw.othello.client;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class CellWidget extends Composite
 {
@@ -10,6 +15,23 @@ public class CellWidget extends Composite
     private BoardWidget boardWidget;
     private Board board;
     private Cell cell;
+    
+    public BoardWidget getBoardWidget()
+    {
+        return boardWidget;
+    }
+    
+    public Board getBoard()
+    {
+        return board;
+    }
+    
+    public Cell getCell()
+    {
+        return cell;
+    }
+    
+    private FocusPanel panel;
     private HTML label = new HTML("...");
     
     public CellWidget(int row, int col, BoardWidget boardWidget, Board board)
@@ -19,7 +41,21 @@ public class CellWidget extends Composite
         this.cell = board.cellAt(row, col);
         if (this.cell == null)
             throw new RuntimeException("Cell for row " + row + " col " + col + " is null");
-        initWidget(label);
+        panel.setWidget(label);
+        initWidget(panel);
+    }
+    
+    public void addBoardListener(final BoardListener listener)
+    {
+        panel.addClickHandler(new ClickHandler()
+        {
+            
+            @Override
+            public void onClick(ClickEvent event)
+            {
+                listener.cellClicked(CellWidget.this);
+            }
+        });
     }
     
     public void refresh()

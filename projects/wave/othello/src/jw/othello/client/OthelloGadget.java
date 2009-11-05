@@ -19,7 +19,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-@ModulePrefs(author = "Alexander Boyd", height = 280, title = "Othello")
+@ModulePrefs(author = "Alexander Boyd", height = 350, title = "Othello")
 @SuppressWarnings("deprecation")
 public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
         StateUpdateEventHandler, ParticipantUpdateEventHandler
@@ -96,6 +96,19 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
                 BoardWidget widget = new BoardWidget(board);
                 widget.refresh();
                 RootPanel.get().add(widget);
+                widget.addBoardListener(new BoardListener()
+                {
+                    
+                    @Override
+                    public void cellClicked(CellWidget cell)
+                    {
+                        int value = cell.getCell().getValue();
+                        value += 1;
+                        value = value % 3;
+                        cell.getCell().setValue(value);
+                        cell.getBoardWidget().refresh();
+                    }
+                });
             }
             catch (Exception e)
             {

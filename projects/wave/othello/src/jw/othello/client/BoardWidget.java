@@ -75,4 +75,15 @@ public class BoardWidget extends Composite
     {
         return "000000";
     }
+    
+    public void addBoardListener(BoardListener listener)
+    {
+        for (int r = 0; r < 8; r++)
+        {
+            for (int c = 0; c < 8; c++)
+            {
+                cells[r][c].addBoardListener(listener);
+            }
+        }
+    }
 }
