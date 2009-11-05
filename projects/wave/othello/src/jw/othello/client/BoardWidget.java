@@ -20,6 +20,7 @@ public class BoardWidget extends Composite
             {
                 CellWidget cellWidget = new CellWidget(row, col, this, board);
                 grid.setWidget(row, col, cellWidget);
+                cells[row][col] = cellWidget;
             }
         }
         initWidget(grid);
@@ -27,22 +28,22 @@ public class BoardWidget extends Composite
     
     public void refresh()
     {
-        for (CellWidget[] row : cells)
+        for (int r = 0; r < 8; r++)
         {
-            for (CellWidget cell : row)
+            for (int c = 0; c < 8; c++)
             {
-                cell.refresh();
+                cells[r][c].refresh();
             }
         }
     }
     
     public void forceRefresh()
     {
-        for (CellWidget[] row : cells)
+        for (int r = 0; r < 8; r++)
         {
-            for (CellWidget cell : row)
+            for (int c = 0; c < 8; c++)
             {
-                cell.forceRefresh();
+                cells[r][c].forceRefresh();
             }
         }
     }

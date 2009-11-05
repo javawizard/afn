@@ -17,6 +17,8 @@ public class CellWidget extends Composite
         this.boardWidget = boardWidget;
         this.board = board;
         this.cell = board.cellAt(row, col);
+        if (this.cell == null)
+            throw new RuntimeException("Cell for row " + row + " col " + col + " is null");
         initWidget(label);
     }
     
