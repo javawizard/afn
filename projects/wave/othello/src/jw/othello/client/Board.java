@@ -6,27 +6,39 @@ import com.google.gwt.user.client.Window;
 
 public class Board
 {
-    public static enum Direction 
+    public static enum Direction
     {
-        ;
+        north(-1, 0), northeast(-1, 1), east(0, 1), southeast(1, 1), south(1, 0), southwest(
+                1, -1), west(0, -1), northwest(-1, -1);
         private int dr;
         private int dc;
-        public 
+        
+        private Direction(int dr, int dc)
+        {
+            this.dr = dr;
+            this.dc = dc;
+        }
+        
+        public int getDeltaR()
+        {
+            return dr;
+        }
+        
+        public int getDeltaC()
+        {
+            return dc;
+        }
     }
-    private int[][] cells = new int[8][8];
-    private String player1;
-    private String color1;
-    private String player2;
-    private String color2;
     
-    public int getCell(int row, int col)
+    private Cell[][] cells = new Cell[8][8];
     {
-        return cells[row][col];
-    }
-    
-    public void setCell(int row, int col, int value)
-    {
-        cells[row][col] = value;
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                cells[row][col] = new Cell(this, row, col);
+            }
+        }
     }
     
     /**
@@ -44,12 +56,12 @@ public class Board
                 // properties could be changed just by changing the method
                 String name = "board-" + row + "-" + col;
                 if (!from.containsKey(name))
-                    cells[row][col] = 0;
+                    cellAt(row, col).setValue(0);
                 else
                 {
                     try
                     {
-                        cells[row][col] = Integer.parseInt(from.get(name));
+                        cellAt(row, col).setValue(Integer.parseInt(from.get(name)));
                     }
                     catch (NumberFormatException e)
                     {
@@ -80,7 +92,7 @@ public class Board
             for (int col = 0; col < 8; col++)
             {
                 String name = "board-" + row + "-" + col;
-                int value = cells[row][col];
+                int value = cellAt(row, col).getValue();
                 if (value == 0)
                 {
                     if (original.containsKey(name))
@@ -98,5 +110,20 @@ public class Board
                 }
             }
         }
+    }
+    
+    /**
+     * Returns the cell at the specified row and column. An ArrayIndexOutOfBoundsException
+     * will be thrown if there is no such cell.
+     * 
+     * @param row
+     *            The 0-based row
+     * @param col
+     *            The 0-based column
+     * @return The cell at the specified position
+     */
+    public Cell cellAt(int row, int col)
+    {
+        return cells[row][col];
     }
 }
