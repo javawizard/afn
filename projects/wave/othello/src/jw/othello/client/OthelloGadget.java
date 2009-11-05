@@ -1,5 +1,8 @@
 package jw.othello.client;
 
+import org.cobogw.gwt.waveapi.gadget.client.NeedsWave;
+import org.cobogw.gwt.waveapi.gadget.client.WaveFeature;
+
 import com.google.gwt.gadgets.client.Gadget;
 import com.google.gwt.gadgets.client.UserPreferences;
 import com.google.gwt.gadgets.client.Gadget.ModulePrefs;
@@ -12,8 +15,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 @ModulePrefs(author = "Alexander Boyd", height = 100, title = "Othello")
 @SuppressWarnings("deprecation")
-public class OthelloGadget extends Gadget<UserPreferences>
+public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave
 {
+    
+    private WaveFeature wave;
     
     @Override
     protected void init(UserPreferences preferences)
@@ -29,6 +34,12 @@ public class OthelloGadget extends Gadget<UserPreferences>
             }
         });
         RootPanel.get().add(button);
+    }
+    
+    @Override
+    public void initializeFeature(WaveFeature feature)
+    {
+        this.wave = feature;
     }
     
 }
