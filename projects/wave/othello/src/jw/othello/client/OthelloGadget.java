@@ -28,6 +28,10 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     
     public Label initialLoadingLabel = new Label("Loading Othello...");
     
+    public static boolean hasParticipants = false;
+    public static boolean hasState = false;
+    public static boolean initialized = false;
+    
     @Override
     protected void init(UserPreferences preferences)
     {
@@ -35,7 +39,6 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
         RootPanel.get().add(initialLoadingLabel);
         wave.addParticipantUpdateEventHandler(this);
         wave.addStateUpdateEventHandler(this);
-        wave.getState().
     }
     
     @Override
@@ -47,13 +50,39 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     @Override
     public void onUpdate(StateUpdateEvent event)
     {
-        RootPanel.get().add(new Label("State updated"));
+        hasState = true;
+        maybeInitialize();
+        if (initialized)
+            reloadState();
     }
     
     @Override
     public void onUpdate(ParticipantUpdateEvent event)
     {
-        RootPanel.get().add(new Label("Participants updated"));
+        hasParticipants = true;
+        maybeInitialize();
+        if (initialized)
+            reloadParticipants();
+    }
+    
+    private void maybeInitialize()
+    {
+        if (hasState && hasParticipants && !initialized)
+        {
+            initialized = true;
+            RootPanel.get().clear();
+            Board board = new Board();
+            BoardWidget widget = new BoardWidget(board);
+            RootPanel.get().add(widget);
+        }
+    }
+    
+    private void reloadState()
+    {
+    }
+    
+    private void reloadParticipants()
+    {
     }
     
 }
