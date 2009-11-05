@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServlet;
@@ -26,6 +27,32 @@ public class BeadServlet extends HttpServlet
     public void service(HttpServletRequest request, HttpServletResponse response)
             throws IOException
     {
+        if (request.getParameter("width") == null)
+        {
+            response.setHeader("Content-Type", "text/plain");
+            PrintWriter out = response.getWriter();
+            out.println("You need to specify the following "
+                    + "query parameters to the bead servlet:");
+            out.println();
+            out.println("width: The width of the bead");
+            out.println("height: The height of the bead");
+            out.println("background: The background color of the image");
+            out.println("foreground: The color that the bead should be filled with");
+            out.println("outline: The color of the outline of the bead");
+            out
+                    .println("bordercolor: The color of the border around the edge of the image");
+            out.println("borders: A string that specifies which borders to draw. If it "
+                    + "contains the letters \"l\", \"t\", \"r\", or \"b\" within it, "
+                    + "then the left border, the top border, the right border, and "
+                    + "the bottom border will be drawn, respectively. More than one "
+                    + "of these letters can appear to draw more than one border.");
+            out.println();
+            out.println("Colors are specified as a normal HTML hex color string (IE ff0000 " +
+            		"is red). The leading # sign is optional. 2 additional characters " +
+            		"can be present at the end, which specify the alpha value. 00 is " +
+            		"completely transparent, and ff is completely opaque.");
+            return;
+        }
         int width = Integer.parseInt(request.getParameter("width"));
         int height = Integer.parseInt(request.getParameter("height"));
         Color background = colorFromHex(request.getParameter("background"));
@@ -54,9 +81,9 @@ public class BeadServlet extends HttpServlet
         if (borders.contains("t"))
             g.drawLine(0, 0, width, 0);
         if (borders.contains("r"))
-            g.drawLine(width, 0, width, height);
+            g.drawLine(width-1, 0, width-1, height);
         if (borders.contains("b"))
-            g.drawLine(0, height, width, height);
+            g.drawLine(0, height-1, width, height-1);
         if (borders.contains("l"))
             g.drawLine(0, 0, 0, height);
         response.setHeader("Content-Type", "image/png");
