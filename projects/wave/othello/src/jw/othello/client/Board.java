@@ -41,6 +41,11 @@ public class Board
         }
     }
     
+    private String player1;
+    private String color1;
+    private String player2;
+    private String color2;
+    
     /**
      * Loads this board from the values in the specified wave state map.
      * 
@@ -72,6 +77,30 @@ public class Board
                 }
             }
         }
+        player1 = from.get("board-player1");
+        color1 = from.get("board-color1");
+        player2 = from.get("board-player2");
+        color2 = from.get("board-color2");
+    }
+    
+    public String getPlayer1()
+    {
+        return player1;
+    }
+    
+    public String getColor1()
+    {
+        return color1;
+    }
+    
+    public String getPlayer2()
+    {
+        return player2;
+    }
+    
+    public String getColor2()
+    {
+        return color2;
     }
     
     /**
@@ -85,7 +114,8 @@ public class Board
      *            do not have the same value as those in <tt>original</tt> will be added
      *            to <tt>to</tt>.
      */
-    public void format(HashMap<String, String> original, HashMap<String, String> to)
+    public void format(HashMap<String, String> original, HashMap<String, String> to,
+            boolean players)
     {
         for (int row = 0; row < 8; row++)
         {
@@ -109,6 +139,30 @@ public class Board
                     }
                 }
             }
+        }
+        if (players)
+        {
+            addIfChanged(original, to, "board-player1", player1);
+            addIfChanged(original, to, "board-color1", color1);
+            addIfChanged(original, to, "board-player2", player2);
+            addIfChanged(original, to, "board-color2", color2);
+        }
+    }
+    
+    private void addIfChanged(HashMap<String, String> original, HashMap<String, String> to,
+            String name, String value)
+    {
+        String originalValue = original.get(name);
+        if (originalValue == null && value == null)
+            return;
+        else if (originalValue == null && value != null)
+            to.put(name, value);
+        else if (originalValue != null && value == null)
+            to.put(name, null);
+        else
+        {
+            if (!originalValue.equals(value))
+                to.put(name, value);
         }
     }
     
