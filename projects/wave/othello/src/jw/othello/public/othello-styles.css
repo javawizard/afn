@@ -2,3 +2,11 @@
 	border-right: 1px solid black;
 	border-bottom: 1px solid black;
 }
+
+a:focus {
+	outline: none ! important
+}
+
+.othello-no-borders {
+	border: none ! important
+}

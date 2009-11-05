@@ -1,5 +1,6 @@
 package jw.othello.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.google.gwt.user.client.Window;
@@ -163,6 +164,157 @@ public class Board
         {
             if (!originalValue.equals(value))
                 to.put(name, value);
+        }
+    }
+    
+    /**
+     * Represents the results of an attempt to capture beads.
+     * 
+     * @author Alexander Boyd
+     * 
+     */
+    public static enum CaptureResult
+    {
+        /**
+         * Indicates that beads could not be captured because there wasn't any possible
+         * direction in which beads could be captured.
+         */
+        nocapture,
+        /**
+         * Indicates that beads could not be captured because there is already a bead at
+         * the location that we're trying to capture from.
+         */
+        occupied,
+        /**
+         * Indicates that beads were successfully captured.
+         */
+        captured
+    }
+    
+    /**
+     * Places a bead at the location specified and attempts to capture beads. If beads
+     * cannot be captured from the requested location, the board will not be modified.
+     * This method correctly handles the case where there is already a bead at the
+     * specified location.
+     * 
+     * @param player
+     *            The player that is attempting to place the bead
+     * @param cell
+     *            The cell that the bead is to be placed on
+     * @param capture
+     *            True to actually perform this capture, false to simulate the capture but
+     *            not actually perform it. This is useful to figure out if a player is
+     *            able to capture at the specified location without actually causing the
+     *            board to change state.
+     * @return The result of the capture
+     */
+    public CaptureResult capture(int player, Cell cell, boolean capture)
+    {
+        /*
+         * First we'll make sure there isn't already a bead at that location.
+         */
+        if (cell.getValue() != 0)
+            return CaptureResult.occupied;
+        /*
+         * Now we'll go through each of the cardinal and intermediate directions and
+         * attempt to capture beads.
+         */
+        boolean beadsWereCaptured = false;
+        for (Direction direction : Direction.values())
+        {
+            /*
+             * First, we'll create a list that will hold all of the opponent cells we
+             * encounter while attempting to capture. We'll need this list of cells in
+             * case the capture goes successfully, so that we can change all of the
+             * opponent cells to be our cell color.
+             */
+            ArrayList<Cell> opponentCells = new ArrayList<Cell>();
+            /*
+             * Now we'll start at the cell immediately in the specified direction, and
+             * head that way.
+             */
+            Cell current = cell.next(direction);
+            while (current != null)
+            {
+                /*
+                 * First, we check to see what type of cell this is.
+                 */
+                int currentValue = current.getValue();
+                if (currentValue == 0)
+                {
+                    /*
+                     * If the cell is blank, we've run out of cells, which means we can't
+                     * capture.
+                     */
+                    break;
+                }
+                else if (currentValue == player)
+                {
+                    /*
+                     * This is one of our cells. If we have at least one opponent cell on
+                     * the list, then we can capture all of the opponent cells. If not, we
+                     * can't capture in this direction.
+                     */
+                    if (opponentCells.size() > 0)
+                    {
+                        beadsWereCaptured = true;
+                        /*
+                         * Now we'll do the actual capturing, if we're supposed to.
+                         */
+                        if (capture)
+                            doCaptureBeads(player, opponentCells);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    /*
+                     * This is one of our opponent's cells. We'll just add it to the
+                     * opponent cell list.
+                     */
+                    opponentCells.add(current);
+                }
+                /*
+                 * Now we move to the next cell.
+                 */
+                current = current.next(direction);
+            }
+            /*
+             * ...and that's it for this direction.
+             */
+        }
+        /*
+         * Now we see if we captured anything. If we did, we place a player bead at the
+         * cell, and return.
+         */
+        if (beadsWereCaptured)
+        {
+            if (capture)
+                cell.setValue(player);
+            return CaptureResult.captured;
+        }
+        /*
+         * If we didn't capture, we return a value indicating such.
+         */
+        return CaptureResult.nocapture;
+    }
+    
+    /**
+     * Sets all of the specified cells to contain the player specified's beads.
+     * 
+     * @param player
+     *            The player who is placing these beads
+     * @param cells
+     *            The cells to capture
+     */
+    private void doCaptureBeads(int player, ArrayList<Cell> cells)
+    {
+        for (Cell cell : cells)
+        {
+            cell.setValue(player);
         }
     }
     

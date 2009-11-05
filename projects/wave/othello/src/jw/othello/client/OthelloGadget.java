@@ -1,5 +1,7 @@
 package jw.othello.client;
 
+import jw.othello.client.Board.CaptureResult;
+
 import org.cobogw.gwt.waveapi.gadget.client.NeedsWave;
 import org.cobogw.gwt.waveapi.gadget.client.ParticipantUpdateEvent;
 import org.cobogw.gwt.waveapi.gadget.client.ParticipantUpdateEventHandler;
@@ -78,6 +80,8 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
             reloadParticipants();
     }
     
+    int exampleCurrentPlayer = 2;
+    
     private void maybeInitialize()
     {
         if (hasState && hasParticipants && !initialized)
@@ -89,10 +93,10 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
                 Board board = new Board();
                 board.setColor1("00ff00");
                 board.setColor2("0077ff");
-                board.cellAt(4, 6).setValue(1);
-                board.cellAt(4, 7).setValue(2);
-                board.cellAt(0, 3).setValue(2);
-                board.cellAt(7, 2).setValue(1);
+                // board.cellAt(4, 6).setValue(1);
+                // board.cellAt(4, 7).setValue(2);
+                // board.cellAt(0, 3).setValue(2);
+                // board.cellAt(7, 2).setValue(1);
                 BoardWidget widget = new BoardWidget(board);
                 widget.refresh();
                 RootPanel.get().add(widget);
@@ -102,11 +106,15 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
                     @Override
                     public void cellClicked(CellWidget cell)
                     {
-                        int value = cell.getCell().getValue();
-                        value += 1;
-                        value = value % 3;
-                        cell.getCell().setValue(value);
+                        exampleCurrentPlayer = (exampleCurrentPlayer == 1 ? 2 : 1);
+                        CaptureResult result = cell.getBoard().capture(
+                                exampleCurrentPlayer, cell.getCell(), true);
                         cell.getBoardWidget().refresh();
+                        if (result == CaptureResult.nocapture)
+                            Window.alert("You can't capture any beads if you "
+                                    + "place a bead there.");
+                        else if (result == CaptureResult.occupied)
+                            Window.alert("There is already a bead at that location.");
                     }
                 });
             }

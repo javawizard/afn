@@ -41,7 +41,18 @@ public class CellWidget extends Composite
         this.cell = board.cellAt(row, col);
         if (this.cell == null)
             throw new RuntimeException("Cell for row " + row + " col " + col + " is null");
+        panel = new FocusPanel();
+        panel.addStyleName("othello-no-borders");
         panel.setWidget(label);
+        panel.addClickHandler(new ClickHandler()
+        {
+            
+            @Override
+            public void onClick(ClickEvent event)
+            {
+                panel.setFocus(false);
+            }
+        });
         initWidget(panel);
     }
     
