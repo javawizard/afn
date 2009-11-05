@@ -2,13 +2,10 @@
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 1.6.4//EN" "http://google-web-toolkit.googlecode.com/svn/tags/1.6.4/distro-source/core/src/gwt-module.dtd">
 <module>
 	 <inherits     name='com.google.gwt.user.User' />
+	 <inherits     name="com.google.gwt.gadgets.Gadgets"/>
 	 <inherits     name="com.google.gwt.http.HTTP" />
-	 <inherits     name='com.google.gwt.user.theme.standard.StandardResources' />
-	 <inherits     name="com.google.gwt.i18n.I18N"/>
-	 <inherits     name='org.cobogw.gwt.user.User' />
-	 <inherits     name="gwtupload.GWTUpload"/>
-     <stylesheet   src="GWTUpload.css"/>
+	 <inherits     name='com.google.gwt.user.theme.standard.Standard' />
 <!-- <inherits     name='com.google.gwt.user.theme.chrome.Chrome'/>         -->
 <!-- <inherits     name='com.google.gwt.user.theme.dark.Dark'/>             -->
-	 <entry-point  class='jw.bznetwork.client.BZNetwork' />
+	 <entry-point  class='jw.othello.client.OthelloGadget' />
 </module>
