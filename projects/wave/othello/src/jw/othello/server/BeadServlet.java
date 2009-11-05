@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -58,18 +59,26 @@ public class BeadServlet extends HttpServlet
             g.drawLine(0, height, width, height);
         if (borders.contains("l"))
             g.drawLine(0, 0, 0, height);
+        response.setHeader("Content-Type", "image/png");
+        ImageIO.write(image, "PNG", response.getOutputStream());
     }
     
     public static Color colorFromHex(String hex)
     {
         if (hex.startsWith("#"))
             hex = hex.substring(1);
+        int a = 255;
+        if (hex.length() == 8)
+        {
+            String as = hex.substring(6, 8);
+            a = Integer.parseInt(as, 16);
+        }
         String rs = hex.substring(0, 2);
         String gs = hex.substring(2, 4);
         String bs = hex.substring(4, 6);
         int r = Integer.parseInt(rs, 16);
         int g = Integer.parseInt(gs, 16);
         int b = Integer.parseInt(bs, 16);
-        return new Color(r, g, b);
+        return new Color(r, g, b, a);
     }
 }
