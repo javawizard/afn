@@ -1,0 +1,4 @@
+#!/bin/bash
+ssh root@trivergia.com rm -rf /var/www/wavyothello
+scp -r war/wavyothello root@trivergia.com:/var/www/wavyothello
+ssh root@trivergia.com chmod -R a+r /var/www/wavyothello
