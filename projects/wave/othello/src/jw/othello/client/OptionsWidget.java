@@ -38,6 +38,8 @@ public class OptionsWidget extends Composite
         });
         panel = new DockPanel();
         initWidget(panel);
+        setWidth("100%");
+        setHeight("100%");
         Button resetButton = new Button("Reset");
         resetButton.addClickHandler(new ClickHandler()
         {

@@ -63,6 +63,7 @@ public class PlayerWidget extends HTML
         Participant participant = OthelloGadget.wave.getParticipantById(playerId);
         if (participant != null)
             label = participant.getDisplayName() + " <" + participant.getId() + ">";
+        setTitle(label);
     }
     
     private void setColoredHTML(String string)

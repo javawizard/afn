@@ -30,6 +30,8 @@ public class GameWidget extends Composite
     {
         dock = new DockPanel();
         initWidget(dock);
+        setWidth("100%");
+        setHeight("100%");
         board = new Board();
         boardWidget = new BoardWidget(board);
         playerListPanel = new VerticalPanel();
@@ -48,7 +50,7 @@ public class GameWidget extends Composite
         Button resetButton = new Button("Reset");
         resetButton.addClickHandler(new ClickHandler()
         {
-
+            
             @Override
             public void onClick(ClickEvent event)
             {
@@ -56,7 +58,7 @@ public class GameWidget extends Composite
             }
         });
     }
-
+    
     public void refresh()
     {
         // TODO Auto-generated method stub
