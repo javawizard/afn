@@ -81,4 +81,9 @@ public class ColorChooserWidget extends Composite
             b = "0" + b;
         return r + g + b;
     }
+    
+    public void addColorListener(ColorListener listener)
+    {
+        listeners.add(listener);
+    }
 }
