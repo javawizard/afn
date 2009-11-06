@@ -43,9 +43,9 @@ public class PlayerWidget extends HTML
     {
         if (active)
         {
-            setColoredHTML("<div style='border: 1px dashed #444444\'>"
+            setColoredHTML("<div style='border: 1px dashed #000000\'>"
                     + "<div style='border: 1px solid #ffffff'>"
-                    + "<div style='border: 1px solid #888888'>"
+                    + "<div style='border: 1px solid #999999'>"
                     + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
                     + "</div></div></div></div>");
@@ -54,7 +54,7 @@ public class PlayerWidget extends HTML
         {
             setColoredHTML("<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 1px solid #ffffff'>"
-                    + "<div style='border: 1px solid #888888'>"
+                    + "<div style='border: 1px solid #999999'>"
                     + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
                     + "</div></div></div></div>");
