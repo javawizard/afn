@@ -99,10 +99,29 @@ public class OptionsWidget extends Composite
             @Override
             public void onClick(ClickEvent event)
             {
-                Window.alert("This would normally start the game.");
+                doStartGame();
             }
         });
         return button;
+    }
+    
+    protected void doStartGame()
+    {
+        State props = OthelloGadget.wave.getState();
+        if (props.get("color1").equals(props.get("color2")))
+        {
+            Window.alert("Currently, you can't start a game when you and your "
+                    + "opponent have the same bead color.");
+            return;
+        }
+        HashMap<String, String> delta = new HashMap<String, String>();
+        delta.put("state", "playing");
+        delta.put("player", "1");
+        delta.put("board-3-3", "1");
+        delta.put("board-4-4", "1");
+        delta.put("board-3-4", "2");
+        delta.put("board-4-3", "2");
+        props.submitDelta(delta);
     }
     
     private Widget createLeaveTheGame(final int ourPlayerNumber)

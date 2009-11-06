@@ -3,6 +3,8 @@ package jw.othello.client;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.cobogw.gwt.waveapi.gadget.client.State;
+
 import com.google.gwt.user.client.Window;
 
 public class Board
@@ -52,7 +54,7 @@ public class Board
      * 
      * @param from
      */
-    public void parse(HashMap<String, String> from)
+    public void parse(State from)
     {
         for (int row = 0; row < 8; row++)
         {
@@ -61,7 +63,7 @@ public class Board
                 // TODO: split the name out into a method, so that the format of the
                 // properties could be changed just by changing the method
                 String name = "board-" + row + "-" + col;
-                if (!from.containsKey(name))
+                if (from.get(name) == null)
                     cellAt(row, col).setValue(0);
                 else
                 {
@@ -78,10 +80,10 @@ public class Board
                 }
             }
         }
-        player1 = from.get("board-player1");
-        color1 = from.get("board-color1");
-        player2 = from.get("board-player2");
-        color2 = from.get("board-color2");
+        player1 = from.get("player1");
+        color1 = from.get("color1");
+        player2 = from.get("player2");
+        color2 = from.get("color2");
     }
     
     public String getPlayer1()
@@ -115,8 +117,7 @@ public class Board
      *            do not have the same value as those in <tt>original</tt> will be added
      *            to <tt>to</tt>.
      */
-    public void format(HashMap<String, String> original, HashMap<String, String> to,
-            boolean players)
+    public void format(State original, HashMap<String, String> to, boolean players)
     {
         for (int row = 0; row < 8; row++)
         {
@@ -126,12 +127,12 @@ public class Board
                 int value = cellAt(row, col).getValue();
                 if (value == 0)
                 {
-                    if (original.containsKey(name))
+                    if (original.get(name) != null)
                         to.put(name, null);
                 }
                 else
                 {
-                    if ((!original.containsKey(name))
+                    if ((original.get(name) == null)
                             || value != Integer.parseInt(original.get(name)))// if we
                     // don't have the key, or we do have the key but it's not the correct
                     // value
@@ -141,17 +142,17 @@ public class Board
                 }
             }
         }
-        if (players)
-        {
-            addIfChanged(original, to, "board-player1", player1);
-            addIfChanged(original, to, "board-color1", color1);
-            addIfChanged(original, to, "board-player2", player2);
-            addIfChanged(original, to, "board-color2", color2);
-        }
+        // if (players)
+        // {
+        // addIfChanged(original, to, "player1", player1);
+        // addIfChanged(original, to, "board-color1", color1);
+        // addIfChanged(original, to, "board-player2", player2);
+        // addIfChanged(original, to, "board-color2", color2);
+        // }
     }
     
-    private void addIfChanged(HashMap<String, String> original, HashMap<String, String> to,
-            String name, String value)
+    private void addIfChanged(State original, HashMap<String, String> to, String name,
+            String value)
     {
         String originalValue = original.get(name);
         if (originalValue == null && value == null)
@@ -378,5 +379,19 @@ public class Board
     public void setColor2(String color2)
     {
         this.color2 = color2;
+    }
+    
+    public int getCellCount(int player)
+    {
+        int count = 0;
+        for (int r = 0; r < 8; r++)
+        {
+            for (int c = 0; c < 8; c++)
+            {
+                if (cellAt(r, c).getValue() == player)
+                    count += 1;
+            }
+        }
+        return count;
     }
 }

@@ -121,6 +121,7 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
         String state = props.get("state");
         if (state != null)
         {
+            currentOptionsWidget = null;
             if (currentGameWidget == null)
             {
                 currentGameWidget = new GameWidget();
@@ -130,6 +131,7 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
         }
         else
         {
+            currentGameWidget = null;
             if (currentOptionsWidget == null)
             {
                 currentOptionsWidget = new OptionsWidget();
