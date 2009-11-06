@@ -41,6 +41,7 @@ public class OptionsWidget extends Composite
         setWidth("100%");
         setHeight("100%");
         Button resetButton = new Button("Reset");
+        OthelloGadget.disableIfPlayback(resetButton);
         resetButton.addClickHandler(new ClickHandler()
         {
             
@@ -93,6 +94,7 @@ public class OptionsWidget extends Composite
     private Widget createStartTheGame()
     {
         Button button = new Button("Start the game");
+        OthelloGadget.disableIfPlayback(button);
         button.addClickHandler(new ClickHandler()
         {
             
@@ -127,6 +129,7 @@ public class OptionsWidget extends Composite
     private Widget createLeaveTheGame(final int ourPlayerNumber)
     {
         Button button = new Button("Leave the game");
+        OthelloGadget.disableIfPlayback(button);
         button.addClickHandler(new ClickHandler()
         {
             
@@ -146,6 +149,7 @@ public class OptionsWidget extends Composite
     {
         Button button = new Button("Join as " + (playerNumber == 1 ? "first" : "second")
                 + " player");
+        OthelloGadget.disableIfPlayback(button);
         button.addClickHandler(new ClickHandler()
         {
             
@@ -205,6 +209,8 @@ public class OptionsWidget extends Composite
     
     protected void doSelectColor(String color)
     {
+        if (OthelloGadget.wave.isPlayback())
+            return;
         String ourPlayerId = OthelloGadget.wave.getViewer().getId();
         State props = OthelloGadget.wave.getState();
         boolean weHaveJoined = ourPlayerId.equals(props.get("player1"))

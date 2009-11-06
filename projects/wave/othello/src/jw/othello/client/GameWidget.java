@@ -106,6 +106,7 @@ public class GameWidget extends Composite
         {
             Window.alert("You can't capture any beads by going there. "
                     + "Try going somewhere else.");
+            return;
         }
         /*
          * We successfully captured. Now we need to figure out whose turn it is, or if the
@@ -198,6 +199,22 @@ public class GameWidget extends Composite
         board.parse(props);
         boardWidget.refresh();
         /*
+         * Now we see if we're a player.
+         */
+        String ourId = OthelloGadget.wave.getViewer().getId();
+        if (ourId.equals(props.get("player1")))
+        {
+            ourPlayerNumber = 1;
+        }
+        else if (ourId.equals(props.get("player2")))
+        {
+            ourPlayerNumber = 2;
+        }
+        else
+        {
+            ourPlayerNumber = -1;
+        }
+        /*
          * Next we'll refresh the current player.
          */
         currentPlayer = Integer.parseInt(props.get("player"));
@@ -251,23 +268,10 @@ public class GameWidget extends Composite
             String name = playerId;
             if (player != null)
                 name = player.getDisplayName();
-            statusLabel.setText(name + "'s turn.");
-        }
-        /*
-         * Now we see if we're a player.
-         */
-        String ourId = OthelloGadget.wave.getViewer().getId();
-        if (ourId.equals(props.get("player1")))
-        {
-            ourPlayerNumber = 1;
-        }
-        else if (ourId.equals(props.get("player2")))
-        {
-            ourPlayerNumber = 2;
-        }
-        else
-        {
-            ourPlayerNumber = -1;
+            String nameDisplay = name + "'s";
+            if (currentPlayer == ourPlayerNumber)
+                nameDisplay = "Your";
+            statusLabel.setText(nameDisplay + " turn.");
         }
     }
 }

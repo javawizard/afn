@@ -21,6 +21,7 @@ import com.google.gwt.gadgets.client.Gadget.ModulePrefs;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -165,5 +166,11 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     {
         if (Window.confirm("Are you sure you want to reset the game?"))
             resetGame();
+    }
+    
+    public static void disableIfPlayback(FocusWidget button)
+    {
+        if (wave.isPlayback())
+            button.setEnabled(false);
     }
 }
