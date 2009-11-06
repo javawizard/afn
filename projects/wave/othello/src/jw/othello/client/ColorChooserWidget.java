@@ -18,6 +18,9 @@ public class ColorChooserWidget extends Composite
     public ColorChooserWidget()
     {
         grid = new Grid(5, 25);
+        grid.setCellPadding(0);
+        grid.setCellSpacing(0);
+        grid.setBorderWidth(0);
         initGrid();
         setSize("125px", "25px");
     }

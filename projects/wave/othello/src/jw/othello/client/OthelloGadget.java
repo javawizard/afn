@@ -90,35 +90,7 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
             {
                 initialized = true;
                 RootPanel.get().clear();
-                final PlayerWidget widget1 = new PlayerWidget(wave.getViewer().getId());
-                widget1.setActive(false);
-                RootPanel.get().add(widget1);
-                RootPanel.get().add(new Label("-------"));
-                final PlayerWidget widget2 = new PlayerWidget(wave.getViewer().getId());
-                widget2.setActive(true);
-                widget2.setColor("000000");
-                RootPanel.get().add(widget2);
-                RootPanel.get().add(new Label("-------"));
-                Button button = new Button("Switch");
-                RootPanel.get().add(button);
-                button.addClickListener(new ClickListener()
-                {
-                    
-                    @Override
-                    public void onClick(Widget sender)
-                    {
-                        if (widget1.isActive())
-                        {
-                            widget1.setActive(false);
-                            widget2.setActive(true);
-                        }
-                        else
-                        {
-                            widget1.setActive(true);
-                            widget2.setActive(false);
-                        }
-                    }
-                });
+                RootPanel.get().add(new ColorChooserWidget());
             }
             catch (Exception e)
             {
