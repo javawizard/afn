@@ -91,6 +91,20 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
                 initialized = true;
                 RootPanel.get().clear();
                 RootPanel.get().add(new PlayerWidget(wave.getViewer().getId()));
+                RootPanel.get().add(new Label("-------"));
+                PlayerWidget widget = new PlayerWidget(wave.getViewer().getId());
+                widget.setActive(true);
+                RootPanel.get().add(widget);
+                RootPanel.get().add(new Label("-------"));
+                widget = new PlayerWidget(wave.getViewer().getId());
+                widget.setActive(true);
+                widget.setColor("ff0000");
+                RootPanel.get().add(widget);
+                RootPanel.get().add(new Label("-------"));
+                widget = new PlayerWidget(wave.getViewer().getId());
+                widget.setActive(true);
+                widget.setColor("ff0000");
+                RootPanel.get().add(widget);
             }
             catch (Exception e)
             {
