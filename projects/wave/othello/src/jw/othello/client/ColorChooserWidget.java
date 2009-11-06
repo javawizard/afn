@@ -11,6 +11,7 @@ import com.google.gwt.user.client.ui.Grid;
 public class ColorChooserWidget extends Composite
 {
     public static final int INTERVAL = 64;
+    public static final int SIZE = 12;
     private Grid grid;
     
     private ArrayList<ColorListener> listeners = new ArrayList<ColorListener>();
@@ -23,7 +24,7 @@ public class ColorChooserWidget extends Composite
         grid.setCellSpacing(0);
         grid.setBorderWidth(0);
         initGrid();
-        setSize("125px", "25px");
+        setSize((SIZE * 25) + "px", (SIZE * 5) + "px");
     }
     
     private void initGrid()
@@ -47,9 +48,10 @@ public class ColorChooserWidget extends Composite
     
     private void initCell(int row, int col, final int red, final int green, final int blue)
     {
-        Anchor a = new Anchor("<img border=\"0\" src=\""
-                + BeadUtils.generateFilledBoxUrl(5, 5, colorString(red, green, blue))
-                + "\"/>", true);
+        // FIXME: This uses a colored image. Change it to use a fixed-size div with a
+        // background color, but check this out on IE first.
+        Anchor a = new Anchor("<div style='width:" + SIZE + ";height:" + SIZE
+                + ";background-color:" + colorString(red, green, blue) + "'></div>", true);
         a.addStyleName("othello-no-borders");
         a.addClickHandler(new ClickHandler()
         {
