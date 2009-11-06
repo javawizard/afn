@@ -1,5 +1,9 @@
 package jw.othello.client;
 
+import java.util.HashMap;
+
+import jw.othello.client.Board.CaptureResult;
+
 import org.cobogw.gwt.waveapi.gadget.client.Participant;
 import org.cobogw.gwt.waveapi.gadget.client.State;
 
@@ -39,6 +43,7 @@ public class GameWidget extends Composite
     private Label playerStatus2 = new Label();
     private int currentPlayer = 1;
     private int ourPlayerNumber = -1;
+    private boolean frozen = false;
     
     public GameWidget()
     {
@@ -75,6 +80,8 @@ public class GameWidget extends Composite
     
     protected void boardClicked(CellWidget cell)
     {
+        if (frozen)
+            return;
         if (ourPlayerNumber == -1)
         {
             Window.alert("You're not playing in this game.");
@@ -85,6 +92,69 @@ public class GameWidget extends Composite
             Window.alert("It's not your turn.");
             return;
         }
+        /*
+         * If we're here, then it is our turn. We'll attempt to place a bead where the
+         * player clicked.
+         */
+        CaptureResult result = board.capture(ourPlayerNumber, cell.getCell(), true);
+        if (result == CaptureResult.occupied)
+        {
+            Window.alert("There's already a bead there.");
+            return;
+        }
+        if (result == CaptureResult.nocapture)
+        {
+            Window.alert("You can't capture any beads by going there. "
+                    + "Try going somewhere else.");
+        }
+        /*
+         * We successfully captured. Now we need to figure out whose turn it is, or if the
+         * game's over.
+         * 
+         * If the other player has a move, then it's their turn. If they don't, but we do,
+         * then it's our turn. If we don't, then the game's over.
+         * 
+         * We'll also create a delta in the process.
+         */
+        State props = OthelloGadget.wave.getState();
+        HashMap<String, String> delta = new HashMap<String, String>();
+        board.format(props, delta, false);
+        boolean opponentCanMove = board.hasValidMoves(ourPlayerNumber == 1 ? 2 : 1);
+        boolean endGame = false;
+        if (opponentCanMove)
+        {
+            currentPlayer = (ourPlayerNumber == 1 ? 2 : 1);
+        }
+        else
+        {
+            boolean weCanMove = board.hasValidMoves(ourPlayerNumber);
+            if (weCanMove)
+            {
+                currentPlayer = ourPlayerNumber;// kinda redundant, but what the heck.
+            }
+            else
+            {
+                endGame = true;
+            }
+        }
+        if (!endGame)
+        {
+            delta.put("player", "" + currentPlayer);
+        }
+        else
+        {
+            delta.put("state", "over");
+            int winner = 0;
+            int myBeads = board.getCellCount(ourPlayerNumber);
+            int theirBeads = board.getCellCount(ourPlayerNumber == 1 ? 2 : 1);
+            if (myBeads > theirBeads)
+                winner = ourPlayerNumber;
+            else if (theirBeads > myBeads)
+                winner = (ourPlayerNumber == 1 ? 2 : 1);
+            delta.put("player", "" + winner);
+        }
+        props.submitDelta(delta);
+        frozen = true;
     }
     
     private void reloadPlayerListPanel()
@@ -119,6 +189,7 @@ public class GameWidget extends Composite
     
     public void refresh()
     {
+        frozen = false;
         State props = OthelloGadget.wave.getState();
         String state = props.get("state");
         /*
