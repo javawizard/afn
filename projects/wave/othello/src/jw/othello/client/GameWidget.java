@@ -56,4 +56,10 @@ public class GameWidget extends Composite
             }
         });
     }
+
+    public void refresh()
+    {
+        // TODO Auto-generated method stub
+        
+    }
 }

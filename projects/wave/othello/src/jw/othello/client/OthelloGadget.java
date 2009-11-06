@@ -5,6 +5,7 @@ import jw.othello.client.Board.CaptureResult;
 import org.cobogw.gwt.waveapi.gadget.client.NeedsWave;
 import org.cobogw.gwt.waveapi.gadget.client.ParticipantUpdateEvent;
 import org.cobogw.gwt.waveapi.gadget.client.ParticipantUpdateEventHandler;
+import org.cobogw.gwt.waveapi.gadget.client.State;
 import org.cobogw.gwt.waveapi.gadget.client.StateUpdateEvent;
 import org.cobogw.gwt.waveapi.gadget.client.StateUpdateEventHandler;
 import org.cobogw.gwt.waveapi.gadget.client.WaveFeature;
@@ -19,6 +20,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 @ModulePrefs(author = "Alexander Boyd", height = 350, title = "Othello")
@@ -31,6 +33,10 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     static WaveFeature wave;
     
     public Label initialLoadingLabel = new Label("Loading Othello...");
+    
+    public SimplePanel container = new SimplePanel();
+    public GameWidget currentGameWidget;
+    public OptionsWidget currentOptionsWidget;
     
     public static boolean hasParticipants = false;
     public static boolean hasState = false;
@@ -90,7 +96,9 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
             {
                 initialized = true;
                 RootPanel.get().clear();
-                RootPanel.get().add(new ColorChooserWidget());
+                RootPanel.get().add(container);
+                container.setWidth("100%");
+                container.setHeight("100%");
             }
             catch (Exception e)
             {
@@ -103,10 +111,35 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     
     private void reloadState()
     {
+        State props = wave.getState();
+        String state = props.get("state");
+        if (state != null)
+        {
+            if (currentGameWidget == null)
+            {
+                currentGameWidget = new GameWidget();
+                container.setWidget(currentGameWidget);
+            }
+            currentGameWidget.refresh();
+        }
+        else
+        {
+            if (currentOptionsWidget == null)
+            {
+                currentOptionsWidget = new OptionsWidget();
+                container.setWidget(currentOptionsWidget);
+            }
+            currentOptionsWidget.refresh();
+        }
     }
     
     private void reloadParticipants()
     {
+        /*
+         * If we're showing options, and a player isn't on the wave anymore, we remove
+         * them. If we're showing the board, we don't do anything, and rely on the user
+         * resetting the game.
+         */
     }
     
     public static void resetGame()
