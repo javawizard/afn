@@ -195,7 +195,7 @@ public class Board
      * Places a bead at the location specified and attempts to capture beads. If beads
      * cannot be captured from the requested location, the board will not be modified.
      * This method correctly handles the case where there is already a bead at the
-     * specified location.
+     * specified location by returning {@link CaptureResult#occupied}.
      * 
      * @param player
      *            The player that is attempting to place the bead
@@ -263,6 +263,13 @@ public class Board
                          */
                         if (capture)
                             doCaptureBeads(player, opponentCells);
+                        else
+                            /*
+                             * If we're not actually capturing, then all we need to know
+                             * is whether or not we can capture at all. Since we just
+                             * found out that we can capture, then we can just return.
+                             */
+                            return CaptureResult.captured;
                     }
                     else
                     {
@@ -300,6 +307,26 @@ public class Board
          * If we didn't capture, we return a value indicating such.
          */
         return CaptureResult.nocapture;
+    }
+    
+    /**
+     * Checks to see if there are any valid moves for the specified player. This iterates
+     * through all 64 positions on the board and checks to see if beads can be captured.
+     * 
+     * @param player
+     * @return
+     */
+    public boolean hasValidMoves(int player)
+    {
+        for (int r = 0; r < 8; r++)
+        {
+            for (int c = 0; c < 8; c++)
+            {
+                if (capture(player, cellAt(r, c), false) == CaptureResult.captured)
+                    return true;
+            }
+        }
+        return false;
     }
     
     /**

@@ -1,5 +1,7 @@
 package jw.othello.client;
 
+import java.util.HashMap;
+
 import jw.othello.client.Board.CaptureResult;
 
 import org.cobogw.gwt.waveapi.gadget.client.NeedsWave;
@@ -11,6 +13,7 @@ import org.cobogw.gwt.waveapi.gadget.client.StateUpdateEventHandler;
 import org.cobogw.gwt.waveapi.gadget.client.WaveFeature;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.gadgets.client.Gadget;
 import com.google.gwt.gadgets.client.UserPreferences;
@@ -147,8 +150,13 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     
     public static void resetGame()
     {
-        Window.alert("This method would normally remove all players "
-                + "from the game and reset the game.");
+        JsArrayString keys = wave.getState().getKeys();
+        HashMap<String, String> delta = new HashMap<String, String>();
+        for (int i = 0; i < keys.length(); i++)
+        {
+            delta.put(keys.get(i), null);
+        }
+        wave.getState().submitDelta(delta);
     }
     
     public static void confirmReset()

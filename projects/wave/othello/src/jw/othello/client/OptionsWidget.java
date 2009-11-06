@@ -80,6 +80,9 @@ public class OptionsWidget extends Composite
             contentPanel.add(createLeaveTheGame(ourPlayerNumber));
         if (twoPeopleJoined && weHaveJoined)
             contentPanel.add(createStartTheGame());
+        else if (weHaveJoined) // && !twoPeopleJoined
+            contentPanel.add(new Label("You can start the game as soon as "
+                    + "another player joins."));
         if (weHaveJoined)
         {
             contentPanel.add(new Label("You can change your bead color if you want:"));
