@@ -56,7 +56,7 @@ public class BeadUtils
      */
     public static String generateFilledBoxUrl(int width, int height, String color)
     {
-        return generateUrl(width, height, color, color, color, "", "");
+        return generateUrl(width, height, color, color, color, "000000", "");
     }
     
     public static String generateFilledBoxUrl(int width, int height, String color,

@@ -18,6 +18,7 @@ public class ColorChooserWidget extends Composite
     public ColorChooserWidget()
     {
         grid = new Grid(5, 25);
+        initWidget(grid);
         grid.setCellPadding(0);
         grid.setCellSpacing(0);
         grid.setBorderWidth(0);
@@ -46,7 +47,7 @@ public class ColorChooserWidget extends Composite
     
     private void initCell(int row, int col, final int red, final int green, final int blue)
     {
-        Anchor a = new Anchor("<img src=\""
+        Anchor a = new Anchor("<img border=\"0\" src=\""
                 + BeadUtils.generateFilledBoxUrl(5, 5, colorString(red, green, blue))
                 + "\"/>", true);
         a.addStyleName("othello-no-borders");
