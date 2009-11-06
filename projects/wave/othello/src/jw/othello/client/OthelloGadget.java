@@ -28,7 +28,7 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
 {
     public static OthelloGadget singleton;
     
-    private WaveFeature wave;
+    static WaveFeature wave;
     
     public Label initialLoadingLabel = new Label("Loading Othello...");
     
