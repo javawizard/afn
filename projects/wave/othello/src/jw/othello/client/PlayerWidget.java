@@ -59,6 +59,8 @@ public class PlayerWidget extends HTML
     
     public PlayerWidget(String playerId)
     {
+        setWidth("34px");
+        setHeight("34px");
         this.playerId = playerId;
         refresh();
     }
@@ -68,6 +70,6 @@ public class PlayerWidget extends HTML
         Participant participant = OthelloGadget.wave.getParticipantById(playerId);
         if (participant == null)
             return "Participant<br/>Deleted";
-        return "<img src=\"" + URL.encodeComponent(participant.getThumbnailUrl()) + "\"/>";
+        return "<img width='24' height='24' src=\"" + participant.getThumbnailUrl() + "\"/>";
     }
 }
