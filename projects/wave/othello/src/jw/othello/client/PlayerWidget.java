@@ -43,29 +43,62 @@ public class PlayerWidget extends HTML
     {
         if (active)
         {
-            setHTML("<div style='border: 2px outset #888888'>"
-                    + "<div style='border: 2px solid #" + color + "'>"
-                    + "<div style='border: 1px solid #888888'>" + generateImageTag()
-                    + "</div></div></div>");
+            setColoredHTML("<div style='border: 2px outset #MID'>" + generateImageTag()
+                    + "</div>");
         }
         else
         {
-            setHTML("<div style='border: 1px solid #888888'>"
-                    + "<div style='border: 3px solid #" + color + "'>"
-                    + "<div style='border: 1px solid #888888'>" + generateImageTag()
-                    + "</div></div></div>");
+            setColoredHTML("<div style='border: 2px solid #MID'>" + generateImageTag()
+                    + "</div>");
         }
+    }
+    
+    private void setColoredHTML(String string)
+    {
+        setHTML(string.replace("COLOR", color));
+    }
+    
+    private String midColor()
+    {
+        String hex = color;
+        String rs = hex.substring(0, 2);
+        String gs = hex.substring(2, 4);
+        String bs = hex.substring(4, 6);
+        int r = Integer.parseInt(rs, 16);
+        int g = Integer.parseInt(gs, 16);
+        int b = Integer.parseInt(bs, 16);
+        r = average(r, 128);
+        g = average(g, 128);
+        b = average(b, 128);
+        return pad("" + r) + pad("" + g) + pad("" + b);
+    }
+    
+    private int average(int... numbers)
+    {
+        int value = 0;
+        for (int i : numbers)
+        {
+            value += i;
+        }
+        return value / numbers.length;
+    }
+    
+    private String pad(String s)
+    {
+        if (s.length() == 1)
+            s = "0" + s;
+        return s;
     }
     
     public boolean isActive()
     {
         return active;
     }
-
+    
     public PlayerWidget(String playerId)
     {
-        setWidth("58px");
-        setHeight("58px");
+        setWidth("56px");
+        setHeight("56px");
         this.playerId = playerId;
         refresh();
     }
@@ -75,6 +108,7 @@ public class PlayerWidget extends HTML
         Participant participant = OthelloGadget.wave.getParticipantById(playerId);
         if (participant == null)
             return "Participant<br/>Deleted";
-        return "<img width='48' height='48' src=\"" + participant.getThumbnailUrl() + "\"/>";
+        return "<img width='48' height='48' src=\"" + participant.getThumbnailUrl()
+                + "\"/>";
     }
 }
