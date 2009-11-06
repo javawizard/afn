@@ -43,17 +43,19 @@ public class PlayerWidget extends HTML
     {
         if (active)
         {
-            setColoredHTML("<div style='border: 1px solid #777777\'>"
-                    + "<div style='border: 2px solid #ffffff'>"
+            setColoredHTML("<div style='border: 1px solid #888888\'>"
+                    + "<div style='border: 1px solid #ffffff'>"
+                    + "<div style='border: 1px solid #888888'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
-                    + "</div></div></div>");
+                    + "</div></div></div></div>");
         }
         else
         {
             setColoredHTML("<div style='border: 1px solid #ffffff'>"
-                    + "<div style='border: 2px solid #ffffff'>"
+                    + "<div style='border: 1px solid #ffffff'>"
+                    + "<div style='border: 1px solid #888888'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
-                    + "</div></div></div>");
+                    + "</div></div></div></div>");
         }
     }
     
