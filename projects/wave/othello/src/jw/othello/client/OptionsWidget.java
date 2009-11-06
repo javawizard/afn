@@ -57,6 +57,7 @@ public class OptionsWidget extends Composite
         panel.setCellHorizontalAlignment(contentPanel, panel.ALIGN_CENTER);
         panel.setCellVerticalAlignment(contentPanel, panel.ALIGN_MIDDLE);
         contentPanel.setSpacing(3);
+        contentPanel.setHorizontalAlignment(contentPanel.ALIGN_CENTER);
     }
     
     public void refresh()
@@ -149,6 +150,7 @@ public class OptionsWidget extends Composite
     public HorizontalPanel buildPlayerPanel(State props)
     {
         HorizontalPanel content = new HorizontalPanel();
+        content.setVerticalAlignment(content.ALIGN_MIDDLE);
         content.setSpacing(5);
         boolean hasFirst = props.get("player1") != null;
         if (hasFirst)
