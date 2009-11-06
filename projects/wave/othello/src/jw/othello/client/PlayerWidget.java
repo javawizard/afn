@@ -43,8 +43,8 @@ public class PlayerWidget extends HTML
     {
         if (active)
         {
-            setColoredHTML("<div style='border: 1px dashed #000000\'>"
-                    + "<div style='border: 1px solid #ffffff'>"
+            setColoredHTML("<div style='border: 1px solid #0099ff\'>"
+                    + "<div style='border: 2px solid #ffffff'>"
                     + "<div style='border: 1px solid #999999'>"
                     + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
@@ -53,12 +53,16 @@ public class PlayerWidget extends HTML
         else
         {
             setColoredHTML("<div style='border: 1px solid #ffffff'>"
-                    + "<div style='border: 1px solid #ffffff'>"
+                    + "<div style='border: 2px solid #ffffff'>"
                     + "<div style='border: 1px solid #999999'>"
                     + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
                     + "</div></div></div></div>");
         }
+        String label = "Participant no longer exists.";
+        Participant participant = OthelloGadget.wave.getParticipantById(playerId);
+        if (participant != null)
+            label = participant.getDisplayName() + " <" + participant.getId() + ">";
     }
     
     private void setColoredHTML(String string)
@@ -73,8 +77,8 @@ public class PlayerWidget extends HTML
     
     public PlayerWidget(String playerId)
     {
-        setWidth("60px");
-        setHeight("60px");
+        setWidth("62px");
+        setHeight("62px");
         this.playerId = playerId;
         refresh();
     }

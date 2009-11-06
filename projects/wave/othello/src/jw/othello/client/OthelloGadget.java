@@ -137,4 +137,15 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     {
     }
     
+    public static void resetGame()
+    {
+        Window.alert("This method would normally remove all players "
+                + "from the game and reset the game.");
+    }
+    
+    public static void confirmReset()
+    {
+        if (Window.confirm("Are you sure you want to reset the game?"))
+            resetGame();
+    }
 }

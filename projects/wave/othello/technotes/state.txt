@@ -1,0 +1,7 @@
+This is what happens when new state comes in.
+
+First, the state property will be either playing, over, or it will be null. Playing means a game is in progress, and the property player is 1 or 2, depending on whose turn it is. Over means the game has finished, and the property player is 0, 1, or 2, depending on whether it was a tie, player1 won, or player2 won. In both of these states, the board is preserved accordingly. If the state is null, then we're choosing players. player1 is the first player's id, color1 is the first player's color, player2 is the second player's id, and color2 is the second player's color. 
+
+When we receive updated state, we check to see if the state property is null. If it is, and there's a PlayerWidget active, we remove it and add a new OptionsWidget instead. Then we tell the options widget to reload itself. It completely regenerates itself, IE it creates an entirely new panel to render the buttons and everything. 
+
+For each player that has been added, it adds a player widget for that player.  
