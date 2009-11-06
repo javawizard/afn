@@ -90,33 +90,7 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
             {
                 initialized = true;
                 RootPanel.get().clear();
-                Board board = new Board();
-                board.setColor1("00ff00");
-                board.setColor2("0077ff");
-                board.cellAt(3, 3).setValue(1);
-                board.cellAt(4, 4).setValue(1);
-                board.cellAt(3, 4).setValue(2);
-                board.cellAt(4, 3).setValue(2);
-                BoardWidget widget = new BoardWidget(board);
-                widget.refresh();
-                RootPanel.get().add(widget);
-                widget.addBoardListener(new BoardListener()
-                {
-                    
-                    @Override
-                    public void cellClicked(CellWidget cell)
-                    {
-                        exampleCurrentPlayer = (exampleCurrentPlayer == 1 ? 2 : 1);
-                        CaptureResult result = cell.getBoard().capture(
-                                exampleCurrentPlayer, cell.getCell(), true);
-                        cell.getBoardWidget().refresh();
-                        if (result == CaptureResult.nocapture)
-                            Window.alert("You can't capture any beads if you "
-                                    + "place a bead there.");
-                        else if (result == CaptureResult.occupied)
-                            Window.alert("There is already a bead at that location.");
-                    }
-                });
+                RootPanel.get().add(new PlayerWidget(wave.getViewer().getId()));
             }
             catch (Exception e)
             {
