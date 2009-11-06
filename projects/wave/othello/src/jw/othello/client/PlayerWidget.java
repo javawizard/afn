@@ -43,9 +43,10 @@ public class PlayerWidget extends HTML
     {
         if (active)
         {
-            setColoredHTML("<div style='border: 1px solid #888888\'>"
+            setColoredHTML("<div style='border: 1px dashed #444444\'>"
                     + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 1px solid #888888'>"
+                    + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
                     + "</div></div></div></div>");
         }
@@ -54,6 +55,7 @@ public class PlayerWidget extends HTML
             setColoredHTML("<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 1px solid #888888'>"
+                    + "<div style='border: 1px solid #ffffff'>"
                     + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
                     + "</div></div></div></div>");
         }
@@ -71,8 +73,8 @@ public class PlayerWidget extends HTML
     
     public PlayerWidget(String playerId)
     {
-        setWidth("58px");
-        setHeight("58px");
+        setWidth("60px");
+        setHeight("60px");
         this.playerId = playerId;
         refresh();
     }
