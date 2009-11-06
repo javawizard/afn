@@ -81,8 +81,8 @@ public class OptionsWidget extends Composite
             contentPanel.add(createStartTheGame());
         if (weHaveJoined)
         {
-            panel.add(new Label("You can change your bead color if you want:"));
-            panel.add(colorChooser);
+            contentPanel.add(new Label("You can change your bead color if you want:"));
+            contentPanel.add(colorChooser);
         }
     }
     
@@ -149,6 +149,7 @@ public class OptionsWidget extends Composite
     public HorizontalPanel buildPlayerPanel(State props)
     {
         HorizontalPanel content = new HorizontalPanel();
+        content.setSpacing(5);
         boolean hasFirst = props.get("player1") != null;
         if (hasFirst)
         {
@@ -158,7 +159,8 @@ public class OptionsWidget extends Composite
         }
         else
         {
-            content.add(new HTML("&nbsp;No first player&nbsp;"));
+            content.add(new HTML(
+                    "<div style='width:62px;height:62px;border:1px solid #999999'></div>"));
         }
         boolean hasSecond = props.get("player2") != null;
         if (hasSecond)
@@ -169,7 +171,8 @@ public class OptionsWidget extends Composite
         }
         else
         {
-            content.add(new HTML("&nbsp;No second player&nbsp;"));
+            content.add(new HTML(
+                    "<div style='width:62px;height:62px;border:1px solid #999999'></div>"));
         }
         return content;
     }
