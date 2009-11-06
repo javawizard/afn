@@ -159,8 +159,9 @@ public class OptionsWidget extends Composite
         }
         else
         {
-            content.add(new HTML(
-                    "<div style='width:62px;height:62px;border:1px solid #999999'></div>"));
+            content
+                    .add(new HTML(
+                            "<div title=\"No first player\" style='width:54px;height:54px;border:1px solid #999999'></div>"));
         }
         boolean hasSecond = props.get("player2") != null;
         if (hasSecond)
@@ -171,8 +172,9 @@ public class OptionsWidget extends Composite
         }
         else
         {
-            content.add(new HTML(
-                    "<div style='width:62px;height:62px;border:1px solid #999999'></div>"));
+            content
+                    .add(new HTML(
+                            "<div title=\"No second player\" style='width:54px;height:54px;border:1px solid #999999'></div>"));
         }
         return content;
     }

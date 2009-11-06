@@ -32,7 +32,10 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
     
     static WaveFeature wave;
     
-    public Label initialLoadingLabel = new Label("Loading Othello...");
+    public Label initialLoadingLabel = new Label(
+            "Loading Othello... (If you've just switched here from playback mode, "
+                    + "switch to another wave and then switch back to this wave. "
+                    + "This is a bug I'm currently working on.)");
     
     public SimplePanel container = new SimplePanel();
     public GameWidget currentGameWidget;
