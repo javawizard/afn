@@ -80,6 +80,8 @@ public class GameWidget extends Composite
     
     protected void boardClicked(CellWidget cell)
     {
+        if (OthelloGadget.wave.isPlayback())
+            return;
         if (frozen)
             return;
         if (ourPlayerNumber == -1)
@@ -162,6 +164,7 @@ public class GameWidget extends Composite
     {
         playerListPanel.clear();
         Button resetButton = new Button("Reset");
+        OthelloGadget.disableIfPlayback(resetButton);
         resetButton.addClickHandler(new ClickHandler()
         {
             
