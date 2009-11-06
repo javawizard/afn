@@ -90,21 +90,35 @@ public class OthelloGadget extends Gadget<UserPreferences> implements NeedsWave,
             {
                 initialized = true;
                 RootPanel.get().clear();
-                RootPanel.get().add(new PlayerWidget(wave.getViewer().getId()));
+                final PlayerWidget widget1 = new PlayerWidget(wave.getViewer().getId());
+                widget1.setActive(false);
+                RootPanel.get().add(widget1);
                 RootPanel.get().add(new Label("-------"));
-                PlayerWidget widget = new PlayerWidget(wave.getViewer().getId());
-                widget.setActive(true);
-                RootPanel.get().add(widget);
+                final PlayerWidget widget2 = new PlayerWidget(wave.getViewer().getId());
+                widget2.setActive(true);
+                widget2.setColor("000000");
+                RootPanel.get().add(widget2);
                 RootPanel.get().add(new Label("-------"));
-                widget = new PlayerWidget(wave.getViewer().getId());
-                widget.setActive(false);
-                widget.setColor("ff0000");
-                RootPanel.get().add(widget);
-                RootPanel.get().add(new Label("-------"));
-                widget = new PlayerWidget(wave.getViewer().getId());
-                widget.setActive(true);
-                widget.setColor("ff0000");
-                RootPanel.get().add(widget);
+                Button button = new Button("Switch");
+                RootPanel.get().add(button);
+                button.addClickListener(new ClickListener()
+                {
+                    
+                    @Override
+                    public void onClick(Widget sender)
+                    {
+                        if (widget1.isActive())
+                        {
+                            widget1.setActive(false);
+                            widget2.setActive(true);
+                        }
+                        else
+                        {
+                            widget1.setActive(true);
+                            widget2.setActive(false);
+                        }
+                    }
+                });
             }
             catch (Exception e)
             {

@@ -43,24 +43,29 @@ public class PlayerWidget extends HTML
     {
         if (active)
         {
-            setHTML("<div style='border: 2px outset #444444'>"
+            setHTML("<div style='border: 2px outset #888888'>"
                     + "<div style='border: 2px solid #" + color + "'>"
-                    + "<div style='border: 1px solid #444444'>" + generateImageTag()
+                    + "<div style='border: 1px solid #888888'>" + generateImageTag()
                     + "</div></div></div>");
         }
         else
         {
-            setHTML("<div style='border: 1px solid #444444'>"
+            setHTML("<div style='border: 1px solid #888888'>"
                     + "<div style='border: 3px solid #" + color + "'>"
-                    + "<div style='border: 1px solid #444444'>" + generateImageTag()
+                    + "<div style='border: 1px solid #888888'>" + generateImageTag()
                     + "</div></div></div>");
         }
     }
     
+    public boolean isActive()
+    {
+        return active;
+    }
+
     public PlayerWidget(String playerId)
     {
-        setWidth("34px");
-        setHeight("34px");
+        setWidth("58px");
+        setHeight("58px");
         this.playerId = playerId;
         refresh();
     }
@@ -70,6 +75,6 @@ public class PlayerWidget extends HTML
         Participant participant = OthelloGadget.wave.getParticipantById(playerId);
         if (participant == null)
             return "Participant<br/>Deleted";
-        return "<img width='24' height='24' src=\"" + participant.getThumbnailUrl() + "\"/>";
+        return "<img width='48' height='48' src=\"" + participant.getThumbnailUrl() + "\"/>";
     }
 }
