@@ -10,6 +10,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -50,9 +51,11 @@ public class GameWidget extends Composite
         boardWidget = new BoardWidget(board);
         playerListPanel = new VerticalPanel();
         playerListPanel.setSpacing(3);
+        playerListPanel.setVerticalAlignment(playerListPanel.ALIGN_TOP);
         table.setWidget(0, 1, playerListPanel);
         format.setRowSpan(0, 1, 2);
         format.setHorizontalAlignment(0, 1, HorizontalPanel.ALIGN_RIGHT);
+        format.setVerticalAlignment(0, 1, HorizontalPanel.ALIGN_TOP);
         table.setWidget(0, 0, boardWidget);
         format.setHorizontalAlignment(0, 0, HorizontalPanel.ALIGN_LEFT);
         format.setVerticalAlignment(0, 0, HorizontalPanel.ALIGN_BOTTOM);
@@ -77,6 +80,11 @@ public class GameWidget extends Composite
             Window.alert("You're not playing in this game.");
             return;
         }
+        if (ourPlayerNumber != currentPlayer)
+        {
+            Window.alert("It's not your turn.");
+            return;
+        }
     }
     
     private void reloadPlayerListPanel()
@@ -93,6 +101,7 @@ public class GameWidget extends Composite
             }
         });
         playerListPanel.add(resetButton);
+        playerListPanel.add(new HTML("&nbsp;"));
         State props = OthelloGadget.wave.getState();
         String player1 = props.get("player1");
         String color1 = props.get("color1");
