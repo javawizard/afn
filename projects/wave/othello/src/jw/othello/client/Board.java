@@ -263,7 +263,10 @@ public class Board
                          * Now we'll do the actual capturing, if we're supposed to.
                          */
                         if (capture)
+                        {
                             doCaptureBeads(player, opponentCells);
+                            break;
+                        }
                         else
                             /*
                              * If we're not actually capturing, then all we need to know
