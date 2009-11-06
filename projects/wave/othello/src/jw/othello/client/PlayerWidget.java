@@ -43,51 +43,23 @@ public class PlayerWidget extends HTML
     {
         if (active)
         {
-            setColoredHTML("<div style='border: 2px outset #MID'>" + generateImageTag()
-                    + "</div>");
+            setColoredHTML("<div style='border: 1px solid #777777\'>"
+                    + "<div style='border: 2px solid #ffffff'>"
+                    + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
+                    + "</div></div></div>");
         }
         else
         {
-            setColoredHTML("<div style='border: 2px solid #MID'>" + generateImageTag()
-                    + "</div>");
+            setColoredHTML("<div style='border: 1px solid #ffffff'>"
+                    + "<div style='border: 2px solid #ffffff'>"
+                    + "<div style='border: 2px solid #COLOR'>" + generateImageTag()
+                    + "</div></div></div>");
         }
     }
     
     private void setColoredHTML(String string)
     {
         setHTML(string.replace("COLOR", color));
-    }
-    
-    private String midColor()
-    {
-        String hex = color;
-        String rs = hex.substring(0, 2);
-        String gs = hex.substring(2, 4);
-        String bs = hex.substring(4, 6);
-        int r = Integer.parseInt(rs, 16);
-        int g = Integer.parseInt(gs, 16);
-        int b = Integer.parseInt(bs, 16);
-        r = average(r, 128);
-        g = average(g, 128);
-        b = average(b, 128);
-        return pad("" + r) + pad("" + g) + pad("" + b);
-    }
-    
-    private int average(int... numbers)
-    {
-        int value = 0;
-        for (int i : numbers)
-        {
-            value += i;
-        }
-        return value / numbers.length;
-    }
-    
-    private String pad(String s)
-    {
-        if (s.length() == 1)
-            s = "0" + s;
-        return s;
     }
     
     public boolean isActive()
@@ -97,8 +69,8 @@ public class PlayerWidget extends HTML
     
     public PlayerWidget(String playerId)
     {
-        setWidth("56px");
-        setHeight("56px");
+        setWidth("58px");
+        setHeight("58px");
         this.playerId = playerId;
         refresh();
     }
