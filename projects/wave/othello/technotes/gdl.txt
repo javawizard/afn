@@ -1,0 +1,25 @@
+Game definition language
+
+<config>
+    <players exact="2"/>
+    <interact move="no" create="yes"/>
+</config>
+<background>
+    <foreach on="gridtox" last="no"> <!-- GridToX goes left to right for each cell -->
+        <eval to="v" from="v*gridwidth"/>
+        <line x1="%v%" y1="0" x2="%v%" y2="%gridheightpix%"/>
+    </foreach>
+</background>
+<start>
+    <cell x="4" y="4" team="1"/>
+    <cell x="5" y="5" team="1"/> 
+    <cell x="4" y="5" team="2"/>
+    <cell x="5" y="4" team="2"/> 
+</start>
+<create>
+    <foreach on="adir"> <!-- adir is All Directions, all 8 directions -->
+        <foreach on="adirfollow"> <!-- adirfollow is A Direction Follow, says go in the direction indicated by the containing adir loop (if no dir attribute is present) -->
+            
+        </foreach>
+    </foreach>
+</create>
