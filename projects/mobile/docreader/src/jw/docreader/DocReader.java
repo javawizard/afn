@@ -19,10 +19,15 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
@@ -88,7 +93,7 @@ public class DocReader
      */
     public static String[] currentSearchResults;
     
-    private static Font defaultFont = Font.decode(null);
+    private static Font defaultFont = Font.decode(null).deriveFont(10f);
     
     public static final Object lock = new Object();
     /**
@@ -265,9 +270,12 @@ public class DocReader
                 name = "(no name)";
             if (description == null)
                 description = "(no description)";
+            Panel p2 = new Panel();
+            p2.setLayout(new BorderLayout());
             Button button = new Button(name);
             button.setFont(defaultFont.deriveFont(Font.BOLD));
-            panel.add(button);
+            p2.add(button, BorderLayout.WEST);
+            panel.add(p2);
             Label label = new Label(description);
             label.setFont(defaultFont.deriveFont(Font.PLAIN));
             panel.add(label);
@@ -301,4 +309,67 @@ public class DocReader
             }
         };
     }
+    
+    public static String readFile(File file)
+    {
+        try
+        {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            FileInputStream fis = new FileInputStream(file);
+            copy(fis, baos);
+            fis.close();
+            baos.flush();
+            baos.close();
+            return new String(baos.toByteArray(), "UTF-8");
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static String readStream(InputStream stream)
+    {
+        try
+        {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            copy(stream, baos);
+            stream.close();
+            baos.flush();
+            baos.close();
+            return new String(baos.toByteArray(), "UTF-8");
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static void writeFile(String string, File file)
+    {
+        try
+        {
+            ByteArrayInputStream bais = new ByteArrayInputStream(string.getBytes("UTF-8"));
+            FileOutputStream fos = new FileOutputStream(file);
+            copy(bais, fos);
+            bais.close();
+            fos.flush();
+            fos.close();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static void copy(InputStream in, OutputStream out) throws IOException
+    {
+        byte[] buffer = new byte[8192];
+        int amount;
+        while ((amount = in.read(buffer)) != -1)
+        {
+            out.write(buffer, 0, amount);
+        }
+    }
+    
 }
