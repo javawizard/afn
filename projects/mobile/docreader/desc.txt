@@ -1,0 +1,7 @@
+DocReader is a program that allows you to store a collection of text documents and read them while offline. It allows full-text search of the documents, and can store the current reading position within any document.
+
+A docreader library starts out with an int, which represents the version of the format. This number is currently 1. Then comes an int, which represents the number of documents that are in the library. Following that int is a list of ints, one for each document in the library, and each of those ints points to an index within the file where that document's header is stored.
+
+A document header consists of an int that represents the number of pages within that document. Following that is a block containing one int for each page, and that int points to the content of the page in the file. After this series of ints comes the name of the document, encoded as a modified UTF-8 string (as per java.io.DataOutput.writeUTF()). Immediately following is a short description of the document. Following this is the summary of the document, which is currently unused but is present so that summary functionality can be added without breaking the current file format. After this summary is an int which specifies the number of tags this document has. Then, for each tag, there is a string containing the tag's name.
+
+Each page of the document is simply a string containing the content of the page.

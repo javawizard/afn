@@ -1,0 +1,7 @@
+When the doc reader starts up, it either shows the document list if there is no document being read, or the current document (at the correct position) if a document is being read.
+
+The document list consists simply of a text box. For each document is a line containing the document's title, a newline, the document's description (with two spaces before it), and two newlines. The document list is paged, with 20  documents per page, so to get to the next page you have to click the next and previous buttons which are at the bottom of the screen. To open a document, you click so that the mouse cursor is within the text representing the title or description of the document, and press the open button.
+
+The document viewer itself is a text box that shows the current page, along with a next page, previous page, and back-to-document-list button set at the bottom of the screen. 
+
+The list also has a search button, where doc names, doc descriptions, doc content, and tags can be searched for. Tags can also be listed, and docs under a specific tag can be seen. (or under multiple tags) 
