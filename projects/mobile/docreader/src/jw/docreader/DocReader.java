@@ -31,7 +31,10 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -46,19 +49,26 @@ public class DocReader
 {
     public static class OpenDocListener extends MouseAdapter implements ActionListener
     {
-        private File docFolder;
+        private ZipFile docFile;
         private String docName;
+        private String zipFilePrefix;
+        private Properties pageProperties;
+        private int docNumber;
         
-        public OpenDocListener(File docFolder, String docName)
+        public OpenDocListener(ZipFile docFile, String docName, String zipFilePrefix,
+                Properties pageProperties, int docNumber)
         {
-            this.docFolder = docFolder;
+            this.docFile = docFile;
             this.docName = docName;
+            this.zipFilePrefix = zipFilePrefix;
+            this.pageProperties = pageProperties;
+            this.docNumber = docNumber;
         }
         
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            loadDocPage(docFolder, 0, docName);
+            loadDocPage(docFile, 0, docName, zipFilePrefix, pageProperties, docNumber);
         }
         
         @Override
@@ -112,10 +122,14 @@ public class DocReader
      */
     private static final int PAGE_LENGTH = 20;
     
+    public static Label loadingLabel = new Label("Loading DocReader...");
+    
+    private static int totalPageCount;
+    
     /**
      * @param args
      */
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws Throwable
     {
         frame = new Frame("DocReader");
         frame.setSize(240, 320);
@@ -128,8 +142,9 @@ public class DocReader
                 frame.dispose();
             }
         });
-        frame.add(new Label("Loading DocReader..."));
+        frame.add(loadingLabel);
         frame.show();
+        loadingLabel.setText("Searching for docs...");
         File f = new File("drfz-docs");
         System.out.println("Checking for " + f.getCanonicalPath());
         if (!f.exists())
@@ -143,24 +158,32 @@ public class DocReader
                 System.out.println("Checking for " + f.getCanonicalPath());
                 if (!f.exists())
                 {
+                    loadingLabel.setText("No doc storage folder. DocReader will exit.");
                     System.out.println("No document storage found at dfrz-docs "
                             + "or ../docs.drfz or ~/docs.dfrz. Exiting.");
+                    Thread.sleep(3000);
                     System.exit(0);
                 }
             }
         }
         DocReader.storage = f;
+        loadingLabel.setText("Calculating page count...");
         calculateTotalDocCount();
+        loadingLabel.setText("Loading first page...");
         showDocListPage(0);
     }
     
-    public static void loadDocPage(final File docFolder, final int pageNumber,
-            final String docName)
+    public static void loadDocPage(final ZipFile docFile, final int pageNumber,
+            final String docName, final String zipFilePrefix,
+            final Properties pageProperties, final int docNumber)
     {
+        // System.out.println("Loading doc page " + pageNumber + " doc " + docName
+        // + " prefix " + zipFilePrefix);
         frame.removeAll();
         try
         {
-            Page page = readPage(docFolder, pageNumber);
+            Page page = readPage(docFile, pageNumber, zipFilePrefix, pageProperties,
+                    docNumber);
             if (page == null)
                 page = generatePlaceholderEmptyPage();
             boolean backEnabled = pageNumber > 0;
@@ -169,6 +192,7 @@ public class DocReader
                     + docName), BorderLayout.NORTH);
             TextArea area = new TextArea(page.text, 0, 0, TextArea.SCROLLBARS_VERTICAL_ONLY);
             area.setEditable(false);
+            area.setCaretPosition(0);
             frame.add(area);
             frame.add(new ButtonPanel(new String[]
             {
@@ -178,7 +202,7 @@ public class DocReader
                     "<", ">", "Library", "Find"
             }, new boolean[]
             {
-                    backEnabled, forwardEnabled, true, false
+                    backEnabled, forwardEnabled, true, true
             }, new ButtonListener()
             {
                 
@@ -186,9 +210,11 @@ public class DocReader
                 public void action(String name)
                 {
                     if (name.equals("back"))
-                        loadDocPage(docFolder, pageNumber - 1, docName);
+                        loadDocPage(docFile, pageNumber - 1, docName, zipFilePrefix,
+                                pageProperties, docNumber);
                     else if (name.equals("forward"))
-                        loadDocPage(docFolder, pageNumber + 1, docName);
+                        loadDocPage(docFile, pageNumber + 1, docName, zipFilePrefix,
+                                pageProperties, docNumber);
                     else if (name.equals("doclist"))
                         showDocListPage(lastVisibleDocPage);
                     else
@@ -205,6 +231,9 @@ public class DocReader
                 }
             }), BorderLayout.SOUTH);
             revalidate(frame);
+            area.setCaretPosition(0);
+            // revalidate(frame);
+            revalidate(area);
         }
         catch (Exception e)
         {
@@ -220,38 +249,46 @@ public class DocReader
         return page;
     }
     
-    public static Page readPage(File file, int pageNumber) throws ZipException, IOException
+    public static Page readPage(ZipFile file, int pageNumber, String zipFilePrefix,
+            Properties pageProperties, int docNumber) throws ZipException, IOException
     {
         Page page = new Page();
-        if (file.isDirectory())
-        {
-            File pageFile = new File(file, "" + pageNumber);
-            if (!pageFile.exists())
-                return null;
-            page.total = file.listFiles(hiddenFilter).length;
-            page.text = readFile(pageFile);
-        }
-        else
-        {
-            ZipFile zipFile = new ZipFile(file);
-            page.total = zipFile.size();
-            ZipEntry entry = zipFile.getEntry("" + pageNumber);
-            if (entry == null)
-                entry = zipFile.getEntry("/" + pageNumber);
-            if (entry == null)
-                return null;
-            page.text = readStream(zipFile.getInputStream(entry));
-        }
+        page.total = Integer.parseInt(pageProperties.getProperty(docNumber + "t"));
+        ZipEntry entry = file.getEntry(zipFilePrefix + pageNumber);
+        if (entry == null)
+            entry = file.getEntry("/" + zipFilePrefix + pageNumber);
+        if (entry == null)
+            return null;
+        page.text = readStream(file.getInputStream(entry));
         return page;
     }
     
-    private static void calculateTotalDocCount()
+    private static void calculateTotalDocCount() throws IOException, InterruptedException
     {
+        loadingLabel.setText("Loading page file list...");
         File[] pageFolders = storage.listFiles(hiddenFilter);
+        loadingLabel.setText("Running page file loop...");
+        int pagesSoFar = 0;
         for (File page : pageFolders)
         {
-            totalDocCount += page.listFiles(hiddenFilter).length;
+            // System.gc();
+            if ((pagesSoFar++ % 10) == 0)
+                loadingLabel.setText("Loading... (p:" + pagesSoFar + " d:" + totalDocCount
+                        + ")");
+            // ZipFile file = new ZipFile(page);
+            // Properties props = new Properties();
+            // props.load(file.getInputStream(file.getEntry("names.props")));
+            // for (Object key : props.keySet())
+            // {
+            // if (((String) key).endsWith("n"))
+            // totalDocCount += 1;
+            // }
+            // file.close();
+            // add to totalDocCount
         }
+        loadingLabel.setText("" + pagesSoFar + " pages");
+        totalPageCount = pagesSoFar;
+        Thread.sleep(2000);
     }
     
     /**
@@ -274,16 +311,46 @@ public class DocReader
     public static void showDocPlainList(final int page)
     {
         frame.removeAll();
+        Label statusLabel = new Label();
+        frame.add(statusLabel);
+        statusLabel.setText("Garbage collecting...");
+        revalidate(frame);
+        System.gc();
         try
         {
-            final int pageCount = storage.listFiles(hiddenFilter).length;
-            File pageFolder = new File(storage, "" + page);
+            File pageFile = new File(storage, "" + page);
+            statusLabel.setText("Opening zip file...");
+            ZipFile file = new ZipFile(pageFile);
             boolean allowBack = new File(storage, "" + (page - 1)).exists();
             boolean allowForward = new File(storage, "" + (page + 1)).exists();
-            File[] docFolders = pageFolder.listFiles(hiddenFilter);
-            Arrays.sort(docFolders);
-            frame.add(generateDocListPanel(docFolders));
-            frame.add(new Label("Page " + (page + 1) + " of " + pageCount),
+            Properties pageProperties = new Properties();
+            statusLabel.setText("Loading page properties...");
+            pageProperties.load(file.getInputStream(file.getEntry("names.props")));
+            statusLabel.setText("Iterating over page properties...");
+            ArrayList<String> docPrefixes = new ArrayList<String>();
+            for (Map.Entry mapEntry : pageProperties.entrySet())
+            {
+                // list page properties, add to doc prefixes, sort, then add trailing
+                // slash
+                String key = (String) mapEntry.getKey();
+                if (!key.endsWith("n"))
+                    continue;
+                docPrefixes.add(key.substring(0, key.length() - 1));
+            }
+            statusLabel.setText("Sorting doc prefixes...s");
+            Collections.sort(docPrefixes);
+            statusLabel.setText("Creating doc prefix array...");
+            String[] prefixes = docPrefixes.toArray(new String[0]);
+            for (int i = 0; i < prefixes.length; i++)
+            {
+                prefixes[i] = prefixes[i] + "/";
+            }
+            statusLabel.setText("Loading doc list component...");
+            Component docListComponent = generateDocListPanel(Collections.nCopies(
+                    prefixes.length, file).toArray(new ZipFile[0]), prefixes);
+            frame.removeAll();
+            frame.add(docListComponent);
+            frame.add(new Label("Page " + (page + 1) + " of " + totalPageCount),
                     BorderLayout.NORTH);
             frame.add(new ButtonPanel(new String[]
             {
@@ -310,7 +377,7 @@ public class DocReader
                     }
                     else if (name.equals("page"))
                     {
-                        doGotoPlainPage(page, pageCount);
+                        doGotoPlainPage(page, totalPageCount);
                     }
                     else
                     {
@@ -362,7 +429,7 @@ public class DocReader
                 + sw.toString());
     }
     
-    private static void revalidate(Container container)
+    private static void revalidate(Component container)
     {
         container.invalidate();
         container.validate();
@@ -381,7 +448,8 @@ public class DocReader
      * @param docFolders
      * @throws IOException
      */
-    public static Component generateDocListPanel(File[] docFolders) throws IOException
+    public static Component generateDocListPanel(ZipFile[] files, String[] prefixes)
+            throws IOException
     {
         ScrollPane scroll = new ScrollPane();
         scroll.getVAdjustable().setUnitIncrement(22);
@@ -391,17 +459,24 @@ public class DocReader
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         String lastPageName = null;
         Properties lastPageProperties = new Properties();
-        for (File file : docFolders)
+        for (int i = 0; i < files.length; i++)
         {
-            String pageName = file.getParentFile().getName();
+            ZipFile file = files[i];
+            String filePrefix = prefixes[i];
+            String pageName = lastComponent(file.getName());
+            String fileNumber = filePrefix.substring(0, filePrefix.length() - 1);
             if (!pageName.equals(lastPageName))
             {
-                lastPageProperties.clear();
-                lastPageProperties.load(new FileInputStream(new File(file.getParentFile(),
-                        "names.props")));
+                /*
+                 * This must be set to a new properties object, not cleared, since a
+                 * reference to this is passed to the instance of OpenDocActionListener,
+                 * which needs the properties when the button is clicked.
+                 */
+                lastPageProperties = new Properties();
+                lastPageProperties.load(file.getInputStream(file.getEntry("names.props")));
             }
-            String name = lastPageProperties.getProperty(file.getName() + "n");
-            String description = lastPageProperties.getProperty(file.getName() + "d");
+            String name = lastPageProperties.getProperty(fileNumber + "n");
+            String description = lastPageProperties.getProperty(fileNumber + "d");
             if (name == null)
                 name = "(no name)";
             if (description == null)
@@ -416,9 +491,15 @@ public class DocReader
             label.setFont(defaultFont.deriveFont(Font.PLAIN));
             panel.add(label);
             panel.add(verticalSpacer(4));
-            button.addActionListener(new OpenDocListener(file, name));
+            button.addActionListener(new OpenDocListener(file, name, filePrefix,
+                    lastPageProperties, Integer.parseInt(fileNumber)));
         }
         return scroll;
+    }
+    
+    private static String lastComponent(String name)
+    {
+        return new File(name).getName();
     }
     
     private static Component verticalSpacer(final int height)
