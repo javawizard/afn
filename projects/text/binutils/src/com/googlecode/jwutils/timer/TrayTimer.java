@@ -23,7 +23,11 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -133,7 +137,7 @@ public class TrayTimer
                 if (name.trim().equals(""))
                     name = generateName();
                 addTimer(dialog.getUpHours().getText(), dialog.getUpMinutes().getText(),
-                        dialog.getUpSeconds().getText(), true, name);
+                        dialog.getUpSeconds().getText(), true, name, true);
                 dialog.getUpHours().setText("0");
                 dialog.getUpMinutes().setText("0");
                 dialog.getUpSeconds().setText("0");
@@ -150,7 +154,7 @@ public class TrayTimer
                     name = generateName();
                 addTimer(dialog.getDownHours().getText(),
                         dialog.getDownMinutes().getText(), dialog.getDownSeconds()
-                                .getText(), false, name);
+                                .getText(), false, name, true);
                 dialog.getDownHours().setText("0");
                 dialog.getDownMinutes().setText("0");
                 dialog.getDownSeconds().setText("0");
@@ -231,6 +235,62 @@ public class TrayTimer
         });
         icon.setPopupMenu(menu);
         tray.add(icon);
+        startSocketListener();
+    }
+    
+    private static void startSocketListener()
+    {
+        final ServerSocket ss;
+        try
+        {
+            ss = new ServerSocket(44728, 10);
+        }
+        catch (Exception e)
+        {
+            System.err.println("Couldn't listen on port " + 44728
+                    + ". TrayTimer will run, but without remote timer support.");
+            e.printStackTrace();
+            return;
+        }
+        Thread t = new Thread()
+        {
+            public void run()
+            {
+                while (true)
+                {
+                    Socket s = null;
+                    try
+                    {
+                        s = ss.accept();
+                        s.setSoTimeout(25000);
+                        String line = new Scanner(s.getInputStream()).nextLine();
+                        processSocketLine(line);
+                        s.close();
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                        try
+                        {
+                            s.close();
+                        }
+                        catch (Exception ex)
+                        {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
+    }
+    
+    protected static void processSocketLine(String line)
+    {
+        String[] split = line.split("-", 6);
+        addTimer(split[0], split[1], split[2], split[3].equals("up"), split[5], split[4]
+                .equals("counting"));
     }
     
     protected static synchronized String generateName()
@@ -379,12 +439,13 @@ public class TrayTimer
     }
     
     public static synchronized void addTimer(String h, String m, String s, boolean up,
-            String name)
+            String name, boolean counting)
     {
         TimerComponent component = new TimerComponent();
         component.getNameLabel().setText(
                 "" + (up ? ((char) 8593) : ((char) 8595)) + " " + name);
         component.getMainButton().setText(h + ":" + m + ":" + s);
+        component.getMainButton().setSelected(counting);
         final Timer timer = new Timer();
         timer.setComponent(component);
         timer.setDirection(up ? Direction.UP : Direction.DOWN);
