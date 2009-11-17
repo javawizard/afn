@@ -347,7 +347,7 @@ public class DocReader
             }
             statusLabel.setText("Loading doc list component...");
             Component docListComponent = generateDocListPanel(Collections.nCopies(
-                    prefixes.length, file).toArray(new ZipFile[0]), prefixes);
+                    prefixes.length, file).toArray(new ZipFile[0]), prefixes, statusLabel);
             frame.removeAll();
             frame.add(docListComponent);
             frame.add(new Label("Page " + (page + 1) + " of " + totalPageCount),
@@ -448,7 +448,7 @@ public class DocReader
      * @param docFolders
      * @throws IOException
      */
-    public static Component generateDocListPanel(ZipFile[] files, String[] prefixes)
+    public static Component generateDocListPanel(ZipFile[] files, String[] prefixes, Label statusLabel)
             throws IOException
     {
         ScrollPane scroll = new ScrollPane();
@@ -472,8 +472,10 @@ public class DocReader
                  * reference to this is passed to the instance of OpenDocActionListener,
                  * which needs the properties when the button is clicked.
                  */
+                System.out.println("Loading page props");
                 lastPageProperties = new Properties();
                 lastPageProperties.load(file.getInputStream(file.getEntry("names.props")));
+                lastPageName = pageName;
             }
             String name = lastPageProperties.getProperty(fileNumber + "n");
             String description = lastPageProperties.getProperty(fileNumber + "d");
