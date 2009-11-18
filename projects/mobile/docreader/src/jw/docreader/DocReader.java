@@ -472,7 +472,7 @@ public class DocReader
                  * reference to this is passed to the instance of OpenDocActionListener,
                  * which needs the properties when the button is clicked.
                  */
-                System.out.println("Loading page props");
+//                System.out.println("Loading page props");
                 lastPageProperties = new Properties();
                 lastPageProperties.load(file.getInputStream(file.getEntry("names.props")));
                 lastPageName = pageName;
