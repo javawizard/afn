@@ -11,6 +11,7 @@ import java.awt.Label;
 import java.awt.Panel;
 import java.awt.ScrollPane;
 import java.awt.TextArea;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -47,6 +48,184 @@ import jw.docreader.ui.OptionPane;
 
 public class DocReader
 {
+    public static class DeleteSearchListener implements ActionListener
+    {
+        private File file;
+        
+        public DeleteSearchListener(File file)
+        {
+            this.file = file;
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            if (OptionPane.showInputDialog(frame,
+                    "Are you sure you want to delete the search "
+                            + file.getName().substring(0, file.getName().length() - 4)
+                            + "?", null) == null)
+                return;
+            if (!file.delete())
+                OptionPane.showMessageDialog(frame, "The file could not be deleted.");
+            showSearchChooser();
+        }
+        
+    }
+    
+    public static class DoSearchActionListener implements ActionListener
+    {
+        private File file;
+        
+        public DoSearchActionListener(File file)
+        {
+            this.file = file;
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            currentSearchResultFile = file;
+            showDocListPage(0);
+        }
+        
+    }
+    
+    public static class CreateSearchListener implements ActionListener
+    {
+        private TextField searchField;
+        
+        public CreateSearchListener(TextField searchField)
+        {
+            this.searchField = searchField;
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            if (searchField.getText().equals(""))
+            {
+                OptionPane.showMessageDialog(frame,
+                        "You can't create a builder that doesn't have any text in it.");
+                return;
+            }
+            synchronized (searchBuilderList)
+            {
+                SearchBuilder builder = new SearchBuilder(searchField.getText());
+                searchBuilderList.add(builder);
+                builder.start();
+            }
+            showSearchBuilder();
+        }
+        
+    }
+    
+    public static class ClearBuilderListener implements ActionListener
+    {
+        private SearchBuilder builder;
+        
+        public ClearBuilderListener(SearchBuilder builder)
+        {
+            this.builder = builder;
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            synchronized (searchBuilderList)
+            {
+                searchBuilderList.remove(builder);
+            }
+            showSearchBuilder();
+        }
+        
+    }
+    
+    public static class SearchBuilder extends Thread
+    {
+        public volatile boolean done = false;
+        public volatile int currentSearchPage = 0;
+        private String searchTerms;
+        
+        public SearchBuilder(String searchTerms)
+        {
+            this.searchTerms = searchTerms;
+        }
+        
+        public void run()
+        {
+            File searchFile = new File(storageSearch, searchTerms.replace(" ", "-")
+                    .replaceAll("[^a-zA-Z0-9\\-]", "")
+                    + ".txt");
+            try
+            {
+                FileOutputStream out = new FileOutputStream(searchFile);
+                for (int page = 0; page < totalPageCount; page++)
+                {
+                    currentSearchPage = page;
+                    File pageFile = new File(storage, "" + page);
+                    ZipFile file = new ZipFile(pageFile);
+                    Properties pageProperties = new Properties();
+                    pageProperties.load(file.getInputStream(file.getEntry("names.props")));
+                    ArrayList<String> docPrefixes = new ArrayList<String>();
+                    for (Map.Entry mapEntry : pageProperties.entrySet())
+                    {
+                        String key = (String) mapEntry.getKey();
+                        if (!key.endsWith("n"))
+                            continue;
+                        String currentDocNumber = key.substring(0, key.length() - 1);
+                        int docNumber = Integer.parseInt(currentDocNumber);
+                        int totalDocPages = Integer.parseInt(pageProperties
+                                .getProperty(currentDocNumber + "t"));
+                        int matchesInDoc = 0;
+                        for (int docPage = 0; docPage < totalDocPages; docPage++)
+                        {
+                            Page pageObject = readPage(file, docPage, currentDocNumber
+                                    + "/", pageProperties, docNumber);
+                            int previous = 0;
+                            boolean hadMatch = true;
+                            while (hadMatch)
+                            {
+                                int matchIndex = pageObject.text.indexOf(searchTerms,
+                                        previous);
+                                if (matchIndex > -1)
+                                {
+                                    matchesInDoc += 1;
+                                    hadMatch = true;
+                                    previous = matchIndex + 1;
+                                }
+                                else
+                                {
+                                    hadMatch = false;
+                                }
+                            }
+                        }
+                        if (matchesInDoc > 0)
+                        {
+                            out.write(matchesInDoc > 100 ? 100 : matchesInDoc);
+                            out.write(page / 100);
+                            out.write(page % 100);
+                            out.write(docNumber);
+                        }
+                    }
+                }
+                out.flush();
+                out.close();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                searchFile.delete();
+                done = true;
+                OptionPane.showMessageDialog(frame,
+                        "Error while building search, thrown to parent, see stderr");
+            }
+            finally
+            {
+                done = true;
+            }
+        }
+    }
+    
     public static class OpenDocListener extends MouseAdapter implements ActionListener
     {
         private ZipFile docFile;
@@ -91,11 +270,12 @@ public class DocReader
         {
             if (pathname.isHidden())
                 return false;
-            if (pathname.getName().startsWith("."))
+            String name = pathname.getName();
+            if (name.startsWith("."))
                 return false;
-            if (pathname.getName().equals("names.props"))
+            if (name.equals("names.props"))
                 return false;
-            if (pathname.getName().endsWith("~"))
+            if (name.endsWith("~"))
                 return false;
             return true;
         }
@@ -106,11 +286,8 @@ public class DocReader
     public static File storage;
     
     public static int totalDocCount;
-    /**
-     * A string of file paths to the folders representing each document that matched the
-     * last search query
-     */
-    public static String[] currentSearchResults;
+    
+    public static File currentSearchResultFile;
     
     private static Font defaultFont = Font.decode(null).deriveFont(10f);
     
@@ -125,6 +302,12 @@ public class DocReader
     public static Label loadingLabel = new Label("Loading DocReader...");
     
     private static int totalPageCount;
+    
+    public static ArrayList<SearchBuilder> searchBuilderList = new ArrayList<SearchBuilder>();
+    
+    private static File storageParent;
+    
+    private static File storageSearch;
     
     /**
      * @param args
@@ -145,6 +328,7 @@ public class DocReader
         frame.add(loadingLabel);
         frame.show();
         loadingLabel.setText("Searching for docs...");
+        revalidate(frame);
         File f = new File("drfz-docs");
         System.out.println("Checking for " + f.getCanonicalPath());
         if (!f.exists())
@@ -167,6 +351,24 @@ public class DocReader
             }
         }
         DocReader.storage = f;
+        DocReader.storageParent = f.getParentFile();
+        DocReader.storageSearch = new File(storageParent, "dfrz-search");
+        try
+        {
+            if (!(DocReader.storageSearch.exists() && DocReader.storageSearch.isDirectory()))
+            {
+                if (!DocReader.storageSearch.mkdirs())
+                {
+                    loadingLabel
+                            .setText("Searches are disabled due to folder creation failure.");
+                    Thread.sleep(4000);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
         loadingLabel.setText("Calculating page count...");
         calculateTotalDocCount();
         loadingLabel.setText("Loading first page...");
@@ -302,7 +504,7 @@ public class DocReader
     public static void showDocListPage(int page)
     {
         lastVisibleDocPage = page;
-        if (currentSearchResults == null)
+        if (currentSearchResultFile == null)
             showDocPlainList(page);
         else
             showDocSearchList(page);
@@ -337,7 +539,7 @@ public class DocReader
                     continue;
                 docPrefixes.add(key.substring(0, key.length() - 1));
             }
-            statusLabel.setText("Sorting doc prefixes...s");
+            statusLabel.setText("Sorting doc prefixes...");
             Collections.sort(docPrefixes);
             statusLabel.setText("Creating doc prefix array...");
             String[] prefixes = docPrefixes.toArray(new String[0]);
@@ -347,27 +549,49 @@ public class DocReader
             }
             statusLabel.setText("Loading doc list component...");
             Component docListComponent = generateDocListPanel(Collections.nCopies(
-                    prefixes.length, file).toArray(new ZipFile[0]), prefixes, statusLabel);
+                    prefixes.length, file).toArray(new ZipFile[0]), prefixes, statusLabel,
+                    null);
             frame.removeAll();
             frame.add(docListComponent);
             frame.add(new Label("Page " + (page + 1) + " of " + totalPageCount),
                     BorderLayout.NORTH);
             frame.add(new ButtonPanel(new String[]
             {
-                    "back", "forward", "page", "search"
+                    "back", "forward", "page", "build", "search", "random", "help"
             }, new String[]
             {
-                    "<", ">", "goto", "search"
+                    "<", ">", "G", "B", "S", "R", "?"
             }, new boolean[]
             {
-                    allowBack, allowForward, true, true
+                    allowBack, allowForward, true, true, true, true, true
             }, new ButtonListener()
             {
                 
                 @Override
                 public void action(String name)
                 {
-                    if (name.equals("back"))
+                    if (name.equals("help"))
+                    {
+                        OptionPane
+                                .showMessageDialog(
+                                        frame,
+                                        "Buttons:\n\n"
+                                                + "<  --  Go back one page.\n"
+                                                + ">  --  Go forward one page.\n"
+                                                + "G  --  Enter a page number to go to.\n"
+                                                + "B  --  Specify a search query, and build a search from it. This also lets you "
+                                                + "view searches currently being built.\n"
+                                                + "S  --  View a search that you have built.\n"
+                                                + "R  --  Choose a page at random and go to it.\n"
+                                                + "?  --  View this help page.\n\n"
+                                                + "On other pages, you may see these:\n\n"
+                                                + "L  --  Return to the library (the list of pages you were just at before you hit the ?)\n"
+                                                + "F  --  Refresh the current page and any information shown on it.\n\n"
+                                                + "On the doc list page, the number in parentheses before each doc title is the number "
+                                                + "of pages in the doc. On the search page, the number in square brackets is the number "
+                                                + "of times the search query was found within the document.");
+                    }
+                    else if (name.equals("back"))
                     {
                         showDocListPage(page - 1);
                     }
@@ -378,6 +602,18 @@ public class DocReader
                     else if (name.equals("page"))
                     {
                         doGotoPlainPage(page, totalPageCount);
+                    }
+                    else if (name.equals("random"))
+                    {
+                        showDocPlainList((int) (Math.random() * totalPageCount));
+                    }
+                    else if (name.equals("build"))
+                    {
+                        showSearchBuilder();
+                    }
+                    else if (name.equals("search"))
+                    {
+                        showSearchChooser();
                     }
                     else
                     {
@@ -391,6 +627,93 @@ public class DocReader
         {
             showException(e);
         }
+        revalidate(frame);
+    }
+    
+    protected static void showSearchChooser()
+    {
+        frame.removeAll();
+        Panel panel = new Panel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        ScrollPane scroll = new ScrollPane();
+        scroll.add(panel);
+        frame.add(scroll);
+        File[] files = storageSearch.listFiles(hiddenFilter);
+        for (File file : files)
+        {
+            String fileName = file.getName();
+            if (!fileName.endsWith(".txt"))
+                continue;
+            fileName = fileName.substring(0, fileName.length() - 4);
+            Button searchButton = new Button(fileName);
+            searchButton.addActionListener(new DoSearchActionListener(file));
+            Button deleteButton = new Button("Delete");
+            deleteButton.addActionListener(new DeleteSearchListener(file));
+            panel.add(searchButton);
+            panel.add(deleteButton);
+            panel.add(verticalSpacer(4));
+            
+        }
+        Button libraryButton = new Button("Back to the library");
+        libraryButton.addActionListener(new ActionListener()
+        {
+            
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                showDocListPage(lastVisibleDocPage);
+            }
+        });
+        panel.add(libraryButton);
+        revalidate(frame);
+    }
+    
+    protected static void showSearchBuilder()
+    {
+        frame.removeAll();
+        Panel panel = new Panel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(new Label("Type some search terms:"));
+        TextField searchField = new TextField(20);
+        panel.add(searchField);
+        Button createSearchButton = new Button("Build a search from these terms");
+        panel.add(createSearchButton);
+        panel.add(new Label("Current search builders:"));
+        panel.add(new Label(" "));
+        synchronized (searchBuilderList)
+        {
+            for (SearchBuilder builder : searchBuilderList)
+            {
+                panel.add(new Label(builder.searchTerms));
+                if (!builder.done)
+                {
+                    panel.add(new Label("--> On page " + builder.currentSearchPage));
+                }
+                else
+                // if(builder.done)
+                {
+                    panel.add(new Label("--> Done."));
+                    Button clearBuilderButton = new Button("Remove from this list");
+                    panel.add(clearBuilderButton);
+                    clearBuilderButton.addActionListener(new ClearBuilderListener(builder));
+                }
+            }
+        }
+        createSearchButton.addActionListener(new CreateSearchListener(searchField));
+        Button libraryButton = new Button("Back to the library");
+        panel.add(libraryButton);
+        libraryButton.addActionListener(new ActionListener()
+        {
+            
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                showDocListPage(lastVisibleDocPage);
+            }
+        });
+        ScrollPane scroll = new ScrollPane();
+        scroll.add(panel);
+        frame.add(scroll);
         revalidate(frame);
     }
     
@@ -448,8 +771,8 @@ public class DocReader
      * @param docFolders
      * @throws IOException
      */
-    public static Component generateDocListPanel(ZipFile[] files, String[] prefixes, Label statusLabel)
-            throws IOException
+    public static Component generateDocListPanel(ZipFile[] files, String[] prefixes,
+            Label statusLabel, String[] beforeTitles) throws IOException
     {
         ScrollPane scroll = new ScrollPane();
         scroll.getVAdjustable().setUnitIncrement(22);
@@ -472,7 +795,7 @@ public class DocReader
                  * reference to this is passed to the instance of OpenDocActionListener,
                  * which needs the properties when the button is clicked.
                  */
-//                System.out.println("Loading page props");
+                // System.out.println("Loading page props");
                 lastPageProperties = new Properties();
                 lastPageProperties.load(file.getInputStream(file.getEntry("names.props")));
                 lastPageName = pageName;
@@ -483,9 +806,12 @@ public class DocReader
                 name = "(no name)";
             if (description == null)
                 description = "(no description)";
+            if (beforeTitles != null)
+                name = beforeTitles[i] + name;
             Panel p2 = new Panel();
             p2.setLayout(new BorderLayout());
-            Button button = new Button(name);
+            Button button = new Button("("
+                    + lastPageProperties.getProperty(fileNumber + "t") + ") " + name);
             button.setFont(defaultFont.deriveFont(Font.BOLD));
             p2.add(button, BorderLayout.WEST);
             panel.add(p2);

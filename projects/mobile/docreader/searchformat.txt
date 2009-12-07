@@ -1,0 +1,11 @@
+Searches are built by clicking the B (for Build) button. This shows a single field at top where you can enter search terms and hit go. This goes back to the main page list, but tells you the search is now processing. 
+
+The build page also shows, below the field and the button, a list of searches that are currently building, along with their progress. When a particular search is done, it is removed from the list by its builder thread.
+
+To build a search, the search goes through and opens each page in turn. It lists all docs in that page, then opens each doc in turn. Each page within each doc is then read. The number of times the search terms occur within the document is recorded. 
+
+The builder then writes each doc that contains at least one match to the output file, along with the number of matches it contained.
+
+The format of this file is actually straightforward. The file's length will always be exactly a multiple of four. For each matching document, there is a set of four bytes. The first byte is the number of matches that occurred. This will not be greater than 100, and if more than 100 matches occurred, this number will just be 100. The second and third bytes represent the page on which the match occurred. The second byte is multiplied by 100 and then added to the third byte to get this page number. The fourth byte represents the index in that page that the matching document is located at.
+
+The searcher screen shows a list of searches, along with a button to delete the search (which confirms the action) and a button to view the search. It also shows the number of results for the search (which is the search file's size divided by 4) and the search's title.
