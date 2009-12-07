@@ -149,6 +149,7 @@ public class DocReader
         public SearchBuilder(String searchTerms)
         {
             this.searchTerms = searchTerms;
+            setPriority(Thread.MIN_PRIORITY);
         }
         
         public void run()
@@ -173,6 +174,8 @@ public class DocReader
                         String key = (String) mapEntry.getKey();
                         if (!key.endsWith("n"))
                             continue;
+                        // We'll wait 12 milliseconds to give other stuff a chance to work
+                        Thread.sleep(12);
                         String currentDocNumber = key.substring(0, key.length() - 1);
                         int docNumber = Integer.parseInt(currentDocNumber);
                         int totalDocPages = Integer.parseInt(pageProperties
