@@ -156,6 +156,7 @@ public class DocReader
             File searchFile = new File(storageSearch, searchTerms.replace(" ", "-")
                     .replaceAll("[^a-zA-Z0-9\\-]", "")
                     + ".txt");
+            String searchTermsLower = searchTerms.toLowerCase();
             try
             {
                 FileOutputStream out = new FileOutputStream(searchFile);
@@ -177,15 +178,24 @@ public class DocReader
                         int totalDocPages = Integer.parseInt(pageProperties
                                 .getProperty(currentDocNumber + "t"));
                         int matchesInDoc = 0;
+                        String docName = pageProperties.getProperty(currentDocNumber + "n");
+                        String docDesc = pageProperties.getProperty(currentDocNumber + "d");
+                        if (docName != null
+                                && docName.toLowerCase().contains(searchTermsLower))
+                            matchesInDoc += 1;
+                        if (docDesc != null
+                                && docDesc.toLowerCase().contains(searchTermsLower))
+                            matchesInDoc += 1;
                         for (int docPage = 0; docPage < totalDocPages; docPage++)
                         {
                             Page pageObject = readPage(file, docPage, currentDocNumber
                                     + "/", pageProperties, docNumber);
+                            String pageText = pageObject.text.toLowerCase();
                             int previous = 0;
                             boolean hadMatch = true;
                             while (hadMatch)
                             {
-                                int matchIndex = pageObject.text.indexOf(searchTerms,
+                                int matchIndex = pageText.indexOf(searchTermsLower,
                                         previous);
                                 if (matchIndex > -1)
                                 {
@@ -651,7 +661,7 @@ public class DocReader
             deleteButton.addActionListener(new DeleteSearchListener(file));
             panel.add(searchButton);
             panel.add(deleteButton);
-            panel.add(verticalSpacer(4));
+            panel.add(verticalSpacer(8));
             
         }
         Button libraryButton = new Button("Back to the library");
@@ -759,9 +769,143 @@ public class DocReader
         container.repaint();
     }
     
-    public static void showDocSearchList(int page)
+    public static final int SEARCH_PAGE_SIZE = 10;
+    
+    public static void showDocSearchList(final int page)
     {
-        
+        frame.removeAll();
+        revalidate(frame);
+        try
+        {
+            int resultFileLength = (int) currentSearchResultFile.length();
+            int numberOfResults = resultFileLength / 4;
+            FileInputStream in = new FileInputStream(currentSearchResultFile);
+            int offsetItem = page * SEARCH_PAGE_SIZE;
+            int itemsOnThisPage = numberOfResults - offsetItem;
+            if (itemsOnThisPage > SEARCH_PAGE_SIZE)
+                itemsOnThisPage = SEARCH_PAGE_SIZE;
+            int offsetInBytes = offsetItem * 4;
+            skip(in, offsetInBytes);
+            ArrayList<ZipFile> zipFiles = new ArrayList<ZipFile>();
+            ArrayList<String> prefixList = new ArrayList<String>();
+            ArrayList<String> beforeTitleList = new ArrayList<String>();
+            int lastPageNumber = -1;
+            ZipFile lastZipFile = null;
+            for (int itemNumber = 0; itemNumber < itemsOnThisPage; itemNumber++)
+            {
+                int matchCount = in.read();
+                int pageNumber = in.read() * 100;
+                pageNumber += in.read();
+                int docNumber = in.read();
+                beforeTitleList.add("[" + matchCount + "] ");
+                prefixList.add(docNumber + "/");
+                if (pageNumber != lastPageNumber)
+                {
+                    lastPageNumber = pageNumber;
+                    lastZipFile = new ZipFile(new File(storage, "" + pageNumber));
+                }
+                zipFiles.add(lastZipFile);
+            }
+            frame.add(generateDocListPanel(zipFiles.toArray(new ZipFile[0]), prefixList
+                    .toArray(new String[0]), null, beforeTitleList.toArray(new String[0])));
+            String searchName = currentSearchResultFile.getName();
+            searchName = searchName.substring(0, searchName.length() - 4);
+            final int totalPages;
+            if (numberOfResults == 0)
+                totalPages = 0;
+            else
+                totalPages = ((numberOfResults - 1) / SEARCH_PAGE_SIZE) + 1;
+            frame.add(new Label("" + (page + 1) + " of " + totalPages + ": " + searchName),
+                    BorderLayout.NORTH);
+            frame.add(new ButtonPanel(new String[]
+            {
+                    "back", "forward", "go", "library"
+            }, new String[]
+            {
+                    "<", ">", "G", "L"
+            }, new boolean[]
+            {
+                    page > 0, page < (totalPages - 1), true, true
+            }, new ButtonListener()
+            {
+                
+                @Override
+                public void action(String name)
+                {
+                    if (name.equals("back"))
+                        showDocListPage(page - 1);
+                    else if (name.equals("forward"))
+                        showDocListPage(page + 1);
+                    else if (name.equals("library"))
+                    {
+                        currentSearchResultFile = null;
+                        showDocListPage(0);
+                    }
+                    else if (name.equals("go"))
+                    {
+                        String newValue = OptionPane.showInputDialog(frame,
+                                "Enter a page number to go to, from 1 to " + totalPages
+                                        + ".", "" + page);
+                        if (newValue == null)
+                            return;
+                        int value;
+                        try
+                        {
+                            value = Integer.parseInt(newValue);
+                        }
+                        catch (Exception e)
+                        {
+                            OptionPane.showMessageDialog(frame, "That input (\"" + newValue
+                                    + "\") is not a number.");
+                            return;
+                        }
+                        if (value < 1 || value > totalPages)
+                        {
+                            OptionPane.showMessageDialog(frame,
+                                    "That number was not within the range 1 to "
+                                            + totalPages + ".");
+                        }
+                        showDocListPage(value - 1);
+                    }
+                }
+            }), BorderLayout.SOUTH);
+        }
+        catch (Exception e)
+        {
+            showException(e);
+            currentSearchResultFile = null;
+            showDocListPage(0);
+        }
+        revalidate(frame);
+    }
+    
+    /**
+     * Reads <tt>count</tt> bytes from <tt>in</tt> and discards them. This method silently
+     * returns if the end of the stream is encountered before this many bytes have been
+     * skipped over.
+     * 
+     * @param in
+     *            The input stream to read from
+     * @param count
+     *            The number of bytes to skip
+     */
+    public static void skip(InputStream in, int count) throws IOException
+    {
+        if (count == 0)
+            return;
+        byte[] buffer = new byte[512];
+        int amount = 0;
+        while (count > 0)
+        {
+            amount = in.read(buffer, 0, (count > buffer.length ? buffer.length : count));
+            if (amount < 0)// EOF
+                return;
+            if (amount == 0)
+                throw new RuntimeException(
+                        "Invalid read data; 0 bytes are reported to have been read. "
+                                + "This would cause an infinite loop.");
+            count -= amount;
+        }
     }
     
     /**
