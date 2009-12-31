@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -13,15 +14,116 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 public class Gibberish
 {
-    public static Deque<Object> stack = new LinkedBlockingDeque<Object>();
+    public static interface Input
+    {
+        public int read() throws IOException;
+        
+        public String readLine() throws IOException;
+    }
+    
+    public static interface Output
+    {
+        public void write(String s) throws IOException;
+        
+        public void writeln(String s) throws IOException;
+    }
+    
+    public static class BufferedReaderInput implements Input
+    {
+        private BufferedReader reader;
+        
+        public BufferedReaderInput(BufferedReader reader)
+        {
+            super();
+            this.reader = reader;
+        }
+        
+        @Override
+        public int read() throws IOException
+        {
+            return reader.read();
+        }
+        
+        @Override
+        public String readLine() throws IOException
+        {
+            return reader.readLine();
+        }
+        
+    }
+    
+    public static class PrintStreamOutput implements Output
+    {
+        private PrintStream stream;
+        
+        public PrintStreamOutput(PrintStream stream)
+        {
+            super();
+            this.stream = stream;
+        }
+        
+        @Override
+        public void write(String s)
+        {
+            stream.print(s);
+            stream.flush();
+        }
+        
+        @Override
+        public void writeln(String s)
+        {
+            stream.println(s);
+            stream.flush();
+        }
+        
+    }
+    
+    public static interface Debugger
+    {
+        /**
+         * Called just before executing a particular instruction.
+         * 
+         * @param interpreter
+         *            The interpreter
+         * @param code
+         *            The code
+         * @param position
+         *            The index of the first (and usually, only) character of the
+         *            instruction
+         */
+        public void before(Gibberish interpreter, String code, int position);
+        
+        /**
+         * Called just after executing a particular instruction.
+         * 
+         * @param interpreter
+         *            The interpreter
+         * @param code
+         *            The code
+         * @param position
+         *            The index of the first (and usually, only) character of the
+         *            instruction
+         */
+        public void after(Gibberish interpreter, String code, int position);
+        
+        // public void begin(Gibberish interpreter, String code);
+        
+        // public void end(Gibberish interpreter, String code, int position);
+    }
+    
+    public Deque<Object> stack = new LinkedBlockingDeque<Object>();
     
     public static MathContext mc = new MathContext(300);
     
-    public static int instructionSet;
+    public int instructionSet;
     
-    public static BufferedReader input;
+    public Input input;
     
-    public static boolean debug = false;
+    public Output output;
+    
+    public Debugger debugger;
+    
+    private String toplevelCode;
     
     /**
      * @param args
@@ -35,45 +137,82 @@ public class Gibberish
                     + "output will be sent to stdout.");
             return;
         }
-        input = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         FileInputStream in = new FileInputStream(args[0]);
         String code = new Scanner(in).useDelimiter("\\z").next();
-        run(code);
+        Gibberish interpreter = new Gibberish(new BufferedReaderInput(inputReader),
+                new PrintStreamOutput(System.out), null);
+        interpreter.interpret(code);
     }
     
-    private static void run(String code) throws IOException
+    public Gibberish(Input in, Output out, Debugger debugger)
+    {
+        this.input = in;
+        this.output = out;
+        this.debugger = debugger;
+    }
+    
+    public synchronized void interpret(String code)
+    {
+        this.toplevelCode = code;
+        try
+        {
+            run(code, 0);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+    
+    private void run(String code, int codeOffset) throws IOException
     {
         int index = 0;
         while (index < code.length())
         {
-            index = process(index, code);
+            index = process(index, code, codeOffset);
             index += 1;
         }
     }
     
-    private static int process(int index, String code) throws IOException
+    private int process(int index, String code, int codeOffset) throws IOException
     {
         char c = code.charAt(index);
         if (c == ' ' || c == '\n' || c == '\r' || c == '\t')
             // ignoring whitespace for now
             return index;
-        debug("Set " + instructionSet + " command " + c + ", stack is (top to bottom) "
-                + debugStack());
-        int newIndex = processCommon(c, index, code);
-        if (newIndex != -1)
-            return newIndex;
-        if (instructionSet == 1)
-            return processFirst(c, index, code);
-        else if (instructionSet == 2)
-            return processSecond(c, index, code);
-        else if (instructionSet == 3)
-            return processThird(c, index, code);
-        else
-            throw new RuntimeException("The current instruction set was not 1, 2, or 3, "
-                    + "and an instruction-set-specific instruction was executed.");
+        if (debugger != null)
+            debugger.before(this, toplevelCode, index + codeOffset);
+        try
+        {
+            int newIndex = processCommon(c, index, code, codeOffset);
+            if (newIndex != -1)
+                return newIndex;
+            if (instructionSet == 1)
+                return processFirst(c, index, code, codeOffset);
+            else if (instructionSet == 2)
+                return processSecond(c, index, code, codeOffset);
+            else if (instructionSet == 3)
+                return processThird(c, index, code, codeOffset);
+            else
+                throw new RuntimeException(
+                        "The current instruction set was not 1, 2, or 3, "
+                                + "and an instruction-set-specific instruction was executed.");
+        }
+        finally
+        {
+            if (debugger != null)
+                debugger.after(this, toplevelCode, index + codeOffset);
+        }
     }
     
-    private static String debugStack()
+    /**
+     * Dumps a human-readable version of the operand stack, topmost-item first.
+     * 
+     * @return
+     */
+    public String debugStack()
     {
         Object[] os = stack.toArray();
         StringBuffer result = new StringBuffer();
@@ -89,7 +228,8 @@ public class Gibberish
             return result.toString().substring(2);
     }
     
-    private static int processFirst(char c, int index, String code) throws IOException
+    private int processFirst(char c, int index, String code, int codeOffset)
+            throws IOException
     {
         if (c == 'a')
         {
@@ -138,7 +278,7 @@ public class Gibberish
         return index;
     }
     
-    private static int processSecond(char c, int index, String code)
+    private int processSecond(char c, int index, String code, int codeOffset)
     {
         if (c == 'n')
         {
@@ -156,14 +296,14 @@ public class Gibberish
         return index;
     }
     
-    private static int processThird(char c, int index, String code) throws IOException
+    private int processThird(char c, int index, String code, int codeOffset)
+            throws IOException
     {
         if (c == 'w')
         {
             String loop = (String) stack.pop();
             while (((BigDecimal) stack.pop()).intValue() == 1)
             {
-                debug("running loop at " + index);
                 run(loop);
             }
         }
@@ -174,7 +314,7 @@ public class Gibberish
         return index;
     }
     
-    private static int processCommon(char c, int index, String code)
+    private int processCommon(char c, int index, String code, int codeOffset)
     {
         if (c == '[')
         {
@@ -210,28 +350,23 @@ public class Gibberish
             instructionSet = ((BigDecimal) stack.pop()).intValue();
             if (instructionSet < 0 || instructionSet > 3)
                 throw new RuntimeException("The \"x\" instruction set the "
-                        + "instruction set number to " + instructionSet
+                        + "instruction-set number to " + instructionSet
                         + ", which isn't valid. It can only be 0, 1, 2, or 3.");
         }
         else if (c == 'z')
         {
-            // nothing to do here
+            // nothing to do here, since this is nop
         }
         else
             return -1;
         return index;
     }
     
-    private static void invalidInstruction(char c)
+    private void invalidInstruction(char c)
     {
         throw new RuntimeException("The instruction \"" + c
                 + "\" is not a valid instruction in instruction set " + instructionSet
                 + ".");
     }
     
-    public static void debug(String s)
-    {
-        if (debug)
-            System.out.println(s);
-    }
 }
