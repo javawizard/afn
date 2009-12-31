@@ -33,6 +33,7 @@ public class Gibberish
         int index = 0;
         while (index < code.length())
         {
+            
             index += 1;
         }
     }
