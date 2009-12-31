@@ -91,7 +91,8 @@ public class Gibberish
          *            The index of the first (and usually, only) character of the
          *            instruction
          */
-        public void before(Gibberish interpreter, String code, int position);
+        public void before(Gibberish interpreter, String toplevelCode, String code,
+                int position);
         
         /**
          * Called just after executing a particular instruction.
@@ -104,7 +105,8 @@ public class Gibberish
          *            The index of the first (and usually, only) character of the
          *            instruction
          */
-        public void after(Gibberish interpreter, String code, int position);
+        public void after(Gibberish interpreter, String toplevelCode, String code,
+                int position);
         
         // public void begin(Gibberish interpreter, String code);
         
@@ -183,7 +185,7 @@ public class Gibberish
             // ignoring whitespace for now
             return index;
         if (debugger != null)
-            debugger.before(this, toplevelCode, index + codeOffset);
+            debugger.before(this, toplevelCode, code, index);
         try
         {
             int newIndex = processCommon(c, index, code, codeOffset);
@@ -203,7 +205,7 @@ public class Gibberish
         finally
         {
             if (debugger != null)
-                debugger.after(this, toplevelCode, index + codeOffset);
+                debugger.after(this, toplevelCode, code, index);
         }
     }
     
@@ -304,7 +306,9 @@ public class Gibberish
             String loop = (String) stack.pop();
             while (((BigDecimal) stack.pop()).intValue() == 1)
             {
-                run(loop);
+                // This really whacks up the code offset, but we're not using it in the
+                // interpreter for now; it's purely for debug purposes.
+                run(loop, codeOffset + 1);
             }
         }
         else
