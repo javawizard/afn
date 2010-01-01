@@ -4,4 +4,35 @@
 
 Good luck programming! ]ev
 
-NOTE TO SELF: consider having either a fixed set of memory positions, or have the bottom stack item be the number of positions present, or derive the number of positions off of the number of stack items. At the end of each loop, the bottom (or 2nd bottom item, if the botton item is something else) item could be the index that the BF program is at. Also consider having instructions that are like move, copy, and delete, but that operate with an index relative to the bottom of the stack instead of an index relative to the top of the stack.
+K so, the bf loop goes over and over again. The lowest item in the stack is the program to run, the next item is the index we're currently at, and the next item is the data bank, stored as a string where each value is a position. The next item up is the pointer into the data bank that we're at.
+
+This makes things easy, since we can manipulate the pointers, code, and data bank by copying/moving relative to the bottom of the stack with gp and gk.
+
+The fifth and sixth items are strings containing "[" and "]", respectively. The seventh item is the number of levels deep we are currently nested within a BF loop.
+
+Every item above the seventh item, with the exception of the working items at the top of the stack, is a position marking an open bracket encountered while parsing. These are stored in reverse order, IE the 8th item is the innermost bracket encountered. When the interpreter encounters a close bracket, it decrements the seventh item, pops the 8th item from the stack, and sets the program counter to the 8th item's value.
+
+So anyway, our interpreter first reads in the program and stores it on the stack. It then pushes 0, which is our position in the program. It then pushes a string with a single byte, char 0, which is our data. It then pushes 0, for the data pointer position. It then pushes 
+
+
+
+[Enter a BF program to run, then press enter. Everything after that is input to your BF program.]
+eo
+
+[First, we read in the program and set up the default variables on the stack.]ev
+l00gt0[[]]eu01hgb12eh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

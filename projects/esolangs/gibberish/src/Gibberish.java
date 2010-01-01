@@ -6,14 +6,39 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class Gibberish
 {
+    public static class PrintDebugger implements Debugger
+    {
+        
+        @Override
+        public void after(Gibberish interpreter, String toplevelCode, String code,
+                int position, char command)
+        {
+            // TODO Auto-generated method stub
+            
+        }
+        
+        @Override
+        public void before(Gibberish interpreter, String toplevelCode, String code,
+                int position, char command)
+        {
+            System.out.println("Command " + command + " with stack (topmost item last): "
+                    + interpreter.debugStack());
+        }
+        
+    }
+    
     public static interface Input
     {
         public int read() throws IOException;
@@ -92,7 +117,7 @@ public class Gibberish
          *            instruction
          */
         public void before(Gibberish interpreter, String toplevelCode, String code,
-                int position);
+                int position, char command);
         
         /**
          * Called just after executing a particular instruction.
@@ -106,7 +131,7 @@ public class Gibberish
          *            instruction
          */
         public void after(Gibberish interpreter, String toplevelCode, String code,
-                int position);
+                int position, char command);
         
         // public void begin(Gibberish interpreter, String code);
         
@@ -134,16 +159,29 @@ public class Gibberish
     {
         if (args.length == 0)
         {
-            System.out.println("Usage: gibberish <filename> -- Runs the specified file, "
-                    + "as gibberish code. Input will be provided via stdin; "
-                    + "output will be sent to stdout.");
+            System.out
+                    .println("Usage: gibberish [-debug] <filename> -- Runs the specified file, "
+                            + "as gibberish code. Input will be provided via stdin; "
+                            + "output will be sent to stdout.");
             return;
         }
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
-        FileInputStream in = new FileInputStream(args[0]);
+        String filename;
+        boolean debug;
+        if (args.length == 2 && args[0].equals("-debug"))
+        {
+            debug = true;
+            filename = args[1];
+        }
+        else
+        {
+            debug = false;
+            filename = args[0];
+        }
+        FileInputStream in = new FileInputStream(filename);
         String code = new Scanner(in).useDelimiter("\\z").next();
         Gibberish interpreter = new Gibberish(new BufferedReaderInput(inputReader),
-                new PrintStreamOutput(System.out), null);
+                new PrintStreamOutput(System.out), debug ? new PrintDebugger() : null);
         interpreter.interpret(code);
     }
     
@@ -185,7 +223,7 @@ public class Gibberish
             // ignoring whitespace for now
             return index;
         if (debugger != null)
-            debugger.before(this, toplevelCode, code, index);
+            debugger.before(this, toplevelCode, code, index, c);
         try
         {
             int newIndex = processCommon(c, index, code, codeOffset);
@@ -205,7 +243,7 @@ public class Gibberish
         finally
         {
             if (debugger != null)
-                debugger.after(this, toplevelCode, code, index);
+                debugger.after(this, toplevelCode, code, index, c);
         }
     }
     
@@ -217,6 +255,9 @@ public class Gibberish
     public String debugStack()
     {
         Object[] os = stack.toArray();
+        List<Object> nl = new ArrayList<Object>(Arrays.asList(os));
+        Collections.reverse(nl);
+        os = nl.toArray(new Object[0]);
         StringBuffer result = new StringBuffer();
         for (Object o : os)
         {
@@ -236,6 +277,12 @@ public class Gibberish
         if (c == 'a')
         {
             stack.push(((BigDecimal) stack.pop()).add((BigDecimal) stack.pop()));
+        }
+        else if (c == 'c')
+        {
+            String first = (String) stack.pop();
+            String second = (String) stack.pop();
+            stack.push(second + first);
         }
         else if (c == 'i')
         {
@@ -263,6 +310,10 @@ public class Gibberish
             System.out.print(stack.pop());
             System.out.flush();
         }
+        else if (c == 't')
+        {
+            stack.push(((BigDecimal) stack.pop()).toString());
+        }
         else if (c == 'u')
         {
             Object o = stack.pop();
@@ -281,8 +332,14 @@ public class Gibberish
     }
     
     private int processSecond(char c, int index, String code, int codeOffset)
+            throws IOException
     {
-        if (c == 'n')
+        if (c == 'c')
+        {
+            String newCode = (String) stack.pop();
+            run(newCode, codeOffset + 1);
+        }
+        else if (c == 'n')
         {
             stack.push((((BigDecimal) stack.pop()).intValue() == 1) ? BigDecimal.ZERO
                     : BigDecimal.ONE);
