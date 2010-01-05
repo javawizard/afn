@@ -1,3 +1,5 @@
+from specialprint import special_print
+
 class StringSink:
     def __init__(self):
         self.current = "";
@@ -10,13 +12,13 @@ class StringSink:
     
 class PrintSink:
     def write(self, new):
-        print new,
+        special_print(new)
         
 class ForkedSink:
     def __init__(self, first, second):
         self.first = first;
         self.second = second;
         
-    def write(self,new):
+    def write(self, new):
         self.first.write(new);
         self.second.write(new);

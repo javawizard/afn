@@ -1,5 +1,5 @@
 from argumentlist import ArgumentList
-from parser import ParseException
+from exceptions import *
 import functions
 
 class Literal:
@@ -38,14 +38,20 @@ class Sequence:
     def __init__(self):
         self.list = []
         
-    def length(self):
+    def size(self):
         return len(self.list)
+    
+    def length(self):
+        return self.size()
     
     def get(self, index):
         return self.list[index];
     
     def add(self, item):
         self.list.append(item);
+        
+    def append(self, item):
+        self.add(item)
         
     def remove(self, index):
         del self.list[index]

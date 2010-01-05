@@ -1,4 +1,5 @@
 from charstack import *
+from exceptions import ParseException
 from entities import *
 from sinks import *
 from string import strip
@@ -58,6 +59,7 @@ def parseFunction(stack):
             currentLiteral = None
             # TODO: same TODO item about 5 lines up applies here.
             newRef = FunctionReference(argumentSequence)
+            return newRef
         else:
             if(currentLiteral == None):
                 currentLiteral = Literal()
@@ -91,13 +93,6 @@ class FactContext:
         self.localVars = {}
         self.subroutines = {}
         self.action = False
-
-class ParseException(Exception):
-    def __init__(self, reason):
-        self.reason = reason
-        
-    def __str__(self):
-        return "Syntax exception while parsing factoid: " + self.reason
 
 
 
