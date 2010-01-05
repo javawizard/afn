@@ -83,7 +83,7 @@ def getEscapedChar(char):
     elif char == "c":
         return "\x03"
     elif char == "x" or char == " ":
-        return 0
+        return "\x00"
     return char
 
     
