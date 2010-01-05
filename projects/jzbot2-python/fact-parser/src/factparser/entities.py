@@ -1,5 +1,5 @@
-from argumentlist import ArgumentList
-from exceptions import *
+import argumentlist
+import exceptions
 import functions
 
 class Literal:
@@ -24,13 +24,13 @@ class FunctionReference:
         self.arguments = arguments
         
     def resolve(self, sink, context):
-        list = ArgumentList(self.arguments, context)
+        list = argumentlist.ArgumentList(self.arguments, context)
         functionName = list.getString(0)
         function = getattr(functions, "function_" + functionName)
         if(function == None):
             #TODO: iirc this is redundant, since I think getattr throws an
             # exception if there's no such attribute
-            raise ParseException("No such function: " + functionName);
+            raise exceptions.ParseException("No such function: " + functionName);
         subList = list.subList(1)
         function(sink, subList, context);
         

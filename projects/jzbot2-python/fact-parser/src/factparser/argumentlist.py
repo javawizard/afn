@@ -1,9 +1,7 @@
-from factparser.sinks import StringSink, ForkedSink
+import sinks
 
 class ArgumentList:
     def __init__(self, sequence, context):
-        # We have the import in the constructor to avoid a cyclic dependency
-        from parser import Sequence
         self.sequence = sequence
         self.context = context
         self.delegate = None
@@ -24,7 +22,7 @@ class ArgumentList:
             self.sequence.get(index).resolve(sink, self.context)
             
     def resolveString(self, index):
-        sink = StringSink()
+        sink = sinks.StringSink()
         self.resolve(index, sink)
         return sink.toString()
     
@@ -38,15 +36,15 @@ class ArgumentList:
             self.delegate.get(self.offset + index, sink)
         else:
             if self.resolved[index] == None:
-                cache = StringSink()
-                fork = ForkedSink(sink, cache)
+                cache = sinks.StringSink()
+                fork = sinks.ForkedSink(sink, cache)
                 self.sequence.get(index).resolve(fork, self.context)
                 self.resolved[index] = cache.toString()
             else:
                 sink.write(self.resolved[index])
 
     def getString(self, index):
-        sink = StringSink()
+        sink = sinks.StringSink()
         self.get(index, sink)
         return sink.toString()
     

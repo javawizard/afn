@@ -1,11 +1,10 @@
-from charstack import *
-from exceptions import ParseException
-from entities import *
-from sinks import *
-from string import strip
+import charstack
+import exceptions
+import entities
+import sinks
 
 def parse(text):
-    stack = CharStack("{identity|" + text + "}")
+    stack = charstack.CharStack("{identity|" + text + "}")
     entity = parseFunction(stack)
     # TODO: we need to do some checking here to make sure they 
     # didn't include a premature function close or supply an
@@ -14,9 +13,9 @@ def parse(text):
     
 def parseFunction(stack):
     if(stack.next() != "{"):
-        raise ParseException("Start of function reference must be an open brace but is not")
-    argumentSequence = Sequence()
-    currentArgument = Sequence()
+        raise exceptions.ParseException("Start of function reference must be an open brace but is not")
+    argumentSequence = entities.Sequence()
+    currentArgument = entities.Sequence()
     argumentSequence.add(currentArgument)
     currentLiteral = None
     while stack.more():
@@ -25,7 +24,7 @@ def parseFunction(stack):
             continue
         elif c == "\\":
             if currentLiteral == None :
-                currentLiteral = Literal()
+                currentLiteral = entities.Literal()
                 currentArgument.add(currentLiteral)
             theChar = getEscapedChar(stack.next())
             if theChar == "[":
@@ -42,8 +41,8 @@ def parseFunction(stack):
             while  c != "%":
                 varName = varName + c
                 c = stack.next()
-            if strip(varName) != "":
-                currentArgument.append(VarReference(varName))
+            if varName.strip(): # True == Non-Whitespace
+                currentArgument.append(entities.VarReference(varName))
         elif c == "{":
             currentLiteral = None
             stack.back()
@@ -53,19 +52,19 @@ def parseFunction(stack):
             currentLiteral = None
             # TODO: if the current argument has only one child, replace
             # it with its child. This could improve performance a bit.
-            currentArgument = Sequence()
+            currentArgument = entities.Sequence()
             argumentSequence.add(currentArgument)
         elif c == "}":
             currentLiteral = None
             # TODO: same TODO item about 5 lines up applies here.
-            newRef = FunctionReference(argumentSequence)
+            newRef = entities.FunctionReference(argumentSequence)
             return newRef
         else:
             if(currentLiteral == None):
-                currentLiteral = Literal()
+                currentLiteral = entities.Literal()
                 currentArgument.add(currentLiteral)
             currentLiteral.append(c)
-    raise ParseException('Function call not closed (IE you have more "{" than you have "}"')
+    raise exceptions.ParseException('Function call not closed (IE you have more "{" than you have "}"')
             
 def getEscapedChar(char):
     if char == "n":
