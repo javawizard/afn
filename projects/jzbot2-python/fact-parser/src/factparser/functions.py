@@ -1,3 +1,4 @@
+import random
 
 # This file contains all of the functions present in the
 # interpreter. At some point, it'd be nice to split them
@@ -12,3 +13,6 @@ def function_identity(sink, arguments, context):
     
 def function_lset(sink, arguments, context):
     context.localVars[arguments.resolveString(0)] = arguments.resolveString(1)
+
+def function_random(sink, arguments, context):
+    arguments.resolve(random.randint(0, arguments.length() - 1), sink)
