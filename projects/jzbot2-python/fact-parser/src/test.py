@@ -15,15 +15,20 @@ from factparser.sinks import PrintSink, StringSink
 
 # Anyway, here are some examples showing how to use the interpreter.
 # Note the usage of PrintSink(); this constructs a new PrintSink
-
 # which is a type of Sink that simply writes output using Python's
 # print function. Later on in the file is a demonstration of how
 # to use a StringSink to actually get the factoid's output. Note,
 # however, that since the factoid parser doesn't write an extra
 # newline at the end of the factoid, we have to have an empty
-# "print" statement after each time we run a factoid.
+# "print" statement after each time we run a factoid that uses
+# a PrintSink, so that each one runs on its own line.
 
-# Demonstrate choosing a random item
+print "If you haven't opened test.py in your text editor yet,"
+print "I suggest you do so now. None of this output will make"
+print "sense unless you're reading the source code in test.py."
+print ""
+
+# Demonstrate choosing a random item. Try running this multiple times.
 text = "The {random|first|second|third} number was randomly chosen."
 context = FactContext()
 factoid = parse(text) 
@@ -57,14 +62,15 @@ factoid = parse(text)
 factoid.resolve(PrintSink(), context)
 print ""
 
-# Demostrate the ifneq function, which is the opposite of {ifeq}
+# Demostrate the ifneq function, which is the opposite of the ifeq function.
 text = "{ifneq|first|second|Yep.|Nope.} {ifneq|third|third|Yep.|Nope.}"
 context = FactContext()
 factoid = parse(text) 
 factoid.resolve(PrintSink(), context)
 print ""
 
-# Demonstrate writing to a StringSink instead of a PrintSink
+# Demonstrate writing to a StringSink instead of a PrintSink, so that the
+# factoid's output can be put intoa string
 text = "Hello, I'm some factoid output. {ifeq|hah|hah|Yep.|Nope.}"
 context = FactContext()
 factoid = parse(text)
