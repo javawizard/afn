@@ -1,4 +1,4 @@
 from factparser.parser import parse
-from 
+from factparser.parser import FactContext
 
-context = 
+context = FactContext()

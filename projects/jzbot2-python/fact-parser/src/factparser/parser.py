@@ -5,19 +5,9 @@ def parse():
     pass
 
 class FactContext:
-    pass
-
-class StringSink:
+    globalVars = {}
     def __init__(self):
-        self.current = "";
-    
-    def write(self, new):
-        self.current = self.current + new;
-        
-    def toString(self):
-        return self.current
+        self.localVars = {}
+        self.subroutines = {}
+        self.action = False
 
-class FactEntity:
-    def resolve(self, sink, context):
-        pass
-    
