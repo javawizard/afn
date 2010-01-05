@@ -1,3 +1,7 @@
+from argumentlist import ArgumentList
+from parser import ParseException
+import functions
+
 class Literal:
     def __init__(self, new=""):
         self.value = new
@@ -18,6 +22,17 @@ class VarReference:
 class FunctionReference:
     def __init__(self, arguments):
         self.arguments = arguments
+        
+    def resolve(self, sink, context):
+        list = ArgumentList(self.arguments, context)
+        functionName = list.getString(0)
+        function = getattr(functions, "function_" + functionName)
+        if(function == None):
+            #TODO: iirc this is redundant, since I think getattr throws an
+            # exception if there's no such attribute
+            raise ParseException("No such function: " + functionName);
+        subList = list.subList(1)
+        function(sink, subList, context);
         
 class Sequence:
     def __init__(self):
