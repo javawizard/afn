@@ -30,12 +30,6 @@ def function_identity(sink, arguments, context):
     # do anyway.
     arguments.resolve(0, sink)
     
-def function_lset(sink, arguments, context):
-    context.localVars[arguments.resolveString(0)] = arguments.resolveString(1)
-
-def function_random(sink, arguments, context):
-    arguments.resolve(random.randint(0, arguments.length() - 1), sink)
-
 def function_ifeq(sink, arguments, context):
     if arguments.resolveString(0) == arguments.resolveString(1):
         arguments.resolve(2, sink)
@@ -48,6 +42,13 @@ def function_ifneq(sink, arguments, context):
     elif arguments.length() > 3:
         arguments.resolve(3, sink)
         
+def function_lset(sink, arguments, context):
+    context.localVars[arguments.resolveString(0)] = arguments.resolveString(1)
+
+def function_random(sink, arguments, context):
+    arguments.resolve(random.randint(0, arguments.length() - 1), sink)
+
+
 
 
 

@@ -22,3 +22,26 @@ class ForkedSink:
     def write(self, new):
         self.first.write(new);
         self.second.write(new);
+        
+class DelimitedSink:
+    def __init__(self, sink, delimiter):
+        self.sink = sink
+        self.delimiter = delimiter
+        self.written = False
+        
+    def write(self, new):
+        self.sink.write(new)
+        
+    def next(self):
+        if(self.written):
+            self.sink.write(self.delimiter)
+        self.written = True
+
+
+
+
+
+
+
+
+
