@@ -1,3 +1,7 @@
+
+# A parser/interpreter for the Fact programming language. This parser
+# is a hand-coded predictive recursive descent parser.
+
 import charstack
 import exceptions
 import entities
