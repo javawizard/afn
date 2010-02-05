@@ -64,8 +64,8 @@ public class DocReader
         {
             if (OptionPane.showInputDialog(frame,
                     "Are you sure you want to delete the search "
-                            + file.getName().substring(0, file.getName().length() - 4)
-                            + "?", null) == null)
+                        + file.getName().substring(0, file.getName().length() - 4) + "?",
+                    null) == null)
                 return;
             if (!file.delete())
                 OptionPane.showMessageDialog(frame, "The file could not be deleted.");
@@ -161,9 +161,16 @@ public class DocReader
                 sleepAmount = 0;
             else
                 sleepAmount = 80;
-            File searchFile = new File(storageSearch, searchTerms.replace(" ", "-")
-                    .replaceAll("[^a-zA-Z0-9\\-]", "")
-                    + ".txt");
+            File searchFile =
+                    new File(storageSearch, searchTerms.replace(" ", "-").replaceAll(
+                            "[^a-zA-Z0-9\\-]", "")
+                        + ".txt");
+            int morePagesThan;
+            if (searchTerms.startsWith("morepages "))
+                morePagesThan =
+                        Integer.parseInt(searchTerms.substring("morepages ".length()));
+            else
+                morePagesThan = -1;
             String searchTermsLower = searchTerms.toLowerCase();
             try
             {
@@ -184,16 +191,19 @@ public class DocReader
                         Thread.sleep(sleepAmount);
                         String currentDocNumber = key.substring(0, key.length() - 1);
                         int docNumber = Integer.parseInt(currentDocNumber);
-                        int totalDocPages = Integer.parseInt(pageProperties
-                                .getProperty(currentDocNumber + "t"));
+                        int totalDocPages =
+                                Integer.parseInt(pageProperties
+                                        .getProperty(currentDocNumber + "t"));
                         int matchesInDoc = 0;
+                        if (morePagesThan > -1 && totalDocPages >= morePagesThan)
+                            matchesInDoc += 1;
                         String docName = pageProperties.getProperty(currentDocNumber + "n");
                         String docDesc = pageProperties.getProperty(currentDocNumber + "d");
                         if (docName != null
-                                && docName.toLowerCase().contains(searchTermsLower))
+                            && docName.toLowerCase().contains(searchTermsLower))
                             matchesInDoc += 1;
                         if (docDesc != null
-                                && docDesc.toLowerCase().contains(searchTermsLower))
+                            && docDesc.toLowerCase().contains(searchTermsLower))
                             matchesInDoc += 1;
                         for (int docPage = 0; docPage < totalDocPages; docPage++)
                         {
@@ -205,15 +215,16 @@ public class DocReader
                             if (matchesInDoc > 0)
                                 break;
                             Thread.sleep(sleepAmount);
-                            Page pageObject = readPage(file, docPage, currentDocNumber
-                                    + "/", pageProperties, docNumber);
+                            Page pageObject =
+                                    readPage(file, docPage, currentDocNumber + "/",
+                                            pageProperties, docNumber);
                             String pageText = pageObject.text.toLowerCase();
                             int previous = 0;
                             boolean hadMatch = true;
                             while (hadMatch)
                             {
-                                int matchIndex = pageText.indexOf(searchTermsLower,
-                                        previous);
+                                int matchIndex =
+                                        pageText.indexOf(searchTermsLower, previous);
                                 if (matchIndex > -1)
                                 {
                                     matchesInDoc += 1;
@@ -342,7 +353,8 @@ public class DocReader
     
     private static int totalPageCount;
     
-    public static ArrayList<SearchBuilder> searchBuilderList = new ArrayList<SearchBuilder>();
+    public static ArrayList<SearchBuilder> searchBuilderList =
+            new ArrayList<SearchBuilder>();
     
     private static File storageParent;
     
@@ -372,8 +384,9 @@ public class DocReader
         System.out.println("Checking for " + f.getCanonicalPath());
         if (!f.exists())
         {
-            f = new File((new File(System.getProperty("user.dir")).getParentFile()),
-                    "dfrz-docs");
+            f =
+                    new File((new File(System.getProperty("user.dir")).getParentFile()),
+                            "dfrz-docs");
             System.out.println("Checking for " + f.getCanonicalPath());
             if (!f.exists())
             {
@@ -383,7 +396,7 @@ public class DocReader
                 {
                     loadingLabel.setText("No doc storage folder. DocReader will exit.");
                     System.out.println("No document storage found at dfrz-docs "
-                            + "or ../docs.drfz or ~/docs.dfrz. Exiting.");
+                        + "or ../docs.drfz or ~/docs.dfrz. Exiting.");
                     Thread.sleep(3000);
                     System.exit(0);
                 }
@@ -423,15 +436,16 @@ public class DocReader
         frame.removeAll();
         try
         {
-            Page page = readPage(docFile, pageNumber, zipFilePrefix, pageProperties,
-                    docNumber);
+            Page page =
+                    readPage(docFile, pageNumber, zipFilePrefix, pageProperties, docNumber);
             if (page == null)
                 page = generatePlaceholderEmptyPage();
             boolean backEnabled = pageNumber > 0;
             boolean forwardEnabled = pageNumber < (page.total - 1);
             frame.add(new Label("Page " + (pageNumber + 1) + " of " + page.total + ": "
-                    + docName), BorderLayout.NORTH);
-            TextArea area = new TextArea(page.text, 0, 0, TextArea.SCROLLBARS_VERTICAL_ONLY);
+                + docName), BorderLayout.NORTH);
+            TextArea area =
+                    new TextArea(page.text, 0, 0, TextArea.SCROLLBARS_VERTICAL_ONLY);
             area.setEditable(false);
             area.setCaretPosition(0);
             frame.add(area);
@@ -461,14 +475,14 @@ public class DocReader
                     else
                         OptionPane.showMessageDialog(frame,
                                 "Searching for text within a document is "
-                                        + "not currently supported. In the future, "
-                                        + "it will be implemented by searching forward "
-                                        + "through the document from one character after "
-                                        + "the current caret location, going on "
-                                        + "to the next "
-                                        + "page as necessary, and positioning the caret "
-                                        + "at the location where a match was found when "
-                                        + "a match is found.");
+                                    + "not currently supported. In the future, "
+                                    + "it will be implemented by searching forward "
+                                    + "through the document from one character after "
+                                    + "the current caret location, going on "
+                                    + "to the next "
+                                    + "page as necessary, and positioning the caret "
+                                    + "at the location where a match was found when "
+                                    + "a match is found.");
                 }
             }), BorderLayout.SOUTH);
             revalidate(frame);
@@ -515,7 +529,7 @@ public class DocReader
             // System.gc();
             if ((pagesSoFar++ % 10) == 0)
                 loadingLabel.setText("Loading... (p:" + pagesSoFar + " d:" + totalDocCount
-                        + ")");
+                    + ")");
             // ZipFile file = new ZipFile(page);
             // Properties props = new Properties();
             // props.load(file.getInputStream(file.getEntry("names.props")));
@@ -587,9 +601,9 @@ public class DocReader
                 prefixes[i] = prefixes[i] + "/";
             }
             statusLabel.setText("Loading doc list component...");
-            Component docListComponent = generateDocListPanel(Collections.nCopies(
-                    prefixes.length, file).toArray(new ZipFile[0]), prefixes, statusLabel,
-                    null);
+            Component docListComponent =
+                    generateDocListPanel(Collections.nCopies(prefixes.length, file)
+                            .toArray(new ZipFile[0]), prefixes, statusLabel, null);
             frame.removeAll();
             frame.add(docListComponent);
             frame.add(new Label("Page " + (page + 1) + " of " + totalPageCount),
@@ -615,20 +629,21 @@ public class DocReader
                                 .showMessageDialog(
                                         frame,
                                         "Buttons:\n\n"
-                                                + "<  --  Go back one page.\n"
-                                                + ">  --  Go forward one page.\n"
-                                                + "G  --  Enter a page number to go to.\n"
-                                                + "B  --  Specify a search query, and build a search from it. This also lets you "
-                                                + "view searches currently being built.\n"
-                                                + "S  --  View a search that you have built.\n"
-                                                + "R  --  Choose a page at random and go to it.\n"
-                                                + "?  --  View this help page.\n\n"
-                                                + "On other pages, you may see these:\n\n"
-                                                + "L  --  Return to the library (the list of pages you were just at before you hit the ?)\n"
-                                                + "F  --  Refresh the current page and any information shown on it.\n\n"
-                                                + "On the doc list page, the number in parentheses before each doc title is the number "
-                                                + "of pages in the doc. On the search page, the number in square brackets is the number "
-                                                + "of times the search query was found within the document.");
+                                            + "<  --  Go back one page.\n"
+                                            + ">  --  Go forward one page.\n"
+                                            + "G  --  Enter a page number to go to.\n"
+                                            + "B  --  Specify a search query, and build a search from it. This also lets you "
+                                            + "view searches currently being built. A search query named \"morepages X\" will "
+                                            + "search for all docs with at least X pages in them.\n"
+                                            + "S  --  View a search that you have built.\n"
+                                            + "R  --  Choose a page at random and go to it.\n"
+                                            + "?  --  View this help page.\n\n"
+                                            + "On other pages, you may see these:\n\n"
+                                            + "L  --  Return to the library (the list of pages you were just at before you hit the ?)\n"
+                                            + "F  --  Refresh the current page and any information shown on it.\n\n"
+                                            + "On the doc list page, the number in parentheses before each doc title is the number "
+                                            + "of pages in the doc. On the search page, the number in square brackets is the number "
+                                            + "of times the search query was found within the document.");
                     }
                     else if (name.equals("back"))
                     {
@@ -758,8 +773,10 @@ public class DocReader
     
     protected static void doGotoPlainPage(int page, int pages)
     {
-        String newValue = OptionPane.showInputDialog(frame,
-                "Enter a page number to go to, from 1 to " + pages + ".", "" + page);
+        String newValue =
+                OptionPane
+                        .showInputDialog(frame, "Enter a page number to go to, from 1 to "
+                            + pages + ".", "" + page);
         if (newValue == null)
             return;
         int value;
@@ -770,7 +787,7 @@ public class DocReader
         catch (Exception e)
         {
             OptionPane.showMessageDialog(frame, "That input (\"" + newValue
-                    + "\") is not a number.");
+                + "\") is not a number.");
             return;
         }
         if (value < 1 || value > pages)
@@ -788,7 +805,7 @@ public class DocReader
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         OptionPane.showMessageDialog(frame, "An internal error occured:\n\n"
-                + sw.toString());
+            + sw.toString());
     }
     
     private static void revalidate(Component container)
@@ -877,9 +894,10 @@ public class DocReader
                     }
                     else if (name.equals("go"))
                     {
-                        String newValue = OptionPane.showInputDialog(frame,
-                                "Enter a page number to go to, from 1 to " + totalPages
-                                        + ".", "" + page);
+                        String newValue =
+                                OptionPane.showInputDialog(frame,
+                                        "Enter a page number to go to, from 1 to "
+                                            + totalPages + ".", "" + page);
                         if (newValue == null)
                             return;
                         int value;
@@ -890,14 +908,14 @@ public class DocReader
                         catch (Exception e)
                         {
                             OptionPane.showMessageDialog(frame, "That input (\"" + newValue
-                                    + "\") is not a number.");
+                                + "\") is not a number.");
                             return;
                         }
                         if (value < 1 || value > totalPages)
                         {
                             OptionPane.showMessageDialog(frame,
                                     "That number was not within the range 1 to "
-                                            + totalPages + ".");
+                                        + totalPages + ".");
                         }
                         showDocListPage(value - 1);
                     }
@@ -937,7 +955,7 @@ public class DocReader
             if (amount == 0)
                 throw new RuntimeException(
                         "Invalid read data; 0 bytes are reported to have been read. "
-                                + "This would cause an infinite loop.");
+                            + "This would cause an infinite loop.");
             count -= amount;
         }
     }
@@ -988,8 +1006,9 @@ public class DocReader
                 name = beforeTitles[i] + name;
             Panel p2 = new Panel();
             p2.setLayout(new BorderLayout());
-            Button button = new Button("("
-                    + lastPageProperties.getProperty(fileNumber + "t") + ") " + name);
+            Button button =
+                    new Button("(" + lastPageProperties.getProperty(fileNumber + "t")
+                        + ") " + name);
             button.setFont(defaultFont.deriveFont(Font.BOLD));
             p2.add(button, BorderLayout.WEST);
             panel.add(p2);
