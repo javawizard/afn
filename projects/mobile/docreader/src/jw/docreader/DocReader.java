@@ -48,6 +48,8 @@ import jw.docreader.ui.OptionPane;
 
 public class DocReader
 {
+    public static final Object searchAccessLock = new Object();
+    
     public static class DeleteSearchListener implements ActionListener
     {
         private File file;
@@ -154,6 +156,11 @@ public class DocReader
         
         public void run()
         {
+            int sleepAmount;
+            if ("Linux".equals(System.getProperty("os.name")))
+                sleepAmount = 0;
+            else
+                sleepAmount = 80;
             File searchFile = new File(storageSearch, searchTerms.replace(" ", "-")
                     .replaceAll("[^a-zA-Z0-9\\-]", "")
                     + ".txt");
@@ -174,8 +181,7 @@ public class DocReader
                         String key = (String) mapEntry.getKey();
                         if (!key.endsWith("n"))
                             continue;
-                        // We'll wait 12 milliseconds to give other stuff a chance to work
-                        Thread.sleep(12);
+                        Thread.sleep(sleepAmount);
                         String currentDocNumber = key.substring(0, key.length() - 1);
                         int docNumber = Integer.parseInt(currentDocNumber);
                         int totalDocPages = Integer.parseInt(pageProperties
@@ -191,6 +197,14 @@ public class DocReader
                             matchesInDoc += 1;
                         for (int docPage = 0; docPage < totalDocPages; docPage++)
                         {
+                            /*
+                             * The next two lines effectively disable match counting, and
+                             * also greatly speed up searches since once one page contains
+                             * the terms, the rest of the pages are skipped.
+                             */
+                            if (matchesInDoc > 0)
+                                break;
+                            Thread.sleep(sleepAmount);
                             Page pageObject = readPage(file, docPage, currentDocNumber
                                     + "/", pageProperties, docNumber);
                             String pageText = pageObject.text.toLowerCase();
@@ -205,6 +219,13 @@ public class DocReader
                                     matchesInDoc += 1;
                                     hadMatch = true;
                                     previous = matchIndex + 1;
+                                    /*
+                                     * The next line effectively disables match counting,
+                                     * and also greatly speeds up searches since once one
+                                     * page contains the terms, the rest of the pages are
+                                     * skipped.
+                                     */
+                                    break;
                                 }
                                 else
                                 {
@@ -214,15 +235,20 @@ public class DocReader
                         }
                         if (matchesInDoc > 0)
                         {
-                            out.write(matchesInDoc > 100 ? 100 : matchesInDoc);
-                            out.write(page / 100);
-                            out.write(page % 100);
-                            out.write(docNumber);
+                            synchronized (searchAccessLock)
+                            {
+                                out.write(matchesInDoc > 100 ? 100 : matchesInDoc);
+                                out.write(page / 100);
+                                out.write(page % 100);
+                                out.write(docNumber);
+                            }
                         }
                     }
                 }
-                out.flush();
-                out.close();
+                synchronized (searchAccessLock)
+                {
+                    out.close();
+                }
             }
             catch (Exception e)
             {
@@ -780,34 +806,39 @@ public class DocReader
         revalidate(frame);
         try
         {
-            int resultFileLength = (int) currentSearchResultFile.length();
-            int numberOfResults = resultFileLength / 4;
-            FileInputStream in = new FileInputStream(currentSearchResultFile);
-            int offsetItem = page * SEARCH_PAGE_SIZE;
-            int itemsOnThisPage = numberOfResults - offsetItem;
-            if (itemsOnThisPage > SEARCH_PAGE_SIZE)
-                itemsOnThisPage = SEARCH_PAGE_SIZE;
-            int offsetInBytes = offsetItem * 4;
-            skip(in, offsetInBytes);
             ArrayList<ZipFile> zipFiles = new ArrayList<ZipFile>();
             ArrayList<String> prefixList = new ArrayList<String>();
             ArrayList<String> beforeTitleList = new ArrayList<String>();
-            int lastPageNumber = -1;
-            ZipFile lastZipFile = null;
-            for (int itemNumber = 0; itemNumber < itemsOnThisPage; itemNumber++)
+            int resultFileLength;
+            int numberOfResults;
+            synchronized (searchAccessLock)
             {
-                int matchCount = in.read();
-                int pageNumber = in.read() * 100;
-                pageNumber += in.read();
-                int docNumber = in.read();
-                beforeTitleList.add("[" + matchCount + "] ");
-                prefixList.add(docNumber + "/");
-                if (pageNumber != lastPageNumber)
+                FileInputStream in = new FileInputStream(currentSearchResultFile);
+                resultFileLength = (int) currentSearchResultFile.length();
+                numberOfResults = resultFileLength / 4;
+                int offsetItem = page * SEARCH_PAGE_SIZE;
+                int itemsOnThisPage = numberOfResults - offsetItem;
+                if (itemsOnThisPage > SEARCH_PAGE_SIZE)
+                    itemsOnThisPage = SEARCH_PAGE_SIZE;
+                int offsetInBytes = offsetItem * 4;
+                skip(in, offsetInBytes);
+                int lastPageNumber = -1;
+                ZipFile lastZipFile = null;
+                for (int itemNumber = 0; itemNumber < itemsOnThisPage; itemNumber++)
                 {
-                    lastPageNumber = pageNumber;
-                    lastZipFile = new ZipFile(new File(storage, "" + pageNumber));
+                    int matchCount = in.read();
+                    int pageNumber = in.read() * 100;
+                    pageNumber += in.read();
+                    int docNumber = in.read();
+                    beforeTitleList.add("[" + matchCount + "] ");
+                    prefixList.add(docNumber + "/");
+                    if (pageNumber != lastPageNumber)
+                    {
+                        lastPageNumber = pageNumber;
+                        lastZipFile = new ZipFile(new File(storage, "" + pageNumber));
+                    }
+                    zipFiles.add(lastZipFile);
                 }
-                zipFiles.add(lastZipFile);
             }
             frame.add(generateDocListPanel(zipFiles.toArray(new ZipFile[0]), prefixList
                     .toArray(new String[0]), null, beforeTitleList.toArray(new String[0])));
@@ -1056,7 +1087,7 @@ public class DocReader
     
     public static void copy(InputStream in, OutputStream out) throws IOException
     {
-        byte[] buffer = new byte[8192];
+        byte[] buffer = new byte[1024];
         int amount;
         while ((amount = in.read(buffer)) != -1)
         {
