@@ -19,14 +19,18 @@ import java.net.Socket;
 public class SendSpaced
 {
     public static final int listenPort = 44298;
-    public static final String targetHost = "irc.freenode.net";
-    public static final int targetPort = 6667;
+    public static String targetHost = "irc.freenode.net";
+    public static int targetPort = 6667;
     
     /**
      * @param args
      */
     public static void main(String[] args) throws Throwable
     {
+        if (args.length > 0)
+            targetHost = args[0];
+        if(args.length > 1)
+            targetPort = Integer.parseInt(args[1]);
         // TODO: make these configurable via program arguments
         ServerSocket ss = new ServerSocket(listenPort, 50);
         while (true)
