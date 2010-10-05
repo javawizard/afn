@@ -461,6 +461,13 @@ _MESSAGE = descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    descriptor.FieldDescriptor(
+      name='value10', full_name='Message.value10', index=10,
+      number=10, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -702,6 +709,28 @@ _RUNFUNCTIONRESPONSE = descriptor.Descriptor(
   options=None)
 
 
+_ERRORRESPONSE = descriptor.Descriptor(
+  name='ErrorResponse',
+  full_name='ErrorResponse',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='text', full_name='ErrorResponse.text', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
 _MAPENTRY.fields_by_name['key'].message_type = _INSTANCE
 _MAPENTRY.fields_by_name['value'].message_type = _INSTANCE
 _STRUCTENTRY.fields_by_name['value'].message_type = _INSTANCE
@@ -725,6 +754,7 @@ _MESSAGE.fields_by_name['value6'].message_type = _CALLFUNCTIONCOMMAND
 _MESSAGE.fields_by_name['value7'].message_type = _CALLFUNCTIONRESPONSE
 _MESSAGE.fields_by_name['value8'].message_type = _RUNFUNCTIONCOMMAND
 _MESSAGE.fields_by_name['value9'].message_type = _RUNFUNCTIONRESPONSE
+_MESSAGE.fields_by_name['value10'].message_type = _ERRORRESPONSE
 _REGISTERINTERFACECOMMAND.fields_by_name['info'].message_type = _INSTANCE
 _CALLFUNCTIONCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
 _CALLFUNCTIONRESPONSE.fields_by_name['return_value'].message_type = _INSTANCE
@@ -814,4 +844,8 @@ class RunFunctionCommand(message.Message):
 class RunFunctionResponse(message.Message):
   __metaclass__ = reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _RUNFUNCTIONRESPONSE
+
+class ErrorResponse(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _ERRORRESPONSE
 
