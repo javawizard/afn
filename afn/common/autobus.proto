@@ -73,6 +73,7 @@ message Message {
     optional CallFunctionResponse value7 = 7;
     optional RunFunctionCommand value8 = 8;
     optional RunFunctionResponse value9 = 9;
+    optional ErrorResponse value10 = 10;
 }
 
 message RegisterInterfaceCommand {
@@ -113,6 +114,10 @@ message RunFunctionCommand {
 
 message RunFunctionResponse {
     optional Instance return_value = 1;
+}
+
+message ErrorResponse {
+    optional string text = 1;
 }
 
     
