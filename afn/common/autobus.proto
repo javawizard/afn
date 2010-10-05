@@ -1,0 +1,144 @@
+message MapEntry {
+    required Instance key = 1;
+    required Instance value = 2;
+}
+
+message StructEntry {
+    required string key = 1;
+    required Instance value = 2;
+}
+
+message Instance {
+    optional IntegerInstance value1 = 1;
+    optional LongInstance value2 = 2;
+    optional DoubleInstance value3 = 3;
+    optional StringInstance value4 = 4;
+    optional TimestampInstance value5 = 5;
+    optional NullInstance value6 = 6;
+    optional ListInstance value7 = 7;
+    optional MapInstance value8 = 8;
+    optional StructInstance value9 = 9;
+}
+
+message IntegerInstance {
+    required int32 value = 1;
+}
+
+message LongInstance {
+    required int64 value = 1;
+}
+
+message DoubleInstance {
+    required double value = 1;
+}
+
+message StringInstance {
+    required string value = 1;
+}
+
+message TimestampInstance {
+    required int32 year = 1;
+    required int32 month = 2;
+    required int32 day = 3;
+    required int32 hour = 4;
+    required int32 minute = 5;
+    required int32 second = 6;
+    required int32 millisecond = 7;
+}
+
+message NullInstance {
+}
+
+message ListInstance {
+    repeated Instance value = 1;
+}
+
+message MapInstance {
+    repeated MapEntry value = 1;
+}
+
+message StructInstance {
+    required string name = 1;
+    repeated StructEntry value = 2;
+}
+
+message Message {
+    required int32 message_type = 1; // command, response, or notification
+    required int64 message_id = 60;
+    optional RegisterInterfaceCommand value2 = 2;
+    optional RegisterInterfaceResponse value3 = 3;
+    optional RegisterFunctionCommand value4 = 4;
+    optional RegisterFunctionResponse value5 = 5;
+    optional CallFunctionCommand value6 = 6;
+    optional CallFunctionResponse value7 = 7;
+    optional RunFunctionCommand value8 = 8;
+    optional RunFunctionResponse value9 = 9;
+}
+
+message RegisterInterfaceCommand {
+    required string name = 1;
+    required Instance info = 2;
+}
+
+message RegisterInterfaceResponse {
+    required int64 id = 1;
+}
+
+message RegisterFunctionCommand {
+    optional int64 interface_id = 1;
+    optional string interface_name = 2;
+    required string name = 3;
+}
+
+message RegisterFunctionResponse {
+}
+
+message CallFunctionCommand {
+    optional int64 interface_id = 1;
+    optional string interface_name = 2;
+    required string function = 3;
+    repeated Instance arguments = 4;
+}
+
+message CallFunctionResponse {
+    optional Instance return_value = 1;
+}
+
+message RunFunctionCommand {
+    required int64 interface_id = 1;
+    required string interface_name = 2;
+    required string function = 3;
+    repeated Instance arguments = 4;
+}
+
+message RunFunctionResponse {
+    optional Instance return_value = 1;
+}
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
