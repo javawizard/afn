@@ -4,7 +4,9 @@
 from threading import Thread, RLock
 from Queue import Queue
 from libautobus import ProtoMultiAccessor, read_fully, discard_args
-from libautobus import InputThread, OutputThread
+from libautobus import InputThread, OutputThread, get_next_id
+from libautobus import COMMAND, RESPONSE, NOTIFICATION, create_message_pair
+from libautobus import DEFAULT_PORT
 from struct import pack, unpack
 import autobus_protobuf.autobus_pb2 as protobuf
 from traceback import print_exc
@@ -13,10 +15,6 @@ from functools import partial
 import re
 import sys
 
-COMMAND = 1
-RESPONSE = 2
-NOTIFICATION = 3
-
 connection_map = {} # connection ids to connection objects
 interfaces_by_name = {} # interface names to lists of interfaces
 interface_map = {} # interface ids to interfaces
@@ -24,22 +22,10 @@ event_queue = Queue() # A queue of tuples, each of which consists of a
 # connection id and either a protobuf Message object or None to indicate that
 # the connecton was lost and so should be shut down
 
-next_id = 1
-next_id_lock = RLock()
-
 # We're breaking naming conventions with these two because I'm paranoid of
 # accidentally conflicting them if I use the regular naming convention
 MessageValue = ProtoMultiAccessor(protobuf.Message, "value")
 InstanceValue = ProtoMultiAccessor(protobuf.Instance, "value")
-
-def get_next_id():
-    """
-    Thread-safely increments next_id and returns the value it previously held.
-    """
-    with next_id_lock:
-        the_id = next_id
-        next_id += 1
-    return the_id
 
 def process_event_queue():
     while True:
@@ -201,22 +187,15 @@ def find_function_for_message(message):
                         + function_name)
     return globals()[function_name]
 
-def create_message_pair(type_or_instance):
-    if callable(type_or_instance):
-        type_or_instance = type_or_instance()
-    message = protobuf.Message()
-    MessageValue[message] = type_or_instance
-    return message, type_or_instance
-
 def process_register_interface_command(message, sender, connection):
     command = MessageValue[message]
     name = command.name
     info = command.info
     interface = Interface(name, connection, info)
     interface.register()
-    response_message, response = create_message_pair(protobuf.RegisterInterfaceResponse)
+    response_message, response = create_message_pair(protobuf.RegisterInterfaceResponse, message)
     response.id = interface.id
-    return response_message
+    connection.send(response_message)
 
 
 # MAIN CODE
@@ -225,7 +204,8 @@ server = Socket()
 if len(sys.argv) > 1:
     server_port = int(sys.argv[1])
 else:
-    server_port = 28862
+    server_port = DEFAULT_PORT
+print "Listening on port " + str(server_port)
 server.bind(("", server_port))
 server.listen(50)
 
