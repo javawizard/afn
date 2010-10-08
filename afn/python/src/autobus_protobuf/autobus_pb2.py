@@ -136,6 +136,27 @@ _INSTANCE = descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    descriptor.FieldDescriptor(
+      name='value10', full_name='Instance.value10', index=9,
+      number=10, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value11', full_name='Instance.value11', index=10,
+      number=11, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value_n', full_name='Instance.value_n', index=11,
+      number=100, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -385,6 +406,50 @@ _STRUCTINSTANCE = descriptor.Descriptor(
   options=None)
 
 
+_EXCEPTIONINSTANCE = descriptor.Descriptor(
+  name='ExceptionInstance',
+  full_name='ExceptionInstance',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='text', full_name='ExceptionInstance.text', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_BOOLINSTANCE = descriptor.Descriptor(
+  name='BoolInstance',
+  full_name='BoolInstance',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='value', full_name='BoolInstance.value', index=0,
+      number=1, type=8, cpp_type=7, label=2,
+      default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
 _MESSAGE = descriptor.Descriptor(
   name='Message',
   full_name='Message',
@@ -465,6 +530,13 @@ _MESSAGE = descriptor.Descriptor(
       name='value10', full_name='Message.value10', index=10,
       number=10, type=11, cpp_type=10, label=1,
       default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value_n', full_name='Message.value_n', index=11,
+      number=100, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -630,7 +702,7 @@ _CALLFUNCTIONRESPONSE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='return_value', full_name='CallFunctionResponse.return_value', index=0,
-      number=1, type=11, cpp_type=10, label=1,
+      number=1, type=11, cpp_type=10, label=2,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -695,7 +767,7 @@ _RUNFUNCTIONRESPONSE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='return_value', full_name='RunFunctionResponse.return_value', index=0,
-      number=1, type=11, cpp_type=10, label=1,
+      number=1, type=11, cpp_type=10, label=2,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -743,6 +815,8 @@ _INSTANCE.fields_by_name['value6'].message_type = _NULLINSTANCE
 _INSTANCE.fields_by_name['value7'].message_type = _LISTINSTANCE
 _INSTANCE.fields_by_name['value8'].message_type = _MAPINSTANCE
 _INSTANCE.fields_by_name['value9'].message_type = _STRUCTINSTANCE
+_INSTANCE.fields_by_name['value10'].message_type = _EXCEPTIONINSTANCE
+_INSTANCE.fields_by_name['value11'].message_type = _BOOLINSTANCE
 _LISTINSTANCE.fields_by_name['value'].message_type = _INSTANCE
 _MAPINSTANCE.fields_by_name['value'].message_type = _MAPENTRY
 _STRUCTINSTANCE.fields_by_name['value'].message_type = _STRUCTENTRY
@@ -808,6 +882,14 @@ class MapInstance(message.Message):
 class StructInstance(message.Message):
   __metaclass__ = reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _STRUCTINSTANCE
+
+class ExceptionInstance(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _EXCEPTIONINSTANCE
+
+class BoolInstance(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _BOOLINSTANCE
 
 class Message(message.Message):
   __metaclass__ = reflection.GeneratedProtocolMessageType

@@ -3,9 +3,10 @@ from threading import Thread, RLock
 from struct import pack, unpack
 import autobus_protobuf.autobus_pb2 as protobuf
 from traceback import print_exc
-from socket import error as SocketError, socket as Socket
+from socket import error as SocketError, socket as Socket, SHUT_RDWR
 from functools import update_wrapper
-from Queue import Queue
+from Queue import Queue, Empty
+from time import sleep
 
 COMMAND = 1
 RESPONSE = 2
@@ -20,33 +21,35 @@ def get_next_id():
     """
     Thread-safely increments next_id and returns the value it previously held.
     """
+    global next_id
     with next_id_lock:
         the_id = next_id
         next_id += 1
     return the_id
 
 class ProtoMultiAccessor(object):
-    def __init__(self, proto_class, prefix):
+    def __init__(self, proto_class, prefix, specifier=None):
         self.proto_class = proto_class
         self.prefix = prefix
+        if specifier is None:
+            specifier = prefix + "_n"
+        self.specifier = specifier
         self.fields = {}
         for field_name, field_descriptor in proto_class.DESCRIPTOR.fields_by_name.items():
-            if field_name.startswith(prefix):
+            if field_name.startswith(prefix) and field_name != specifier:
                 self.fields[field_descriptor.message_type._concrete_class] = field_name
     
     def __getitem__(self, item):
-        for field_class, field_name in self.fields.items():
-            if item.HasField(field_name):
-                return getattr(item, field_name)
-        raise Exception("Instance does not have any fields set")
+        return getattr(item, self.prefix + getattr(item, self.specifier))
     
     def __setitem__(self, item, value):
         set = False
         for field_class, field_name in self.fields.items():
-            item.ClearField(field_name)
+            getattr(item, field_name).Clear()
             if isinstance(value, field_class):
                 set = True
-                setattr(item, field_name, value)
+                getattr(item, field_name).MergeFrom(value)
+                setattr(item, self.specifier, field_name[len(self.prefix):])
         if not set:
             raise Exception("Supplied instance is not of a valid type")
 
@@ -70,20 +73,32 @@ def create_message_pair(*args, **kwargs):
     This function returns the constructed message followed by the constructed
     specific message (or the first argument if it was a specific message
     instance instead of a specific message type).
+    
+    The constructed message returned will be None if this method is called to
+    construct a reply to a notification (since, by protocol definition,
+    only commands, and possibly replies, are replied to; notifications are
+    never replied to). The specific message will still be present, though. This
+    allows code to call this function, set up the specific message, and send
+    the constructed message without worrying about whether or not it's None,
+    and the message sending logic will discard it if it's None.
     """
     # type_or_instance, in_reply_to, notification
     type_or_instance = args[0]
     message_type = COMMAND if len(args) < 2 else args[1]
     if callable(type_or_instance):
-        type_or_instance = type_or_instance()
+        type_or_instance = type_or_instance(**kwargs)
     message = protobuf.Message()
     MessageValue[message] = type_or_instance
-    if not isinstance(message_type, int):
-        message.message_id = message_type.message_id
-        message.message_type = RESPONSE
-    else:
+    if isinstance(message_type, int):
         message.message_id = get_next_id()
         message.message_type = message_type
+    else:
+        if message_type.message_type == NOTIFICATION:
+            # Replies to notifications are not allowed
+            message = None
+        else:
+            message.message_id = message_type.message_id
+            message.message_type = RESPONSE
     return message, type_or_instance
 
 def read_fully(socket, length):
@@ -95,7 +110,9 @@ def read_fully(socket, length):
     """
     data = ""
     while len(data) < length:
+#        print "Reading bytes..."
         new_data = socket.recv(length - len(data))
+#        print str(len(new_data)) + " bytes received"
         if new_data == "":
             raise EOFError()
         data += new_data
@@ -108,6 +125,7 @@ class InputThread(Thread):
     the socket and calls another user-defined function.
     """
     def __init__(self, socket, message_function, close_function=None):
+        Thread.__init__(self)
         self.socket = socket
         self.message_function = message_function
         self.close_function = close_function
@@ -115,19 +133,26 @@ class InputThread(Thread):
     def run(self):
         try:
             while True:
+#                print "Waiting for client message..."
                 message_length = read_fully(self.socket, 4)
-                message_data = read_fully(self.socket,
-                                          unpack(">i", message_length)[0])
-                message = protobuf.Message
+                message_length = unpack(">i", message_length)[0]
+#                print "Receiving message with length " + str(message_length)
+                message_data = read_fully(self.socket, message_length)
+#                print "Message received, decoding..."
+                message = protobuf.Message()
                 message.ParseFromString(message_data)
+#                print "Dispatching received message..."
                 self.message_function(message)
         except EOFError:
             pass
         except:
             print_exc()
+#        print "Input thread finished, closing socket..."
         self.socket.close()
         if self.close_function:
+#            print "Invoking close_function..."
             self.close_function()
+#        print "Input thread has shut down."
 
 
 class OutputThread(Thread):
@@ -139,23 +164,52 @@ class OutputThread(Thread):
     immediately closed and this thread will exit.
     """
     def __init__(self, socket, read_function):
+        Thread.__init__(self)
         self.socket = socket
         self.read_function = read_function
     
     def run(self):
         try:
             while True:
+#                print "Waiting for a message to send..."
                 message = self.read_function()
+#                print "Getting ready to send message " + str(message)
                 if message is None:
+#                    print "Message was empty, shutting down the thread"
                     break
                 message_data = message.SerializeToString()
+#                print "Sending encoded message length..."
                 self.socket.sendall(pack(">i", len(message_data)))
+#                print "Sending encoded message..."
                 self.socket.sendall(message_data)
         except SocketError:
             pass
         except:
             print_exc()
         self.socket.close()
+
+class NoSuchInterfaceException(Exception):
+    def __init__(self, interface_id, interface_name, info=None):
+        self.interface_id = interface_id
+        self.interface_name = interface_name
+        self.info = info
+    
+    def __str__(self):
+        return ("No such interface: id=" + str(self.interface_id) + 
+                ", name=" + self.interface_name + (", additional info: " + 
+                        self.info if self.info is not None else ""))
+
+class NoSuchFunctionException(Exception):
+    def __init__(self, function_id, function_name):
+        self.function_id = function_id
+        self.functino_name = function_name
+    
+    def __str__(self):
+        return ("No such function: id=" + str(self.function_id) + 
+                ", name=" + self.function_name)
+
+class TimeoutException(Exception):
+    pass
 
 def discard_args(function):
     """
@@ -167,6 +221,13 @@ def discard_args(function):
         function()
     update_wrapper(wrapper, function)
     return wrapper
+
+def merge_repeated(src, dest):
+    """
+    Merges all items in the repeated field src into the repeated field dest. 
+    """
+    for item in src:
+        dest.add().MergeFrom(item)
 
 def encode_object(object, instance=None):
     """
@@ -181,6 +242,8 @@ def encode_object(object, instance=None):
         InstanceValue[instance] = protobuf.LongInstance(value=object)
     elif isinstance(object, float):
         InstanceValue[instance] = protobuf.DoubleInstance(value=object)
+    elif isinstance(object, bool):
+        InstanceValue[instance] = protobuf.BoolInstance(value=object)
     elif isinstance(object, basestring):
         InstanceValue[instance] = protobuf.StringInstance(value=object)
     elif object is None:
@@ -191,9 +254,20 @@ def encode_object(object, instance=None):
             list_object_instance = list_instance.value.add()
             encode_object(list_object, list_object_instance)
         InstanceValue[instance] = list_instance
+    elif isinstance(object, dict):
+        map_instance = protobuf.MapInstance()
+        for key, value in object.items():
+            map_entry = map_instance.value.add()
+            map_entry.key.MergeFrom(encode_object(key))
+            map_entry.value.MergeFrom(encode_object(value))
+        InstanceValue[instance] = map_instance
+    elif isinstance(object, Exception):
+        InstanceValue[instance] = protobuf.ExceptionInstance(
+                text=type(object).__name__ + ": " + str(object))
     else:
         raise Exception("Invalid instance type to encode: " + 
                 str(type(object)))
+    return instance
 
 def decode_object(instance):
     instance_value = InstanceValue[instance]
@@ -201,6 +275,8 @@ def decode_object(instance):
             protobuf.LongInstance, protobuf.DoubleInstance,
             protobuf.StringInstance)):
         return instance_value.value
+    elif isinstance(instance_value, protobuf.BoolInstance):
+        return bool(instance_value.value)
     elif isinstance(instance_value, protobuf.NullInstance):
         return None
     elif isinstance(instance_value, protobuf.ListInstance):
@@ -208,9 +284,44 @@ def decode_object(instance):
         for item in instance_value.value:
             result.append(decode_object(item))
         return result
+    elif isinstance(instance_value, protobuf.MapInstance):
+        result = {}
+        for item in instance_value.value:
+            result[decode_object(item.key)] = decode_object(item.value)
+        return result
+    elif isinstance(instance_value, protobuf.ExceptionInstance):
+        return Exception(instance_value.text)
     else:
         raise Exception("Invalid instance type to decode: " + 
                 str(type(instance_value)))
+
+class InterfaceWrapper(object):
+    def __init__(self, connection, name):
+        self.connection = connection
+        self.name = name
+    
+    def __getattr__(self, attribute):
+        return FunctionWrapper(self.connection, self, attribute)
+
+class FunctionWrapper(object):
+    def __init__(self, connection, interface, name):
+        self.connection = connection
+        self.interface = interface
+        self.name = name
+    
+    def __call__(self, *args):
+        instance_args = [encode_object(arg) for arg in args]
+        message, call_message = create_message_pair(protobuf.CallFunctionCommand,
+                interface_name=self.interface.name, function=self.name,
+                arguments=instance_args)
+        response = self.connection.query(message)
+        call_response = MessageValue[response]
+        if isinstance(call_response, protobuf.ErrorResponse):
+            raise Exception("Server-side error: " + call_response.text)
+        result = decode_object(call_response.return_value)
+        if isinstance(result, Exception):
+            raise result
+        return result
 
 class AutobusConnection(object):
     """
@@ -224,11 +335,15 @@ class AutobusConnection(object):
     If the connection to the autobus server is lost, all currently-pending
     functions etc will raise an exception, and this class will attempt to
     re-establish a connection and re-register interfaces.
+    
+    Subscripting an instance of this class is the same as calling
+    get_interface(). For example, a wrapper around the interface "example" on
+    the server could be obtained with some_autobus_connection["example"]. 
     """
-    def __init__(self, host="localhost", port=DEFAULT_PORT, 
+    def __init__(self, host="localhost", port=DEFAULT_PORT,
             on_connect=lambda: None, on_disconnect=lambda: None):
         """
-        Creates a new conneection. This doesn't actually connect to the
+        Creates a new connection. This doesn't actually connect to the
         autobus server; use connect() or start_connecting() for that.
         """
         self.host = host
@@ -236,9 +351,21 @@ class AutobusConnection(object):
         self.on_connect = on_connect
         self.on_disconnect = on_disconnect
         self.source_interfaces = {}
+        self.is_shut_down = False
         self.send_queue = Queue()
         self.receive_queues = {} # maps message ids expecting responses to the
         # corresponding queues waiting for the message response
+    
+    def shutdown(self):
+        self.is_shut_down = True
+        try:
+            self.socket.shutdown(SHUT_RDWR)
+        except:
+            pass
+        try:
+            self.socket.close()
+        except:
+            pass
     
     def add_interface(self, name, interface, info):
         """
@@ -252,7 +379,7 @@ class AutobusConnection(object):
         """
         Calls connect(None) in a new thread.
         """
-        Thread(target=self.connect, kwargs={"attempts": 1}).start()
+        Thread(target=self.connect, kwargs={"attempts": None}).start()
     
     def connect(self, attempts=1):
         """
@@ -266,7 +393,7 @@ class AutobusConnection(object):
         progress = 0
         delay = 0.1
         delay_increment = 1.5
-        while attempts is None or progress < attempts:
+        while (attempts is None or progress < attempts) and not self.is_shut_down:
             progress += 1
             delay *= delay_increment
             if delay > 15:
@@ -275,6 +402,7 @@ class AutobusConnection(object):
             try:
                 self.socket.connect((self.host, self.port))
             except:
+                sleep(delay)
                 continue
             self.connection_established()
             return
@@ -282,39 +410,150 @@ class AutobusConnection(object):
     # messagearrived, inputclosed, readnextmessage
     
     def connection_established(self):
+#        print "Processing established connection..."
         self.input_thread = InputThread(self.socket, self.message_arrived, self.input_closed)
         self.output_thread = OutputThread(self.socket, self.read_next_message)
         self.send_queue = Queue() # clear the send queue
+        self.receive_queues = {}
         self.input_thread.start()
         self.output_thread.start()
+#        print "Registering interfaces with the server..."
         for name, interface, info in self.source_interfaces.values():
             message, register_message = create_message_pair(protobuf.RegisterInterfaceCommand,
-                    name=name, info=encode_object(info))
+                    NOTIFICATION, name=name, info=encode_object(info))
+            self.send(message)
+            for function_name in dir(interface):
+                if function_name[0:1] != "_" and callable(
+                        getattr(interface, function_name)):
+                    message, register_message = create_message_pair(
+                            protobuf.RegisterFunctionCommand, NOTIFICATION,
+                            interface_name=name, name=function_name)
+                    self.send(message) 
+#        print "Calling custom on_connection action"
         self.on_connect()
         
     def message_arrived(self, message):
-        pass
+        queue = self.receive_queues.get(message.message_id, None)
+        if queue is not None:
+            queue.put(message)
+            try:
+                del self.receive_queues[message.message_id]
+            except KeyError:
+                pass
+            return
+        message_value = MessageValue[message]
+        if isinstance(message_value, protobuf.RunFunctionCommand):
+            interface_name = message_value.interface_name
+            function_name = message_value.function
+            arguments = message_value.arguments
+            arguments = [decode_object(arg) for arg in arguments]
+            try:
+                if function_name.startswith("_"):
+                    raise Exception("Function names starting with _ are "
+                            "not allowed")
+                _, interface, _ = self.source_interfaces[interface_name]
+                return_value = getattr(interface, function_name)(*arguments)
+            except Exception as e:
+                return_value = e
+            response, run_response = create_message_pair(protobuf.RunFunctionResponse,
+                    message, return_value=encode_object(return_value))
+            self.send(response)
+            return
+        print "Message from the server arrived: " + repr(message)
+    
+    def query(self, message, timeout=30):
+        """
+        Sends the specified message from the server, waiting up to the
+        specified timeout for a response. When a response is received, it is
+        returned. If a response is not received within the specified amount of
+        time, a TimeoutException will be raised. Otherwise, the response sent
+        by the server will be returned. 
+        """
+        queue = Queue()
+        self.receive_queues[message.message_id] = queue
+        self.send(message)
+        try:
+            response = queue.get(block=True, timeout=timeout)
+        except Empty:
+            try:
+                del self.receive_queues[message.message_id]
+            except KeyError:
+                pass
+            raise TimeoutException()
+        # If we don't get a KeyError, it's guaranteed that the input thread
+        # will already have removed the queue, so we don't need to worry about
+        # removing it.
+        return response
     
     def send(self, message):
         """
         Adds the specified message, which should be an instance of
-        protobuf.Message, to the send queue.
+        protobuf.Message, to the send queue. If the message is None, this
+        method returns without doing anything.
         """
-        self.send_queue.put(message, block=True)
+        if message is not None:
+#            print "Adding message to send queue " + str(self.send_queue) + "..."
+            self.send_queue.put(message, block=True)
     
     def input_closed(self):
         self.send_queue.put(None)
         for queue in self.receive_queues.values():
             queue.put(None)
         self.receive_queues.clear()
+        self.input_thread = None
+        self.output_thread = None
+        self.send_queue = None
+        self.receive_queues = None
         self.on_disconnect()
-        self.start_connecting()
+        if not self.is_shut_down:
+            self.start_connecting()
     
     def read_next_message(self):
         send_queue = self.send_queue
         if send_queue is None:
             return None
+#        print "Getting next message from send queue " + str(send_queue) + "..."
         return send_queue.get(block=True)
+    
+    def send_error(self, in_reply_to=None, **kwargs):
+        """
+        Sends an error back to the client. If in_reply_to is itself a
+        notification message, no message will be sent back. Otherwise, an
+        ErrorResponse to the specified message will be sent. The error's
+        fields will be initialized to have any additional keyword arugments
+        specified. You'll typically do:
+        
+        send_error(some_message, text="A random problem happened")
+        """
+        if in_reply_to == None:
+            in_reply_to = NOTIFICATION
+        message, error_message = create_message_pair(protobuf.ErrorResponse, in_reply_to, **kwargs)
+        self.send(message)
+    
+    def get_interface(self, name):
+        """
+        Returns a wrapper around the specified interface. This doesn't check
+        to make sure that the specified interface is actually present on the
+        server; if it's not, an exception will be thrown when a function on
+        the interface is invoked for the first time.
+        
+        This function can be used like so:
+        
+        interface = some_connection.get_interface("example")
+        return_value = interface.some_function("first", 2, ["third"])
+        
+        This would invoke the function "some_function" on the interface
+        "example" on the server. An exception would be thrown if the specified
+        interface does not exist on the server or if the specified interface
+        does not have any such function.
+        
+        If the function does not return within 30 seconds (or the server does
+        not send a response indicating that the function has returned within
+        that time frame), a TimeoutException will be raised.
+        """
+        return InterfaceWrapper(self, name)
+    
+    __getitem__ = get_interface
 
 
 
