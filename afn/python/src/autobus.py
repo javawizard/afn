@@ -8,6 +8,7 @@ from libautobus import InputThread, OutputThread, get_next_id
 from libautobus import COMMAND, RESPONSE, NOTIFICATION, create_message_pair
 from libautobus import DEFAULT_PORT, NoSuchInterfaceException
 from libautobus import NoSuchFunctionException, encode_object, decode_object
+from libautobus import get_function_doc
 from struct import pack, unpack
 import autobus_protobuf.autobus_pb2 as protobuf
 from traceback import print_exc
@@ -23,8 +24,7 @@ by Alexander Boyd (a.k.a. javawizard or jcp)
 """
 
 connection_map = {} # connection ids to connection objects
-interfaces_by_name = {} # interface names to lists of interfaces
-interface_map = {} # interface ids to interfaces
+interface_map = {} # interface names to interfaces
 event_queue = Queue() # A queue of tuples, each of which consists of a
 # connection id and either a protobuf Message object or None to indicate that
 # the connecton was lost and so should be shut down
@@ -61,13 +61,20 @@ def process_event_queue():
             != 1 else "") + " have been shut down."
 
 class AutobusInterface(object):
+    """
+    An interface built-in to the Autobus server that provides information about
+    the server, such as the interfaces that are currently registered. To see a
+    list of functions that are on this interface, call the function
+    list_functions on this interface, passing in the string "autobus". The
+    resulting list should provide plenty of information.
+    """
     def list_interfaces(self):
         """
         Returns a list of all interfaces currently registered to the autobus
         server. The return value is a list of maps, with each map representing
         one interface. Each map has the following keys:
         
-        id: The numeric id of the interface.
+        owner: The numeric id of the connection that registered this interface.
         
         name: The name of the interface.
         
@@ -82,19 +89,17 @@ class AutobusInterface(object):
         """
         result = []
         for interface in interface_map.values():
-            result.append({"id": interface.id, "name": interface.name,
-                    "info": decode_object(interface.info) if interface.info
-                    is not None else None, "special": interface.special,
-                    "doc": interface.doc})
+            result.append({"owner": interface.connection.id if not
+                    interface.special else 0, "name": interface.name,
+                    "special": interface.special, "doc": interface.doc})
         return result
     
-    def list_functions(self, interface_id_or_name):
+    def list_functions(self, interface_name):
         """
         Returns a list of all functions currently registered to the specified
-        interface. The first, and only, argument is the id or the name of the
-        interface to look up. If it's a name, the first interface registered
-        with that name will be assumed. If there's no such interface, an
-        exception will be thrown.
+        interface. If there's no such interface, an exception will be thrown.
+        This function works correctly on special interfaces as well as normal
+        interfaces.
         
         The return value is similar to the return value of list_interfaces().
         Each map within the list that's returned represents a function on the
@@ -102,17 +107,29 @@ class AutobusInterface(object):
         """
         result = []
         try:
-            if isinstance(interface_id_or_name, basestring):
-                interface = interfaces_by_name[interface_id_or_name][0]
-            else:
-                interface = interface_map[interface_id_or_name]
+            interface = interface_map[interface_name]
         except KeyError:
             raise Exception("No such interface.")
-        for function in interface.function_map.values():
-            result.append({"id": function.id, "name": function.name,
-                    "special": function.special, "doc": function.doc})
+        if interface.special:
+            function_list = dir(interface.connection)
+            function_list = [function for function in function_list if
+                    not function.startswith("_")]
+            for function in function_list:
+                result.append({"name": function, "special": True, 
+                        "doc": get_function_doc(interface.connection, 
+                                function)})
+        else:
+            for function in interface.function_map.values():
+                result.append({"name": function.name, 
+                        "special": function.special, "doc": function.doc})
+        return result
     
     def get_processed_message_count(self):
+        """
+        Returns the number of messages that Autobus has received and processed
+        since it started up. This does not count messages that Autobus has
+        sent; only inbound messages are counted.
+        """
         return processed_message_count
 
 autobus_interface = AutobusInterface()
@@ -122,7 +139,6 @@ class Function(object):
     Represents a function registered on an interface.
     """
     def __init__(self, sender, name, doc, special_target=None):
-        self.id = get_next_id()
         self.name = name
         self.sender = sender
         self.doc = doc
@@ -154,19 +170,16 @@ class Interface(object):
     corresponding function objects, and they have a single Instance
     representing more information about the interface.
     """
-    def __init__(self, name, connection, doc, info):
+    def __init__(self, name, connection, doc):
         """
         Creates a new interface object. This does not register it with all of
         the global dicts nor the connection's dicts; register() must be called
         to do that.
         """
-        self.id = get_next_id()
         self.name = name
         self.connection = connection
         self.doc = doc
-        self.functions_by_name = {}
-        self.function_map = {}
-        self.info = info
+        self.function_map = {} # Maps function names to Function instances
         self.special = False
     
     def register(self):
@@ -174,10 +187,9 @@ class Interface(object):
         Registers this interface with the global dicts and the connection's
         dicts. This must only be called on the event thread.
         """
-        if not self.name in interfaces_by_name:
-            interfaces_by_name[self.name] = []
-        interfaces_by_name[self.name].append(self)
-        interface_map[self.id] = self
+        if self.name in interface_map:
+            raise KeyError()
+        interface_map[self.name] = self
         if not self.special:
             self.connection.interfaces.append(self)
     
@@ -200,22 +212,19 @@ class Interface(object):
         The opposite of register(): deregisters this interface.
         """
         print "Deregistering interface with name " + self.name
-        if self.name in interfaces_by_name:
-            interfaces_by_name[self.name].remove(self)
-            if interfaces_by_name[self.name] == []:
-                del interfaces_by_name[self.name]
-        del interface_map[self.id]
+        del interface_map[self.name]
         self.connection.interfaces.remove(self)
     
     def register_function(self, sender, function_name, doc):
+        if function_name in self.function_map:
+            raise KeyError()
         print ("Registering function " + function_name + " from " + 
-                str(sender) + " on " + self.name + "(" + str(self.id) + ")") 
+                str(sender) + " on " + self.name) 
         function = Function(sender, function_name, doc)
-        self.functions_by_name[function_name] = function
-        self.function_map[function.id] = function
+        self.function_map[function_name] = function
         return function
     
-    def lookup_function(self, function_id=0, function_name=""):
+    def lookup_function(self, function_name):
         """
         Looks up the function with the specified id or name. If this interface
         is special, this function requires the name to be specified, and a
@@ -223,15 +232,16 @@ class Interface(object):
         returned.
         """
         if self.special:
+            if function_name.startswith("_"): # Don't allow functions whose
+                # names start with underscores
+                raise NoSuchFunctionException(function_name)
             try:
                 return Function(None, function_name, None, getattr(self.connection, function_name))
             except AttributeError:
-                raise NoSuchFunctionException(function_id, function_name)
-        if function_id and function_id in self.function_map:
-            return self.function_map[function_id]
-        if function_name and function_name in self.functions_by_name:
-            return self.functions_by_name[function_name]
-        raise NoSuchFunctionException(function_id, function_name)
+                raise NoSuchFunctionException(function_name)
+        if function_name in self.function_map:
+            return self.function_map[function_name]
+        raise NoSuchFunctionException(function_name)
 
 class Connection(object):
     """
@@ -364,70 +374,62 @@ def find_function_for_message(message):
                         + function_name)
     return globals()[function_name]
 
-def lookup_interface(interface_id=0, interface_name="", owner=None):
+def lookup_interface(interface_name, owner=None):
     """
-    Looks up an interface with the specified id or name. An interface with the
-    specified id will be looked up first. If it does not exist, an interface
-    with the specified name will be searched for, and the first one to be
-    registered will be the one returned from this function. Either interface_id
-    or interface_name can be 0 or None, respectively, which skips searching by
-    that particular field. If an interface with the specified id or the
-    specified name does not exist, a NoSuchInterfaceException will be raised.
+    Looks up an interface with the specified name. If there is no such
+    interface, a NoSuchInterfaceException will be raised.
     
     If owner is not None, it should be the id of a connection. Only an
     interface registered by this connection will be returned.
     """
-    interface = None
-    if interface_id and interface_id in interface_map:
-        interface = interface_map[interface_id]
+    if interface_name not in interface_map:
+        raise NoSuchInterfaceException(interface_name)
+    else:
+        interface = interface_map[interface_name]
         if owner is not None and (interface.special or 
                 interface.connection.id != owner):
-            raise NoSuchInterfaceException(interface_id=interface_id,
-                    interface_name=interface_name, info="You're not the "
-                    "owner of that particular interface.")
-    if interface is None and interface_name and interface_name in interfaces_by_name:
-        for test_interface in interfaces_by_name[interface_name]:
-            if owner is None or ((not test_interface.special) and 
-                    test_interface.connection.id == owner):
-                interface = test_interface
-                break
-    if interface is None:
-        raise NoSuchInterfaceException(interface_id=interface_id,
-                interface_name=interface_name)
-    return interface
+            raise NoSuchInterfaceException(interface_name,
+                    info="You're not the owner of that particular interface.")
+        return interface
 
 def process_register_interface_command(message, sender, connection):
     command = MessageValue[message]
     name = command.name
-    info = command.info
     doc = command.doc
     print "Registering interface with name " + name
-    interface = Interface(name, connection, doc, info)
-    interface.register()
+    interface = Interface(name, connection, doc)
+    try:
+        interface.register()
+    except KeyError:
+        connection.send_error(message, "An interface with the same name "
+                "is already registered.")
+        return
     response_message, response = create_message_pair(protobuf.RegisterInterfaceResponse, message)
-    response.id = interface.id
     connection.send(response_message)
 
 def process_register_function_command(message, sender, connection):
     command = MessageValue[message]
-    interface_id = command.interface_id
     interface_name = command.interface_name
     function_name = command.name
     doc = command.doc
     try:
-        interface = lookup_interface(interface_id, interface_name, sender)
+        interface = lookup_interface(interface_name, sender)
     except NoSuchInterfaceException as e:
         connection.send_error(message, text=str(e))
         return
-    interface.register_function(sender, function_name, doc)
+    try:
+        interface.register_function(sender, function_name, doc)
+    except KeyError:
+        connection.send_error(message, "A function with that name has already "
+                "been registered on that interface.")
     response_message, response = create_message_pair(protobuf.RegisterFunctionResponse, message)
     connection.send(response_message)
 
 def process_call_function_command(message, sender, connection):
     command = MessageValue[message]
     try:
-        interface = lookup_interface(command.interface_id, command.interface_name)
-        function = interface.lookup_function(function_name=command.function)
+        interface = lookup_interface(command.interface_name)
+        function = interface.lookup_function(command.function)
     except (NoSuchInterfaceException, NoSuchFunctionException) as e:
         connection.send_error(message, text=str(e))
         return
@@ -435,8 +437,8 @@ def process_call_function_command(message, sender, connection):
         function.invoke_special(message, command, connection)
         return
     invoke_message, invoke_command = create_message_pair(protobuf.RunFunctionCommand,
-            interface_id=interface.id, interface_name=interface.name,
-            function=function.name, arguments=command.arguments)
+            interface_name=interface.name, function=function.name, 
+            arguments=command.arguments)
     interface.connection.send(invoke_message)
     print ("Sending run command to " + str(interface.connection.id) +
             " with message id " + str(invoke_message.message_id) +
@@ -452,7 +454,8 @@ def process_run_function_response(message, sender, connection):
     if not message.message_id in connection.pending_responses:
         # Sporadic response received, just ignore it
         print ("Sporadic run response received from connection " + str(sender)
-                + " for reported message id " + str(message.message_id))
+                + " for reported message id " + str(message.message_id) + 
+                ". It will be ignored.")
         return
     response_connection_id, response_message_id = connection.pending_responses[message.message_id]
     del connection.pending_responses[message.message_id]
@@ -463,7 +466,7 @@ def process_run_function_response(message, sender, connection):
         response_connection.send(response)
 
 
-Interface("autobus", autobus_interface, None, None).register_special()
+Interface("autobus", autobus_interface, None).register_special()
 
 # MAIN CODE
 

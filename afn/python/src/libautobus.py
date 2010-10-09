@@ -190,24 +190,22 @@ class OutputThread(Thread):
         self.socket.close()
 
 class NoSuchInterfaceException(Exception):
-    def __init__(self, interface_id, interface_name, info=None):
-        self.interface_id = interface_id
+    def __init__(self, interface_name, info=None):
         self.interface_name = interface_name
         self.info = info
     
     def __str__(self):
-        return ("No such interface: id=" + str(self.interface_id) + 
-                ", name=" + self.interface_name + (", additional info: " + 
-                        self.info if self.info is not None else ""))
+        value = "No such interface: " + self.interface_name
+        if self.info is not None:
+            value += ", additional info: " + self.info
+        return value
 
 class NoSuchFunctionException(Exception):
-    def __init__(self, function_id, function_name):
-        self.function_id = function_id
-        self.functino_name = function_name
+    def __init__(self, function_name):
+        self.function_name = function_name
     
     def __str__(self):
-        return ("No such function: id=" + str(self.function_id) + 
-                ", name=" + self.function_name)
+        return "No such function: " + self.function_name
 
 class TimeoutException(Exception):
     pass
@@ -355,7 +353,14 @@ class AutobusConnection(object):
     
     Subscripting an instance of this class is the same as calling
     get_interface(). For example, a wrapper around the interface "example" on
-    the server could be obtained with some_autobus_connection["example"]. 
+    the server could be obtained with some_autobus_connection["example"].
+    
+    Autobus provides introspection and additional information via the built-in
+    autobus interface. You can access it with get_interface("autobus") or
+    connection["autobus"]. Calling
+    connection["autobus"].list_functions("autobus") will list all of the
+    functions available on the autobus interface along with more documentation
+    on how to use them. 
     """
     def __init__(self, host="localhost", port=DEFAULT_PORT,
             on_connect=lambda: None, on_disconnect=lambda: None):
@@ -384,13 +389,13 @@ class AutobusConnection(object):
         except:
             pass
     
-    def add_interface(self, name, interface, info):
+    def add_interface(self, name, interface):
         """
         Adds an interface that will be automatically registered with the server
         on connecting. All methods that do not start with an underscore on the
         specified object will be registered on the interface as functions.
         """
-        self.source_interfaces[name] = name, interface, info
+        self.source_interfaces[name] = name, interface
     
     def start_connecting(self):
         """
@@ -435,12 +440,12 @@ class AutobusConnection(object):
         self.input_thread.start()
         self.output_thread.start()
 #        print "Registering interfaces with the server..."
-        for name, interface, info in self.source_interfaces.values():
+        for name, interface, in self.source_interfaces.values():
             doc = inspect.getdoc(interface)
             if doc is None:
                 doc = ""
             message, register_message = create_message_pair(protobuf.RegisterInterfaceCommand,
-                    NOTIFICATION, name=name, info=encode_object(info), doc=doc)
+                    NOTIFICATION, name=name, doc=doc)
             self.send(message)
             for function_name in dir(interface):
                 if function_name[0:1] != "_" and callable(
@@ -575,7 +580,7 @@ class AutobusConnection(object):
         return InterfaceWrapper(self, name)
     
     __getitem__ = get_interface
-
+    
 
 
 

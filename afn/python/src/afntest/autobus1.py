@@ -17,7 +17,7 @@ class ExampleInterface(object):
         return "Hello, " + name + ". How are you?"
 
 server = AutobusConnection()
-server.add_interface("example", ExampleInterface(), None)
+server.add_interface("example", ExampleInterface())
 server.connect()
 
 
@@ -27,4 +27,5 @@ try:
     while True:
         sleep(1)
 except KeyboardInterrupt:
+    print "Shutting down"
     server.shutdown()

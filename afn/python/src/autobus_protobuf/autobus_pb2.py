@@ -563,14 +563,7 @@ _REGISTERINTERFACECOMMAND = descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='info', full_name='RegisterInterfaceCommand.info', index=1,
-      number=2, type=11, cpp_type=10, label=2,
-      default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='doc', full_name='RegisterInterfaceCommand.doc', index=2,
+      name='doc', full_name='RegisterInterfaceCommand.doc', index=1,
       number=3, type=9, cpp_type=9, label=1,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
@@ -591,13 +584,6 @@ _REGISTERINTERFACERESPONSE = descriptor.Descriptor(
   filename='autobus.proto',
   containing_type=None,
   fields=[
-    descriptor.FieldDescriptor(
-      name='id', full_name='RegisterInterfaceResponse.id', index=0,
-      number=1, type=3, cpp_type=2, label=2,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
   ],
   extensions=[
   ],
@@ -614,28 +600,21 @@ _REGISTERFUNCTIONCOMMAND = descriptor.Descriptor(
   containing_type=None,
   fields=[
     descriptor.FieldDescriptor(
-      name='interface_id', full_name='RegisterFunctionCommand.interface_id', index=0,
-      number=1, type=3, cpp_type=2, label=1,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='interface_name', full_name='RegisterFunctionCommand.interface_name', index=1,
+      name='interface_name', full_name='RegisterFunctionCommand.interface_name', index=0,
       number=2, type=9, cpp_type=9, label=1,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='name', full_name='RegisterFunctionCommand.name', index=2,
+      name='name', full_name='RegisterFunctionCommand.name', index=1,
       number=3, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='doc', full_name='RegisterFunctionCommand.doc', index=3,
+      name='doc', full_name='RegisterFunctionCommand.doc', index=2,
       number=4, type=9, cpp_type=9, label=1,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
@@ -672,28 +651,21 @@ _CALLFUNCTIONCOMMAND = descriptor.Descriptor(
   containing_type=None,
   fields=[
     descriptor.FieldDescriptor(
-      name='interface_id', full_name='CallFunctionCommand.interface_id', index=0,
-      number=1, type=3, cpp_type=2, label=1,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='interface_name', full_name='CallFunctionCommand.interface_name', index=1,
+      name='interface_name', full_name='CallFunctionCommand.interface_name', index=0,
       number=2, type=9, cpp_type=9, label=1,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='function', full_name='CallFunctionCommand.function', index=2,
+      name='function', full_name='CallFunctionCommand.function', index=1,
       number=3, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='arguments', full_name='CallFunctionCommand.arguments', index=3,
+      name='arguments', full_name='CallFunctionCommand.arguments', index=2,
       number=4, type=11, cpp_type=10, label=3,
       default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -737,28 +709,21 @@ _RUNFUNCTIONCOMMAND = descriptor.Descriptor(
   containing_type=None,
   fields=[
     descriptor.FieldDescriptor(
-      name='interface_id', full_name='RunFunctionCommand.interface_id', index=0,
-      number=1, type=3, cpp_type=2, label=2,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='interface_name', full_name='RunFunctionCommand.interface_name', index=1,
+      name='interface_name', full_name='RunFunctionCommand.interface_name', index=0,
       number=2, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='function', full_name='RunFunctionCommand.function', index=2,
+      name='function', full_name='RunFunctionCommand.function', index=1,
       number=3, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='arguments', full_name='RunFunctionCommand.arguments', index=3,
+      name='arguments', full_name='RunFunctionCommand.arguments', index=2,
       number=4, type=11, cpp_type=10, label=3,
       default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -843,7 +808,6 @@ _MESSAGE.fields_by_name['value7'].message_type = _CALLFUNCTIONRESPONSE
 _MESSAGE.fields_by_name['value8'].message_type = _RUNFUNCTIONCOMMAND
 _MESSAGE.fields_by_name['value9'].message_type = _RUNFUNCTIONRESPONSE
 _MESSAGE.fields_by_name['value10'].message_type = _ERRORRESPONSE
-_REGISTERINTERFACECOMMAND.fields_by_name['info'].message_type = _INSTANCE
 _CALLFUNCTIONCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
 _CALLFUNCTIONRESPONSE.fields_by_name['return_value'].message_type = _INSTANCE
 _RUNFUNCTIONCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
