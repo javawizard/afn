@@ -15,6 +15,7 @@ from socket import socket as Socket, SHUT_RDWR
 from functools import partial
 import re
 import sys
+import inspect
 
 print """\
 Autobus, a message bus that's kind of a cross of D-Bus and RPC, written
@@ -27,6 +28,7 @@ interface_map = {} # interface ids to interfaces
 event_queue = Queue() # A queue of tuples, each of which consists of a
 # connection id and either a protobuf Message object or None to indicate that
 # the connecton was lost and so should be shut down
+processed_message_count = 0
 
 # We're breaking naming conventions with these two because I'm paranoid of
 # accidentally conflicting them if I use the regular naming convention
@@ -34,6 +36,7 @@ MessageValue = ProtoMultiAccessor(protobuf.Message, "value")
 InstanceValue = ProtoMultiAccessor(protobuf.Instance, "value")
 
 def process_event_queue():
+    global processed_message_count
     while True:
 #        print "Waiting for events..."
         sender, message = event_queue.get(block=True)
@@ -43,6 +46,7 @@ def process_event_queue():
         connection = connection_map.get(sender, None)
 #        print ("Event " + str(message) + " received for sender " + str(sender)
 #                + " and connection " + str(connection))
+        processed_message_count += 1
         try:
             message(sender, connection)
         except:
@@ -58,14 +62,44 @@ def process_event_queue():
 
 class AutobusInterface(object):
     def list_interfaces(self):
+        """
+        Returns a list of all interfaces currently registered to the autobus
+        server. The return value is a list of maps, with each map representing
+        one interface. Each map has the following keys:
+        
+        id: The numeric id of the interface.
+        
+        name: The name of the interface.
+        
+        info: The info object associated with the interface.
+        
+        special: True if this interface is special (I.E. registered by
+        server-side code instead of by a client), false if it is a normal
+        interface.
+        
+        doc: The documentation of the interface if the client supplied any such
+        documentation, or the empty string if they didn't.
+        """
         result = []
         for interface in interface_map.values():
             result.append({"id": interface.id, "name": interface.name,
                     "info": decode_object(interface.info) if interface.info
-                    is not None else None, "special": interface.special})
+                    is not None else None, "special": interface.special,
+                    "doc": interface.doc})
         return result
     
     def list_functions(self, interface_id_or_name):
+        """
+        Returns a list of all functions currently registered to the specified
+        interface. The first, and only, argument is the id or the name of the
+        interface to look up. If it's a name, the first interface registered
+        with that name will be assumed. If there's no such interface, an
+        exception will be thrown.
+        
+        The return value is similar to the return value of list_interfaces().
+        Each map within the list that's returned represents a function on the
+        interface. 
+        """
         result = []
         try:
             if isinstance(interface_id_or_name, basestring):
@@ -76,7 +110,10 @@ class AutobusInterface(object):
             raise Exception("No such interface.")
         for function in interface.function_map.values():
             result.append({"id": function.id, "name": function.name,
-                    "special": function.special})
+                    "special": function.special, "doc": function.doc})
+    
+    def get_processed_message_count(self):
+        return processed_message_count
 
 autobus_interface = AutobusInterface()
 
@@ -84,12 +121,17 @@ class Function(object):
     """
     Represents a function registered on an interface.
     """
-    def __init__(self, sender, name, special_target=None):
+    def __init__(self, sender, name, doc, special_target=None):
         self.id = get_next_id()
         self.name = name
         self.sender = sender
+        self.doc = doc
         self.special_target = special_target
         self.special = special_target != None
+        if self.special:
+            self.doc = inspect.getdoc(special_target)
+            if self.doc is None:
+                self.doc = ""
     
     def invoke_special(self, message, command, connection):
         args = command.arguments
@@ -112,7 +154,7 @@ class Interface(object):
     corresponding function objects, and they have a single Instance
     representing more information about the interface.
     """
-    def __init__(self, name, connection, info):
+    def __init__(self, name, connection, doc, info):
         """
         Creates a new interface object. This does not register it with all of
         the global dicts nor the connection's dicts; register() must be called
@@ -121,6 +163,7 @@ class Interface(object):
         self.id = get_next_id()
         self.name = name
         self.connection = connection
+        self.doc = doc
         self.functions_by_name = {}
         self.function_map = {}
         self.info = info
@@ -148,6 +191,9 @@ class Interface(object):
         """
         self.special = True
         self.register()
+        self.doc = inspect.getdoc(self.connection)
+        if self.doc is None:
+            self.doc = ""
     
     def deregister(self):
         """
@@ -161,12 +207,13 @@ class Interface(object):
         del interface_map[self.id]
         self.connection.interfaces.remove(self)
     
-    def register_function(self, sender, function_name):
+    def register_function(self, sender, function_name, doc):
         print ("Registering function " + function_name + " from " + 
                 str(sender) + " on " + self.name + "(" + str(self.id) + ")") 
-        function = Function(sender, function_name)
+        function = Function(sender, function_name, doc)
         self.functions_by_name[function_name] = function
         self.function_map[function.id] = function
+        return function
     
     def lookup_function(self, function_id=0, function_name=""):
         """
@@ -177,7 +224,7 @@ class Interface(object):
         """
         if self.special:
             try:
-                return Function(None, function_name, getattr(self.connection, function_name))
+                return Function(None, function_name, None, getattr(self.connection, function_name))
             except AttributeError:
                 raise NoSuchFunctionException(function_id, function_name)
         if function_id and function_id in self.function_map:
@@ -353,8 +400,9 @@ def process_register_interface_command(message, sender, connection):
     command = MessageValue[message]
     name = command.name
     info = command.info
+    doc = command.doc
     print "Registering interface with name " + name
-    interface = Interface(name, connection, info)
+    interface = Interface(name, connection, doc, info)
     interface.register()
     response_message, response = create_message_pair(protobuf.RegisterInterfaceResponse, message)
     response.id = interface.id
@@ -365,12 +413,13 @@ def process_register_function_command(message, sender, connection):
     interface_id = command.interface_id
     interface_name = command.interface_name
     function_name = command.name
+    doc = command.doc
     try:
         interface = lookup_interface(interface_id, interface_name, sender)
     except NoSuchInterfaceException as e:
         connection.send_error(message, text=str(e))
         return
-    interface.register_function(sender, function_name)
+    interface.register_function(sender, function_name, doc)
     response_message, response = create_message_pair(protobuf.RegisterFunctionResponse, message)
     connection.send(response_message)
 
@@ -414,7 +463,7 @@ def process_run_function_response(message, sender, connection):
         response_connection.send(response)
 
 
-Interface("autobus", autobus_interface, None).register_special()
+Interface("autobus", autobus_interface, None, None).register_special()
 
 # MAIN CODE
 

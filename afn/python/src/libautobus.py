@@ -7,6 +7,7 @@ from socket import error as SocketError, socket as Socket, SHUT_RDWR
 from functools import update_wrapper
 from Queue import Queue, Empty
 from time import sleep
+import inspect
 
 COMMAND = 1
 RESPONSE = 2
@@ -295,6 +296,22 @@ def decode_object(instance):
         raise Exception("Invalid instance type to decode: " + 
                 str(type(instance_value)))
 
+def get_function_doc(interface, function_name):
+    function = getattr(interface, function_name)
+    if inspect.isfunction(function):
+        args = inspect.formatargspec(*inspect.getargspec(function))
+    elif inspect.ismethod(function):
+        argspec = inspect.getargspec(function)
+        # Remove the leading "self" argument
+        argspec = (argspec[0][1:],) + argspec[1:]
+        args = inspect.formatargspec(*argspec)
+    else:
+        args = "(...)"
+    doc = inspect.getdoc(function)
+    if doc is None:
+        doc = ""
+    return function_name + args + "\n\n" + doc
+
 class InterfaceWrapper(object):
     def __init__(self, connection, name):
         self.connection = connection
@@ -419,15 +436,19 @@ class AutobusConnection(object):
         self.output_thread.start()
 #        print "Registering interfaces with the server..."
         for name, interface, info in self.source_interfaces.values():
+            doc = inspect.getdoc(interface)
+            if doc is None:
+                doc = ""
             message, register_message = create_message_pair(protobuf.RegisterInterfaceCommand,
-                    NOTIFICATION, name=name, info=encode_object(info))
+                    NOTIFICATION, name=name, info=encode_object(info), doc=doc)
             self.send(message)
             for function_name in dir(interface):
                 if function_name[0:1] != "_" and callable(
                         getattr(interface, function_name)):
                     message, register_message = create_message_pair(
                             protobuf.RegisterFunctionCommand, NOTIFICATION,
-                            interface_name=name, name=function_name)
+                            interface_name=name, name=function_name,
+                            doc=get_function_doc(interface, function_name))
                     self.send(message) 
 #        print "Calling custom on_connection action"
         self.on_connect()
