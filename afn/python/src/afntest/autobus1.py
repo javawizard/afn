@@ -1,5 +1,6 @@
 
 from libautobus import AutobusConnection
+from time import sleep
 
 class ExampleInterface(object):
     """
@@ -19,3 +20,11 @@ server = AutobusConnection()
 server.add_interface("example", ExampleInterface(), None)
 server.connect()
 
+
+# That's it for the actual autobus code. The rest of the code is a hack to get
+# around python not letting the application die with ctrl+c.
+try:
+    while True:
+        sleep(1)
+except KeyboardInterrupt:
+    server.shutdown()
