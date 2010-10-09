@@ -11,7 +11,7 @@ from libautobus import NoSuchFunctionException, encode_object, decode_object
 from struct import pack, unpack
 import autobus_protobuf.autobus_pb2 as protobuf
 from traceback import print_exc
-from socket import socket as Socket, SHUT_RDWR
+from socket import socket as Socket, SHUT_RDWR, SOL_SOCKET, SO_REUSEADDR
 from functools import partial
 import re
 import sys
@@ -473,6 +473,7 @@ if len(sys.argv) > 1:
 else:
     server_port = DEFAULT_PORT
 print "Listening on port " + str(server_port)
+server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 server.bind(("", server_port))
 server.listen(50)
 
