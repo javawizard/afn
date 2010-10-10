@@ -25,6 +25,8 @@ by Alexander Boyd (a.k.a. javawizard or jcp)
 
 connection_map = {} # connection ids to connection objects
 interface_map = {} # interface names to interfaces
+listener_map = {}
+watch_map = {}
 event_queue = Queue() # A queue of tuples, each of which consists of a
 # connection id and either a protobuf Message object or None to indicate that
 # the connecton was lost and so should be shut down
@@ -34,6 +36,25 @@ processed_message_count = 0
 # accidentally conflicting them if I use the regular naming convention
 MessageValue = ProtoMultiAccessor(protobuf.Message, "value")
 InstanceValue = ProtoMultiAccessor(protobuf.Instance, "value")
+
+def register_object_watch(interface_name, object_name, connection_id, listener_id):
+    """
+    Adds a watch on the specified object. This only modifies the global watch
+    map; this does not modify the connection's list of watches.
+    """
+    object_spec = interface_name, object_name
+    if object_spec not in watch_map:
+        watch_map[object_spec] = []
+    watch_map[object_spec].append((connection_id, listener_id))
+
+def deregister_object_watch(interface_name, object_name, connection_id, listener_id):
+    """
+    Same as register_object_watch, but deregisters a watch previously added.
+    """
+    object_spec = interface_name, object_name
+    watch_map[object_spec].remove((connection_id, listener_id))
+    if len(watch_map[object_spec]) == 0:
+        del watch_map[object_spec]
 
 def process_event_queue():
     global processed_message_count
@@ -115,12 +136,12 @@ class AutobusInterface(object):
             function_list = [function for function in function_list if
                     not function.startswith("_")]
             for function in function_list:
-                result.append({"name": function, "special": True, 
-                        "doc": get_function_doc(interface.connection, 
+                result.append({"name": function, "special": True,
+                        "doc": get_function_doc(interface.connection,
                                 function)})
         else:
             for function in interface.function_map.values():
-                result.append({"name": function.name, 
+                result.append({"name": function.name,
                         "special": function.special, "doc": function.doc})
         return result
     
@@ -162,6 +183,44 @@ class Function(object):
                 message, return_value=result)
         connection.send(response)
 
+class Event(object):
+    def __init__(self, sender, name, doc):
+        self.name = name
+        self.sender = sender
+        self.doc = doc
+        # TODO: allow special events
+    
+class Object(object):
+    def __init__(self, sender, interface, name, doc, value):
+        self.name = name
+        self.interface = interface
+        self.sender = sender
+        self.doc = doc
+        self.value = value # This is an instance of protobuf.Instance
+    
+    def set_and_notify(self, new_value):
+        """
+        Sets this object's value to the specified value and sends a message to
+        all connections watching the object with the new value. 
+        """
+        self.value = new_value
+        self.notify()
+    
+    def notify(self):
+        """
+        Sends a message to all connections watching this object containing the
+        object's current value.
+        """
+        watch_spec = (self.interface.name, self.name)
+        if watch_spec in watch_map:
+            for connection_id, listener_id in watch_map[watch_spec]:
+                connection = connection_map[connection_id]
+                message, set_message = create_message_pair(protobuf.SetObjectCommand,
+                        NOTIFICATION, interface_name=self.interface.name,
+                        object_name=self.name, listener_id=listener_id,
+                        value=self.value)
+                connection.send(message)
+
 class Interface(object):
     """
     Represents an interface registered by a particular connection. Interfaces
@@ -180,6 +239,8 @@ class Interface(object):
         self.connection = connection
         self.doc = doc
         self.function_map = {} # Maps function names to Function instances
+        self.event_map = {} # Maps event names to Event instances
+        self.object_map = {} # Maps object names to Object instances
         self.special = False
     
     def register(self):
@@ -214,6 +275,8 @@ class Interface(object):
         print "Deregistering interface with name " + self.name
         del interface_map[self.name]
         self.connection.interfaces.remove(self)
+        for object_name in self.object_map:
+            self.object_map[object_name].set_and_notify(encode_object(None))
     
     def register_function(self, sender, function_name, doc):
         if function_name in self.function_map:
@@ -223,6 +286,16 @@ class Interface(object):
         function = Function(sender, function_name, doc)
         self.function_map[function_name] = function
         return function
+    
+    def register_object(self, sender, object_name, doc, value):
+        if object_name in self.object_map:
+            raise KeyError()
+        print ("Registering object " + object_name + " from " + 
+                str(sender) + " on " + self.name)
+        object = Object(sender, self, object_name, doc, value)
+        self.object_map[object_name] = object
+        object.notify()
+        return object
     
     def lookup_function(self, function_name):
         """
@@ -254,6 +327,9 @@ class Connection(object):
     def __init__(self, socket):
         self.socket = socket
         self.interfaces = []
+        self.listeners = []
+        self.watches = [] # List of tuples, each of which contains an
+        # interface name, an object name, and a listener id.
         self.message_queue = Queue()
         self.id = get_next_id()
         self.pending_responses = {} # Maps message ids of commands sent to this
@@ -355,6 +431,8 @@ class Connection(object):
                         "on closed unexpectedly"))
         for interface in self.interfaces:
             interface.deregister()
+        for interface_name, object_name, listener_id in self.watches:
+            deregister_object_watch(interface_name, object_name, self.id, listener_id)
 
 def create_error_response(message_id, text):
     response = protobuf.ErrorResponse()
@@ -422,6 +500,7 @@ def process_register_function_command(message, sender, connection):
     except KeyError:
         connection.send_error(message, "A function with that name has already "
                 "been registered on that interface.")
+        return
     response_message, response = create_message_pair(protobuf.RegisterFunctionResponse, message)
     connection.send(response_message)
 
@@ -437,11 +516,11 @@ def process_call_function_command(message, sender, connection):
         function.invoke_special(message, command, connection)
         return
     invoke_message, invoke_command = create_message_pair(protobuf.RunFunctionCommand,
-            interface_name=interface.name, function=function.name, 
+            interface_name=interface.name, function=function.name,
             arguments=command.arguments)
     interface.connection.send(invoke_message)
-    print ("Sending run command to " + str(interface.connection.id) +
-            " with message id " + str(invoke_message.message_id) +
+    print ("Sending run command to " + str(interface.connection.id) + 
+            " with message id " + str(invoke_message.message_id) + 
             " whose response is to be forwarded with id " + 
             str(message.message_id))
     interface.connection.pending_responses[invoke_message.message_id] = (
@@ -465,6 +544,51 @@ def process_run_function_response(message, sender, connection):
         response_connection = connection_map[response_connection_id]
         response_connection.send(response)
 
+def process_register_object_command(message, sender, connection):
+    command = MessageValue[message]
+    interface_name = command.interface_name
+    object_name = command.object_name
+    doc = command.doc
+    value = command.value
+    try:
+        interface = lookup_interface(interface_name, sender)
+    except NoSuchInterfaceException as e:
+        connection.send_error(message, text=str(e))
+        return
+    try:
+        interface.register_object(sender, object_name, doc)
+    except KeyError:
+        connection.send_error(message, "An object with that name has already "
+                "been registered on that interface.")
+        return
+    response_message, response = create_message_pair(protobuf.RegisterObjectResponse, message)
+    connection.send(response_message)
+
+def process_watch_object_command(message, sender, connection):
+    command = MessageValue[message]
+    interface_name = command.interface_name
+    object_name = command.object_name
+    listener_id = command.listener_id
+    register_object_watch(interface_name, object_name, sender, listener_id)
+    connection.watches.append((interface_name, object_name, listener_id))
+    response_message, response = create_message_pair(protobuf.WatchObjectResponse, message)
+    connection.send(response_message)
+
+def process_set_object_command(message, sender, connection):
+    command = MessageValue[message]
+    interface_name = command.interface_name
+    object_name = command.object_name
+    value = command.value
+    try:
+        interface = lookup_interface(interface_name, sender)
+    except NoSuchInterfaceException as e:
+        connection.send_error(message, text=str(e))
+        return
+    if object_name not in interface.object_map:
+        connection.send_error(message, "You need to register the object "
+                "with Autobus before you can set its value.")
+        return
+    interface.object_map[object_name].set_and_notify(value)
 
 Interface("autobus", autobus_interface, None).register_special()
 

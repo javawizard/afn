@@ -1,1 +1,65 @@
-So, design of event listeners:-: and shared objects.
+So, design of event listeners and shared objects.
+
+Functions, event listeners, and shared objects all have a separate namespace
+on the server. This simplifies a lot of stuff.
+
+Event listeners and object listeners (as they're called) aren't registered on
+an interface or a function object. This is to allow them to persist even if the
+interface were to go away for a period of time. Instead, they're registered in
+a global map. There are two such maps: listener_map and
+watch_map for events and objects, respectively. They each map
+tuples of interface names and event/object names to lists containing tuples of
+connection ids and listener ids.
+
+When a client wants to register a listener, it sends the name of the interface
+to register it on, the name of the event or object to listen for, and an id
+representing the listener. The server then responds. If the listener registered
+was for an event, the response is empty. If the listener registered was for an
+object, the response contains the current value of the object.
+
+The client that registered a particular interface can register events and
+objects on it. It cannot fire an event until it has registered it. Similarly,
+it cannot set the value of an object until it has registered it.
+
+Clients can fire events, specifying a number of arguments that go along with
+the event being fired. They can also set the value of an object, specifying
+the object itself.
+
+Before an object's value is set by the client that owns it, and from when the
+client that set it disconnects until it (or another client) reconnects,
+registers the interface, and sets the object again, the object's value appears
+to all other clients to be null. When the client disconnects, all other clients
+will receive notifications for that object that it got set to null. There's
+currently no way to tell the difference between a client explicitly setting an
+object to null and the client disconnecting from the standpoint of another
+client listening for changes to the object.
+
+Each connection maintains a list of listeners it has registered. This list
+contains tuples, each of which contains an interface name, an event/object
+name, and the listener id. This is used to deregister all of a connection's
+listeners when the connection dies.
+
+Each interface contains a map of events and objects registered to it. When an
+interface is deregistered, it sends out a notification to all clients watching
+any objects registered to it telling them that the object's value has changed
+to null.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

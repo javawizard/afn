@@ -534,7 +534,105 @@ _MESSAGE = descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='value_n', full_name='Message.value_n', index=11,
+      name='value11', full_name='Message.value11', index=11,
+      number=11, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value12', full_name='Message.value12', index=12,
+      number=12, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value13', full_name='Message.value13', index=13,
+      number=13, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value14', full_name='Message.value14', index=14,
+      number=14, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value15', full_name='Message.value15', index=15,
+      number=15, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value16', full_name='Message.value16', index=16,
+      number=16, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value17', full_name='Message.value17', index=17,
+      number=17, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value19', full_name='Message.value19', index=18,
+      number=19, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value20', full_name='Message.value20', index=19,
+      number=20, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value21', full_name='Message.value21', index=20,
+      number=21, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value22', full_name='Message.value22', index=21,
+      number=22, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value23', full_name='Message.value23', index=22,
+      number=23, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value24', full_name='Message.value24', index=23,
+      number=24, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value25', full_name='Message.value25', index=24,
+      number=25, type=11, cpp_type=10, label=1,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value_n', full_name='Message.value_n', index=25,
       number=100, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
@@ -601,7 +699,7 @@ _REGISTERFUNCTIONCOMMAND = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='interface_name', full_name='RegisterFunctionCommand.interface_name', index=0,
-      number=2, type=9, cpp_type=9, label=1,
+      number=2, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -782,6 +880,405 @@ _ERRORRESPONSE = descriptor.Descriptor(
   options=None)
 
 
+_REGISTEREVENTCOMMAND = descriptor.Descriptor(
+  name='RegisterEventCommand',
+  full_name='RegisterEventCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='RegisterEventCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='event_name', full_name='RegisterEventCommand.event_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='doc', full_name='RegisterEventCommand.doc', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_REGISTEREVENTRESPONSE = descriptor.Descriptor(
+  name='RegisterEventResponse',
+  full_name='RegisterEventResponse',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_REGISTERLISTENERCOMMAND = descriptor.Descriptor(
+  name='RegisterListenerCommand',
+  full_name='RegisterListenerCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='RegisterListenerCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='event_name', full_name='RegisterListenerCommand.event_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='listener_id', full_name='RegisterListenerCommand.listener_id', index=2,
+      number=3, type=3, cpp_type=2, label=2,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_REGISTERLISTENERRESPONSE = descriptor.Descriptor(
+  name='RegisterListenerResponse',
+  full_name='RegisterListenerResponse',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_DEREGISTERLISTENERCOMMAND = descriptor.Descriptor(
+  name='DeregisterListenerCommand',
+  full_name='DeregisterListenerCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='DeregisterListenerCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='event_name', full_name='DeregisterListenerCommand.event_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='listener_id', full_name='DeregisterListenerCommand.listener_id', index=2,
+      number=3, type=3, cpp_type=2, label=2,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_DEREGISTERLISTENERRESPONSE = descriptor.Descriptor(
+  name='DeregisterListenerResponse',
+  full_name='DeregisterListenerResponse',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_FIREEVENTCOMMAND = descriptor.Descriptor(
+  name='FireEventCommand',
+  full_name='FireEventCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='FireEventCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='event_name', full_name='FireEventCommand.event_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='listener_id', full_name='FireEventCommand.listener_id', index=2,
+      number=3, type=3, cpp_type=2, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='arguments', full_name='FireEventCommand.arguments', index=3,
+      number=4, type=11, cpp_type=10, label=3,
+      default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_REGISTEROBJECTCOMMAND = descriptor.Descriptor(
+  name='RegisterObjectCommand',
+  full_name='RegisterObjectCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='RegisterObjectCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='object_name', full_name='RegisterObjectCommand.object_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='doc', full_name='RegisterObjectCommand.doc', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value', full_name='RegisterObjectCommand.value', index=3,
+      number=4, type=11, cpp_type=10, label=2,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_REGISTEROBJECTRESPONSE = descriptor.Descriptor(
+  name='RegisterObjectResponse',
+  full_name='RegisterObjectResponse',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_WATCHOBJECTCOMMAND = descriptor.Descriptor(
+  name='WatchObjectCommand',
+  full_name='WatchObjectCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='WatchObjectCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='object_name', full_name='WatchObjectCommand.object_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='listener_id', full_name='WatchObjectCommand.listener_id', index=2,
+      number=3, type=3, cpp_type=2, label=2,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_WATCHOBJECTRESPONSE = descriptor.Descriptor(
+  name='WatchObjectResponse',
+  full_name='WatchObjectResponse',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_UNWATCHOBJECTCOMMAND = descriptor.Descriptor(
+  name='UnwatchObjectCommand',
+  full_name='UnwatchObjectCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='UnwatchObjectCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='object_name', full_name='UnwatchObjectCommand.object_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='listener_id', full_name='UnwatchObjectCommand.listener_id', index=2,
+      number=3, type=3, cpp_type=2, label=2,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_UNWATCHOBJECTRESPONSE = descriptor.Descriptor(
+  name='UnwatchObjectResponse',
+  full_name='UnwatchObjectResponse',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
+_SETOBJECTCOMMAND = descriptor.Descriptor(
+  name='SetObjectCommand',
+  full_name='SetObjectCommand',
+  filename='autobus.proto',
+  containing_type=None,
+  fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='SetObjectCommand.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='object_name', full_name='SetObjectCommand.object_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='listener_id', full_name='SetObjectCommand.listener_id', index=2,
+      number=3, type=3, cpp_type=2, label=1,
+      default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value', full_name='SetObjectCommand.value', index=3,
+      number=4, type=11, cpp_type=10, label=2,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],  # TODO(robinson): Implement.
+  enum_types=[
+  ],
+  options=None)
+
+
 _MAPENTRY.fields_by_name['key'].message_type = _INSTANCE
 _MAPENTRY.fields_by_name['value'].message_type = _INSTANCE
 _STRUCTENTRY.fields_by_name['value'].message_type = _INSTANCE
@@ -808,10 +1305,27 @@ _MESSAGE.fields_by_name['value7'].message_type = _CALLFUNCTIONRESPONSE
 _MESSAGE.fields_by_name['value8'].message_type = _RUNFUNCTIONCOMMAND
 _MESSAGE.fields_by_name['value9'].message_type = _RUNFUNCTIONRESPONSE
 _MESSAGE.fields_by_name['value10'].message_type = _ERRORRESPONSE
+_MESSAGE.fields_by_name['value11'].message_type = _REGISTEREVENTCOMMAND
+_MESSAGE.fields_by_name['value12'].message_type = _REGISTEREVENTRESPONSE
+_MESSAGE.fields_by_name['value13'].message_type = _REGISTERLISTENERCOMMAND
+_MESSAGE.fields_by_name['value14'].message_type = _REGISTERLISTENERCOMMAND
+_MESSAGE.fields_by_name['value15'].message_type = _DEREGISTERLISTENERCOMMAND
+_MESSAGE.fields_by_name['value16'].message_type = _DEREGISTERLISTENERRESPONSE
+_MESSAGE.fields_by_name['value17'].message_type = _FIREEVENTCOMMAND
+_MESSAGE.fields_by_name['value19'].message_type = _REGISTEROBJECTCOMMAND
+_MESSAGE.fields_by_name['value20'].message_type = _REGISTEROBJECTRESPONSE
+_MESSAGE.fields_by_name['value21'].message_type = _WATCHOBJECTCOMMAND
+_MESSAGE.fields_by_name['value22'].message_type = _WATCHOBJECTRESPONSE
+_MESSAGE.fields_by_name['value23'].message_type = _UNWATCHOBJECTCOMMAND
+_MESSAGE.fields_by_name['value24'].message_type = _UNWATCHOBJECTCOMMAND
+_MESSAGE.fields_by_name['value25'].message_type = _SETOBJECTCOMMAND
 _CALLFUNCTIONCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
 _CALLFUNCTIONRESPONSE.fields_by_name['return_value'].message_type = _INSTANCE
 _RUNFUNCTIONCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
 _RUNFUNCTIONRESPONSE.fields_by_name['return_value'].message_type = _INSTANCE
+_FIREEVENTCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
+_REGISTEROBJECTCOMMAND.fields_by_name['value'].message_type = _INSTANCE
+_SETOBJECTCOMMAND.fields_by_name['value'].message_type = _INSTANCE
 
 class MapEntry(message.Message):
   __metaclass__ = reflection.GeneratedProtocolMessageType
@@ -908,4 +1422,60 @@ class RunFunctionResponse(message.Message):
 class ErrorResponse(message.Message):
   __metaclass__ = reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _ERRORRESPONSE
+
+class RegisterEventCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _REGISTEREVENTCOMMAND
+
+class RegisterEventResponse(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _REGISTEREVENTRESPONSE
+
+class RegisterListenerCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _REGISTERLISTENERCOMMAND
+
+class RegisterListenerResponse(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _REGISTERLISTENERRESPONSE
+
+class DeregisterListenerCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _DEREGISTERLISTENERCOMMAND
+
+class DeregisterListenerResponse(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _DEREGISTERLISTENERRESPONSE
+
+class FireEventCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _FIREEVENTCOMMAND
+
+class RegisterObjectCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _REGISTEROBJECTCOMMAND
+
+class RegisterObjectResponse(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _REGISTEROBJECTRESPONSE
+
+class WatchObjectCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _WATCHOBJECTCOMMAND
+
+class WatchObjectResponse(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _WATCHOBJECTRESPONSE
+
+class UnwatchObjectCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _UNWATCHOBJECTCOMMAND
+
+class UnwatchObjectResponse(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _UNWATCHOBJECTRESPONSE
+
+class SetObjectCommand(message.Message):
+  __metaclass__ = reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _SETOBJECTCOMMAND
 
