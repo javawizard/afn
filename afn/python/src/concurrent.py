@@ -1,4 +1,3 @@
-
 from threading import RLock
 from functools import partial, update_wrapper
 
@@ -37,6 +36,105 @@ class AtomicInteger(object):
     
     number = AtomicInteger()
     number.set(1)
-    
-    TODO: finish this up
+    number += 1
+    number == 2
     """
+
+    def __init__ (self):
+        self.integer = 0
+        self.lock = RLock()
+        return
+    
+    def get(self):
+        with self.lock:
+            return self.integer
+    
+    def set(self, integer):
+        with self.lock:
+            self.integer = integer
+    
+    def __cmp__(self, other):
+        with self.lock:
+            return self.integer.__cmp__(other)
+    
+    def __hash__(self):
+        with self.lock:
+            return self.integer.__hash__()
+    
+    def __nonzero__(self):
+        with self.lock:
+            return self.integer.__nonzero__()
+    
+    def __repr__(self):
+        return str(self.integer)
+    
+    def __int__(self):
+        return int(self.integer)
+    
+    def __long__(self):
+        return long(self.integer)
+    
+    def __iadd__(self, other):
+        with self.lock:
+            self.integer = self.integer.__add__(other)
+            return self
+    
+    def __isub__(self, other):
+        with self.lock:
+            self.integer = self.integer.__sub__(other)
+            return self
+    
+    def __imul__(self, other):
+        with self.lock:
+            self.integer = self.integer.__mul__(other)
+            return self
+    
+    def __idiv__(self, other):
+        with self.lock:
+            self.integer = self.integer.__div__(other)
+            return self
+    
+    def __itruediv__(self, other):
+        with self.lock:
+            self.integer = self.integer.__truediv__(other)
+            return self
+    
+    def __ifloordiv__(self, other):
+        with self.lock:
+            self.integer = self.integer.__floordiv__(other)
+            return self
+    
+    def __imod__(self, other):
+        with self.lock:
+            self.integer = self.integer.__mod__(other)
+            return self
+    
+    def __ipow__(self, other):
+        with self.lock:
+            self.integer = self.integer.__pow__(other)
+            return self
+    
+    def __ilshift__(self, other):
+        with self.lock:
+            self.integer = self.integer.__lshift__(other)
+            return self
+    
+    def __irshift__(self, other):
+        with self.lock:
+            self.integer = self.integer.__rshift__(other)
+            return self
+    
+    def __iand__(self, other):
+        with self.lock:
+            self.integer = self.integer.__and__(other)
+            return self
+    
+    def __ixor__(self, other):
+        with self.lock:
+            self.integer = self.integer.__xor__(other)
+            return self
+    
+    def __ior__(self, other):
+        with self.lock:
+            self.integer = self.integer.__or__(other)
+            return self
