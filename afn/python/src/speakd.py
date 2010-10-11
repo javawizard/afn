@@ -10,10 +10,10 @@ import random
 from SimpleXMLRPCServer import SimpleXMLRPCServer as XMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler as XMLRPCRequestHandler
 import time
-from select import select
 from itertools import chain
 import re
 from datetime import datetime
+from libautobus import AutobusConnection, DEFAULT_PORT
 
 million = 1000 * 1000
 billion = 1000 * 1000 * 1000
@@ -28,15 +28,15 @@ configuration = RawConfigParser()
 print "Loading configuration from speakd.conf..."
 try:
     configuration.read("speakd.conf")
-    configuration.get("server", "port")
+    configuration.get("autobus", "port")
 except:
     print "You need to create the configuration file speakd.conf before you "
     print "can use speakd. Open speakd.conf.example for an example."
     sys.exit()
 
-host = configuration.get("server", "host") if configuration.has_option("server", "host") else ""
-port = configuration.getint("server", "port")
-rpc_path = configuration.get("server", "path")
+host = configuration.get("autobus", "host")
+port = configuration.getint("autobus", "port") if configuration.has_option("autobus", "port") else DEFAULT_PORT 
+interface_name = configuration.get("autobus", "interface")
 voices = {}
 default_voice = None
 speech_queue = {}
