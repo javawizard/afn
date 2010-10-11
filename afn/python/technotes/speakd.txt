@@ -1,0 +1,11 @@
+So, when we start up we load the audio stuff and stop the output stream since we're not going to be sending anything to it. Then we create the speech queue. The speech queue is essentially a list of two-element tuples, the first item being the priority and the second item being the Sentence object to say.
+
+Then we go off and load the configuration file and set everything up. For each voice, we create a voice object and stick it in the map of voices, which maps names to voice objects. The voice object stores the name of the voice and its path; in the future, it might store other stuff too.
+
+We also set the default voice to the first voice in the configuration file. I might change this to make it possible to explicitly set a voice as default, but for now we'll just do that.
+
+Then we start the RPC server in a thread. Then we stop and check the speech queue twice a second to see if there's anything in it. If there isn't, we wait another half-second and check again.
+
+If there is, we get the next sentence object we're supposed to speak. There's a function for doing that. That function locks on the speech queue lock, sorts it so that highest-priority is first, then removes the first item.
+
+This first item is then spoken word-by-word, using the voice specified by the sentence or the default voice if no voice has been specified. After the item has been spoken, the loop starts over again waiting for new items to appear in the speech queue. In the future, it will additionally notify anything waiting for a particular sentence to be spoken.

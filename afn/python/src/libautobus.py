@@ -409,6 +409,10 @@ class LocalObject(object):
     A local object.
     """
     def __init__(self, name, doc, value):
+        """
+        Creates a new local object. The object will use the specified name,
+        docstring, and it will have the specified initial value.
+        """
         self.interface = None
         self.name = name
         self.doc = doc

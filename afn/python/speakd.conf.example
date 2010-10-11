@@ -1,0 +1,45 @@
+# Before you start up speakd for the first time, you'll need to create 
+# speakd.conf. This file serves as an example configuration file; you can
+# simply copy this to speakd.conf and you'll have at least a basic speak 
+# server.
+
+[server]
+
+# This specifies the port that speakd will listen on. The default
+# port is 37732.
+port: 37732
+
+# This specifies the interface that speakd will listen on. The default is to
+# only listen on the loopback adapter. If you want speakd to listen on all
+# interfaces (which you should only do if the machine you're running speakd on
+# is behind a firewall), comment this out.
+host: localhost
+
+# This specifies the path the speak service is available at. The speak system
+# uses XML-RPC to communicate, and XML-RPC communicates over HTTP. This is the
+# path at which speak will be available. When a client application is using
+# libspeak, it will need to know this path. For example, if this is left as
+# the default and port is left as the default as well, then the URL
+# http://localhost:37732/speak could be passed to libspeak to get it to
+# connect to this speak server. This must start with a forward slash.
+path=/speak
+
+# Now, for every voice you want your speak server to support, you'll need a
+# [voice:the_voice_name] section, followed by some parameters for the voice.
+# A default voice with some default words that should suffice to say the
+# current date and time is included with speakd. Each voice is simply a folder
+# containing one .wav file for each word or phrase that can be spoken. Only
+# .wav files are supported right now. Each .wav file MUST be 44,100 samples-
+# per-second 16-bit mono. You'll get static or worse if you try to play a wav
+# file in any other format. I'm hoping to write a program that can convert
+# files in a different format to this format soon.
+[voice:jcp]
+
+# This specifies the folder that the voice's files are located in.
+path=voices/jcp
+
+
+
+
+
+
