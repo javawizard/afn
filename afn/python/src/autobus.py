@@ -25,8 +25,11 @@ by Alexander Boyd (a.k.a. javawizard or jcp)
 
 connection_map = {} # connection ids to connection objects
 interface_map = {} # interface names to interfaces
-listener_map = {}
-watch_map = {}
+listener_map = {} # Maps tuples of interface names and function names to lists
+# of connection ids representing connections that should be notified when the
+# specified listener is fired
+watch_map = {} # Same as listener_map, but represents connections that should
+# receive an object's value when it changes
 event_queue = Queue() # A queue of tuples, each of which consists of a
 # connection id and either a protobuf Message object or None to indicate that
 # the connecton was lost and so should be shut down
@@ -37,7 +40,7 @@ processed_message_count = 0
 MessageValue = ProtoMultiAccessor(protobuf.Message, "value")
 InstanceValue = ProtoMultiAccessor(protobuf.Instance, "value")
 
-def register_object_watch(interface_name, object_name, connection_id, listener_id):
+def register_object_watch(interface_name, object_name, connection_id):
     """
     Adds a watch on the specified object. This only modifies the global watch
     map; this does not modify the connection's list of watches.
@@ -45,14 +48,14 @@ def register_object_watch(interface_name, object_name, connection_id, listener_i
     object_spec = interface_name, object_name
     if object_spec not in watch_map:
         watch_map[object_spec] = []
-    watch_map[object_spec].append((connection_id, listener_id))
+    watch_map[object_spec].append(connection_id)
 
-def deregister_object_watch(interface_name, object_name, connection_id, listener_id):
+def deregister_object_watch(interface_name, object_name, connection_id):
     """
     Same as register_object_watch, but deregisters a watch previously added.
     """
     object_spec = interface_name, object_name
-    watch_map[object_spec].remove((connection_id, listener_id))
+    watch_map[object_spec].remove(connection_id)
     if len(watch_map[object_spec]) == 0:
         del watch_map[object_spec]
 
@@ -213,12 +216,11 @@ class Object(object):
         """
         watch_spec = (self.interface.name, self.name)
         if watch_spec in watch_map:
-            for connection_id, listener_id in watch_map[watch_spec]:
+            for connection_id in watch_map[watch_spec]:
                 connection = connection_map[connection_id]
                 message, set_message = create_message_pair(protobuf.SetObjectCommand,
                         NOTIFICATION, interface_name=self.interface.name,
-                        object_name=self.name, listener_id=listener_id,
-                        value=self.value)
+                        object_name=self.name, value=self.value)
                 connection.send(message)
 
 class Interface(object):
@@ -431,8 +433,8 @@ class Connection(object):
                         "on closed unexpectedly"))
         for interface in self.interfaces:
             interface.deregister()
-        for interface_name, object_name, listener_id in self.watches:
-            deregister_object_watch(interface_name, object_name, self.id, listener_id)
+        for interface_name, object_name in self.watches:
+            deregister_object_watch(interface_name, object_name, self.id)
 
 def create_error_response(message_id, text):
     response = protobuf.ErrorResponse()
@@ -556,7 +558,7 @@ def process_register_object_command(message, sender, connection):
         connection.send_error(message, text=str(e))
         return
     try:
-        interface.register_object(sender, object_name, doc)
+        interface.register_object(sender, object_name, doc, value)
     except KeyError:
         connection.send_error(message, "An object with that name has already "
                 "been registered on that interface.")
@@ -568,10 +570,16 @@ def process_watch_object_command(message, sender, connection):
     command = MessageValue[message]
     interface_name = command.interface_name
     object_name = command.object_name
-    listener_id = command.listener_id
-    register_object_watch(interface_name, object_name, sender, listener_id)
-    connection.watches.append((interface_name, object_name, listener_id))
-    response_message, response = create_message_pair(protobuf.WatchObjectResponse, message)
+    register_object_watch(interface_name, object_name, sender)
+    connection.watches.append((interface_name, object_name))
+    try:
+        interface = lookup_interface(interface_name)
+        object = interface.object_map[object_name]
+        object_value = object.value
+    except (NoSuchInterfaceException, KeyError): # Object doesn't exist yet
+        object_value = encode_object(None)
+    response_message, response = create_message_pair(protobuf.WatchObjectResponse,
+            message, value=object_value)
     connection.send(response_message)
 
 def process_set_object_command(message, sender, connection):

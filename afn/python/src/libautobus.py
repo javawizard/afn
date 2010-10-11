@@ -163,26 +163,33 @@ class OutputThread(Thread):
     This thread then writes the message to the socket. When the socket dies,
     it will be closed. If the function returns None, the socket will be
     immediately closed and this thread will exit.
+    
+    finished_function will be called after every message has been successfully
+    written out. It defaults to lambda: None.
     """
-    def __init__(self, socket, read_function):
+    def __init__(self, socket, read_function, finished_function=lambda: None):
         Thread.__init__(self)
         self.socket = socket
         self.read_function = read_function
+        self.finished_function = finished_function
     
     def run(self):
         try:
             while True:
 #                print "Waiting for a message to send..."
                 message = self.read_function()
+                try:
 #                print "Getting ready to send message " + str(message)
-                if message is None:
-#                    print "Message was empty, shutting down the thread"
-                    break
-                message_data = message.SerializeToString()
-#                print "Sending encoded message length..."
-                self.socket.sendall(pack(">i", len(message_data)))
-#                print "Sending encoded message..."
-                self.socket.sendall(message_data)
+                    if message is None:
+#                        print "Message was empty, shutting down the thread"
+                        break
+                    message_data = message.SerializeToString()
+#                    print "Sending encoded message length..."
+                    self.socket.sendall(pack(">i", len(message_data)))
+#                    print "Sending encoded message..."
+                    self.socket.sendall(message_data)
+                finally:
+                    self.finished_function()
         except SocketError:
             pass
         except:
@@ -338,6 +345,96 @@ class FunctionWrapper(object):
             raise result
         return result
 
+class ObjectWrapper(object):
+    pass
+
+class LocalInterface(object):
+    """
+    A local interface. Instances of this class represent interfaces that have
+    been added locally to the AutobusConnection instance. They will be
+    registered with the server when a connection is established.
+    """
+    def __init__(self, name, doc):
+        self.connection = None
+        self.name = name
+        self.doc = doc
+        if doc is None:
+            self.doc = ""
+        self.functions = {} # Maps names to LocalFunction objects representing
+        # functions we've registered on this interface
+        self.objects = {} # Maps names to LocalObject objects representing
+        # objects we've registered on this interface
+    
+    def add_all(self, interface):
+        """
+        Adds all of the functions present on the specified object that do not
+        start with an underscore to this interface. This is used by
+        AutobusConnection.add_interface.
+        """
+        for function_name in dir(interface):
+            if function_name[0:1] != "_" and callable(
+                    getattr(interface, function_name)):
+                self.functions[function_name] = LocalFunction(function_name,
+                        get_function_doc(interface, function_name),
+                        getattr(interface, function_name))
+    def register_function(self, local_function):
+        """
+        Registers the specified LocalFunction object to this interface.
+        """
+        self.functions[local_function.name] = local_function
+        local_function.interface = self
+    
+    def register_object(self, local_object):
+        """
+        Registers the specified LocalObject object to this interface.
+        """
+        self.objects[local_object.name] = local_object
+        local_object.interface = self
+
+class LocalFunction(object):
+    """
+    A local function. Local functions are stored in a LocalInterface instance's
+    function map.
+    """
+    def __init__(self, name, doc, function):
+        self.interface = None
+        self.name = name
+        self.doc = doc
+        if doc is None:
+            self.doc = ""
+        self.function = function
+
+class LocalObject(object):
+    """
+    A local object.
+    """
+    def __init__(self, name, doc, value):
+        self.interface = None
+        self.name = name
+        self.doc = doc
+        if doc is None:
+            self.doc = ""
+        encode_object(value) # Make sure in advance that we can encode the
+        # value the user's trying to put as the object's default value
+        self.value = value
+    
+    def set(self, new_value):
+        encode_object(new_value) # Same thing as in the constructor; make sure
+        # in advance we can successfully encode the new value for the object
+        self.value = new_value
+        self.notify()
+    
+    def notify(self):
+        """
+        Sends a message to the server notifying it that this object's value has
+        changed. The encoded form of the object will be sent in the message.
+        """
+        with self.interface.connection.on_connect_lock:
+            message, set_message = create_message_pair(protobuf.SetObjectCommand,
+                    NOTIFICATION, interface_name=self.interface.name,
+                    object_name=self.name, value=encode_object(self.value))
+            self.interface.connection.send(message)
+
 class AutobusConnection(object):
     """
     A connection to an Autobus server. The typical way to use libautobus is to
@@ -360,9 +457,15 @@ class AutobusConnection(object):
     connection["autobus"]. Calling
     connection["autobus"].list_functions("autobus") will list all of the
     functions available on the autobus interface along with more documentation
-    on how to use them. 
+    on how to use them.
+    
+    If reconnect is True (the default), the connection will reconnect itself
+    and re-register all of its local interfaces and functions when it gets
+    disconnected. It will continue attempting to reconnect indefinitely. If
+    reconnect is False, it's up to the on_disconnect function (or some other
+    functionality) to call the connect method when the connection is lost. 
     """
-    def __init__(self, host="localhost", port=DEFAULT_PORT,
+    def __init__(self, host="localhost", port=DEFAULT_PORT, reconnect=True,
             on_connect=lambda: None, on_disconnect=lambda: None):
         """
         Creates a new connection. This doesn't actually connect to the
@@ -370,13 +473,24 @@ class AutobusConnection(object):
         """
         self.host = host
         self.port = port
+        self.reconnect = reconnect
         self.on_connect = on_connect
         self.on_disconnect = on_disconnect
-        self.source_interfaces = {}
+        self.on_connect_lock = RLock()
+        self.interfaces = {} # Map of names to LocalInterface objects
+        # representing interfaces we've registered
         self.is_shut_down = False
         self.send_queue = Queue()
-        self.receive_queues = {} # maps message ids expecting responses to the
+        self.receive_queues = {} # Maps message ids expecting responses to the
         # corresponding queues waiting for the message response
+        self.object_values = {} # Maps tuples containing an interface name and
+        # an object name to the object's current value as sent by the server.
+        # This dict gets replaced every time we disconnect.
+        self.object_listeners = {} # Maps tuples containing an interface name
+        # and an object name to a list of functions listening for changes in
+        # that object. At least one entry must be present in each list in order
+        # for AutobusConnection to auto-register a watch on the object on
+        # connect, even if it's as simple as lambda: None.
     
     def shutdown(self):
         self.is_shut_down = True
@@ -389,13 +503,58 @@ class AutobusConnection(object):
         except:
             pass
     
-    def add_interface(self, name, interface):
+    def add_interface(self, name, interface=None):
         """
         Adds an interface that will be automatically registered with the server
         on connecting. All methods that do not start with an underscore on the
-        specified object will be registered on the interface as functions.
+        specified object will be registered on the interface as functions. The
+        specified object's docstring, if it has one, will be used as the
+        interface's documentation.
+        
+        If the specified interface is None, no functions will be registered on
+        the interface. Either way, functions can later be registered with
+        add_function.
         """
-        self.source_interfaces[name] = name, interface
+        self.interfaces[name] = LocalInterface(name, inspect.getdoc(interface))
+        self.interfaces[name].connection = self
+        if interface is not None:
+            self.interfaces[name].add_all(interface)
+    
+    def add_function(self, interface_name, function_name, doc, function):
+        """
+        Adds a function to the specified local interface. The interface must
+        already have been registered with add_interface. The function will use
+        the specified name and documentation (which must not be None: it should
+        be the empty string if no documentation is available). When another
+        client calls the specified function, the last argument to this
+        function, which should be callable, will be invoked and its return
+        value sent back to the invoking client. The function can raise an
+        exception, which will be re-thrown on the client side.
+        """
+        self.interfaces[interface_name].register_function(LocalFunction(
+                function_name, doc, function))
+    
+    def add_object_watch(self, interface_name, object_name, function):
+        """
+        Adds a function that will be notified when the specified remote
+        object's value changes. add_object_watch is not thread-safe and should
+        generally only be called before the first connection to the server is
+        created.
+        
+        The function should accept one argument. This argument will be the new
+        value of the object.
+        """
+        object_spec = interface_name, object_name
+        if object_spec not in self.object_listeners:
+            self.object_listeners[object_spec] = []
+        self.object_listeners[object_spec].append(function)
+    
+    def add_object(self, interface_name, object_name, doc, value):
+        """
+        Adds a shared object to the specified interface.
+        """
+        self.interfaces[interface_name].register_object(LocalObject(
+                object_name, doc, value))
     
     def start_connecting(self):
         """
@@ -405,9 +564,9 @@ class AutobusConnection(object):
     
     def connect(self, attempts=1):
         """
-        Connects to the autobus server. The specified number of attempts will
+        Connects to the Autobus server. The specified number of attempts will
         be made to re-establish a connection, each time waiting an amount of
-        time that increments itself up to 15 seconds. If attempts is None, an
+        time that increments itself up to 20 seconds. If attempts is None, an
         infinite number of attempts will be made. Once a connection has been
         established, this method returns. If it fails to establish a
         connection, an exception will be raised.
@@ -418,15 +577,16 @@ class AutobusConnection(object):
         while (attempts is None or progress < attempts) and not self.is_shut_down:
             progress += 1
             delay *= delay_increment
-            if delay > 15:
-                delay = 15
+            if delay > 20:
+                delay = 20
             self.socket = Socket()
             try:
                 self.socket.connect((self.host, self.port))
             except:
                 sleep(delay)
                 continue
-            self.connection_established()
+            with self.on_connect_lock:
+                self.connection_established()
             return
         raise Exception("Couldn't connect")
     # messagearrived, inputclosed, readnextmessage
@@ -440,21 +600,30 @@ class AutobusConnection(object):
         self.input_thread.start()
         self.output_thread.start()
 #        print "Registering interfaces with the server..."
-        for name, interface, in self.source_interfaces.values():
-            doc = inspect.getdoc(interface)
-            if doc is None:
-                doc = ""
+        for interface in self.interfaces.values():
             message, register_message = create_message_pair(protobuf.RegisterInterfaceCommand,
-                    NOTIFICATION, name=name, doc=doc)
+                    NOTIFICATION, name=interface.name, doc=interface.doc)
             self.send(message)
-            for function_name in dir(interface):
-                if function_name[0:1] != "_" and callable(
-                        getattr(interface, function_name)):
-                    message, register_message = create_message_pair(
-                            protobuf.RegisterFunctionCommand, NOTIFICATION,
-                            interface_name=name, name=function_name,
-                            doc=get_function_doc(interface, function_name))
-                    self.send(message) 
+            for function in interface.functions.values():
+                message, register_message = create_message_pair(
+                        protobuf.RegisterFunctionCommand, NOTIFICATION,
+                        interface_name=interface.name, name=function.name,
+                        doc=function.doc)
+                self.send(message)
+            for object in interface.objects.values():
+                message, register_message = create_message_pair(
+                        protobuf.RegisterObjectCommand, NOTIFICATION,
+                        interface_name=interface.name, object_name=object.name,
+                        doc=object.doc, value=encode_object(object.value))
+                self.send(message)
+        for interface_name, object_name in self.object_listeners.keys():
+            message, register_message = create_message_pair(
+                    protobuf.WatchObjectCommand, COMMAND,
+                    interface_name=interface_name, object_name=object_name)
+            response = self.query(message)
+            self.object_values[(interface_name, object_name)] = (
+                    decode_object(MessageValue[response].value))
+            self.notify_object_listeners((interface_name, object_name)) 
 #        print "Calling custom on_connection action"
         self.on_connect()
         
@@ -477,15 +646,38 @@ class AutobusConnection(object):
                 if function_name.startswith("_"):
                     raise Exception("Function names starting with _ are "
                             "not allowed")
-                _, interface, _ = self.source_interfaces[interface_name]
-                return_value = getattr(interface, function_name)(*arguments)
+                interface = self.interfaces[interface_name]
+                function = interface.functions[function_name]
+                return_value = function.function(*arguments)
             except Exception as e:
                 return_value = e
             response, run_response = create_message_pair(protobuf.RunFunctionResponse,
                     message, return_value=encode_object(return_value))
             self.send(response)
             return
+        if isinstance(message_value, protobuf.SetObjectCommand):
+            interface_name = message_value.interface_name
+            object_name = message_value.object_name
+            value = message_value.value
+            object_spec = (interface_name, object_name)
+            self.object_values[object_spec] = decode_object(value)
+            self.notify_object_listeners(object_spec)
+            return
         print "Message from the server arrived: " + repr(message)
+    
+    def notify_object_listeners(self, object_spec):
+        """
+        This should only be used by AutobusConnection itself. Notifies all
+        listeners on the specified object spec about the object's current
+        value. 
+        """
+        value = self.object_values.get(object_spec, None)
+        if object_spec in self.object_listeners:
+            for listener in self.object_listeners[object_spec]:
+                try:
+                    listener(value)
+                except:
+                    print_exc()
     
     def query(self, message, timeout=30):
         """
@@ -530,8 +722,12 @@ class AutobusConnection(object):
         self.output_thread = None
         self.send_queue = None
         self.receive_queues = None
+        self.object_values.clear()
+        self.object_values = {}
+        for object_spec in self.object_listeners.keys():
+            self.notify_object_listeners(object_spec)
         self.on_disconnect()
-        if not self.is_shut_down:
+        if self.reconnect and not self.is_shut_down:
             self.start_connecting()
     
     def read_next_message(self):
@@ -540,6 +736,11 @@ class AutobusConnection(object):
             return None
 #        print "Getting next message from send queue " + str(send_queue) + "..."
         return send_queue.get(block=True)
+    
+    def message_write_finished(self):
+        send_queue = self.send_queue
+        if send_queue is not None:
+            send_queue.task_done()
     
     def send_error(self, in_reply_to=None, **kwargs):
         """
@@ -576,10 +777,70 @@ class AutobusConnection(object):
         If the function does not return within 30 seconds (or the server does
         not send a response indicating that the function has returned within
         that time frame), a TimeoutException will be raised.
+        
+        This function returns a wrapper around a server-side interface. To get
+        access to a local interface to register functions, events, or objects,
+        use get_local_interface.
         """
         return InterfaceWrapper(self, name)
     
     __getitem__ = get_interface
+    
+    def get_local_object(self, interface_name, object_name):
+        """
+        Returns the LocalObject instance representing the specified local
+        object, which must have been previously registered with this
+        connection. This is short for
+        get_local_interface(interface_name).objects[object_name].
+        """
+        return self.interfaces[interface_name].objects[object_name]
+    
+    def get_local_function(self, interface_name, function_name):
+        """
+        Returns the LocalFunction instance representing the specified local
+        function, which must have been previously registered with this
+        connection. This is short for
+        get_local_interface(interface_name).functions[function_name]
+        """
+        return self.interfaces[interface_name].functions[function_name]
+    
+    def get_local_interface(self, interface_name):
+        """
+        Returns the LocalInterface instance representing the specified local
+        interface.
+        """
+        return self.interfaces[interface_name]
+    
+    def set_local_object(self, interface_name, object_name, value):
+        """
+        Sets the value of the specified local object and notifies the server if
+        there's currently an active connection to the server. This is short for
+        get_local_object(interface_name, object_name).set(value).
+        """
+        self.get_local_object(interface_name, object_name).set(value)
+    
+    def get_object_value(self, interface_name, object_name):
+        """
+        Returns the current value of a remote object, or None if the value is
+        not known (which could be because add_object_watch was not called before
+        the last time this connection successfully connected to the server).
+        """
+        return self.object_values.get((interface_name, object_name), None)
+    
+    def flush(self):
+        """
+        If this connection is currently connected, waits until all pending
+        outbound messages have been successfully sent to the server.
+        
+        WARNING: I haven't gone through this with a fine-toothed comb for race
+        conditions, so there very well could be some that could cause this
+        function to deadlock. Use at your own risk, and thoroughly test any
+        application using this (in particular, test out what happens when you
+        kill the Autobus server around the time you call this method).
+        """
+        send_queue = self.send_queue
+        if send_queue is not None:
+            send_queue.join()
     
 
 

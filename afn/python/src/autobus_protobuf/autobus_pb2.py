@@ -951,13 +951,6 @@ _REGISTERLISTENERCOMMAND = descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-    descriptor.FieldDescriptor(
-      name='listener_id', full_name='RegisterListenerCommand.listener_id', index=2,
-      number=3, type=3, cpp_type=2, label=2,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
   ],
   extensions=[
   ],
@@ -999,13 +992,6 @@ _DEREGISTERLISTENERCOMMAND = descriptor.Descriptor(
       name='event_name', full_name='DeregisterListenerCommand.event_name', index=1,
       number=2, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='listener_id', full_name='DeregisterListenerCommand.listener_id', index=2,
-      number=3, type=3, cpp_type=2, label=2,
-      default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -1054,14 +1040,7 @@ _FIREEVENTCOMMAND = descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='listener_id', full_name='FireEventCommand.listener_id', index=2,
-      number=3, type=3, cpp_type=2, label=1,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='arguments', full_name='FireEventCommand.arguments', index=3,
+      name='arguments', full_name='FireEventCommand.arguments', index=2,
       number=4, type=11, cpp_type=10, label=3,
       default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -1154,13 +1133,6 @@ _WATCHOBJECTCOMMAND = descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-    descriptor.FieldDescriptor(
-      name='listener_id', full_name='WatchObjectCommand.listener_id', index=2,
-      number=3, type=3, cpp_type=2, label=2,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
   ],
   extensions=[
   ],
@@ -1176,6 +1148,13 @@ _WATCHOBJECTRESPONSE = descriptor.Descriptor(
   filename='autobus.proto',
   containing_type=None,
   fields=[
+    descriptor.FieldDescriptor(
+      name='value', full_name='WatchObjectResponse.value', index=0,
+      number=1, type=11, cpp_type=10, label=2,
+      default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -1202,13 +1181,6 @@ _UNWATCHOBJECTCOMMAND = descriptor.Descriptor(
       name='object_name', full_name='UnwatchObjectCommand.object_name', index=1,
       number=2, type=9, cpp_type=9, label=2,
       default_value=unicode("", "utf-8"),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='listener_id', full_name='UnwatchObjectCommand.listener_id', index=2,
-      number=3, type=3, cpp_type=2, label=2,
-      default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -1257,14 +1229,7 @@ _SETOBJECTCOMMAND = descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
-      name='listener_id', full_name='SetObjectCommand.listener_id', index=2,
-      number=3, type=3, cpp_type=2, label=1,
-      default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    descriptor.FieldDescriptor(
-      name='value', full_name='SetObjectCommand.value', index=3,
+      name='value', full_name='SetObjectCommand.value', index=2,
       number=4, type=11, cpp_type=10, label=2,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -1325,6 +1290,7 @@ _RUNFUNCTIONCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
 _RUNFUNCTIONRESPONSE.fields_by_name['return_value'].message_type = _INSTANCE
 _FIREEVENTCOMMAND.fields_by_name['arguments'].message_type = _INSTANCE
 _REGISTEROBJECTCOMMAND.fields_by_name['value'].message_type = _INSTANCE
+_WATCHOBJECTRESPONSE.fields_by_name['value'].message_type = _INSTANCE
 _SETOBJECTCOMMAND.fields_by_name['value'].message_type = _INSTANCE
 
 class MapEntry(message.Message):

@@ -14,6 +14,7 @@ class ExampleInterface(object):
         name and returns it. The argument must be a string or an exception will
         be raised.
         """
+        print "We're about to say hi to " + name
         return "Hello, " + name + ". How are you?"
 
 server = AutobusConnection()

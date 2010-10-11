@@ -50,6 +50,23 @@ to null.
 
 
 
+On the client side, remote objects are stored in a map. Two different maps,
+actually. One holds the current values of objects the client is interested in.
+This map is cleared whenever the connection disconnects, and if an object is
+not present in this map when its value is asked for, None is returned (which
+mirrors the server's behavior of reporting an object as None if a client has
+not registered it and provided a value).
+
+The other map holds objects that the client is interested in listening for.
+This map is not cleared when the connection is disconnected, and is used to add
+watches to objects when the client connects.
+
+
+
+
+
+
+
 
 
 
