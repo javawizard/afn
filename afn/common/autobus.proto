@@ -160,7 +160,6 @@ message RegisterEventResponse {
 message RegisterListenerCommand {
     required string interface_name = 1;
     required string event_name = 2;
-    required int64 listener_id = 3;
 }
 
 message RegisterListenerResponse {
@@ -169,7 +168,6 @@ message RegisterListenerResponse {
 message DeregisterListenerCommand {
     required string interface_name = 1;
     required string event_name = 2;
-    required int64 listener_id = 3;
 }
 
 message DeregisterListenerResponse {
@@ -178,7 +176,6 @@ message DeregisterListenerResponse {
 message FireEventCommand {
     required string interface_name = 1;
     required string event_name = 2;
-    optional int64 listener_id = 3; // Only present when sending server->client
     repeated Instance arguments = 4;
 }
 
@@ -195,16 +192,15 @@ message RegisterObjectResponse {
 message WatchObjectCommand {
     required string interface_name = 1;
     required string object_name = 2;
-    required int64 listener_id = 3;
 }
 
 message WatchObjectResponse {
+    required Instance value = 1;
 }
 
 message UnwatchObjectCommand {
     required string interface_name = 1;
     required string object_name = 2;
-    required int64 listener_id = 3;
 }
 
 message UnwatchObjectResponse {
@@ -213,7 +209,6 @@ message UnwatchObjectResponse {
 message SetObjectCommand {
     required string interface_name = 1;
     required string object_name = 2;
-    optional int64 listener_id = 3;
     required Instance value = 4;
 }
 
