@@ -140,8 +140,7 @@ def format_p(number):
 
 def format_t(time_string):
     hour, minute, period = re.match("([0-9]?[0-9]):([0-9]?[0-9])"
-                                    "((?:[AaPp]\\.?[Mm]\\.?)?)",
-                                    time_string).groups()
+            "((?:[AaPp]\\.?[Mm]\\.?)?)", time_string).groups()
     hour = int(hour)
     minute = int(minute)
     result = format_n(hour).split(" ")
