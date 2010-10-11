@@ -25,7 +25,7 @@ def synchronized(lock=None, function=None):
         lock = RLock()
     def wrapper(*args, **kwargs):
         with lock:
-            function(*args, **kwargs)
+            return function(*args, **kwargs)
     update_wrapper(wrapper, function)
     return wrapper
 
