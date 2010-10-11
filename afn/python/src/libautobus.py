@@ -8,6 +8,7 @@ from functools import update_wrapper
 from Queue import Queue, Empty
 from time import sleep
 import inspect
+from datetime import datetime
 
 COMMAND = 1
 RESPONSE = 2
@@ -238,7 +239,7 @@ def merge_repeated(src, dest):
 def encode_object(object, instance=None):
     """
     Encodes an object to an instance of protobuf.Instance. This does not yet
-    support struct instances or timestamp instances.
+    support struct instances.
     """
     if instance is None:
         instance = protobuf.Instance()
@@ -252,6 +253,11 @@ def encode_object(object, instance=None):
         InstanceValue[instance] = protobuf.BoolInstance(value=object)
     elif isinstance(object, basestring):
         InstanceValue[instance] = protobuf.StringInstance(value=object)
+    elif isinstance(object, datetime):
+        InstanceValue[instance] = protobuf.TimestampInstance(year=object.year,
+                month=object.month, day=object.day, hour=object.hour,
+                minute=object.minute, second=object.second,
+                millisecond=object.microsecond/1000)
     elif object is None:
         InstanceValue[instance] = protobuf.NullInstance()
     elif isinstance(object, (list, tuple)):
@@ -283,6 +289,11 @@ def decode_object(instance):
         return instance_value.value
     elif isinstance(instance_value, protobuf.BoolInstance):
         return bool(instance_value.value)
+    elif isinstance(instance_value, protobuf.TimestampInstance):
+        return datetime(year=instance_value.year, month=instance_value.month,
+                day=instance_value.day, hour=instance_value.hour,
+                minute=instance_value.minute, second=instance_value.second,
+                microsecond=instance_value.millisecond * 1000)
     elif isinstance(instance_value, protobuf.NullInstance):
         return None
     elif isinstance(instance_value, protobuf.ListInstance):
