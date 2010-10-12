@@ -314,13 +314,16 @@ def decode_object(instance):
 
 def get_function_doc(interface, function_name):
     function = getattr(interface, function_name)
-    if inspect.isfunction(function):
-        args = inspect.formatargspec(*inspect.getargspec(function))
-    elif inspect.ismethod(function):
+    is_method_before = inspect.ismethod(function)
+    while hasattr(function, "wrapped"):
+        function = function.wrapped
+    if is_method_before or inspect.ismethod(function):
         argspec = inspect.getargspec(function)
         # Remove the leading "self" argument
         argspec = (argspec[0][1:],) + argspec[1:]
         args = inspect.formatargspec(*argspec)
+    elif inspect.isfunction(function):
+        args = inspect.formatargspec(*inspect.getargspec(function))
     else:
         args = "(...)"
     doc = inspect.getdoc(function)
@@ -789,7 +792,10 @@ class AutobusConnection(object):
     def message_write_finished(self):
         send_queue = self.send_queue
         if send_queue is not None:
-            send_queue.task_done()
+            try:
+                send_queue.task_done()
+            except:
+                pass
     
     def send_error(self, in_reply_to=None, **kwargs):
         """

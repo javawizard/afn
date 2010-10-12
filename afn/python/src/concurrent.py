@@ -9,6 +9,7 @@ def as_new_thread(function):
     def wrapper(*args, **kwargs):
         Thread(target=function, args=args, kwargs=kwargs).start()
     update_wrapper(wrapper, function)
+    wrapper.wrapped = function
     return wrapper
 
 def synchronized(lock=None, function=None):
@@ -37,6 +38,7 @@ def synchronized(lock=None, function=None):
         with lock:
             return function(*args, **kwargs)
     update_wrapper(wrapper, function)
+    wrapper.wrapped = function
     return wrapper
 
 class AtomicInteger(object):

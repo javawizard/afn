@@ -1,1 +1,6 @@
-# 
+# This file (renamed to libautobus.conf) can be used to configure libautobus.
+# It's not required, but it can be used to set some defaults. For example,
+# AutobusConnection (a class in libautobus) connects to localhost on port
+# 28862 if a host and port are not specified. libautobus.conf can be used to
+# change this, which is useful if most Autobus connections will be to an
+# Autobus server on a host other than localhost.
