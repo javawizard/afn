@@ -1,5 +1,15 @@
-from threading import RLock
+from threading import Thread, RLock
 from functools import partial, update_wrapper
+
+def as_new_thread(function):
+    """
+    A decorator that causes the decorated function to be invoked in a new
+    thread.
+    """
+    def wrapper(*args, **kwargs):
+        Thread(target=function, args=args, kwargs=kwargs).start()
+    update_wrapper(wrapper, function)
+    return wrapper
 
 def synchronized(lock=None, function=None):
     """

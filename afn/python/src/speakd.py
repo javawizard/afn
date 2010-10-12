@@ -355,7 +355,7 @@ try:
         sentence_tuple = get_next_sentence()
         if sentence_tuple is None:
     #       print "Nothing to say"
-            time.sleep(1)
+            time.sleep(0.5)
             continue
         priority, sentence = sentence_tuple
         print "Something to say: " + str(sentence.components)
