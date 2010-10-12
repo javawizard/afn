@@ -335,6 +335,9 @@ class InterfaceWrapper(object):
     
     def __getattr__(self, attribute):
         return FunctionWrapper(self.connection, self, attribute)
+    
+    def __str__(self):
+        return "<InterfaceWrapper on interface " + self.name + ">"
 
 class FunctionWrapper(object):
     def __init__(self, connection, interface, name):
@@ -355,6 +358,12 @@ class FunctionWrapper(object):
         if isinstance(result, Exception):
             raise result
         return result
+    
+    def __str__(self):
+        return ("<FunctionWrapper on function " + self.name + " and interface "
+                + str(self.interface) + ">")
+    
+    __repr__ = __str__
 
 class ObjectWrapper(object):
     pass
@@ -478,10 +487,17 @@ class AutobusConnection(object):
     and re-register all of its local interfaces and functions when it gets
     disconnected. It will continue attempting to reconnect indefinitely. If
     reconnect is False, it's up to the on_disconnect function (or some other
-    functionality) to call the connect method when the connection is lost. 
+    functionality) to call the connect method when the connection is lost.
+    
+    If print_exceptions is True, any exceptions thrown by a local function
+    invoked by a remote client will be printed with traceback.print_exc()
+    before being sent back to the client that invoked the function. This is
+    useful when a function is raising an unexpected error and more information
+    about the error, such as its traceback, is needed. 
     """
     def __init__(self, host="localhost", port=DEFAULT_PORT, reconnect=True,
-            on_connect=lambda: None, on_disconnect=lambda: None):
+            print_exceptions=False, on_connect=lambda: None,
+            on_disconnect=lambda: None):
         """
         Creates a new connection. This doesn't actually connect to the
         autobus server; use connect() or start_connecting() for that.
@@ -491,6 +507,7 @@ class AutobusConnection(object):
         self.reconnect = reconnect
         self.on_connect = on_connect
         self.on_disconnect = on_disconnect
+        self.print_exceptions = print_exceptions
         self.on_connect_lock = RLock()
         self.interfaces = {} # Map of names to LocalInterface objects
         # representing interfaces we've registered
@@ -558,6 +575,13 @@ class AutobusConnection(object):
         
         The function should accept one argument. This argument will be the new
         value of the object.
+        
+        The function must not interact with Autobus. If it does, deadlock will
+        likely result, as the input thread, which receives packets from the
+        server (such as responses to function calls), blocks while this
+        function is invoked. If you need to interact with Autobus (for example,
+        to call functions etc), the function you supply should start a new
+        thread to do so.
         """
         object_spec = interface_name, object_name
         if object_spec not in self.object_listeners:
@@ -566,10 +590,12 @@ class AutobusConnection(object):
     
     def add_object(self, interface_name, object_name, doc, value):
         """
-        Adds a shared object to the specified interface.
+        Adds a shared object to the specified interface. The LocalObject
+        instance created for the object will be returned.
         """
-        self.interfaces[interface_name].register_object(LocalObject(
-                object_name, doc, value))
+        object = LocalObject(object_name, doc, value)
+        self.interfaces[interface_name].register_object(object)
+        return object
     
     def start_connecting(self):
         """
@@ -609,7 +635,7 @@ class AutobusConnection(object):
     def connection_established(self):
 #        print "Processing established connection..."
         self.input_thread = InputThread(self.socket, self.message_arrived, self.input_closed)
-        self.output_thread = OutputThread(self.socket, self.read_next_message)
+        self.output_thread = OutputThread(self.socket, self.read_next_message, self.message_write_finished)
         self.send_queue = Queue() # clear the send queue
         self.receive_queues = {}
         self.input_thread.start()
@@ -643,6 +669,7 @@ class AutobusConnection(object):
         self.on_connect()
         
     def message_arrived(self, message):
+#        print "Message from the server arrived: " + str((message)) + "\n\n"
         queue = self.receive_queues.get(message.message_id, None)
         if queue is not None:
             queue.put(message)
@@ -665,6 +692,8 @@ class AutobusConnection(object):
                 function = interface.functions[function_name]
                 return_value = function.function(*arguments)
             except Exception as e:
+                if self.print_exceptions:
+                    print_exc()
                 return_value = e
             response, run_response = create_message_pair(protobuf.RunFunctionResponse,
                     message, return_value=encode_object(return_value))
@@ -678,7 +707,7 @@ class AutobusConnection(object):
             self.object_values[object_spec] = decode_object(value)
             self.notify_object_listeners(object_spec)
             return
-        print "Message from the server arrived: " + repr(message)
+        print "Not processing message"
     
     def notify_object_listeners(self, object_spec):
         """
@@ -730,6 +759,11 @@ class AutobusConnection(object):
     
     def input_closed(self):
         self.send_queue.put(None)
+        try:
+            while True:
+                self.send_queue.task_done()
+        except ValueError: # Happens once we've marked all tasks as complete
+            pass
         for queue in self.receive_queues.values():
             queue.put(None)
         self.receive_queues.clear()

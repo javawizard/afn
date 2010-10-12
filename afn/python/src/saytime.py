@@ -1,7 +1,7 @@
 
 from datetime import datetime, timedelta as interval
 from time import sleep
-from xmlrpclib import ServerProxy
+from libautobus import AutobusConnection
 import sys
 
 speak_server = ServerProxy(sys.argv[1])

@@ -14,6 +14,9 @@ from itertools import chain
 import re
 from datetime import datetime
 from libautobus import AutobusConnection, DEFAULT_PORT
+from concurrent import synchronized
+
+lock = RLock()
 
 million = 1000 * 1000
 billion = 1000 * 1000 * 1000
@@ -28,7 +31,7 @@ configuration = RawConfigParser()
 print "Loading configuration from speakd.conf..."
 try:
     configuration.read("speakd.conf")
-    configuration.get("autobus", "port")
+    configuration.get("autobus", "host")
 except:
     print "You need to create the configuration file speakd.conf before you "
     print "can use speakd. Open speakd.conf.example for an example."
@@ -62,6 +65,7 @@ class Voice(object):
         self.name = name
         self.path = configuration.get("voice:" + name, "path")
 
+@synchronized(lock)
 def get_next_sentence():
     if len(speech_queue) == 0:
         return None
@@ -158,12 +162,17 @@ def format_t(time_string):
             result.append("pm")
     return result
 
-def rpc_decode_datetime(time):
-    return datetime.strptime(time.value, "%Y%m%dT%H:%M:%S")
-
 class RPC(object):
+    """
+    Allows communicating with the speak server. This allows pre-recorded
+    phrases and synthesized speech to be spoken.
+    """
+    @synchronized(lock)
     def say(self, components, priority=0, voice=None):
         """
+        NOTE: Usually you'll want to use say_text instead of this function.
+        That said, here's the documentation...
+        
         Adds the specified sentence to the queue. It will be spoken as soon as
         there are no more sentences with a priority higher than this
         sentence's priority and all previously-added sentences with the same
@@ -185,7 +194,10 @@ class RPC(object):
         if priority not in speech_queue:
             speech_queue[priority] = []
         speech_queue[priority].append((priority, Sentence(components, voice, priority)))
+        print "After adding request, speech queue is " + str(speech_queue)
+#        speech_queue_object.set(speech_queue)
     
+    @synchronized(lock)
     def say_text(self, text, priority=0, voice=None):
         """
         Same as say(text, priority=0, voice=None), but text should be a string,
@@ -206,7 +218,14 @@ class RPC(object):
         
         p: The data is a number. This token causes a pause of the specified
         number of milliseconds to occur.
+        
+        t: The data is a time, in the format 12:34pm or similar. The period
+        specifier can be a.m., p.m., am, or pm, and both uppercase and
+        lowercase versions are allowed. 12:34pm would be expanded to
+        "12 30 4 pm", 5:03pm (or 05:03pm) would be expanded to "5 oh 3 pm",
+        and 7:00pm would be expanded to "7 o'clock pm".
         """
+        print "Received request to say text " + str(text) 
         tokens = text.split(" ")
         new_tokens = []
         for token in tokens:
@@ -227,6 +246,7 @@ class RPC(object):
                 new_tokens.append(token)
         self.say(new_tokens, priority, voice)
     
+    @synchronized(lock)
     def get_queue_size(self):
         """
         Returns the number of sentences currently in the queue. This does not
@@ -234,6 +254,7 @@ class RPC(object):
         """
         return len(list(chain(speech_queue.values())))
     
+    @synchronized(lock)
     def get_voice_names(self):
         """
         Returns a list of the names of all of the voices available to this
@@ -241,6 +262,7 @@ class RPC(object):
         """
         return voices.keys()
     
+    @synchronized(lock)
     def get_default_voice(self):
         """
         Returns the name of the default voice. The default voice is the voice
@@ -250,6 +272,7 @@ class RPC(object):
         """
         return default_voice
     
+    @synchronized(lock)
     def set_default_voice(self, voice_name):
         """
         Sets the default voice. The default voice is the voice used to speak
@@ -260,12 +283,14 @@ class RPC(object):
                             "configured in speakd.conf.")
         default_voice = voice_name
     
+    @synchronized(lock)
     def get_pid(self):
         """
         Returns the pid of the speak server.
         """
         return os.getpid()
     
+    @synchronized(lock)
     def time_format_time(self, time):
         """
         Formats a date into a string representing the time of the date that
@@ -273,7 +298,6 @@ class RPC(object):
         time_format_time(datetime(hour=15, minute=14)) would return
         ":t:3:14pm".
         """
-        time = rpc_decode_datetime(time)
         hour, minute = time.hour, time.minute
         period = "am" if hour < 12 or hour == 24 else "pm"
         hour = hour % 12
@@ -281,6 +305,7 @@ class RPC(object):
             hour = 12
         return ":t:" + str(hour) + ":" + str(minute).rjust(2, "0") + period
     
+    @synchronized(lock)
     def time_format_month_day(self, time):
         """
         Formats a date into a string representing the month and day of the date
@@ -288,7 +313,6 @@ class RPC(object):
         time_format_month_day(datetime(month=3, day=14)) would return
         "march :n:14".
         """
-        time = rpc_decode_datetime(time)
         month = ["january", "february", "march", "april",
                  "may", "june", "july", "august",
                  "september", "october", "november", "december"
@@ -296,88 +320,78 @@ class RPC(object):
         day = str(time.day)
         return month + " :n:" + day
     
+    @synchronized(lock)
     def time_format_weekday(self, time):
         """
         Formats a date into a string representing the day of the week that the
         day is on.
         """
-        time = rpc_decode_datetime(time)
         return time.strftime("%A").lower()
     
+    @synchronized(lock)
     def time_format_weekday_month_day(self, time):
+        """
+        Returns time_format_weekday(time) + " " + time_format_month_day(time)
+        """
         return (self.time_format_weekday(time) + " " + 
                 self.time_format_month_day(time))
 
 
-class RequestHandler(XMLRPCRequestHandler):
-    rpc_paths = (rpc_path,)
-
-rpc_server = XMLRPCServer((host, port), RequestHandler, allow_none=True)
-rpc_server.request_queue_size = 50
-rpc_server.register_introspection_functions()
-rpc_server.register_multicall_functions()
-rpc_server.register_instance(RPC(), False)
-
-def process_rpc(timeout=0, count=1):
-    """
-    Processes RPC calls if there are any waiting to be serviced. If
-    a timeout is specified, this method will block for that many
-    seconds or until an RPC request arrives. count specifies the
-    maximum number of RPC calls to service before returning.
-    """
-    r, w, x = select([rpc_server], [], [], timeout)
-    handled = 0
-    while rpc_server in r and handled < count:
-        handled += 1
-        print "Processing RPC call"
-        rpc_server._handle_request_noblock()
-        r, w, x = select([rpc_server], [], [], 0) # No timeout this time
+bus = AutobusConnection(host, port, print_exceptions=True)
+bus.add_interface(interface_name, RPC())
+speech_queue_object = bus.add_object(interface_name, "speech_queue", """
+This doesn't work yet.
+""", {})
+bus.connect()
 
 def sanitize_file(name):
     return name.replace(".", "").replace("\\", "").replace("/", "")
 
 print ""
 print "Speakd has successfully started up. PID is " + str(os.getpid())
-
-while not is_shutting_down:
-#   print "Main loop"
-    sentence_tuple = get_next_sentence()
-    if sentence_tuple is None:
-#       print "Nothing to say"
-        process_rpc(timeout=2.0)
-        continue
-    priority, sentence = sentence_tuple
-    print "Something to say: " + str(sentence.components)
-    if sentence.voice is not None:
-        voice = voices[sentence.voice]
-    else:
-        voice = voices[default_voice]
-    voice_path = voice.path
-    print "Saying with voice " + voice.name
-    audio_stream.start_stream()
-    for item in sentence.components:
-        if isinstance(item, basestring):
-            file = sanitize_file(item)
-            print "Saying word " + file
-            try:
-                wave_file = wave.open(os.path.join(voice_path, file + ".wav"), "r")
-            except:
-                print "File " + file + " does not exist for voice " + voice.name + ". It will be silently ignored."
-                continue
-            data = wave_file.readframes(1024)
-            while data != "":
-                audio_stream.write(data)
-                process_rpc(count=5)
+try:
+    while not is_shutting_down:
+    #   print "Main loop"
+        sentence_tuple = get_next_sentence()
+        if sentence_tuple is None:
+    #       print "Nothing to say"
+            time.sleep(1)
+            continue
+        priority, sentence = sentence_tuple
+        print "Something to say: " + str(sentence.components)
+        if sentence.voice is not None:
+            voice = voices[sentence.voice]
+        else:
+            voice = voices[default_voice]
+        voice_path = voice.path
+        print "Saying with voice " + voice.name
+        audio_stream.start_stream()
+        for item in sentence.components:
+            if isinstance(item, basestring):
+                file = sanitize_file(item)
+                print "Saying word " + file
+                try:
+                    wave_file = wave.open(os.path.join(voice_path, file + ".wav"), "r")
+                except:
+                    print "File " + file + " does not exist for voice " + voice.name + ". It will be silently ignored."
+                    continue
                 data = wave_file.readframes(1024)
-        elif isinstance(item, int):
-            print "Pausing for " + str(item) + " milliseconds"
-            time.sleep((item * 1.0) / 1000.0)
-    print "Closing audio stream"
-    audio_stream.stop_stream()
-    print "Waiting..."
-    time.sleep(1)
-    print "Done."
-
+                while data != "":
+                    audio_stream.write(data)
+                    data = wave_file.readframes(1024)
+            elif isinstance(item, int):
+                print "Pausing for " + str(item) + " milliseconds"
+                time.sleep((item * 1.0) / 1000.0)
+            print "Flushing bus outbound queue"
+            bus.flush()
+        print "Waiting..."
+        time.sleep(1)
+        print "Closing audio stream"
+        audio_stream.stop_stream()
+        print "Done."
+except KeyboardInterrupt:
+    print "Interrupted, shutting down"
+    bus.shutdown()
 
 
 
