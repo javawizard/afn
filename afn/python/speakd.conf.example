@@ -3,7 +3,7 @@
 # simply copy this to speakd.conf and you'll have at least a basic speak 
 # server.
 #
-# Speakd uses Autobus to communicate, so you'll also need to have an Autobus
+# speakd uses Autobus to communicate, so you'll also need to have an Autobus
 # server running. This configuration file assumes an Autobus server running on
 # the local machine with the default port.
 
