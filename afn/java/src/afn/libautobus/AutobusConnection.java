@@ -1,5 +1,7 @@
 package afn.libautobus;
 
+import java.lang.reflect.Proxy;
+
 import org.python.core.Py;
 import org.python.core.PyDictionary;
 import org.python.core.PyInteger;
@@ -33,7 +35,13 @@ public class AutobusConnection
     private static boolean hasLoadedPython = false;
     private static PyModule libautobus;
     
-    private static synchronized void init()
+    /**
+     * Initializes the Autobus client library. This loads Jython and initializes
+     * libautobus. This will be called when the first AutobusConnection is constructed,
+     * but it can be called before that to get initialization over and done with. This
+     * usually takes ten to fifteen seconds to run.
+     */
+    public static synchronized void init()
     {
         if (!hasLoadedPython)
         {
@@ -70,6 +78,13 @@ public class AutobusConnection
     public InterfaceWrapper get_interface(String name)
     {
         return null;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public <T> T get_interface_proxy(String name, Class<T> interfaceType)
+    {
+        return (T) Proxy.newProxyInstance(interfaceType.getClassLoader(),
+                new Class[] { interfaceType }, new InterfaceProxyHandler(this, name));
     }
     
     public void shutdown()
