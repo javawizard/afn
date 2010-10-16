@@ -3,6 +3,9 @@ package afn.libautobus;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
+import org.python.core.Py;
+import org.python.core.PyObject;
+
 public class InterfaceProxyHandler implements InvocationHandler
 {
     private AutobusConnection bus;
@@ -21,7 +24,10 @@ public class InterfaceProxyHandler implements InvocationHandler
     {
         if (args == null)
             args = new Object[0];
-        return interfaceWrapper.get_function(method.getName()).invoke(args);
+        PyObject result = interfaceWrapper.get_function(method.getName()).invoke_py(args);
+        if (method.getReturnType() == Void.TYPE)
+            return null;
+        return Py.tojava(result, method.getReturnType());
     }
     
 }
