@@ -1,3 +1,6 @@
+option java_package = "afn.libautobus.protocol";
+option java_outer_classname = "Protobuf";
+
 message MapEntry {
     required Instance key = 1;
     required Instance value = 2;
@@ -27,11 +30,11 @@ message Instance {
 }
 
 message IntegerInstance {
-    required int32 value = 1;
+    required fixed32 value = 1;
 }
 
 message LongInstance {
-    required int64 value = 1;
+    required fixed64 value = 1;
 }
 
 message DoubleInstance {
@@ -43,13 +46,13 @@ message StringInstance {
 }
 
 message TimestampInstance {
-    required int32 year = 1;
-    required int32 month = 2;
-    required int32 day = 3;
-    required int32 hour = 4;
-    required int32 minute = 5;
-    required int32 second = 6;
-    required int32 millisecond = 7;
+    required fixed32 year = 1;
+    required fixed32 month = 2;
+    required fixed32 day = 3;
+    required fixed32 hour = 4;
+    required fixed32 minute = 5;
+    required fixed32 second = 6;
+    required fixed32 millisecond = 7;
 }
 
 message NullInstance {
@@ -77,8 +80,8 @@ message BoolInstance {
 }
 
 message Message {
-    required int32 message_type = 1; // command, response, or notification
-    required int64 message_id = 60;
+    required fixed32 message_type = 1; // command, response, or notification
+    required fixed64 message_id = 60;
     optional RegisterInterfaceCommand value2 = 2;
     optional RegisterInterfaceResponse value3 = 3;
     optional RegisterFunctionCommand value4 = 4;
@@ -195,7 +198,12 @@ message WatchObjectCommand {
 }
 
 message WatchObjectResponse {
-    required Instance value = 1;
+    // We include the interface and object names in the response to simplify
+    // code (like the Python version of libautobus) that processes the response
+    // in a thread other than the one that put in the request
+    required string interface_name = 1;
+    required string object_name = 2;
+    required Instance value = 3;
 }
 
 message UnwatchObjectCommand {
@@ -204,6 +212,8 @@ message UnwatchObjectCommand {
 }
 
 message UnwatchObjectResponse {
+    required string interface_name = 1;
+    required string object_name = 2;
 }
 
 message SetObjectCommand {

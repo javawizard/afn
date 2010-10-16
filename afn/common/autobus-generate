@@ -1,3 +1,6 @@
 #!/bin/bash
 
-protoc --python_out=../afn-python/src/autobus_protobuf autobus.proto
+protoc --python_out=../afn-python/src/autobus_protobuf --java_out=../afn-java/src autobus.proto
+#cd ../afn-python
+#python -m simpleproto ../afn-common/autobus.proto ../afn-java/src
+#cd -

@@ -1,0 +1,11 @@
+Q: I'm using autosend -w to watch an object's value. When I kill the Autobus server and then restart it, autosend prints out None several times before finally reconnecting and showing the object's value. The same thing happens when I use libautobus to listen for changes to an object. What's going on?
+
+A: If you're getting a null value (which autosend prints out as None) more than three times, then you've typically got a problem. If you're getting a null value three or less times, it's because of some quirks with Autobus. There are three points at which you might see a null value during a reconnect cycle, which follow:
+
+When Autobus is instructed to shut down, it iterates over all live connections in sequence. It deregisters each interface registered by that particular connection (deregistering all of the interface's objects in the process), then disconnects the connection. The result is that if the connection that registered an object is disconnected before a connection watching that object, the deregistration of the object by the server will cause the connection watching the object to get notified that the object has been set to null (as connections watching an object always are when the object is deregistered).
+
+When libautobus loses its connection to the Autobus server, it sets all objects to null, then calls all of the listeners registered by the user's application, notifying them that the object has been set to null. The listeners are notified regardless of whether or not the object's value was already null when libautobus lost its connection.
+
+When libautobus re-establishes its connection to the Autobus server and instructs the server to watch the object again, Autobus sends back the initial value of the object. If the client that registered the object has not yet reconnected, the initial value sent back by Autobus will be null. Once the client reconnects, Autobus will send back the object's new value.
+
+None of these should be relied upon, though. Only one null value being sent on a disconnect is guaranteed, and I may change Autobus to omit the null notification on object deregistration if the server is shutting down. 
