@@ -1,5 +1,6 @@
 package afn.libautobus;
 
+import org.python.core.Py;
 import org.python.core.PyDictionary;
 import org.python.core.PyInteger;
 import org.python.core.PyModule;
@@ -14,7 +15,8 @@ import org.python.util.PythonInterpreter;
  * This class uses Jython to run the Python version of libautobus under the covers. You
  * don't need to have Python installed; jython.jar contains everything you need. There are
  * a few quirks, however. Probably the most notable ones are that stack traces may look
- * quite a bit different, and you create an AutobusConnection by calling
+ * quite a bit different, the method naming conventions of this class follow Python's
+ * conventions instead of Java's, and you create an AutobusConnection by calling
  * {@link #create(String, int)} instead of by using a constructor. (The reason for this is
  * that libautobus.py subclasses AutobusConnection if it's running under Jython, and
  * create() returns an instance of the libautobus subclass.)
@@ -24,6 +26,7 @@ import org.python.util.PythonInterpreter;
  */
 public class AutobusConnection
 {
+    public static final int DEFAULT_PORT = 28862;
     private static PyDictionary pythonNamespace = new PyDictionary();
     private static PythonInterpreter pythonInterpreter =
             new PythonInterpreter(pythonNamespace);
@@ -42,18 +45,34 @@ public class AutobusConnection
         }
     }
     
-    private AutobusConnection()
+    /**
+     * <b>This constructor should not be used.</b> Since this class is just a wrapper
+     * around the Python version of libautobus running on Jython, most of the methods in
+     * this class don't actually do anything. libautobus creates a subclass of this class
+     * when it's running under Jython, and it's an instance of this subclass that
+     * {@link #create(String, int)} returns. You should therefore use create() instead.
+     */
+    public AutobusConnection()
     {
     }
     
     public static AutobusConnection create(String host, int port)
     {
         init();
-        /*
-         * This is going to look like an impossible statement, but believe it or not, it
-         * actually works.
-         */
-        return (AutobusConnection) (Object) libautobus.invoke("AutobusConnection",
-                new PyString(host), new PyInteger(port));
+        return Py.tojava(libautobus.invoke("AutobusConnection", new PyString(host),
+                new PyInteger(port)), AutobusConnection.class);
+    }
+    
+    public void connect(int attempts)
+    {
+    }
+    
+    public InterfaceWrapper get_interface(String name)
+    {
+        return null;
+    }
+    
+    public void shutdown()
+    {
     }
 }
