@@ -35,7 +35,7 @@ public class OutputThread extends Thread
                 Message message = bus.readNextMessage();
                 if (message == null)
                     break;
-                byte[] messageData = message.toByteArray();
+                byte[] messageData = message.serialize();
                 out.writeInt(messageData.length);
                 out.write(messageData);
                 out.flush();

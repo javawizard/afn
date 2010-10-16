@@ -7,8 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
+import afn.libautobus.protocol.Protobuf.GeneratedMessage;
+import afn.libautobus.protocol.Protobuf.Instance;
 import afn.libautobus.protocol.Protobuf.Message;
+import afn.libautobus.protocol.Protobuf.RegisterFunctionCommand;
+import afn.libautobus.protocol.Protobuf.RegisterInterfaceCommand;
 
 /**
  * A connection to an Autobus server. This is typically the class that you'll use the most
@@ -88,6 +93,41 @@ import afn.libautobus.protocol.Protobuf.Message;
  */
 public class AutobusConnection
 {
+    public static final int COMMAND = 1;
+    public static final int RESPONSE = 2;
+    public static final int NOTIFICATION = 3;
+    
+    static class MessagePair<E extends GeneratedMessage<E>>
+    {
+        public MessagePair<E> type(int type)
+        {
+            genericMessage.messageType = type;
+            return this;
+        }
+        
+        public MessagePair<E> reply(Message inReplyTo)
+        {
+            if (inReplyTo.messageType == NOTIFICATION) // Replies to notifications aren't
+                // allowed. The send functions will take care of ignoring this message
+                // pair if we just set the generic message to null.
+                genericMessage = null;
+            else
+            {
+                genericMessage.messageId = inReplyTo.messageId;
+                genericMessage.messageType = RESPONSE;
+            }
+            return this;
+        }
+        
+        public Message genericMessage;
+        public E message;
+    }
+    
+    static final ProtoMultiAccessor<Message> messageValue =
+            new ProtoMultiAccessor<Message>(Message.class, "value");
+    static final ProtoMultiAccessor<Instance> instanceValue =
+            new ProtoMultiAccessor<Instance>(Instance.class, "value");
+    
     public static final int DEFAULT_PORT = 28862;
     private Socket socket;
     private String host;
@@ -214,7 +254,17 @@ public class AutobusConnection
         this.outputThread.start();
         for (LocalInterface localInterface : this.interfaces.values())
         {
-            
+            MessagePair<RegisterInterfaceCommand> registerInterfaceMessage =
+                    createMessagePair(RegisterInterfaceCommand.class).type(NOTIFICATION);
+            registerInterfaceMessage.message.setName(localInterface.name).setDoc(
+                    localInterface.doc);
+            send(registerInterfaceMessage);
+            for (LocalFunction function : localInterface.functions.values())
+            {
+                MessagePair<RegisterFunctionCommand> registerFunctionMessage =
+                        createMessagePair(RegisterFunctionCommand.class).type(NOTIFICATION);
+                registerFunctionMessage.message.setInterfaceName(localInterface.name)
+            }
         }
     }
     
@@ -250,8 +300,20 @@ public class AutobusConnection
         }
     }
     
-    static <T extends Builder> MessagePair<T> createMessagePair(Class<T> )
+    static <T extends GeneratedMessage<T>> MessagePair<T> createMessagePair(Class<T> type)
     {
-        
+        MessagePair<T> pair = new MessagePair<T>();
+        pair.genericMessage = new Message();
+        pair.message = ProtocolUtils.constructInstance(type);
+        messageValue.set(pair.genericMessage, pair.message);
+        pair.genericMessage.messageId = getNextId();
+        return pair;
+    }
+    
+    private static final AtomicLong idSequence = new AtomicLong();
+    
+    static long getNextId()
+    {
+        return idSequence.getAndIncrement();
     }
 }

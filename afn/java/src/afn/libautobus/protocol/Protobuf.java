@@ -14,13 +14,17 @@ import java.io.IOException;
 
 public class Protobuf
 {
-    public static interface GeneratedMessage<T extends GeneratedMessage<T>>
+    public static interface GeneratedMessage<E extends GeneratedMessage<E>>
     {
         public byte[] serialize();
         
-        public T deserialize(byte[] bytes);
+        public E deserialize(byte[] bytes);
+        
+        public <T> T get(String name);
         
         public void set(String name, Object value);
+        
+        public Class<?> getInstanceClassForField(String fieldName);
     }
     
     protected static int readVarint(DataInputStream in) throws IOException
@@ -268,6 +272,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -284,6 +293,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -408,6 +430,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -424,6 +451,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -754,6 +794,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -770,6 +815,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -879,6 +937,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -895,6 +958,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -993,6 +1069,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1009,6 +1090,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -1107,6 +1201,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1123,6 +1222,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -1221,6 +1333,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1237,6 +1354,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -1467,6 +1597,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1483,6 +1618,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -1563,6 +1711,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1579,6 +1732,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -1677,6 +1843,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1693,6 +1864,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -1792,6 +1976,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1808,6 +1997,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -1929,6 +2131,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -1945,6 +2152,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -2040,6 +2260,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -2056,6 +2281,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -2154,6 +2392,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -2170,6 +2413,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -2795,6 +3051,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -2811,6 +3072,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -2953,6 +3227,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -2969,6 +3248,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3045,6 +3337,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3061,6 +3358,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3199,6 +3509,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3215,6 +3530,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3292,6 +3620,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3308,6 +3641,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3447,6 +3793,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3463,6 +3814,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3567,6 +3931,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3583,6 +3952,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3726,6 +4108,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3742,6 +4129,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3846,6 +4246,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3862,6 +4267,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -3956,6 +4374,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -3972,6 +4395,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -4111,6 +4547,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -4127,6 +4568,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -4204,6 +4658,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -4220,6 +4679,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -4340,6 +4812,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -4356,6 +4833,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -4432,6 +4922,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -4448,6 +4943,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -4568,6 +5076,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -4584,6 +5097,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -4660,6 +5186,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -4676,6 +5207,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -4818,6 +5362,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -4834,6 +5383,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -5000,6 +5562,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -5016,6 +5583,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -5094,6 +5674,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -5110,6 +5695,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -5229,6 +5827,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -5245,6 +5848,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -5392,6 +6008,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -5408,6 +6029,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -5531,6 +6165,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -5547,6 +6186,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -5669,6 +6321,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -5685,6 +6342,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {
@@ -5831,6 +6501,11 @@ public class Protobuf
             return _typeMap.get(name);
         }
         
+        public Class<?> getInstanceClassForField(String name)
+        {
+            return getClassForField(name);
+        }
+        
         public static List<String> getFieldNamesForPrefix(String prefix)
         {
             ArrayList<String> list = new ArrayList<String>();
@@ -5847,6 +6522,19 @@ public class Protobuf
             try
             {
                 getClass().getField(name).set(this, value);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        public <T> T get(String name)
+        {
+            try
+            {
+                return (T) getClass().getField(name).get(this);
             }
             catch (Exception e)
             {

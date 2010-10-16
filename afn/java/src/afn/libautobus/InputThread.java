@@ -35,7 +35,7 @@ public class InputThread extends Thread
                 int messageLength = in.readInt();
                 byte[] messageData = new byte[messageLength];
                 in.readFully(messageData);
-                Message message = Message.parseFrom(messageData);
+                Message message = new Message().deserialize(messageData);
                 bus.messageArrived(message);
             }
         }
