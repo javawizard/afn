@@ -14,11 +14,13 @@ import java.io.IOException;
 
 public class Protobuf
 {
-    public static interface GeneratedMessage
+    public static interface GeneratedMessage<T extends GeneratedMessage<T>>
     {
         public byte[] serialize();
         
-        public void deserialize(byte[] bytes);
+        public T deserialize(byte[] bytes);
+        
+        public void set(String name, Object value);
     }
     
     protected static int readVarint(DataInputStream in) throws IOException
@@ -153,7 +155,7 @@ public class Protobuf
         writeVarBytes(out, string.getBytes());
     }
     
-    public static class MapEntry implements GeneratedMessage
+    public static class MapEntry implements GeneratedMessage<MapEntry>
     {
         public Instance key = null;
         public Instance value = null;
@@ -227,7 +229,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public MapEntry deserialize(byte[] bytes)
         {
             try
             {
@@ -237,6 +239,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -295,7 +298,7 @@ public class Protobuf
         }
     }
     
-    public static class StructEntry implements GeneratedMessage
+    public static class StructEntry implements GeneratedMessage<StructEntry>
     {
         public String key = null;
         public Instance value = null;
@@ -366,7 +369,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public StructEntry deserialize(byte[] bytes)
         {
             try
             {
@@ -376,6 +379,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -434,7 +438,7 @@ public class Protobuf
         }
     }
     
-    public static class Instance implements GeneratedMessage
+    public static class Instance implements GeneratedMessage<Instance>
     {
         public IntegerInstance value1 = null;
         public LongInstance value2 = null;
@@ -711,7 +715,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public Instance deserialize(byte[] bytes)
         {
             try
             {
@@ -721,6 +725,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -789,7 +794,7 @@ public class Protobuf
         }
     }
     
-    public static class IntegerInstance implements GeneratedMessage
+    public static class IntegerInstance implements GeneratedMessage<IntegerInstance>
     {
         public Integer value = null;
         
@@ -835,7 +840,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public IntegerInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -845,6 +850,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -902,7 +908,7 @@ public class Protobuf
         }
     }
     
-    public static class LongInstance implements GeneratedMessage
+    public static class LongInstance implements GeneratedMessage<LongInstance>
     {
         public Long value = null;
         
@@ -948,7 +954,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public LongInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -958,6 +964,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1015,7 +1022,7 @@ public class Protobuf
         }
     }
     
-    public static class DoubleInstance implements GeneratedMessage
+    public static class DoubleInstance implements GeneratedMessage<DoubleInstance>
     {
         public Double value = null;
         
@@ -1061,7 +1068,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public DoubleInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1071,6 +1078,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1128,7 +1136,7 @@ public class Protobuf
         }
     }
     
-    public static class StringInstance implements GeneratedMessage
+    public static class StringInstance implements GeneratedMessage<StringInstance>
     {
         public String value = null;
         
@@ -1174,7 +1182,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public StringInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1184,6 +1192,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1241,7 +1250,7 @@ public class Protobuf
         }
     }
     
-    public static class TimestampInstance implements GeneratedMessage
+    public static class TimestampInstance implements GeneratedMessage<TimestampInstance>
     {
         public Integer year = null;
         public Integer month = null;
@@ -1419,7 +1428,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public TimestampInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1429,6 +1438,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1492,7 +1502,7 @@ public class Protobuf
         }
     }
     
-    public static class NullInstance implements GeneratedMessage
+    public static class NullInstance implements GeneratedMessage<NullInstance>
     {
         public void checkRequired()
         {
@@ -1514,7 +1524,7 @@ public class Protobuf
         {
         }
         
-        public void deserialize(byte[] bytes)
+        public NullInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1524,6 +1534,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1580,7 +1591,7 @@ public class Protobuf
         }
     }
     
-    public static class ListInstance implements GeneratedMessage
+    public static class ListInstance implements GeneratedMessage<ListInstance>
     {
         public List<Instance> value = new ArrayList<Instance>();
         
@@ -1627,7 +1638,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public ListInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1637,6 +1648,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1694,7 +1706,7 @@ public class Protobuf
         }
     }
     
-    public static class MapInstance implements GeneratedMessage
+    public static class MapInstance implements GeneratedMessage<MapInstance>
     {
         public List<MapEntry> value = new ArrayList<MapEntry>();
         
@@ -1741,7 +1753,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public MapInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1751,6 +1763,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1808,7 +1821,7 @@ public class Protobuf
         }
     }
     
-    public static class StructInstance implements GeneratedMessage
+    public static class StructInstance implements GeneratedMessage<StructInstance>
     {
         public String name = null;
         public List<StructEntry> value = new ArrayList<StructEntry>();
@@ -1877,7 +1890,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public StructInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1887,6 +1900,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -1945,7 +1959,7 @@ public class Protobuf
         }
     }
     
-    public static class ExceptionInstance implements GeneratedMessage
+    public static class ExceptionInstance implements GeneratedMessage<ExceptionInstance>
     {
         public String text = null;
         
@@ -1987,7 +2001,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public ExceptionInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -1997,6 +2011,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -2054,7 +2069,7 @@ public class Protobuf
         }
     }
     
-    public static class BoolInstance implements GeneratedMessage
+    public static class BoolInstance implements GeneratedMessage<BoolInstance>
     {
         public Boolean value = null;
         
@@ -2100,7 +2115,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public BoolInstance deserialize(byte[] bytes)
         {
             try
             {
@@ -2110,6 +2125,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -2167,7 +2183,7 @@ public class Protobuf
         }
     }
     
-    public static class Message implements GeneratedMessage
+    public static class Message implements GeneratedMessage<Message>
     {
         public Integer messageType = null;
         public Long messageId = null;
@@ -2740,7 +2756,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public Message deserialize(byte[] bytes)
         {
             try
             {
@@ -2750,6 +2766,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -2832,7 +2849,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterInterfaceCommand implements GeneratedMessage
+    public static class RegisterInterfaceCommand implements
+            GeneratedMessage<RegisterInterfaceCommand>
     {
         public String name = null;
         public String doc = null;
@@ -2896,7 +2914,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterInterfaceCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -2906,6 +2924,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -2964,7 +2983,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterInterfaceResponse implements GeneratedMessage
+    public static class RegisterInterfaceResponse implements
+            GeneratedMessage<RegisterInterfaceResponse>
     {
         public void checkRequired()
         {
@@ -2986,7 +3006,7 @@ public class Protobuf
         {
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterInterfaceResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -2996,6 +3016,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3052,7 +3073,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterFunctionCommand implements GeneratedMessage
+    public static class RegisterFunctionCommand implements
+            GeneratedMessage<RegisterFunctionCommand>
     {
         public String interfaceName = null;
         public String name = null;
@@ -3138,7 +3160,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterFunctionCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -3148,6 +3170,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3207,7 +3230,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterFunctionResponse implements GeneratedMessage
+    public static class RegisterFunctionResponse implements
+            GeneratedMessage<RegisterFunctionResponse>
     {
         public void checkRequired()
         {
@@ -3229,7 +3253,7 @@ public class Protobuf
         {
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterFunctionResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -3239,6 +3263,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3295,7 +3320,8 @@ public class Protobuf
         }
     }
     
-    public static class CallFunctionCommand implements GeneratedMessage
+    public static class CallFunctionCommand implements
+            GeneratedMessage<CallFunctionCommand>
     {
         public String interfaceName = null;
         public String function = null;
@@ -3382,7 +3408,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public CallFunctionCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -3392,6 +3418,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3451,7 +3478,8 @@ public class Protobuf
         }
     }
     
-    public static class CallFunctionResponse implements GeneratedMessage
+    public static class CallFunctionResponse implements
+            GeneratedMessage<CallFunctionResponse>
     {
         public Instance returnValue = null;
         
@@ -3500,7 +3528,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public CallFunctionResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -3510,6 +3538,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3567,7 +3596,7 @@ public class Protobuf
         }
     }
     
-    public static class RunFunctionCommand implements GeneratedMessage
+    public static class RunFunctionCommand implements GeneratedMessage<RunFunctionCommand>
     {
         public String interfaceName = null;
         public String function = null;
@@ -3658,7 +3687,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public RunFunctionCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -3668,6 +3697,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3727,7 +3757,8 @@ public class Protobuf
         }
     }
     
-    public static class RunFunctionResponse implements GeneratedMessage
+    public static class RunFunctionResponse implements
+            GeneratedMessage<RunFunctionResponse>
     {
         public Instance returnValue = null;
         
@@ -3776,7 +3807,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public RunFunctionResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -3786,6 +3817,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3843,7 +3875,7 @@ public class Protobuf
         }
     }
     
-    public static class ErrorResponse implements GeneratedMessage
+    public static class ErrorResponse implements GeneratedMessage<ErrorResponse>
     {
         public String text = null;
         
@@ -3885,7 +3917,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public ErrorResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -3895,6 +3927,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -3952,7 +3985,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterEventCommand implements GeneratedMessage
+    public static class RegisterEventCommand implements
+            GeneratedMessage<RegisterEventCommand>
     {
         public String interfaceName = null;
         public String eventName = null;
@@ -4038,7 +4072,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterEventCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -4048,6 +4082,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4107,7 +4142,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterEventResponse implements GeneratedMessage
+    public static class RegisterEventResponse implements
+            GeneratedMessage<RegisterEventResponse>
     {
         public void checkRequired()
         {
@@ -4129,7 +4165,7 @@ public class Protobuf
         {
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterEventResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -4139,6 +4175,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4195,7 +4232,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterListenerCommand implements GeneratedMessage
+    public static class RegisterListenerCommand implements
+            GeneratedMessage<RegisterListenerCommand>
     {
         public String interfaceName = null;
         public String eventName = null;
@@ -4263,7 +4301,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterListenerCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -4273,6 +4311,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4331,7 +4370,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterListenerResponse implements GeneratedMessage
+    public static class RegisterListenerResponse implements
+            GeneratedMessage<RegisterListenerResponse>
     {
         public void checkRequired()
         {
@@ -4353,7 +4393,7 @@ public class Protobuf
         {
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterListenerResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -4363,6 +4403,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4419,7 +4460,8 @@ public class Protobuf
         }
     }
     
-    public static class DeregisterListenerCommand implements GeneratedMessage
+    public static class DeregisterListenerCommand implements
+            GeneratedMessage<DeregisterListenerCommand>
     {
         public String interfaceName = null;
         public String eventName = null;
@@ -4487,7 +4529,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public DeregisterListenerCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -4497,6 +4539,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4555,7 +4598,8 @@ public class Protobuf
         }
     }
     
-    public static class DeregisterListenerResponse implements GeneratedMessage
+    public static class DeregisterListenerResponse implements
+            GeneratedMessage<DeregisterListenerResponse>
     {
         public void checkRequired()
         {
@@ -4577,7 +4621,7 @@ public class Protobuf
         {
         }
         
-        public void deserialize(byte[] bytes)
+        public DeregisterListenerResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -4587,6 +4631,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4643,7 +4688,7 @@ public class Protobuf
         }
     }
     
-    public static class FireEventCommand implements GeneratedMessage
+    public static class FireEventCommand implements GeneratedMessage<FireEventCommand>
     {
         public String interfaceName = null;
         public String eventName = null;
@@ -4734,7 +4779,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public FireEventCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -4744,6 +4789,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4803,7 +4849,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterObjectCommand implements GeneratedMessage
+    public static class RegisterObjectCommand implements
+            GeneratedMessage<RegisterObjectCommand>
     {
         public String interfaceName = null;
         public String objectName = null;
@@ -4914,7 +4961,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterObjectCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -4924,6 +4971,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -4984,7 +5032,8 @@ public class Protobuf
         }
     }
     
-    public static class RegisterObjectResponse implements GeneratedMessage
+    public static class RegisterObjectResponse implements
+            GeneratedMessage<RegisterObjectResponse>
     {
         public void checkRequired()
         {
@@ -5006,7 +5055,7 @@ public class Protobuf
         {
         }
         
-        public void deserialize(byte[] bytes)
+        public RegisterObjectResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -5016,6 +5065,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -5072,7 +5122,7 @@ public class Protobuf
         }
     }
     
-    public static class WatchObjectCommand implements GeneratedMessage
+    public static class WatchObjectCommand implements GeneratedMessage<WatchObjectCommand>
     {
         public String interfaceName = null;
         public String objectName = null;
@@ -5140,7 +5190,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public WatchObjectCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -5150,6 +5200,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -5208,7 +5259,8 @@ public class Protobuf
         }
     }
     
-    public static class WatchObjectResponse implements GeneratedMessage
+    public static class WatchObjectResponse implements
+            GeneratedMessage<WatchObjectResponse>
     {
         public String interfaceName = null;
         public String objectName = null;
@@ -5301,7 +5353,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public WatchObjectResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -5311,6 +5363,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -5370,7 +5423,8 @@ public class Protobuf
         }
     }
     
-    public static class UnwatchObjectCommand implements GeneratedMessage
+    public static class UnwatchObjectCommand implements
+            GeneratedMessage<UnwatchObjectCommand>
     {
         public String interfaceName = null;
         public String objectName = null;
@@ -5438,7 +5492,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public UnwatchObjectCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -5448,6 +5502,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -5506,7 +5561,8 @@ public class Protobuf
         }
     }
     
-    public static class UnwatchObjectResponse implements GeneratedMessage
+    public static class UnwatchObjectResponse implements
+            GeneratedMessage<UnwatchObjectResponse>
     {
         public String interfaceName = null;
         public String objectName = null;
@@ -5574,7 +5630,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public UnwatchObjectResponse deserialize(byte[] bytes)
         {
             try
             {
@@ -5584,6 +5640,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
@@ -5642,7 +5699,7 @@ public class Protobuf
         }
     }
     
-    public static class SetObjectCommand implements GeneratedMessage
+    public static class SetObjectCommand implements GeneratedMessage<SetObjectCommand>
     {
         public String interfaceName = null;
         public String objectName = null;
@@ -5735,7 +5792,7 @@ public class Protobuf
             }
         }
         
-        public void deserialize(byte[] bytes)
+        public SetObjectCommand deserialize(byte[] bytes)
         {
             try
             {
@@ -5745,6 +5802,7 @@ public class Protobuf
             {
                 throw new RuntimeException(e);
             }
+            return this;
         }
         
         public byte[] serialize()
