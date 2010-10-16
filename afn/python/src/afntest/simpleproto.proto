@@ -1,0 +1,249 @@
+option java_package = "afn.libautobus.protocol";
+option java_outer_classname = "Protobuf";
+
+message MapEntry {
+    required Instance key = 1;
+    required Instance value = 2;
+}
+
+message StructEntry {
+    required string key = 1;
+    required Instance value = 2;
+}
+
+message Instance {
+    optional IntegerInstance value1 = 1;
+    optional LongInstance value2 = 2;
+    optional DoubleInstance value3 = 3;
+    optional StringInstance value4 = 4;
+    optional TimestampInstance value5 = 5;
+    optional NullInstance value6 = 6;
+    optional ListInstance value7 = 7;
+    optional MapInstance value8 = 8;
+    optional StructInstance value9 = 9;
+    optional ExceptionInstance value10 = 10;
+    optional BoolInstance value11 = 11;
+    required string value_n = 100; // Apparently, protobuf doesn't really allow
+    // composite types to be optional. WHICH I HATE. So we're using this as a
+    // makeshift alternative. See libautobus.ProtoMultiAccessor for more
+    // information on what the heck this does.
+}
+
+message IntegerInstance {
+    required fixed32 value = 1;
+}
+
+message LongInstance {
+    required fixed64 value = 1;
+}
+
+message DoubleInstance {
+    required double value = 1;
+}
+
+message StringInstance {
+    required string value = 1;
+}
+
+message TimestampInstance {
+    required fixed32 year = 1;
+    required fixed32 month = 2;
+    required fixed32 day = 3;
+    required fixed32 hour = 4;
+    required fixed32 minute = 5;
+    required fixed32 second = 6;
+    required fixed32 millisecond = 7;
+}
+
+message NullInstance {
+}
+
+message ListInstance {
+    repeated Instance value = 1;
+}
+
+message MapInstance {
+    repeated MapEntry value = 1;
+}
+
+message StructInstance {
+    required string name = 1;
+    repeated StructEntry value = 2;
+}
+
+message ExceptionInstance {
+    optional string text = 1;
+}
+
+message BoolInstance {
+    required bool value = 1;
+}
+
+message Message {
+    required fixed32 message_type = 1; // command, response, or notification
+    required fixed64 message_id = 60;
+    optional RegisterInterfaceCommand value2 = 2;
+    optional RegisterInterfaceResponse value3 = 3;
+    optional RegisterFunctionCommand value4 = 4;
+    optional RegisterFunctionResponse value5 = 5;
+    optional CallFunctionCommand value6 = 6;
+    optional CallFunctionResponse value7 = 7;
+    optional RunFunctionCommand value8 = 8;
+    optional RunFunctionResponse value9 = 9;
+    optional ErrorResponse value10 = 10;
+    optional RegisterEventCommand value11 = 11;
+    optional RegisterEventResponse value12 = 12;
+    optional RegisterListenerCommand value13 = 13;
+    optional RegisterListenerCommand value14 = 14;
+    optional DeregisterListenerCommand value15 = 15;
+    optional DeregisterListenerResponse value16 = 16;
+    optional FireEventCommand value17 = 17;
+    // 18 reserved in case we ever need a FireEventResponse
+    optional RegisterObjectCommand value19 = 19;
+    optional RegisterObjectResponse value20 = 20;
+    optional WatchObjectCommand value21 = 21;
+    optional WatchObjectResponse value22 = 22;
+    optional UnwatchObjectCommand value23 = 23;
+    optional UnwatchObjectCommand value24 = 24;
+    optional SetObjectCommand value25 = 25;
+    // 26 reserved in case we ever need a SetObjectResponse
+    required string value_n = 100;
+}
+
+message RegisterInterfaceCommand {
+    required string name = 1;
+    optional string doc = 3;
+}
+
+message RegisterInterfaceResponse {
+}
+
+message RegisterFunctionCommand {
+    required string interface_name = 2;
+    required string name = 3;
+    optional string doc = 4;
+}
+
+message RegisterFunctionResponse {
+}
+
+message CallFunctionCommand {
+    optional string interface_name = 2;
+    required string function = 3;
+    repeated Instance arguments = 4;
+}
+
+message CallFunctionResponse {
+    required Instance return_value = 1;
+}
+
+message RunFunctionCommand {
+    required string interface_name = 2;
+    required string function = 3;
+    repeated Instance arguments = 4;
+}
+
+message RunFunctionResponse {
+    required Instance return_value = 1;
+}
+
+message ErrorResponse {
+    optional string text = 1;
+}
+
+message RegisterEventCommand {
+    required string interface_name = 1;
+    required string event_name = 2;
+    optional string doc = 3;
+}
+
+message RegisterEventResponse {
+}
+
+message RegisterListenerCommand {
+    required string interface_name = 1;
+    required string event_name = 2;
+}
+
+message RegisterListenerResponse {
+}
+
+message DeregisterListenerCommand {
+    required string interface_name = 1;
+    required string event_name = 2;
+}
+
+message DeregisterListenerResponse {
+}
+
+message FireEventCommand {
+    required string interface_name = 1;
+    required string event_name = 2;
+    repeated Instance arguments = 4;
+}
+
+message RegisterObjectCommand {
+    required string interface_name = 1;
+    required string object_name = 2;
+    optional string doc = 3;
+    required Instance value = 4;
+}
+
+message RegisterObjectResponse {
+}
+
+message WatchObjectCommand {
+    required string interface_name = 1;
+    required string object_name = 2;
+}
+
+message WatchObjectResponse {
+    // We include the interface and object names in the response to simplify
+    // code (like the Python version of libautobus) that processes the response
+    // in a thread other than the one that put in the request
+    required string interface_name = 1;
+    required string object_name = 2;
+    required Instance value = 3;
+}
+
+message UnwatchObjectCommand {
+    required string interface_name = 1;
+    required string object_name = 2;
+}
+
+message UnwatchObjectResponse {
+    required string interface_name = 1;
+    required string object_name = 2;
+}
+
+message SetObjectCommand {
+    required string interface_name = 1;
+    required string object_name = 2;
+    required Instance value = 4;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

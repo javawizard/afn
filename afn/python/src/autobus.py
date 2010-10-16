@@ -148,6 +148,12 @@ class AutobusInterface(object):
                         "special": function.special, "doc": function.doc})
         return result
     
+    def list_objects(self, interface_name):
+        """
+        Same as list_functions, but returns a list of objects available on this
+        interface. 
+        """
+    
     def get_processed_message_count(self):
         """
         Returns the number of messages that Autobus has received and processed
@@ -579,7 +585,8 @@ def process_watch_object_command(message, sender, connection):
     except (NoSuchInterfaceException, KeyError): # Object doesn't exist yet
         object_value = encode_object(None)
     response_message, response = create_message_pair(protobuf.WatchObjectResponse,
-            message, value=object_value)
+            message, interface_name=interface_name, object_name=object_name,
+            value=object_value)
     connection.send(response_message)
 
 def process_set_object_command(message, sender, connection):

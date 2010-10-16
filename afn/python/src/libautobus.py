@@ -113,7 +113,10 @@ def read_fully(socket, length):
     data = ""
     while len(data) < length:
 #        print "Reading bytes..."
-        new_data = socket.recv(length - len(data))
+        try:
+            new_data = socket.recv(length - len(data))
+        except: # Sporadically happens if the socket dies
+            new_data = ""
 #        print str(len(new_data)) + " bytes received"
         if new_data == "":
             raise EOFError()
@@ -505,6 +508,7 @@ class AutobusConnection(object):
         Creates a new connection. This doesn't actually connect to the
         autobus server; use connect() or start_connecting() for that.
         """
+        self.socket = None
         self.host = host
         self.port = port
         self.reconnect = reconnect
@@ -664,11 +668,14 @@ class AutobusConnection(object):
             message, register_message = create_message_pair(
                     protobuf.WatchObjectCommand, COMMAND,
                     interface_name=interface_name, object_name=object_name)
-            response = self.query(message)
-            self.object_values[(interface_name, object_name)] = (
-                    decode_object(MessageValue[response].value))
-            self.notify_object_listeners((interface_name, object_name)) 
-#        print "Calling custom on_connection action"
+            self.send(message) # I used to send this as a query and set the
+            # resulting value into the object, but this caused a race condition
+            # where another value arriving as a SetObjectCommand before the
+            # logic in this method could get the new value set into the object
+            # would cause the object to be reset to its initial value. So for
+            # now, we're processing the WatchObjectResponse in message_arrived
+            # the same as we process SetObjectCommand instances from the
+            # server, which fixes the race condition.
         self.on_connect()
         
     def message_arrived(self, message):
@@ -702,7 +709,8 @@ class AutobusConnection(object):
                     message, return_value=encode_object(return_value))
             self.send(response)
             return
-        if isinstance(message_value, protobuf.SetObjectCommand):
+        if isinstance(message_value, (protobuf.SetObjectCommand, 
+                protobuf.WatchObjectResponse)):
             interface_name = message_value.interface_name
             object_name = message_value.object_name
             value = message_value.value
@@ -896,6 +904,20 @@ class AutobusConnection(object):
         send_queue = self.send_queue
         if send_queue is not None:
             send_queue.join()
+    
+    def unshutdown(self):
+        """
+        Marks a shutdown Autobus connection as no longer shut down. This
+        generally should not be used in production code; it's mostly for those
+        that want to disconnect and reconnect an Autobus connection
+        experimentally. The connection must have previously been shut down with
+        shutdown() and sufficient time given for the connection to stop trying
+        to reconnect. After this is called, all local interfaces, functions,
+        objects, etc, will still be registered to this connection, and a call
+        to connect() or start_connecting() immediately after calling this
+        function will cause them to be re-registered with the server.
+        """
+        self.is_shut_down = False
     
 
 

@@ -174,7 +174,7 @@ _INTEGERINSTANCE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='value', full_name='IntegerInstance.value', index=0,
-      number=1, type=5, cpp_type=1, label=2,
+      number=1, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -196,7 +196,7 @@ _LONGINSTANCE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='value', full_name='LongInstance.value', index=0,
-      number=1, type=3, cpp_type=2, label=2,
+      number=1, type=6, cpp_type=4, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -262,49 +262,49 @@ _TIMESTAMPINSTANCE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='year', full_name='TimestampInstance.year', index=0,
-      number=1, type=5, cpp_type=1, label=2,
+      number=1, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='month', full_name='TimestampInstance.month', index=1,
-      number=2, type=5, cpp_type=1, label=2,
+      number=2, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='day', full_name='TimestampInstance.day', index=2,
-      number=3, type=5, cpp_type=1, label=2,
+      number=3, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='hour', full_name='TimestampInstance.hour', index=3,
-      number=4, type=5, cpp_type=1, label=2,
+      number=4, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='minute', full_name='TimestampInstance.minute', index=4,
-      number=5, type=5, cpp_type=1, label=2,
+      number=5, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='second', full_name='TimestampInstance.second', index=5,
-      number=6, type=5, cpp_type=1, label=2,
+      number=6, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='millisecond', full_name='TimestampInstance.millisecond', index=6,
-      number=7, type=5, cpp_type=1, label=2,
+      number=7, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -458,14 +458,14 @@ _MESSAGE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='message_type', full_name='Message.message_type', index=0,
-      number=1, type=5, cpp_type=1, label=2,
+      number=1, type=7, cpp_type=3, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='message_id', full_name='Message.message_id', index=1,
-      number=60, type=3, cpp_type=2, label=2,
+      number=60, type=6, cpp_type=4, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1149,8 +1149,22 @@ _WATCHOBJECTRESPONSE = descriptor.Descriptor(
   containing_type=None,
   fields=[
     descriptor.FieldDescriptor(
-      name='value', full_name='WatchObjectResponse.value', index=0,
-      number=1, type=11, cpp_type=10, label=2,
+      name='interface_name', full_name='WatchObjectResponse.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='object_name', full_name='WatchObjectResponse.object_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='value', full_name='WatchObjectResponse.value', index=2,
+      number=3, type=11, cpp_type=10, label=2,
       default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1199,6 +1213,20 @@ _UNWATCHOBJECTRESPONSE = descriptor.Descriptor(
   filename='autobus.proto',
   containing_type=None,
   fields=[
+    descriptor.FieldDescriptor(
+      name='interface_name', full_name='UnwatchObjectResponse.interface_name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    descriptor.FieldDescriptor(
+      name='object_name', full_name='UnwatchObjectResponse.object_name', index=1,
+      number=2, type=9, cpp_type=9, label=2,
+      default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
