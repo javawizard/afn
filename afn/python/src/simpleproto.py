@@ -173,7 +173,9 @@ import java.util.Set;
 import java.io.IOException;
 
 public class %(output_class)s {
-public static interface GeneratedMessage {public byte[] serialize();public void deserialize(byte[] bytes);}
+public static interface GeneratedMessage<T extends GeneratedMessage<T>> 
+{public byte[] serialize();public T deserialize(byte[] bytes);
+public void set(String name, Object value);}
 protected static int readVarint(DataInputStream in)throws IOException{
     int value = 0;
     int i;
@@ -263,7 +265,7 @@ protected static void writeString(DataOutputStream out, String string)throws IOE
 
 for message in messages:
     write("""
-    public static class %(name)s implements GeneratedMessage { 
+    public static class %(name)s implements GeneratedMessage<%(name)s> { 
     """, name=message.name)
     for field in message.fields:
         write("""
@@ -351,9 +353,9 @@ for message in messages:
         write("}")
     write("""
     }
-    public void deserialize(byte[] bytes){
+    public %(message_type)s deserialize(byte[] bytes){
         try{readFrom(new DataInputStream(new ByteArrayInputStream(bytes)));}
-        catch(IOException e){throw new RuntimeException(e);}
+        catch(IOException e){throw new RuntimeException(e);}return this;
     }
     public byte[] serialize(){
         try{
@@ -383,7 +385,7 @@ for message in messages:
         }catch(Exception e){throw new RuntimeException(e);}
     }
     static{
-    """)
+    """, message_type=message.name)
     for field in message.fields:
         write("_typeMap.put(\"%(name)s\", %(ctype)s.class);", 
                 name=field.studley_name, ctype=field.component_type)
