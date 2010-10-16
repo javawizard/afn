@@ -12,7 +12,7 @@ is_jython = platform.system() == "Java"
 if is_jython:
     def jython_buffer(object, offset=None, size=None):
         if size is not None:
-            return object[offset:offset+size]
+            return object[offset:offset + size]
         elif offset is not None:
             return object[offset:]
         return object[:]
@@ -307,7 +307,7 @@ def encode_object(object, instance=None):
         InstanceValue[instance] = protobuf.TimestampInstance(year=object.year,
                 month=object.month, day=object.day, hour=object.hour,
                 minute=object.minute, second=object.second,
-                millisecond=object.microsecond/1000)
+                millisecond=object.microsecond / 1000)
     elif object is None:
         InstanceValue[instance] = protobuf.NullInstance()
     elif isinstance(object, (list, tuple)):
@@ -417,6 +417,8 @@ class FunctionWrapper(FunctionWrapperSuper):
     
     if is_jython:
         def invoke(self, args):
+            return self(*args)
+        def invoke_py(self, args):
             return self(*args)
     
     def __str__(self):
@@ -765,7 +767,7 @@ class AutobusConnection(AutobusConnectionSuper):
                     message, return_value=encode_object(return_value))
             self.send(response)
             return
-        if isinstance(message_value, (protobuf.SetObjectCommand, 
+        if isinstance(message_value, (protobuf.SetObjectCommand,
                 protobuf.WatchObjectResponse)):
             interface_name = message_value.interface_name
             object_name = message_value.object_name
