@@ -1,4 +1,23 @@
 
+from __future__ import with_statement
+import platform
+import sys
+
+is_jython = platform.system() == "Java"
+
+# Workaround to get libautobus to work on Jython. Jython does not have Python's
+# built-in buffer function, which Google's protocol buffers stuff needs to run.
+# If we're on Jython, then, we'll create our own equivalent of the buffer
+# function and install it in builtins.
+if is_jython:
+    def jython_buffer(object, offset=None, size=None):
+        if size is not None:
+            return object[offset:offset+size]
+        elif offset is not None:
+            return object[offset:]
+        return object[:]
+    sys.builtins["buffer"] = jython_buffer #@UndefinedVariable
+
 from threading import Thread, RLock
 from struct import pack, unpack
 import autobus_protobuf.autobus_pb2 as protobuf
@@ -9,6 +28,33 @@ from Queue import Queue, Empty
 from time import sleep
 import inspect
 from datetime import datetime
+if is_jython:
+    from java.util import Map, List #@UnresolvedImport
+    from org.python.core import Options #@UnresolvedImport
+    from array import array
+    from afn.libautobus import (AutobusConnection as AutobusConnectionSuper, #@UnresolvedImport
+            InterfaceWrapper as InterfaceWrapperSuper, #@UnresolvedImport
+            FunctionWrapper as FunctionWrapperSuper, #@UnresolvedImport
+            ObjectWrapper as ObjectWrapperSuper) #@UnresolvedImport
+    Options.respectJavaAccessibility = False
+
+# We want to allow some additional types beyond the normal Python types to be
+# encoded, so we'll use a function to do the translation
+if is_jython:
+    def jython_encode_replace(object):
+        if isinstance(object, Map):
+            return dict(object)
+        if isinstance(object, (List, array)):
+            return list(object)
+        return object
+else:
+    def jython_encode_replace(object):
+        return object
+if not is_jython:
+    AutobusConnectionSuper = object
+    InterfaceWrapperSuper = object
+    FunctionWrapperSuper = object
+    ObjectWrapperSuper = object
 
 COMMAND = 1
 RESPONSE = 2
@@ -246,14 +292,15 @@ def encode_object(object, instance=None):
     """
     if instance is None:
         instance = protobuf.Instance()
-    if isinstance(object, int):
+    object = jython_encode_replace(object)
+    if isinstance(object, bool):
+        InstanceValue[instance] = protobuf.BoolInstance(value=object)
+    elif isinstance(object, int):
         InstanceValue[instance] = protobuf.IntegerInstance(value=object)
     elif isinstance(object, long):
         InstanceValue[instance] = protobuf.LongInstance(value=object)
     elif isinstance(object, float):
         InstanceValue[instance] = protobuf.DoubleInstance(value=object)
-    elif isinstance(object, bool):
-        InstanceValue[instance] = protobuf.BoolInstance(value=object)
     elif isinstance(object, basestring):
         InstanceValue[instance] = protobuf.StringInstance(value=object)
     elif isinstance(object, datetime):
@@ -334,7 +381,7 @@ def get_function_doc(interface, function_name):
         doc = ""
     return function_name + args + "\n\n" + doc
 
-class InterfaceWrapper(object):
+class InterfaceWrapper(InterfaceWrapperSuper):
     def __init__(self, connection, name):
         self.connection = connection
         self.name = name
@@ -342,10 +389,13 @@ class InterfaceWrapper(object):
     def __getattr__(self, attribute):
         return FunctionWrapper(self.connection, self, attribute)
     
+    if is_jython:
+        get_function = __getattr__
+    
     def __str__(self):
         return "<InterfaceWrapper on interface " + self.name + ">"
 
-class FunctionWrapper(object):
+class FunctionWrapper(FunctionWrapperSuper):
     def __init__(self, connection, interface, name):
         self.connection = connection
         self.interface = interface
@@ -365,13 +415,17 @@ class FunctionWrapper(object):
             raise result
         return result
     
+    if is_jython:
+        def invoke(self, args):
+            return self(*args)
+    
     def __str__(self):
         return ("<FunctionWrapper on function " + self.name + " and interface "
                 + str(self.interface) + ">")
     
     __repr__ = __str__
 
-class ObjectWrapper(object):
+class ObjectWrapper(ObjectWrapperSuper):
     pass
 
 class LocalInterface(object):
@@ -465,7 +519,7 @@ class LocalObject(object):
                     object_name=self.name, value=encode_object(self.value))
             self.interface.connection.send(message)
 
-class AutobusConnection(object):
+class AutobusConnection(AutobusConnectionSuper):
     """
     A connection to an Autobus server. The typical way to use libautobus is to
     create an instance of this class and go from there.
@@ -619,6 +673,8 @@ class AutobusConnection(object):
         established, this method returns. If it fails to establish a
         connection, an exception will be raised.
         """
+        if attempts == 0:
+            attempts = None
         progress = 0
         delay = 0.1
         delay_increment = 1.5
@@ -701,7 +757,7 @@ class AutobusConnection(object):
                 interface = self.interfaces[interface_name]
                 function = interface.functions[function_name]
                 return_value = function.function(*arguments)
-            except Exception as e:
+            except Exception, e:
                 if self.print_exceptions:
                     print_exc()
                 return_value = e

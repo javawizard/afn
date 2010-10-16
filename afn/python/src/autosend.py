@@ -63,14 +63,14 @@ parser.add_option("-w", action="store_const", const="watch", dest="mode",
         "value changes, the new value will be printed to stdout. Like -e, "
         "you'll have to use Ctrl+C to kill autosend when you're done watching "
         "the object's value change.")
-parser.add_option("-?", "--help", action="store_true", dest="help", default=False)
+parser.add_option("-?", "--help", action="store_const", const="help", dest="mode")
 options, command_line_args = parser.parse_args()
 
 mode = options.mode
 if mode == "unspecified":
     if len(command_line_args) == 0:
         mode = "list"
-        print "Use autosend --help for more information."
+        print "Use autosend --help for more information.\n"
     elif len(command_line_args) == 1:
         mode = "interface"
     elif len(command_line_args) >= 2:

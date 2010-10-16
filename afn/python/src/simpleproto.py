@@ -173,9 +173,11 @@ import java.util.Set;
 import java.io.IOException;
 
 public class %(output_class)s {
-public static interface GeneratedMessage<T extends GeneratedMessage<T>> 
-{public byte[] serialize();public T deserialize(byte[] bytes);
-public void set(String name, Object value);}
+public static interface GeneratedMessage<E extends GeneratedMessage<E>> 
+{public byte[] serialize();public E deserialize(byte[] bytes);
+public <T> T get(String name);public void set(String name, Object value);
+public Class<?> getInstanceClassForField(String fieldName);
+}
 protected static int readVarint(DataInputStream in)throws IOException{
     int value = 0;
     int i;
@@ -371,6 +373,9 @@ for message in messages:
     public static Class<?> getClassForField(String name){
         return _typeMap.get(name);
     }
+    public Class<?> getInstanceClassForField(String name){
+        return getClassForField(name);
+    }
     public static List<String> getFieldNamesForPrefix(String prefix){
         ArrayList<String> list = new ArrayList<String>();
         for(String name : getFieldNames()){
@@ -384,10 +389,16 @@ for message in messages:
             getClass().getField(name).set(this, value);
         }catch(Exception e){throw new RuntimeException(e);}
     }
+    @SuppressWarnings("unchecked")
+    public <T> T get(String name){
+        try{
+            return (T) getClass().getField(name).get(this);
+        }catch(Exception e){throw new RuntimeException(e);}
+    }
     static{
     """, message_type=message.name)
     for field in message.fields:
-        write("_typeMap.put(\"%(name)s\", %(ctype)s.class);", 
+        write("_typeMap.put(\"%(name)s\", %(ctype)s.class);",
                 name=field.studley_name, ctype=field.component_type)
     write("}}")
 
