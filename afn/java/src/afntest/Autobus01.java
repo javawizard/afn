@@ -6,6 +6,7 @@ import java.util.Map;
 import afn.libautobus.AutobusConnection;
 import afn.libautobus.FunctionWrapper;
 import afn.libautobus.InterfaceWrapper;
+import afn.libautobus.ObjectListener;
 
 public class Autobus01
 {
@@ -20,6 +21,10 @@ public class Autobus01
         public List<String> get_voice_names();
         
         public int get_pid();
+        
+        // A method that doesn't exist on the actual speak interface that I was using to
+        // test out what would happen when a nonexistant method is called
+        public void bogus();
     }
     
     /**
@@ -29,11 +34,22 @@ public class Autobus01
     {
         AutobusConnection bus =
                 AutobusConnection.create("localhost", AutobusConnection.DEFAULT_PORT);
+        bus.add_object_watch("example", "test", new ObjectListener<?>()
+        {
+            
+            @Override
+            public void changed(Object value)
+            {
+                System.out.println("New object value: " + value);
+                if (value instanceof List)
+                    System.out.println("List. First value: " + ((List) value).get(0));
+            }
+        });
         bus.connect(1);
         SpeakInterface speak = bus.get_interface_proxy("speak", SpeakInterface.class);
         speak.say_text("timer 7");
         System.out.println("Default voice is " + speak.get_default_voice());
         System.out.println("Speak server's pid is " + speak.get_pid());
-        bus.shutdown();
+        // bus.shutdown();
     }
 }

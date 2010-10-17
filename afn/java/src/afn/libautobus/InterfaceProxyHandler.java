@@ -24,10 +24,18 @@ public class InterfaceProxyHandler implements InvocationHandler
     {
         if (args == null)
             args = new Object[0];
-        PyObject result = interfaceWrapper.get_function(method.getName()).invoke_py(args);
-        if (method.getReturnType() == Void.TYPE)
-            return null;
-        return Py.tojava(result, method.getReturnType());
+        try
+        {
+            PyObject result =
+                    interfaceWrapper.get_function(method.getName()).invoke_py(args);
+            if (method.getReturnType() == Void.TYPE)
+                return null;
+            return Py.tojava(result, method.getReturnType());
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Method invocation threw an exception", e);
+        }
     }
     
 }

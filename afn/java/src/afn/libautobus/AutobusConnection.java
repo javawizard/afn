@@ -2,6 +2,7 @@ package afn.libautobus;
 
 import java.lang.reflect.Proxy;
 
+import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
 import org.python.core.PyInteger;
@@ -46,6 +47,8 @@ public class AutobusConnection
         if (!hasLoadedPython)
         {
             hasLoadedPython = true;
+            Options.showJavaExceptions = true;
+            Options.includeJavaStackInExceptions = true;
             pythonInterpreter.exec("import sys");
             pythonInterpreter.exec("sys.path += ['../afn-python/src']");
             pythonInterpreter.exec("import libautobus");
@@ -88,6 +91,11 @@ public class AutobusConnection
     }
     
     public void shutdown()
+    {
+    }
+    
+    public void add_object_watch(String interfaceName, String objectName,
+            ObjectListener<?> listener)
     {
     }
 }
