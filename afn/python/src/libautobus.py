@@ -646,6 +646,9 @@ class AutobusConnection(AutobusConnectionSuper):
         to call functions etc), the function you supply should start a new
         thread to do so.
         """
+        if hasattr(function, "changed"): # We're on Jython and the function
+            # is an instance of ObjectListener
+            function = function.changed
         object_spec = interface_name, object_name
         if object_spec not in self.object_listeners:
             self.object_listeners[object_spec] = []
