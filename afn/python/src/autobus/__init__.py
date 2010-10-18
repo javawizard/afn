@@ -665,36 +665,37 @@ autobus_interface.register_special()
 
 # MAIN CODE
 
-server = Socket()
-if len(sys.argv) > 1:
-    server_port = int(sys.argv[1])
-else:
-    server_port = DEFAULT_PORT
-print "Listening on port " + str(server_port)
-server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-server.bind(("", server_port))
-server.listen(50)
-
-Thread(target=process_event_queue).start()
-
-print "\nAutobus has successfully started up."
-
-try:
-    while True:
-        socket, address = server.accept()
-        connection = Connection(socket)
-        event_queue.put((connection.id, discard_args(connection.register)), block=True)
-        connection.start()
-except KeyboardInterrupt:
-    print "KeyboardInterrupt received, shutting down"
-    event_queue.put((None, None), block=True)
-    print "Event queue has been notified to shut down"
-except:
-    print "Unexpected exception occurred in the main loop, shutting down. Stack trace:"
-    print_exc()
-    event_queue.put((None, None), block=True)
-    print "Event queue has been notified to shut down"
-server.close()
+def main():
+    server = Socket()
+    if len(sys.argv) > 1:
+        server_port = int(sys.argv[1])
+    else:
+        server_port = DEFAULT_PORT
+    print "Listening on port " + str(server_port)
+    server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    server.bind(("", server_port))
+    server.listen(50)
+    
+    Thread(target=process_event_queue).start()
+    
+    print "\nAutobus has successfully started up."
+    
+    try:
+        while True:
+            socket, address = server.accept()
+            connection = Connection(socket)
+            event_queue.put((connection.id, discard_args(connection.register)), block=True)
+            connection.start()
+    except KeyboardInterrupt:
+        print "KeyboardInterrupt received, shutting down"
+        event_queue.put((None, None), block=True)
+        print "Event queue has been notified to shut down"
+    except:
+        print "Unexpected exception occurred in the main loop, shutting down. Stack trace:"
+        print_exc()
+        event_queue.put((None, None), block=True)
+        print "Event queue has been notified to shut down"
+    server.close()
 
     
 
