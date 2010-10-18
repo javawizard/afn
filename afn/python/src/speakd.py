@@ -46,14 +46,6 @@ speech_queue = {}
 speech_queue_lock = RLock()
 is_shutting_down = False
 
-print "Opening audio device..."
-
-audio_device = pyaudio.PyAudio()
-audio_stream = audio_device.open(format=audio_device.get_format_from_width(2),
-                                 channels=1, rate=44100, output=True,
-                                 frames_per_buffer=1024)
-audio_stream.stop_stream()
-
 class Sentence(object):
     def __init__(self, components, voice, priority):
         self.components = components
@@ -337,61 +329,74 @@ class RPC(object):
                 self.time_format_month_day(time))
 
 
-bus = AutobusConnection(host, port, print_exceptions=True)
-bus.add_interface(interface_name, RPC())
-speech_queue_object = bus.add_object(interface_name, "speech_queue", """
-This doesn't work yet.
-""", {})
-bus.start_connecting()
-
 def sanitize_file(name):
     return name.replace(".", "").replace("\\", "").replace("/", "")
 
-print ""
-print "Speakd has successfully started up. PID is " + str(os.getpid())
-try:
-    while not is_shutting_down:
-    #   print "Main loop"
-        sentence_tuple = get_next_sentence()
-        if sentence_tuple is None:
-    #       print "Nothing to say"
-            time.sleep(0.5)
-            continue
-        priority, sentence = sentence_tuple
-        print "Something to say: " + str(sentence.components)
-        if sentence.voice is not None:
-            voice = voices[sentence.voice]
-        else:
-            voice = voices[default_voice]
-        voice_path = voice.path
-        print "Saying with voice " + voice.name
-        audio_stream.start_stream()
-        for item in sentence.components:
-            if isinstance(item, basestring):
-                file = sanitize_file(item)
-                print "Saying word " + file
-                try:
-                    wave_file = wave.open(os.path.join(voice_path, file + ".wav"), "r")
-                except:
-                    print "File " + file + " does not exist for voice " + voice.name + ". It will be silently ignored."
-                    continue
-                data = wave_file.readframes(1024)
-                while data != "":
-                    audio_stream.write(data)
+    print "Opening audio device..."
+
+def main():
+    global audio_device
+    global autio_stream
+    global bus
+    global speech_queue_object
+    audio_device = pyaudio.PyAudio()
+    audio_stream = audio_device.open(format=audio_device.get_format_from_width(2),
+                                     channels=1, rate=44100, output=True,
+                                     frames_per_buffer=1024)
+    audio_stream.stop_stream()
+    
+    bus = AutobusConnection(host, port, print_exceptions=True)
+    bus.add_interface(interface_name, RPC())
+    speech_queue_object = bus.add_object(interface_name, "speech_queue", """
+    This doesn't work yet.
+    """, {})
+    bus.start_connecting()
+    
+    print ""
+    print "Speakd has successfully started up. PID is " + str(os.getpid())
+    try:
+        while not is_shutting_down:
+        #   print "Main loop"
+            sentence_tuple = get_next_sentence()
+            if sentence_tuple is None:
+        #       print "Nothing to say"
+                time.sleep(0.5)
+                continue
+            priority, sentence = sentence_tuple
+            print "Something to say: " + str(sentence.components)
+            if sentence.voice is not None:
+                voice = voices[sentence.voice]
+            else:
+                voice = voices[default_voice]
+            voice_path = voice.path
+            print "Saying with voice " + voice.name
+            audio_stream.start_stream()
+            for item in sentence.components:
+                if isinstance(item, basestring):
+                    file = sanitize_file(item)
+                    print "Saying word " + file
+                    try:
+                        wave_file = wave.open(os.path.join(voice_path, file + ".wav"), "r")
+                    except:
+                        print "File " + file + " does not exist for voice " + voice.name + ". It will be silently ignored."
+                        continue
                     data = wave_file.readframes(1024)
-            elif isinstance(item, int):
-                print "Pausing for " + str(item) + " milliseconds"
-                time.sleep((item * 1.0) / 1000.0)
-            print "Flushing bus outbound queue"
-            bus.flush()
-        print "Waiting..."
-        time.sleep(1)
-        print "Closing audio stream"
-        audio_stream.stop_stream()
-        print "Done."
-except KeyboardInterrupt:
-    print "Interrupted, shutting down"
-    bus.shutdown()
+                    while data != "":
+                        audio_stream.write(data)
+                        data = wave_file.readframes(1024)
+                elif isinstance(item, int):
+                    print "Pausing for " + str(item) + " milliseconds"
+                    time.sleep((item * 1.0) / 1000.0)
+                print "Flushing bus outbound queue"
+                bus.flush()
+            print "Waiting..."
+            time.sleep(1)
+            print "Closing audio stream"
+            audio_stream.stop_stream()
+            print "Done."
+    except KeyboardInterrupt:
+        print "Interrupted, shutting down"
+        bus.shutdown()
 
 
 
