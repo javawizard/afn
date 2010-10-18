@@ -37,40 +37,46 @@ class RPC(object):
         """
         return current_time
 
-rpc = RPC()
-
-bus = AutobusConnection()
-bus.add_interface("saytime", rpc)
-bus.start_connecting()
-speak_server = bus["speak"]
-
-start_time = datetime.now()
-current_time = start_time
-next_minute = start_time
-
-try:
-    while True:
-        interval_to_next = next_minute - datetime.now()
-        time_to_next = float(interval_to_next.seconds) + (interval_to_next.microseconds / 1000000.0)
-        if interval_to_next.days < 0:
-            time_to_next = 0
-        print "Waiting " + str(time_to_next) + " seconds"
-        sleep(time_to_next)
-        sleep(0.2) # Make sure we're at the next minute
-        current_hour = next_minute.hour
-        current_minute = next_minute.minute
-        current_time = next_minute
-        next_minute = next_minute + interval(seconds=70)
-        next_minute = datetime(year=next_minute.year, month=next_minute.month, day=next_minute.day, hour=next_minute.hour, minute=next_minute.minute)
-        print "Processing instructions for " + str(current_hour) + ":" + str(current_minute)
-        if (current_hour >= 8 and current_hour < 20) or (current_hour == 20 and 
-                                                         current_minute == 0): 
-            if current_minute == 0:
-                rpc.datetime()
-            elif (current_minute % 15) == 0:
-                rpc.time()
-finally:
-    bus.shutdown()
+def main():
+    global current_time
+    global speak_server
+    rpc = RPC()
+    
+    host="localhost"
+    if len(sys.argv) > 1:
+        host = sys.argv[1]
+    bus = AutobusConnection(host)
+    bus.add_interface("saytime", rpc)
+    bus.start_connecting()
+    speak_server = bus["speak"]
+    
+    start_time = datetime.now()
+    current_time = start_time
+    next_minute = start_time
+    
+    try:
+        while True:
+            interval_to_next = next_minute - datetime.now()
+            time_to_next = float(interval_to_next.seconds) + (interval_to_next.microseconds / 1000000.0)
+            if interval_to_next.days < 0:
+                time_to_next = 0
+            print "Waiting " + str(time_to_next) + " seconds"
+            sleep(time_to_next)
+            sleep(0.2) # Make sure we're at the next minute
+            current_hour = next_minute.hour
+            current_minute = next_minute.minute
+            current_time = next_minute
+            next_minute = next_minute + interval(seconds=70)
+            next_minute = datetime(year=next_minute.year, month=next_minute.month, day=next_minute.day, hour=next_minute.hour, minute=next_minute.minute)
+            print "Processing instructions for " + str(current_hour) + ":" + str(current_minute)
+            if (current_hour >= 8 and current_hour < 20) or (current_hour == 20 and 
+                                                             current_minute == 0): 
+                if current_minute == 0:
+                    rpc.datetime()
+                elif (current_minute % 15) == 0:
+                    rpc.time()
+    finally:
+        bus.shutdown()
 
 
 
