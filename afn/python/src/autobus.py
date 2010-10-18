@@ -43,7 +43,8 @@ InstanceValue = ProtoMultiAccessor(protobuf.Instance, "value")
 def register_object_watch(interface_name, object_name, connection_id):
     """
     Adds a watch on the specified object. This only modifies the global watch
-    map; this does not modify the connection's list of watches.
+    map; this does not modify the connection's list of watches., and this does
+    not cause any WatchObjectResponse to be sent back to the client.
     """
     object_spec = interface_name, object_name
     if object_spec not in watch_map:
@@ -60,6 +61,11 @@ def deregister_object_watch(interface_name, object_name, connection_id):
         del watch_map[object_spec]
 
 def process_event_queue():
+    """
+    Starts processing the event queue. This function returns when (None, None)
+    is pushed onto the event queue. This function generally should be started
+    in a new thread.
+    """
     global processed_message_count
     while True:
 #        print "Waiting for events..."
@@ -102,8 +108,6 @@ class AutobusInterface(object):
         
         name: The name of the interface.
         
-        info: The info object associated with the interface.
-        
         special: True if this interface is special (I.E. registered by
         server-side code instead of by a client), false if it is a normal
         interface.
@@ -129,24 +133,11 @@ class AutobusInterface(object):
         Each map within the list that's returned represents a function on the
         interface. 
         """
-        result = []
         try:
             interface = interface_map[interface_name]
         except KeyError:
             raise Exception("No such interface.")
-        if interface.special:
-            function_list = dir(interface.connection)
-            function_list = [function for function in function_list if
-                    not function.startswith("_")]
-            for function in function_list:
-                result.append({"name": function, "special": True,
-                        "doc": get_function_doc(interface.connection,
-                                function)})
-        else:
-            for function in interface.function_map.values():
-                result.append({"name": function.name,
-                        "special": function.special, "doc": function.doc})
-        return result
+        return interface.describe_functions()
     
     def list_objects(self, interface_name):
         """
@@ -162,7 +153,7 @@ class AutobusInterface(object):
         """
         return processed_message_count
 
-autobus_interface = AutobusInterface()
+autobus_interface_impl = AutobusInterface()
 
 class Function(object):
     """
@@ -200,34 +191,73 @@ class Event(object):
         # TODO: allow special events
     
 class Object(object):
-    def __init__(self, sender, interface, name, doc, value):
+    def __init__(self, sender, name, doc, value):
+        """
+        Initializes this object. sender is the id of the connection that
+        created this object. Name and doc are the object's name and documentation,
+        respectively. value is the object's initial value.
+        """
         self.name = name
-        self.interface = interface
+        self.interface = None # Interface sets this when an object is registered
+        # to an instance of it, so we don't have to
         self.sender = sender
         self.doc = doc
-        self.value = value # This is an instance of protobuf.Instance
+        self._value = value # This is an instance of protobuf.Instance
     
     def set_and_notify(self, new_value):
         """
         Sets this object's value to the specified value and sends a message to
         all connections watching the object with the new value. 
         """
-        self.value = new_value
+        self._value = new_value
         self.notify()
     
     def notify(self):
         """
         Sends a message to all connections watching this object containing the
-        object's current value.
+        object's current value. This only calls self.get() once, so it's not
+        generally processor-intensive even when lots of connections are
+        listening for changes to this object.
         """
         watch_spec = (self.interface.name, self.name)
+        current_value = self.get()
         if watch_spec in watch_map:
             for connection_id in watch_map[watch_spec]:
                 connection = connection_map[connection_id]
                 message, set_message = create_message_pair(protobuf.SetObjectCommand,
                         NOTIFICATION, interface_name=self.interface.name,
-                        object_name=self.name, value=self.value)
+                        object_name=self.name, value=current_value)
                 connection.send(message)
+    
+    def get(self):
+        """
+        Returns the current value of the object. This is used instead of
+        self._value to allow for subclasses to provide custom values for the
+        object. VirtualObject in particular makes use of this.
+        
+        The return value must be an instance of protobuf.Instance. 
+        """
+
+class VirtualObject(Object):
+    """
+    A subclass of Object that allows the object to have a value computed
+    whenever it is requested. This is for server-side use only, and is used to
+    implement most objects on the Autobus interface.
+    """
+    def __init__(self, name, doc, accessor):
+        """
+        Initializes this object. Name, and doc are the same as on
+        the Object constructor. Accessor is a function that takes no
+        arguments and returns the computed value of the object when it's called.
+        """
+        Object.__init__(self, 0, name, doc, None)
+        self.accessor = accessor
+    
+    def set_and_notify(self, new_value):
+        raise Exception("VirtualObjects cannot have their value set")
+    
+    def get(self):
+        return self.accessor()
 
 class Interface(object):
     """
@@ -295,14 +325,18 @@ class Interface(object):
         self.function_map[function_name] = function
         return function
     
-    def register_object(self, sender, object_name, doc, value):
-        if object_name in self.object_map:
-            raise KeyError()
-        print ("Registering object " + object_name + " from " + 
-                str(sender) + " on " + self.name)
-        object = Object(sender, self, object_name, doc, value)
-        self.object_map[object_name] = object
+    def register_object(self, object):
+        if object.name in self.object_map:
+            raise KeyError(object.name)
+        print ("Registering object " + object.name + " from " + 
+                str(object.sender) + " on " + self.name)
+        object.interface = self
+        self.object_map[object.name] = object
         object.notify()
+    
+    def create_and_register_object(self, sender, object_name, doc, value):
+        object = Object(sender, self, object_name, doc, value)
+        self.register_object(object)
         return object
     
     def lookup_function(self, function_name):
@@ -323,6 +357,27 @@ class Interface(object):
         if function_name in self.function_map:
             return self.function_map[function_name]
         raise NoSuchFunctionException(function_name)
+    
+    def describe_functions(self):
+        """
+        Returns a list of maps in the same format that the list_functions
+        function of the Autobus internal interface returns. In fact, that
+        function delegates to this one once it's looked up the interface.
+        """
+        result = []
+        if self.special:
+            function_list = dir(self.connection)
+            function_list = [function for function in function_list if
+                    not function.startswith("_")]
+            for function in function_list:
+                result.append({"name": function, "special": True,
+                        "doc": get_function_doc(self.connection,
+                                function)})
+        else:
+            for function in self.function_map.values():
+                result.append({"name": function.name,
+                        "special": function.special, "doc": function.doc})
+        return result
 
 class Connection(object):
     """
@@ -581,7 +636,7 @@ def process_watch_object_command(message, sender, connection):
     try:
         interface = lookup_interface(interface_name)
         object = interface.object_map[object_name]
-        object_value = object.value
+        object_value = object.get()
     except (NoSuchInterfaceException, KeyError): # Object doesn't exist yet
         object_value = encode_object(None)
     response_message, response = create_message_pair(protobuf.WatchObjectResponse,
@@ -605,7 +660,8 @@ def process_set_object_command(message, sender, connection):
         return
     interface.object_map[object_name].set_and_notify(value)
 
-Interface("autobus", autobus_interface, None).register_special()
+autobus_interface = Interface("autobus", autobus_interface_impl, None)
+autobus_interface.register_special()
 
 # MAIN CODE
 

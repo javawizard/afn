@@ -381,6 +381,23 @@ def get_function_doc(interface, function_name):
         doc = ""
     return function_name + args + "\n\n" + doc
 
+def start_thread(function):
+    """
+    A function decorator that can be used on functions registered to
+    interfaces. Such functions will be invoked in a new thread, but their
+    return value will still be captured and sent back to the client that
+    invoked the function. This allows the function to make additional autobus
+    calls while it's running and return results based on those calls, but no
+    guarantee is made that two invocations of the function will not run at the
+    same time.
+    
+    The same effect can be achieved by setting the attribute start_thread to
+    have the value True on the function object. Indeed, this is exactly what
+    this decorator does.
+    """
+    function.start_thread = True
+    return function
+
 class InterfaceWrapper(InterfaceWrapperSuper):
     def __init__(self, connection, name):
         self.connection = connection
@@ -484,7 +501,12 @@ class LocalFunction(object):
         self.doc = doc
         if doc is None:
             self.doc = ""
-        self.function = function
+        if is_jython and hasattr(function, "run"):
+            self.start_thread = function.isInNewThread()
+            self.function = function.run
+        else:
+            self.start_thread = hasattr(function, "start_thread") and function.start_thread
+            self.function = function
 
 class LocalObject(object):
     """
@@ -761,14 +783,26 @@ class AutobusConnection(AutobusConnectionSuper):
                             "not allowed")
                 interface = self.interfaces[interface_name]
                 function = interface.functions[function_name]
-                return_value = function.function(*arguments)
             except Exception, e:
                 if self.print_exceptions:
                     print_exc()
-                return_value = e
-            response, run_response = create_message_pair(protobuf.RunFunctionResponse,
-                    message, return_value=encode_object(return_value))
-            self.send(response)
+                response, run_response = create_message_pair(protobuf.RunFunctionResponse,
+                        message, return_value=encode_object(e))
+                self.send(response)
+            def process():
+                try:
+                    return_value = function.function(*arguments)
+                except Exception, e:
+                    if self.print_exceptions:
+                        print_exc()
+                    return_value = e
+                response, run_response = create_message_pair(protobuf.RunFunctionResponse,
+                        message, return_value=encode_object(return_value))
+                self.send(response)
+            if function.start_thread:
+                Thread(target=process).start()
+            else:
+                process()
             return
         if isinstance(message_value, (protobuf.SetObjectCommand,
                 protobuf.WatchObjectResponse)):
