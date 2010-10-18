@@ -17,12 +17,14 @@ from functools import partial
 import re
 import sys
 import inspect
+import os
+from autobus import processors, special_interface, special_objects
 
 print """\
 Autobus, a message bus that's kind of a cross of D-Bus and RPC, written
 by Alexander Boyd (a.k.a. javawizard or jcp)
 """
-
+autobus_interface = None
 connection_map = {} # connection ids to connection objects
 interface_map = {} # interface names to interfaces
 listener_map = {} # Maps tuples of interface names and function names to lists
@@ -82,78 +84,13 @@ def process_event_queue():
         except:
             print "FATAL ERROR in a protocol function handler:"
             print_exc()
-            break
+            os._exit(1)
     print "Shutting down connections..."
     connection_count = len(connection_map)
     for connection in connection_map.values():
         connection.shutdown_and_deregister()
     print str(connection_count) + " connection" + ("s" if connection_count
             != 1 else "") + " have been shut down."
-
-class AutobusInterface(object):
-    """
-    An interface built-in to the Autobus server that provides information about
-    the server, such as the interfaces that are currently registered. To see a
-    list of functions that are on this interface, call the function
-    list_functions on this interface, passing in the string "autobus". The
-    resulting list should provide plenty of information.
-    """
-    def list_interfaces(self):
-        """
-        Returns a list of all interfaces currently registered to the autobus
-        server. The return value is a list of maps, with each map representing
-        one interface. Each map has the following keys:
-        
-        owner: The numeric id of the connection that registered this interface.
-        
-        name: The name of the interface.
-        
-        special: True if this interface is special (I.E. registered by
-        server-side code instead of by a client), false if it is a normal
-        interface.
-        
-        doc: The documentation of the interface if the client supplied any such
-        documentation, or the empty string if they didn't.
-        """
-        result = []
-        for interface in interface_map.values():
-            result.append({"owner": interface.connection.id if not
-                    interface.special else 0, "name": interface.name,
-                    "special": interface.special, "doc": interface.doc})
-        return result
-    
-    def list_functions(self, interface_name):
-        """
-        Returns a list of all functions currently registered to the specified
-        interface. If there's no such interface, an exception will be thrown.
-        This function works correctly on special interfaces as well as normal
-        interfaces.
-        
-        The return value is similar to the return value of list_interfaces().
-        Each map within the list that's returned represents a function on the
-        interface. 
-        """
-        try:
-            interface = interface_map[interface_name]
-        except KeyError:
-            raise Exception("No such interface.")
-        return interface.describe_functions()
-    
-    def list_objects(self, interface_name):
-        """
-        Same as list_functions, but returns a list of objects available on this
-        interface. 
-        """
-    
-    def get_processed_message_count(self):
-        """
-        Returns the number of messages that Autobus has received and processed
-        since it started up. This does not count messages that Autobus has
-        sent; only inbound messages are counted.
-        """
-        return processed_message_count
-
-autobus_interface_impl = AutobusInterface()
 
 class Function(object):
     """
@@ -220,8 +157,8 @@ class Object(object):
         listening for changes to this object.
         """
         watch_spec = (self.interface.name, self.name)
-        current_value = self.get()
         if watch_spec in watch_map:
+            current_value = self.get()
             for connection_id in watch_map[watch_spec]:
                 connection = connection_map[connection_id]
                 message, set_message = create_message_pair(protobuf.SetObjectCommand,
@@ -235,8 +172,9 @@ class Object(object):
         self._value to allow for subclasses to provide custom values for the
         object. VirtualObject in particular makes use of this.
         
-        The return value must be an instance of protobuf.Instance. 
+        The return value must be an instance of protobuf.Instance.
         """
+        return self._value
 
 class VirtualObject(Object):
     """
@@ -248,7 +186,11 @@ class VirtualObject(Object):
         """
         Initializes this object. Name, and doc are the same as on
         the Object constructor. Accessor is a function that takes no
-        arguments and returns the computed value of the object when it's called.
+        arguments and returns the computed value of the object when it's
+        called. If the accessor returns an object that is not an instance of
+        protobuf.Instance, that object will be converted with
+        libautobus.encode_object before being returned from the virtual
+        object's get() method.
         """
         Object.__init__(self, 0, name, doc, None)
         self.accessor = accessor
@@ -257,7 +199,10 @@ class VirtualObject(Object):
         raise Exception("VirtualObjects cannot have their value set")
     
     def get(self):
-        return self.accessor()
+        value = self.accessor()
+        if isinstance(value, protobuf.Instance):
+            return value
+        return encode_object(value)
 
 class Interface(object):
     """
@@ -291,6 +236,11 @@ class Interface(object):
         interface_map[self.name] = self
         if not self.special:
             self.connection.interfaces.append(self)
+        # Notifications
+        if self is not autobus_interface:
+            autobus_interface.notify_object("interface_count")
+            autobus_interface.notify_object("interfaces")
+            autobus_interface.notify_object("interface_items")
     
     def register_special(self):
         """
@@ -315,14 +265,21 @@ class Interface(object):
         self.connection.interfaces.remove(self)
         for object_name in self.object_map:
             self.object_map[object_name].set_and_notify(encode_object(None))
+        # Notifications
+        if self is not autobus_interface:
+            autobus_interface.notify_object("interface_count")
+            autobus_interface.notify_object("interfaces")
+            autobus_interface.notify_object("interface_items")
     
-    def register_function(self, sender, function_name, doc):
+    def register_function(self, sender, function_name, doc, notify=True):
         if function_name in self.function_map:
             raise KeyError()
         print ("Registering function " + function_name + " from " + 
                 str(sender) + " on " + self.name) 
         function = Function(sender, function_name, doc)
         self.function_map[function_name] = function
+        if notify and (self is not autobus_interface):
+            autobus_interface.notify_object("interface_items")
         return function
     
     def register_object(self, object):
@@ -332,12 +289,20 @@ class Interface(object):
                 str(object.sender) + " on " + self.name)
         object.interface = self
         self.object_map[object.name] = object
+        if self is not autobus_interface:
+            autobus_interface.notify_object("interface_items")
         object.notify()
     
     def create_and_register_object(self, sender, object_name, doc, value):
-        object = Object(sender, self, object_name, doc, value)
+        object = Object(sender, object_name, doc, value)
         self.register_object(object)
         return object
+    
+    def notify_object(self, name):
+        """
+        Looks up the specified object, then calls its notify method.
+        """
+        self.object_map[name].notify()
     
     def lookup_function(self, function_name):
         """
@@ -510,10 +475,10 @@ def find_function_for_message(message):
     class_name = type(MessageValue[message]).__name__
     function_name = re.sub("([A-Z])", "_\\1", class_name)[1:].lower()
     function_name = "process_" + function_name
-    if function_name not in globals():
+    if function_name not in vars(processors):
         raise Exception("Message is missing processor function "
                         + function_name)
-    return globals()[function_name]
+    return vars(processors)[function_name]
 
 def lookup_interface(interface_name, owner=None):
     """
@@ -533,139 +498,27 @@ def lookup_interface(interface_name, owner=None):
                     info="You're not the owner of that particular interface.")
         return interface
 
-def process_register_interface_command(message, sender, connection):
-    command = MessageValue[message]
-    name = command.name
-    doc = command.doc
-    print "Registering interface with name " + name
-    interface = Interface(name, connection, doc)
-    try:
-        interface.register()
-    except KeyError:
-        connection.send_error(message, "An interface with the same name "
-                "is already registered.")
-        return
-    response_message, response = create_message_pair(protobuf.RegisterInterfaceResponse, message)
-    connection.send(response_message)
 
-def process_register_function_command(message, sender, connection):
-    command = MessageValue[message]
-    interface_name = command.interface_name
-    function_name = command.name
-    doc = command.doc
-    try:
-        interface = lookup_interface(interface_name, sender)
-    except NoSuchInterfaceException as e:
-        connection.send_error(message, text=str(e))
-        return
-    try:
-        interface.register_function(sender, function_name, doc)
-    except KeyError:
-        connection.send_error(message, "A function with that name has already "
-                "been registered on that interface.")
-        return
-    response_message, response = create_message_pair(protobuf.RegisterFunctionResponse, message)
-    connection.send(response_message)
-
-def process_call_function_command(message, sender, connection):
-    command = MessageValue[message]
-    try:
-        interface = lookup_interface(command.interface_name)
-        function = interface.lookup_function(command.function)
-    except (NoSuchInterfaceException, NoSuchFunctionException) as e:
-        connection.send_error(message, text=str(e))
-        return
-    if function.special:
-        function.invoke_special(message, command, connection)
-        return
-    invoke_message, invoke_command = create_message_pair(protobuf.RunFunctionCommand,
-            interface_name=interface.name, function=function.name,
-            arguments=command.arguments)
-    interface.connection.send(invoke_message)
-    print ("Sending run command to " + str(interface.connection.id) + 
-            " with message id " + str(invoke_message.message_id) + 
-            " whose response is to be forwarded with id " + 
-            str(message.message_id))
-    interface.connection.pending_responses[invoke_message.message_id] = (
-            sender, message.message_id)
-
-def process_run_function_response(message, sender, connection):
-    result = MessageValue[message]
-    response, call_response = create_message_pair(protobuf.CallFunctionResponse,
-            RESPONSE, return_value=result.return_value)
-    if not message.message_id in connection.pending_responses:
-        # Sporadic response received, just ignore it
-        print ("Sporadic run response received from connection " + str(sender)
-                + " for reported message id " + str(message.message_id) + 
-                ". It will be ignored.")
-        return
-    response_connection_id, response_message_id = connection.pending_responses[message.message_id]
-    del connection.pending_responses[message.message_id]
-    response.message_id = response_message_id
-    if response_connection_id in connection_map: # Make sure the connection
-        # listening for the response is still alive
-        response_connection = connection_map[response_connection_id]
-        response_connection.send(response)
-
-def process_register_object_command(message, sender, connection):
-    command = MessageValue[message]
-    interface_name = command.interface_name
-    object_name = command.object_name
-    doc = command.doc
-    value = command.value
-    try:
-        interface = lookup_interface(interface_name, sender)
-    except NoSuchInterfaceException as e:
-        connection.send_error(message, text=str(e))
-        return
-    try:
-        interface.register_object(sender, object_name, doc, value)
-    except KeyError:
-        connection.send_error(message, "An object with that name has already "
-                "been registered on that interface.")
-        return
-    response_message, response = create_message_pair(protobuf.RegisterObjectResponse, message)
-    connection.send(response_message)
-
-def process_watch_object_command(message, sender, connection):
-    command = MessageValue[message]
-    interface_name = command.interface_name
-    object_name = command.object_name
-    register_object_watch(interface_name, object_name, sender)
-    connection.watches.append((interface_name, object_name))
-    try:
-        interface = lookup_interface(interface_name)
-        object = interface.object_map[object_name]
-        object_value = object.get()
-    except (NoSuchInterfaceException, KeyError): # Object doesn't exist yet
-        object_value = encode_object(None)
-    response_message, response = create_message_pair(protobuf.WatchObjectResponse,
-            message, interface_name=interface_name, object_name=object_name,
-            value=object_value)
-    connection.send(response_message)
-
-def process_set_object_command(message, sender, connection):
-    command = MessageValue[message]
-    interface_name = command.interface_name
-    object_name = command.object_name
-    value = command.value
-    try:
-        interface = lookup_interface(interface_name, sender)
-    except NoSuchInterfaceException as e:
-        connection.send_error(message, text=str(e))
-        return
-    if object_name not in interface.object_map:
-        connection.send_error(message, "You need to register the object "
-                "with Autobus before you can set its value.")
-        return
-    interface.object_map[object_name].set_and_notify(value)
-
-autobus_interface = Interface("autobus", autobus_interface_impl, None)
-autobus_interface.register_special()
+def register_builtin_interface():
+    global autobus_interface
+    interface = Interface("autobus", special_interface.AutobusInterface(), None)
+    autobus_interface = interface
+    interface.register_special()
+    for name in dir(special_objects):
+        if name[0] != "_":
+            function = getattr(special_objects, name)
+            if inspect.isfunction(function):
+                if function.__doc__ is None:
+                    function_doc = ""
+                else:
+                    function_doc = inspect.getdoc(function)
+                interface.register_object(VirtualObject(name,
+                        function_doc, function))
 
 # MAIN CODE
 
 def main():
+    register_builtin_interface()
     server = Socket()
     if len(sys.argv) > 1:
         server_port = int(sys.argv[1])

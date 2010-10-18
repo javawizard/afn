@@ -1,0 +1,7 @@
+Timerd is a daemon that connects to Autobus, much like speakd does. In fact, timerd uses speakd to perform timer announcements. Timerd can still function without a working instance of speakd, however, and in this mode it will show notifications across all computers connected to it but it won't send any notifications to speakd. (If speakd were to connect to the bus later on, timerd would immediately start sending notifications to it again.)
+
+In contrast to VocalClock, which is being rewritten as timerd, speakd, and saytime (and Autobus, although I'm considering that a separate project), the timer list is dynamic, meaning that timers can be added and removed as needed.
+
+Each timer has a name, which can be changed as needed. Each timer has a number of hours, minutes, and seconds associated with it. The latter two will never be more than 59. Each timer also has a current state, which is 1, 2, or 3, for counting up, counting down, and stopped, respectively.
+
+Timers also have a minute modulo n, such that the timer's current value will be announced when the timer's minute field modulo n is equal to zero.

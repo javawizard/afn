@@ -41,7 +41,7 @@ rpc = RPC()
 
 bus = AutobusConnection()
 bus.add_interface("saytime", rpc)
-bus.connect()
+bus.start_connecting()
 speak_server = bus["speak"]
 
 start_time = datetime.now()

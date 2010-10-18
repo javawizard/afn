@@ -342,7 +342,7 @@ bus.add_interface(interface_name, RPC())
 speech_queue_object = bus.add_object(interface_name, "speech_queue", """
 This doesn't work yet.
 """, {})
-bus.connect()
+bus.start_connecting()
 
 def sanitize_file(name):
     return name.replace(".", "").replace("\\", "").replace("/", "")

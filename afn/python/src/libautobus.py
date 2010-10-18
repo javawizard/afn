@@ -735,12 +735,15 @@ class AutobusConnection(AutobusConnectionSuper):
             message, register_message = create_message_pair(protobuf.RegisterInterfaceCommand,
                     NOTIFICATION, name=interface.name, doc=interface.doc)
             self.send(message)
+            message, register_message = create_message_pair(protobuf.RegisterFunctionCommand,
+                    NOTIFICATION, interface_name=interface.name)
             for function in interface.functions.values():
-                message, register_message = create_message_pair(
-                        protobuf.RegisterFunctionCommand, NOTIFICATION,
-                        interface_name=interface.name, name=function.name,
-                        doc=function.doc)
-                self.send(message)
+                register_message.name.append(function.name)
+                register_message.doc.append(function.doc)
+            # This is due to the fact that protobuf copies messages, which is
+            # freaking annoying as heck
+            MessageValue[message] = register_message
+            self.send(message)
             for object in interface.objects.values():
                 message, register_message = create_message_pair(
                         protobuf.RegisterObjectCommand, NOTIFICATION,
