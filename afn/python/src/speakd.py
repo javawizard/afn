@@ -270,6 +270,7 @@ class RPC(object):
         Sets the default voice. The default voice is the voice used to speak
         sentences when no voice is specified for the sentence.
         """
+        global default_voice
         if voice_name not in voices:
             raise Exception("There is no voice with that name. Voices must be "
                             "configured in speakd.conf.")
