@@ -375,10 +375,11 @@ def main():
                 if isinstance(item, basestring):
                     file = sanitize_file(item)
                     print "Saying word " + file
+                    absolute_file = os.path.join(voice_path, file + ".wav")
                     try:
-                        wave_file = wave.open(os.path.join(voice_path, file + ".wav"), "r")
+                        wave_file = wave.open(absolute_file, "r")
                     except:
-                        print "File " + file + " does not exist for voice " + voice.name + ". It will be silently ignored."
+                        print "File " + absolute_file + " does not exist for voice " + voice.name + ". It will be silently ignored."
                         continue
                     data = wave_file.readframes(1024)
                     while data != "":
