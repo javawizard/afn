@@ -120,8 +120,8 @@ message RegisterInterfaceResponse {
 
 message RegisterFunctionCommand {
     required string interface_name = 2;
-    required string name = 3;
-    optional string doc = 4;
+    repeated string name = 3;
+    repeated string doc = 4;
 }
 
 message RegisterFunctionResponse {
