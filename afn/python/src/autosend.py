@@ -27,7 +27,7 @@ parser = OptionParser(usage=
         "usage: autosend [options] [interface [item [arguments...]]]",
         description="!!!INFO!!!",
         add_help_option=False)
-parser.add_option("-h", type="string", dest="host", help="The host to connect "
+parser.add_option("-h", type="string", action="store", dest="host", help="The host to connect "
         "to. The default is whatever you've configured in libautobus.conf, or "
         "localhost if you haven't created libautobus.conf.", default=None)
 parser.add_option("-p", type="int", dest="port", help="The port to connect to. "
@@ -122,7 +122,7 @@ for value in command_line_args:
     
 
 from libautobus import AutobusConnection
-bus = AutobusConnection(*connect_options)
+bus = AutobusConnection(**connect_options)
 
 # We've got everything set up thus far. Now we'll look up the mode and figure
 # out what we need to do before we connect to the Autobus server.
