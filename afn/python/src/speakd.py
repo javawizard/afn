@@ -15,6 +15,7 @@ import re
 from datetime import datetime
 from libautobus import AutobusConnection, DEFAULT_PORT
 from concurrent import synchronized
+from cStringIO import StringIO
 
 lock = RLock()
 
@@ -56,6 +57,22 @@ class Voice(object):
     def __init__(self, name):
         self.name = name
         self.path = configuration.get("voice:" + name, "path")
+        self.scale_level = None
+        if configuration.has_option("voice:" + name, "scale"):
+            self.scale_level = configuration.getfloat("voice:" + name, "scale")
+
+class VoiceChange(object):
+    def __init__(self, voice):
+        self.voice = voice
+    def __repr__(self):
+        return "<VoiceChange: " + self.voice + ">"
+
+class ScaleLevel(object):
+    def __init__(self, level, word):
+        self.level = float(level)
+        self.word = word
+    def __repr__(self):
+        return "<ScaleLevel: " + str(self.level) + " " + self.word + ">"
 
 @synchronized(lock)
 def get_next_sentence():
@@ -154,6 +171,31 @@ def format_t(time_string):
             result.append("pm")
     return result
 
+def format_v(voice_string):
+    if voice_string == "":
+        voice_string = random.choice(voices.keys())
+    if voice_string not in voices:
+        raise Exception("No such voice: " + voice_string)
+    return VoiceChange(voice_string)
+
+def format_sl(scale_string):
+    return ScaleLevel(*scale_string.split(":", 1))
+
+def scale_sound(block, scale_level):
+    if scale_level == 1:
+        return block
+    result = StringIO()
+    for i in xrange(0, len(block), 2):
+        value = ord(block[i]) | (ord(block[i + 1]) << 8)
+        if value > 32767:
+            value = value - 65536
+        value = int(value * scale_level)
+        if value < 0:
+            value = value + 65536
+        result.write(chr(value & 0xFF))
+        result.write(chr((value >> 8) & 0xFF))
+    return result.getvalue()
+
 class RPC(object):
     """
     Allows communicating with the speak server. This allows pre-recorded
@@ -228,12 +270,8 @@ class RPC(object):
                     new_tokens += format_result.split(" ")
                 elif isinstance(format_result, list):
                     new_tokens += format_result
-                elif isinstance(format_result, int):
-                    new_tokens.append(format_result)
                 else:
-                    raise Exception("Invalid format result from format " + 
-                                    specifier + " for data " + data + 
-                                    ": " + str(format_result))
+                    new_tokens.append(format_result)
             else:
                 new_tokens.append(token)
         self.say(new_tokens, priority, voice)
@@ -369,14 +407,19 @@ def main():
                 voice = voices[sentence.voice]
             else:
                 voice = voices[default_voice]
-            voice_path = voice.path
             print "Saying with voice " + voice.name
             audio_stream.start_stream()
             for item in sentence.components:
+                scale_level = 1.0
+                if voice.scale_level is not None:
+                    scale_level = scale_level * voice.scale_level
+                if isinstance(item, ScaleLevel):
+                    scale_level = scale_level * item.level
+                    item = item.word
                 if isinstance(item, basestring):
                     file = sanitize_file(item)
                     print "Saying word " + file
-                    absolute_file = os.path.join(voice_path, file + ".wav")
+                    absolute_file = os.path.join(voice.path, file + ".wav")
                     try:
                         wave_file = wave.open(absolute_file, "r")
                     except:
@@ -384,11 +427,14 @@ def main():
                         continue
                     data = wave_file.readframes(1024)
                     while data != "":
-                        audio_stream.write(data)
+                        audio_stream.write(scale_sound(data, scale_level))
                         data = wave_file.readframes(1024)
                 elif isinstance(item, int):
                     print "Pausing for " + str(item) + " milliseconds"
                     time.sleep((item * 1.0) / 1000.0)
+                elif isinstance(item, VoiceChange):
+                    print "Switching voice to " + item.voice
+                    voice = voices[item.voice]
                 print "Flushing bus outbound queue"
                 bus.flush()
             print "Waiting..."
