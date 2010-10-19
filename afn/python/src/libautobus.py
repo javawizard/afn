@@ -216,6 +216,14 @@ class OutputThread(Thread):
     
     finished_function will be called after every message has been successfully
     written out. It defaults to lambda: None.
+    
+    The read function can return either a Message object or a string. If it's
+    the former, it will be converted to a string via the message's
+    SerializeToString function. Messages are ordinarily returned as Message
+    objects to prevent message serialization from blocking the event queue in
+    Autobus, but in some cases (such as when a single message is to be sent to
+    several recipients), it may be more efficient to pre-encode the message
+    and send it as a string.
     """
     def __init__(self, socket, read_function, finished_function=lambda: None):
         Thread.__init__(self)
@@ -233,7 +241,10 @@ class OutputThread(Thread):
                     if message is None:
 #                        print "Message was empty, shutting down the thread"
                         break
-                    message_data = message.SerializeToString()
+                    if isinstance(message, str):
+                        message_data = message
+                    else:
+                        message_data = message.SerializeToString()
 #                    print "Sending encoded message length..."
                     self.socket.sendall(pack(">i", len(message_data)))
 #                    print "Sending encoded message..."
@@ -795,10 +806,10 @@ class AutobusConnection(AutobusConnectionSuper):
             def process():
                 try:
                     return_value = function.function(*arguments)
-                except Exception, e:
+                except:
                     if self.print_exceptions:
                         print_exc()
-                    return_value = e
+                    return_value = sys.exc_type
                 response, run_response = create_message_pair(protobuf.RunFunctionResponse,
                         message, return_value=encode_object(return_value))
                 self.send(response)

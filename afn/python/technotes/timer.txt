@@ -2,6 +2,31 @@ Timerd is a daemon that connects to Autobus, much like speakd does. In fact, tim
 
 In contrast to VocalClock, which is being rewritten as timerd, speakd, and saytime (and Autobus, although I'm considering that a separate project), the timer list is dynamic, meaning that timers can be added and removed as needed.
 
-Each timer has a name, which can be changed as needed. Each timer has a number of hours, minutes, and seconds associated with it. The latter two will never be more than 59. Each timer also has a current state, which is 1, 2, or 3, for counting up, counting down, and stopped, respectively.
+Each timer has a name, which can be changed as needed. Each timer has a number of seconds associated with it, and it's up to the client application to figure out the corresponding number of minutes and hours (although timerd provides utility functions for doing this). Each timer also has a current state, which is 1, 2, or 3, for counting up, counting down, and stopped, respectively.
 
-Timers also have a minute modulo n, such that the timer's current value will be announced when the timer's minute field modulo n is equal to zero.
+Timers also have a value n such that the timer's current value will be announced when the timer's minute field modulo n is equal to zero. Timerd also provides a function that will instruct a timer to announce itself when the function is called.
+
+Timerd makes available an object containing the state of all timers. This object is updated only when a timer changes state (which includes when a timer goes off; such a timer transitions from counting up or counting down to stopped) or value or other information. Another object is made available that updates once every second and contains the number of seconds since timerd started up (which is kept in sync with the system clock, so it might skip every now and then due to delays with the object being updated). Timer durations present in the first object are specified relative to the startup time of timerd, which allows all of the timer's current values to be calculated without having to rebroadcast the state of every timer every single second.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

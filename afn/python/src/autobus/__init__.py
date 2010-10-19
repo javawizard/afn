@@ -159,12 +159,13 @@ class Object(object):
         watch_spec = (self.interface.name, self.name)
         if watch_spec in watch_map:
             current_value = self.get()
+            message, set_message = create_message_pair(protobuf.SetObjectCommand,
+                    NOTIFICATION, interface_name=self.interface.name,
+                    object_name=self.name, value=current_value)
+            encoded_message = message.SerializeToString()
             for connection_id in watch_map[watch_spec]:
                 connection = connection_map[connection_id]
-                message, set_message = create_message_pair(protobuf.SetObjectCommand,
-                        NOTIFICATION, interface_name=self.interface.name,
-                        object_name=self.name, value=current_value)
-                connection.send(message)
+                connection.send(encoded_message)
     
     def get(self):
         """
