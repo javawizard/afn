@@ -809,7 +809,7 @@ class AutobusConnection(AutobusConnectionSuper):
                 except:
                     if self.print_exceptions:
                         print_exc()
-                    return_value = sys.exc_value #@UndefinedVariable
+                    _, return_value, _ = sys.exc_info() #@UndefinedVariable
                 response, run_response = create_message_pair(protobuf.RunFunctionResponse,
                         message, return_value=encode_object(return_value))
                 self.send(response)
