@@ -11,12 +11,14 @@ public class InterfaceProxyHandler implements InvocationHandler
     private AutobusConnection bus;
     private String interfaceName;
     private InterfaceWrapper interfaceWrapper;
+    private boolean async;
     
-    InterfaceProxyHandler(AutobusConnection bus, String interfaceName)
+    InterfaceProxyHandler(AutobusConnection bus, String interfaceName, boolean async)
     {
         this.bus = bus;
         this.interfaceName = interfaceName;
         this.interfaceWrapper = bus.get_interface(interfaceName);
+        this.async = async;
     }
     
     @Override
@@ -26,11 +28,19 @@ public class InterfaceProxyHandler implements InvocationHandler
             args = new Object[0];
         try
         {
-            PyObject result =
-                    interfaceWrapper.get_function(method.getName()).invoke_py(args);
+            FunctionWrapper functionWrapper =
+                    interfaceWrapper.get_function(method.getName());
+            PyObject result;
+            if (async)
+                result = functionWrapper.invoke_later_py(args);
+            else
+                result = functionWrapper.invoke_py(args);
             if (method.getReturnType() == Void.TYPE)
                 return null;
-            return Py.tojava(result, method.getReturnType());
+            Object javaResult = Py.tojava(result, method.getReturnType());
+            if (javaResult == null)
+                return AutobusUtils.getDefaultPrimitiveValue(method.getReturnType());
+            return javaResult;
         }
         catch (Exception e)
         {

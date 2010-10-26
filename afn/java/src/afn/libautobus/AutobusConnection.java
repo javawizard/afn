@@ -1,6 +1,13 @@
 package afn.libautobus;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.python.core.Options;
 import org.python.core.Py;
@@ -22,7 +29,11 @@ import org.python.util.PythonInterpreter;
  * conventions instead of Java's, and you create an AutobusConnection by calling
  * {@link #create(String, int)} instead of by using a constructor. (The reason for this is
  * that libautobus.py subclasses AutobusConnection if it's running under Jython, and
- * create() returns an instance of the libautobus subclass.)
+ * create() returns an instance of the libautobus subclass. In other words, when running
+ * under Python, the python libautobus.AutobusConnection subclasses Python's built-in
+ * class object, but when running under Jython, the python libautobus.AutobusConnection
+ * subclasses this class and overrides all of its methods that have the same names as one
+ * in the python AutobusConnection class.)
  * 
  * @author Alexander Boyd
  * 
@@ -40,7 +51,8 @@ public class AutobusConnection
      * Initializes the Autobus client library. This loads Jython and initializes
      * libautobus. This will be called when the first AutobusConnection is constructed,
      * but it can be called before that to get initialization over and done with. This
-     * usually takes ten to fifteen seconds to run.
+     * usually takes ten to fifteen seconds to run due to Jython compiling the Python
+     * version of libautobus to Java bytecode.
      */
     public static synchronized void init()
     {
@@ -84,10 +96,17 @@ public class AutobusConnection
     }
     
     @SuppressWarnings("unchecked")
+    public <T> T get_interface_proxy(String name, Class<T> interfaceType, boolean async)
+    {
+        return (T) Proxy
+                .newProxyInstance(interfaceType.getClassLoader(),
+                        new Class[] { interfaceType }, new InterfaceProxyHandler(this,
+                                name, async));
+    }
+    
     public <T> T get_interface_proxy(String name, Class<T> interfaceType)
     {
-        return (T) Proxy.newProxyInstance(interfaceType.getClassLoader(),
-                new Class[] { interfaceType }, new InterfaceProxyHandler(this, name));
+        return get_interface_proxy(name, interfaceType, false);
     }
     
     public void shutdown()
@@ -97,5 +116,113 @@ public class AutobusConnection
     public void add_object_watch(String interfaceName, String objectName,
             ObjectListener<?> listener)
     {
+    }
+    
+    public void start_connecting()
+    {
+    }
+    
+    /**
+     * Iterates through all of the items in the specified map. For each item, the field on
+     * the specified object whose name is equal to the key of the item has its value set
+     * to the item itself, or a default value if the field is primitive and the item's
+     * value is null. This is used to follow a common convention among Autobus services of
+     * representing structures as maps.<br/><br/>
+     * 
+     * If a field does not exist for a specified item, that item will be ignored.
+     * 
+     * @param <T>
+     * @param map
+     *            The map of items to unpack into the specified object
+     * @param object
+     *            The object that the items will be unpacked into
+     * @return <t>object</t>
+     */
+    public static <T> T unpack(Map<String, ? extends Object> map, T object)
+    {
+        System.out.println("Unpacking " + map + " into " + object);
+        for (Entry<String, ?> entry : map.entrySet())
+        {
+            try
+            {
+                setattr(object, entry.getKey(), entry.getValue());
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Object is now " + object);
+        return object;
+    }
+    
+    /**
+     * For each item in the specified list, creates a new object of the specified type and
+     * passes it into {@link #unpack(Map, Object)} with the item in the list. The
+     * resulting objects are then returned as an array from this method.
+     * 
+     * @param <T>
+     * @param map
+     * @param type
+     * @return
+     */
+    public static <T> T[] unpack(Collection<Map<String, ? extends Object>> list,
+            Class<T> type)
+    {
+        try
+        {
+            T[] array = (T[]) Array.newInstance(type, list.size());
+            Map<String, ? extends Object>[] args =
+                    (Map<String, ? extends Object>[]) list.toArray(new Map[0]);
+            for (int i = 0; i < array.length; i++)
+                array[i] = unpack(args[i], type.getConstructor().newInstance());
+            return array;
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /**
+     * Roughly mirrors Python's setattr function, but for Java objects. It's quite similar
+     * to using reflection to set the specified field, but it wraps everything with an
+     * unchecked exception (specifically an IllegalArgumentException) and it converts
+     * between types wherever possible (I.E. if the supplied value is a java.lang.Long and
+     * the field type is int, the long will be converted to an int via a narrowing
+     * primitive conversion).
+     * 
+     * @param object
+     *            The object that has a field whose value is going to be set
+     * @param name
+     *            The name of the field on the object
+     * @param value
+     *            The new value for the field
+     */
+    public static void setattr(Object object, String name, Object value)
+    {
+        try
+        {
+            Field field = object.getClass().getField(name);
+            Class fieldType = field.getType();
+            Class valueType = value.getClass();
+            if ((fieldType == Integer.TYPE || fieldType == Integer.class)
+                && valueType == Long.class)
+            {
+                long oldValue = (Long) value;
+                value = new Integer((int) oldValue);
+            }
+            else if ((fieldType == Integer.TYPE || fieldType == Integer.class)
+                && valueType == BigInteger.class)
+            {
+                BigInteger oldValue = (BigInteger) value;
+                value = oldValue.intValue();
+            }
+            field.set(object, value);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 }

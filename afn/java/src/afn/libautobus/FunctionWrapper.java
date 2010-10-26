@@ -13,4 +13,14 @@ public class FunctionWrapper
     {
         return null;
     }
+    
+    public Object invoke_later(Object... args)
+    {
+        return null;
+    }
+    
+    public PyObject invoke_later_py(Object[] args)
+    {
+        return null;
+    }
 }
