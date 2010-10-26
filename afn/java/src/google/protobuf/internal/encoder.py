@@ -1,1 +1,0 @@
-/usr/share/pyshared/google/protobuf/internal/encoder.py

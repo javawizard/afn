@@ -1,1 +1,0 @@
-/usr/share/pyshared/google/protobuf/descriptor_pb2.py

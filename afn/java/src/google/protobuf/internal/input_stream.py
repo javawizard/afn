@@ -1,1 +1,0 @@
-/usr/share/pyshared/google/protobuf/internal/input_stream.py

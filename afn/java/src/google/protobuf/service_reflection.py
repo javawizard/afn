@@ -1,1 +1,0 @@
-/usr/share/pyshared/google/protobuf/service_reflection.py
