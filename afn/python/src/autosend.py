@@ -64,6 +64,7 @@ parser.add_option("-w", action="store_const", const="watch", dest="mode",
         "you'll have to use Ctrl+C to kill autosend when you're done watching "
         "the object's value change.")
 parser.add_option("-?", "--help", action="store_const", const="help", dest="mode")
+parser.disable_interspersed_args()
 options, command_line_args = parser.parse_args()
 
 mode = options.mode

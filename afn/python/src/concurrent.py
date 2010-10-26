@@ -4,7 +4,9 @@ from functools import partial, update_wrapper
 def as_new_thread(function):
     """
     A decorator that causes the decorated function to be invoked in a new
-    thread.
+    thread. The function returned will invoke the specified function on a
+    newly-created thread. The target function's return value will be discarded;
+    the resulting function will always return None.
     """
     def wrapper(*args, **kwargs):
         Thread(target=function, args=args, kwargs=kwargs).start()
@@ -27,6 +29,10 @@ def synchronized(lock=None, function=None):
     
     All three uses are valid, with the latter two creating a new reentrant
     lock for this function.
+    
+    Technically, the specified lock can be any object that can be passed as the
+    context manager of a with statement. This behavior will be preserved
+    throughout potential future revisions of this function/decorator.
     """
     if callable(lock): # in case it's used as @synchronized
         return synchronized(None, lock)

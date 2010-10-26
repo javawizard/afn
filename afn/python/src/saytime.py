@@ -40,6 +40,7 @@ class RPC(object):
 def main():
     global current_time
     global speak_server
+    global rpc
     rpc = RPC()
     
     host="localhost"

@@ -5,6 +5,28 @@ import sys
 
 is_jython = platform.system() == "Java"
 
+__doc__ = """\
+This module is the Python client library for Autobus. It's the authoritative
+Autobus client library; features generally appear here first and then get
+ported to versions of libautobus written for other languages.
+
+To use this module, you'll generally start with an instance of
+AutobusConnection. See that class's documentation for more information on how
+to use it.
+
+This module includes some hacks to get it to work properly on Jython. In
+particular, Google's Protocol Buffers, which libautobus uses, do not work
+properly on Jython by default, but simply importing libautobus adds a fix to
+get it to work. (In fact, other Jython applications that want to make use of
+Protocol Buffers could import libautobus just to get protocol buffers working.)
+However, there are some issues right now, namely that if you're going to be
+using libautobus on Jython, you need to have the Java libautobus on your
+classpath. The reason is that this module changes some of its classes to
+implement interfaces in the Java version, and the Java version then makes use
+of this module running under Jython. As long as the Java libautobus is on the
+classpath, you can import and use this module successfully from Jython code.
+"""
+
 # Workaround to get libautobus to work on Jython. Jython does not have Python's
 # built-in buffer function, which Google's protocol buffers stuff needs to run.
 # If we're on Jython, then, we'll create our own equivalent of the buffer
@@ -278,6 +300,9 @@ class NoSuchFunctionException(Exception):
 class TimeoutException(Exception):
     pass
 
+class NotConnectedException(Exception):
+    pass
+
 def discard_args(function):
     """
     Returns a function that calls the specified function, discarding all
@@ -443,11 +468,44 @@ class FunctionWrapper(FunctionWrapperSuper):
             raise result
         return result
     
-    if is_jython:
-        def invoke(self, args):
-            return self(*args)
-        def invoke_py(self, args):
-            return self(*args)
+    def invoke(self, args):
+        """
+        Calls this function, passing in the arguments in the specified sequence
+        object. This is currently equivalent to self(*args), and is present
+        mostly to make using libautobus from Jython easier.
+        """
+        return self(*args)
+
+    def invoke_py(self, args):
+        """
+        Exactly the same as invoke(args). The Java version of libautobus that
+        wraps this function returns a PyObject instead of an Object, which
+        changes some semantics slightly. In other words, this function exists
+        purely for the benefit of the Java Autobus API.
+        """
+        return self(*args)
+    
+    def send(self, *args):
+        """
+        Invokes this function asynchronously. self(...) is exactly the same as
+        self.send(...), except that the call is sent off to the server, None
+        is returned to the caller, and the return value or exception send from
+        the server, if any, is discarded.
+        """
+        instance_args = [encode_object(arg) for arg in args]
+        message, call_message = create_message_pair(protobuf.CallFunctionCommand,
+                NOTIFICATION, interface_name=self.interface.name,
+                function=self.name, arguments=instance_args)
+        self.connection.send(message)
+    
+    def invoke_later(self, args):
+        """
+        Same as send(*args). This exists to make libautobus from Java easier.
+        """
+        return self.send(*args)
+    
+    def invoke_later_py(self, args):
+        return self.invoke_later(args)
     
     def __str__(self):
         return ("<FunctionWrapper on function " + self.name + " and interface "
@@ -552,7 +610,12 @@ class LocalObject(object):
             message, set_message = create_message_pair(protobuf.SetObjectCommand,
                     NOTIFICATION, interface_name=self.interface.name,
                     object_name=self.name, value=encode_object(self.value))
-            self.interface.connection.send(message)
+            try:
+                self.interface.connection.send(message)
+            except NotConnectedException: # We've already stored the value
+                # locally if we're calling notify, so we'll just rely on the
+                # c connect thread to send this value on next connection.
+                pass
 
 class AutobusConnection(AutobusConnectionSuper):
     """
@@ -875,7 +938,10 @@ class AutobusConnection(AutobusConnectionSuper):
         """
         if message is not None:
 #            print "Adding message to send queue " + str(self.send_queue) + "..."
-            self.send_queue.put(message, block=True)
+            queue = self.send_queue
+            if queue is None:
+                raise NotConnectedException()
+            queue.put(message, block=True)
     
     def input_closed(self):
         self.send_queue.put(None)

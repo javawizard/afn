@@ -174,7 +174,7 @@ _INTEGERINSTANCE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='value', full_name='IntegerInstance.value', index=0,
-      number=1, type=7, cpp_type=3, label=2,
+      number=1, type=15, cpp_type=1, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -196,7 +196,7 @@ _LONGINSTANCE = descriptor.Descriptor(
   fields=[
     descriptor.FieldDescriptor(
       name='value', full_name='LongInstance.value', index=0,
-      number=1, type=6, cpp_type=4, label=2,
+      number=1, type=16, cpp_type=2, label=2,
       default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
