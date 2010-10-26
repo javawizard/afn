@@ -30,11 +30,11 @@ message Instance {
 }
 
 message IntegerInstance {
-    required fixed32 value = 1;
+    required sfixed32 value = 1;
 }
 
 message LongInstance {
-    required fixed64 value = 1;
+    required sfixed64 value = 1;
 }
 
 message DoubleInstance {
