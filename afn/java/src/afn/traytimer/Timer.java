@@ -9,6 +9,9 @@ public class Timer
     public int time;
     public int state;
     public String name;
+    public boolean announce_on_state_change;
+    public int announce_count;
+    public int announce_interval;
     
     public int getAbsoluteTime()
     {

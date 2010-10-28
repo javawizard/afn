@@ -18,8 +18,11 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
+import afn.Hashutils;
 import afn.libautobus.AutobusConnection;
 import afn.libautobus.ObjectListener;
 import afn.libautobus.proxies.TimerInterface;
@@ -59,7 +62,6 @@ public class TrayTimer
         @Override
         public void changed(final Map<Integer, Map<String, Object>> value)
         {
-            System.out.println("1");
             SwingUtilities.invokeLater(new Runnable()
             {
                 public void run()
@@ -77,7 +79,6 @@ public class TrayTimer
         @Override
         public void changed(final Integer value)
         {
-            System.out.println("2");
             SwingUtilities.invokeLater(new Runnable()
             {
                 public void run()
@@ -87,6 +88,11 @@ public class TrayTimer
             });
         }
     }
+    
+    private static final int HASH_MODIFIER = 2;
+    private static final int BACKGROUND_MIN = 135;
+    private static final int BACKGROUND_MAX = 225;
+    private static final int BACKGROUND_RANGE = BACKGROUND_MAX - BACKGROUND_MIN;
     
     public static AutobusConnection bus;
     public static TimerInterface timerInterface;
@@ -100,6 +106,7 @@ public class TrayTimer
     public static JFrame frame;
     public static JTabbedPane tabs;
     public static JPanel addTimerPanel;
+    public static JButton addTimerButton;
     
     // A timer that will be tabbed to on the next change of the timer object
     public static int switchToOnLoad = 0;
@@ -111,6 +118,7 @@ public class TrayTimer
      */
     public static void main(String[] args)
     {
+        // UIManager.put("TabbedPane.selected", new Color(225, 225, 225));
         frame = new JFrame("TrayTimer");
         frame.setSize(435, 275);
         frame.setLocationRelativeTo(null);
@@ -130,30 +138,83 @@ public class TrayTimer
             }
         });
         tabs = new JTabbedPane();
+        tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         initAddTimerTab();
         bus = AutobusConnection.create("localhost", AutobusConnection.DEFAULT_PORT);
         bus.add_object_watch("timer", "timers", new TimersObjectListener());
         bus.add_object_watch("timer", "startup", new StartupObjectListener());
         timerInterface = bus.get_interface_proxy("timer", TimerInterface.class);
         timerInterfaceAsync = bus.get_interface_proxy("timer", TimerInterface.class, true);
-        System.out.println("Connecting");
         bus.start_connecting();
-        System.out.println("Connected");
     }
     
     private static void initAddTimerTab()
     {
         addTimerPanel = new JPanel();
+        addTimerPanel.setOpaque(false);
         addTimerPanel.setLayout(new TableLayout(new double[] { TableLayout.FILL },
                 new double[] { TableLayout.FILL }));
-        JButton addTimerButton = new JButton("Add a new timer");
+        addTimerButton = new JButton("Add a new timer");
         addTimerPanel.add(addTimerButton, "0, 0, c, c");
         tabs.addTab("+", addTimerPanel);
+        addTimerButton.addActionListener(new ActionListener()
+        {
+            
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                addNewTimer();
+            }
+        });
+    }
+    
+    protected static void addNewTimer()
+    {
+        addTimerButton.setEnabled(false);
+        new Thread()
+        {
+            public void run()
+            {
+                try
+                {
+                    int newTimer = timerInterface.create();
+                    switchToTimerTab(newTimer);
+                }
+                finally
+                {
+                    SwingUtilities.invokeLater(new Runnable()
+                    {
+                        
+                        @Override
+                        public void run()
+                        {
+                            addTimerButton.setEnabled(true);
+                        }
+                    });
+                }
+            }
+        }.start();
+    }
+    
+    protected static void switchToTimerTab(final int timerNumber)
+    {
+        if (!SwingUtilities.isEventDispatchThread())
+            SwingUtilities.invokeLater(new Runnable()
+            {
+                
+                @Override
+                public void run()
+                {
+                    switchToTimerTab(timerNumber);
+                }
+            });
+        TimerPanel panel = timerPanelMap.get(timerNumber);
+        if (panel != null)
+            tabs.setSelectedComponent(panel);
     }
     
     public static void timersObjectChanged(Map<Integer, Map<String, Object>> value)
     {
-        System.out.println("Timers object is " + value);
         if (value == null)
         {
             currentTimers = null;
@@ -174,7 +235,6 @@ public class TrayTimer
     
     public static void startupObjectChanged(Integer value)
     {
-        System.out.println("Startup object is " + value);
         if (value == null)
             value = 0;
         startupTime = value;
@@ -192,7 +252,7 @@ public class TrayTimer
         Map<Integer, TimerPanel> existingPanels = new HashMap<Integer, TimerPanel>();
         for (int i = 0; i < tabs.getTabCount(); i++)
         {
-            Component component = tabs.getComponent(i);
+            Component component = tabs.getComponentAt(i);
             if (component instanceof TimerPanel)
                 existingPanels.put(((TimerPanel) component).number, (TimerPanel) component);
         }
@@ -240,8 +300,9 @@ public class TrayTimer
         String minutes = time[1];
         String seconds = time[2];
         TimerPanel panel = timerPanelMap.get(timer.number);
-        tabs.setTitleAt(tabs.indexOfComponent(panel), "Timer " + timer.number + ": "
-            + hours + ":" + minutes + "." + seconds);
+        tabs.setTabComponentAt(tabs.indexOfComponent(panel), new JLabel("<html>Timer <b>"
+            + timer.number + "</b>: " + hours + ":" + minutes + "." + seconds));
+        panel.getNameLabel().setText(timer.name);
         panel.getHours().getValue().setText(hours);
         panel.getMinutes().getValue().setText(minutes);
         panel.getSeconds().getValue().setText(seconds);
@@ -253,15 +314,36 @@ public class TrayTimer
                 timer.state == 2 ? selectedColor : otherColor);
         panel.getStoppedButton().setBackground(
                 timer.state == 3 ? selectedColor : otherColor);
+        panel.getAnnounceOnStateChangeBox().setSelected(timer.announce_on_state_change);
     }
     
-    private static void createTimerTab(Integer number)
+    private static void createTimerTab(final Integer number)
     {
-        TimerPanel panel = new TimerPanel();
+        final TimerPanel panel = new TimerPanel();
         panel.number = number;
         panel.getTimerLabel().setText("Timer " + number);
-        tabs.addTab("Timer " + number + ": Loading", panel);
+        int insertIndex = -1;
+        for (int i = 0; i < tabs.getTabCount(); i++)
+        {
+            Component component = tabs.getComponentAt(i);
+            if (component instanceof TimerPanel)
+            {
+                TimerPanel componentPanel = (TimerPanel) component;
+                if (componentPanel.number > number)
+                {
+                    insertIndex = i;
+                    break;
+                }
+            }
+        }
+        if (insertIndex == -1)
+            tabs.addTab("Timer " + number + ": Loading", panel);
+        else
+            tabs.insertTab("Timer" + number + ": Loading", null, panel, null, insertIndex);
         timerPanelMap.put(number, panel);
+        if (insertIndex == -1)
+            insertIndex = tabs.getTabCount() - 1;
+        // 225,225,225
         // Hours
         panel.getHours().getUpButton().addActionListener(
                 new UpdateTimeListener(number, 1 * 3600));
@@ -289,6 +371,41 @@ public class TrayTimer
                 new UpdateTimeListener(number, 10 * 1));
         panel.getSeconds().getFastDownButton().addActionListener(
                 new UpdateTimeListener(number, -10 * 1));
+        // Anonymous listeners
+        panel.getAnnounceOnStateChangeBox().addActionListener(new ActionListener()
+        {
+            
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                Timer timer = currentTimerMap.get(number);
+                if (timer == null)
+                    return;
+                boolean state = panel.getAnnounceOnStateChangeBox().isSelected();
+                panel.getAnnounceOnStateChangeBox().setSelected(
+                        timer.announce_on_state_change);
+                timerInterfaceAsync
+                        .set_attribute(number, "announce_on_state_change", state);
+            }
+        });
+    }
+    
+    private static Color hashTimerBackground(int number)
+    {
+        int hash =
+                Hashutils.hashToRange("" + number + ":" + HASH_MODIFIER, BACKGROUND_RANGE
+                    * BACKGROUND_RANGE * BACKGROUND_RANGE);
+        System.out.println("Hash for timer " + number + ": " + hash);
+        int red = hash / (BACKGROUND_RANGE * BACKGROUND_RANGE);
+        int green = hash / BACKGROUND_RANGE;
+        int blue = hash;
+        red %= BACKGROUND_RANGE;
+        green %= BACKGROUND_RANGE;
+        blue %= BACKGROUND_RANGE;
+        red += BACKGROUND_MIN;
+        green += BACKGROUND_MIN;
+        blue += BACKGROUND_MIN;
+        return new Color(red, green, blue);
     }
     
     /**
@@ -336,6 +453,7 @@ public class TrayTimer
     
     public static void onAnnounce(int number)
     {
+        timerInterfaceAsync.announce(number);
     }
     
     public static void onDelete(int number)

@@ -15,4 +15,6 @@ public interface TimerInterface
     public void set_attribute(int timer_number, String name, Object value);
     
     public void delete(int timer_number);
+    
+    public void announce(int number);
 }

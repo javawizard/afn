@@ -60,20 +60,20 @@ public class MultiSpinner extends javax.swing.JPanel
             }
             {
                 upButton = new BasicArrowButton(1);
-                this.add(getUpButton(), "1, 0");
+                this.add(upButton, "2,0");
             }
             {
                 downButton = new BasicArrowButton(5);
-                this.add(getDownButton(), "1, 1");
+                this.add(downButton, "2,1");
                 downButton.setDirection(5);
             }
             {
                 fastUpButton = new BasicArrowButton(1);
-                this.add(getFastUpButton(), "2, 0");
+                this.add(fastUpButton, "1,0");
             }
             {
                 fastDownButton = new BasicArrowButton(5);
-                this.add(getFastDownButton(), "2, 1");
+                this.add(fastDownButton, "1,1");
                 fastDownButton.setDirection(5);
             }
         }

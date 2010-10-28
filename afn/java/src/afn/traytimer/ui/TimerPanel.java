@@ -80,6 +80,7 @@ public class TimerPanel extends javax.swing.JPanel
             BorderLayout thisLayout = new BorderLayout();
             this.setLayout(thisLayout);
             this.setPreferredSize(new java.awt.Dimension(430, 260));
+            this.setOpaque(false);
             {
                 panel = new JPanel();
                 TableLayout panelLayout =
@@ -93,11 +94,13 @@ public class TimerPanel extends javax.swing.JPanel
                                         TableLayout.PREFERRED, TableLayout.FILL } });
                 panel.setLayout(panelLayout);
                 this.add(panel, BorderLayout.CENTER);
+                panel.setOpaque(false);
                 {
                     leftButtonPanel = new JPanel();
                     BorderLayout leftButtonPanelLayout = new BorderLayout();
                     panel.add(leftButtonPanel, "0, 0, 1, 4");
                     leftButtonPanel.setLayout(leftButtonPanelLayout);
+                    leftButtonPanel.setOpaque(false);
                     {
                         leftButtonInset = new JPanel();
                         GridLayout leftButtonInsetLayout = new GridLayout(0, 1);
@@ -138,6 +141,7 @@ public class TimerPanel extends javax.swing.JPanel
                     BorderLayout rightButtonPanelLayout = new BorderLayout();
                     panel.add(rightButtonPanel, "5, 0, 5, 4");
                     rightButtonPanel.setLayout(rightButtonPanelLayout);
+                    rightButtonPanel.setOpaque(false);
                     {
                         rightButtonInset = new JPanel();
                         GridLayout rightButtonInsetLayout = new GridLayout(0, 1);
@@ -197,7 +201,7 @@ public class TimerPanel extends javax.swing.JPanel
                 }
                 {
                     countingDownButton = new JButton();
-                    panel.add(getCountingDownButton(), "1, 8, 2, 8");
+                    panel.add(countingDownButton, "1,9,2,9");
                     countingDownButton.setText("Counting Down");
                     countingDownButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
                     countingDownButton.setSelected(true);
@@ -211,7 +215,7 @@ public class TimerPanel extends javax.swing.JPanel
                 }
                 {
                     stoppedButton = new JButton();
-                    panel.add(getStoppedButton(), "1, 9, 2, 9");
+                    panel.add(stoppedButton, "1,8,2,8");
                     stoppedButton.setText("Stopped");
                     stoppedButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
                     stoppedButton.setBackground(new java.awt.Color(192, 205, 255));
@@ -227,6 +231,7 @@ public class TimerPanel extends javax.swing.JPanel
                     announceOnStateChangeBox = new JCheckBox();
                     panel.add(getAnnounceOnStateChangeBox(), "4, 7, 5, 7");
                     announceOnStateChangeBox.setText("Announce on state change");
+                    announceOnStateChangeBox.setOpaque(false);
                 }
                 {
                     announceIntervalPanel = new JPanel();
@@ -235,10 +240,12 @@ public class TimerPanel extends javax.swing.JPanel
                                     javax.swing.BoxLayout.X_AXIS);
                     panel.add(announceIntervalPanel, "4,8,5,8,l,f");
                     announceIntervalPanel.setLayout(announceIntervalPanelLayout);
+                    announceIntervalPanel.setOpaque(false);
                     {
                         announceIntervalBox = new JCheckBox();
                         announceIntervalPanel.add(getAnnounceIntervalBox());
                         announceIntervalBox.setText("Announce every ");
+                        announceIntervalBox.setOpaque(false);
                     }
                     {
                         announceIntervalField = new JTextField();
