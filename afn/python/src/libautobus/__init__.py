@@ -62,6 +62,7 @@ if is_jython:
     from afn.libautobus import (AutobusConnection as AutobusConnectionSuper, #@UnresolvedImport
             InterfaceWrapper as InterfaceWrapperSuper, #@UnresolvedImport
             FunctionWrapper as FunctionWrapperSuper, #@UnresolvedImport
+            EventWrapper as EventWrapperSuper, #@UnresolvedImport
             ObjectWrapper as ObjectWrapperSuper) #@UnresolvedImport
     Options.respectJavaAccessibility = False
 
@@ -441,6 +442,9 @@ class FunctionWrapper(FunctionWrapperSuper):
 class ObjectWrapper(ObjectWrapperSuper):
     pass
 
+class EventWrapper(EventWrapperSuper):
+    pass
+
 class LocalInterface(object):
     """
     A local interface. Instances of this class represent interfaces that have
@@ -455,6 +459,8 @@ class LocalInterface(object):
             self.doc = ""
         self.functions = {} # Maps names to LocalFunction objects representing
         # functions we've registered on this interface
+        self.events = {} # Maps names to LocalEvent objects representing
+        # events we've registered on this interface
         self.objects = {} # Maps names to LocalObject objects representing
         # objects we've registered on this interface
     
@@ -476,6 +482,13 @@ class LocalInterface(object):
         """
         self.functions[local_function.name] = local_function
         local_function.interface = self
+    
+    def register_event(self, local_event):
+        """
+        Registers the specified LocalEvent object to this interface.
+        """
+        self.events[local_event.name] = local_event
+        local_event.interface = self
     
     def register_object(self, local_object):
         """
@@ -501,6 +514,37 @@ class LocalFunction(object):
         else:
             self.start_thread = hasattr(function, "start_thread") and function.start_thread
             self.function = function
+
+class LocalEvent(object):
+    """
+    A local event. Local events are callable; calling one will fire it.
+    """
+    def __init__(self, name, doc):
+        """
+        Creates a new local event. The event will use the specified name and
+        docstring.
+        """
+        self.interface = None
+        self.name = name
+        self.doc = doc
+    
+    def __call__(self, *arguments):
+        """
+        Fires this event, using the specified arguments as the event's
+        arguments. If no connection to the server is available, this does
+        nothing.
+        """
+        with self.interface.connection.on_connect_lock:
+            message = create_message(FireEventCommand,
+                    NOTIFICATION, interface_name=self.interface.name,
+                    event_name=self.name, 
+                    arguments=[encode_object(o) for o in arguments])
+            try:
+                self.interface.connection.send(message)
+            except NotConnectedException: # We've already stored the value
+                # locally if we're calling notify, so we'll just rely on the
+                # connect thread to send this value on next connection.
+                pass
 
 class LocalObject(object):
     """
@@ -599,6 +643,12 @@ class AutobusConnection(AutobusConnectionSuper):
         self.send_queue = Queue()
         self.receive_queues = {} # Maps message ids expecting responses to the
         # corresponding queues waiting for the message response
+        self.event_listeners = {} # Maps tuples containing an interface name
+        # and an event name to a list of functions listening for the specified
+        # event to fire on the server. At least one entry must be present in
+        # each list in order for AutobusConnection to auto-register a
+        # listener on the specified event on connect, even if it's as simple
+        # as lambda: None.
         self.object_values = {} # Maps tuples containing an interface name and
         # an object name to the object's current value as sent by the server.
         # This dict gets replaced every time we disconnect.
@@ -649,6 +699,34 @@ class AutobusConnection(AutobusConnectionSuper):
         """
         self.interfaces[interface_name].register_function(LocalFunction(
                 function_name, doc, function))
+    
+    def add_event_listener(self, interface_name, event_name, function):
+        """
+        Adds a function that will be notified when the specified remote event
+        is fired. This function is not thread-safe and should generally only
+        be called before the first connection to the server is created.
+        
+        The specified function should accept a number of arguments
+        corresponding to the number of arguments sent when the remote client
+        fires the event. You'll usually have to consult the event's
+        documentation.
+        """
+        if hasattr(function, "fired"): # We're on Jython and the function is
+            # an instance of EventListener
+            function = function.fired
+        event_spec = interface_name, event_name
+        if event_spec not in self.event_listeners:
+            self.event_listeners[event_spec] = []
+        self.event_listeners[event_spec].append(function)
+    
+    def add_event(self, interface_name, event_name, doc):
+        """
+        Adds a local event to the specified interface. The LocalEvent
+        instance created for the event will be returned.
+        """
+        event = LocalEvent(event_name, doc)
+        self.interfaces[interface_name].register_event(event)
+        return event
     
     def add_object_watch(self, interface_name, object_name, function):
         """
@@ -739,12 +817,20 @@ class AutobusConnection(AutobusConnectionSuper):
                 message["name"].append(function.name)
                 message["doc"].append(function.doc)
             self.send(message)
+            for event in interface.events.values():
+                self.send(create_message(
+                        RegisterEventCommand, NOTIFICATION,
+                        interface_name=interface.name, event_name=event.name,
+                        doc=event.doc))
             for object in interface.objects.values():
-                message = create_message(
+                self.send(create_message(
                         RegisterObjectCommand, NOTIFICATION,
                         interface_name=interface.name, object_name=object.name,
-                        doc=object.doc, value=encode_object(object.value))
-                self.send(message)
+                        doc=object.doc, value=encode_object(object.value)))
+        for interface_name, event_name in self.event_listeners.keys():
+            self.send(create_message(
+                    RegisterListenerCommand, NOTIFICATION,
+                    interface_name=interface_name, event_name=event_name))
         for interface_name, object_name in self.object_listeners.keys():
             message = create_message(
                     WatchObjectCommand, COMMAND,
@@ -800,6 +886,12 @@ class AutobusConnection(AutobusConnectionSuper):
             else:
                 process()
             return
+        if message["action"] == FireEventCommand:
+            interface_name = message["interface_name"]
+            event_name = message["event_name"]
+            arguments = message["arguments"]
+            event_spec = (interface_name, event_name)
+            self.fire_event_listeners(event_spec, [decode_object(o) for o in arguments])
         if message["action"] in (SetObjectCommand, WatchObjectResponse):
             interface_name = message["interface_name"]
             object_name = message["object_name"]
@@ -821,6 +913,19 @@ class AutobusConnection(AutobusConnectionSuper):
             for listener in self.object_listeners[object_spec]:
                 try:
                     listener(value)
+                except:
+                    print_exc()
+    
+    def fire_event_listeners(self, event_spec, arguments):
+        """
+        This should only be used by AutobusConnection itself. Notifies all
+        listeners on the specified event spec that the event has been fired
+        with the specified arguments.
+        """
+        if event_spec in self.event_listeners:
+            for listener in self.event_listeners[event_spec]:
+                try:
+                    listener(*arguments)
                 except:
                     print_exc()
     
@@ -941,6 +1046,9 @@ class AutobusConnection(AutobusConnectionSuper):
         return InterfaceWrapper(self, name)
     
     __getitem__ = get_interface
+    
+    def get_local_event(self, interface_name, event_name):
+        return self.interfaces[interface_name].events[event_name]
     
     def get_local_object(self, interface_name, object_name):
         """
