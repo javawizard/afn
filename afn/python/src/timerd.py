@@ -67,11 +67,21 @@ class Timer(object):
         self.set_absolute_time(time)
     
     def on_manual_state_change(self):
-        print ("Manual state change on timer " + str(self.number) +
+        print ("Manual state change on timer " + str(self.number) + 
                 " with state set to " + str(self.state))
+        if self.announce_on_state_change:
+            rpc.announce(self.number)
     
     def on_beeping(self):
         print "Timer " + str(self.number) + " is beeping"
+    
+    def get_time_fields(self):
+        """
+        Returns a 3-tuple of the hours, minutes, and seconds, in that order,
+        of the timer's absolute value.
+        """
+        value = self.get_absolute_time()
+        return value / 3600, value / 60 % 60, value % 60
 
 @synchronized(lock)
 def publish_timer_object():
@@ -82,11 +92,26 @@ def build_timer_object():
     result = {}
     for timer in timer_map.values():
         timer_info = {"number": timer.number, "time": timer.time, "state":
-                timer.state, "name": timer.name}
+                timer.state, "name": timer.name, "announce_on_state_change":
+        timer.announce_on_state_change, "announce_count": timer.announce_count,
+        "announce_interval": timer.announce_interval}
         result[timer.number] = timer_info
     return result
 
 class RPC(object):
+    """
+    A timer server. The timer daemon manages timers and provides information
+    about those timers. Timers can be counting up, counting down, or stopped,
+    which, when passed to functions, are represented by the integers 1, 2, and
+    3, respectively. Timers have a notion of a current time showing on the
+    timer. The timer daemon keeps track of each timer's current time and
+    increments/decrements it automatically if the timer is counting up or
+    counting down, respectively.
+    
+    Integration with the speak daemon is provided. If this Autobus server has
+    an interface available named speak when a timer goes off, that interface's
+    say_text function will be used to say that the timer is beeping.
+    """
     
     @start_thread
     @synchronized(lock)
@@ -140,6 +165,9 @@ class RPC(object):
         if "announce_on_state_change" in attributes:
             cast(attributes["announce_on_state_change"], bool)
             timer.announce_on_state_change = attributes["announce_on_state_change"]
+        if "announce_count" in attributes:
+            cast(attributes["announce_count"], int, long)
+            timer.announce_count = attributes["announce_count"]
         if "state" in attributes:
             if attributes["state"] != timer.state:
                 timer.set_state(attributes["state"])
@@ -167,6 +195,42 @@ class RPC(object):
             raise Exception("There is no timer with the number " + str(timer_number))
         del timer_map[timer_number]
         publish_timer_object()
+    
+    @start_thread
+    @synchronized(lock)
+    def announce(self, timer_number):
+        """
+        Announces the time remaining on the specified timer. If speakd is not
+        currently running and connected to this Autobus server, this function
+        does nothing.
+        """
+        timer = timer_map[timer_number]
+        field_values = timer.get_time_fields()
+        field_names = ["hour", "minute", "second"]
+        announce_string = ""
+        for field_name, field_value in zip(field_names, field_values):
+            if field_value != 0:
+                announce_string += (" :n:" + str(field_value) + " :pt:" + 
+                        field_name + ":s:" + str(field_value))
+        if announce_string == "":
+            announce_string = " :n:0 " + field_names[-1] + "s"
+        if timer.state == UP:
+            state_string = "counting up"
+        if timer.state == DOWN:
+            state_string = "counting down"
+        if timer.state == STOPPED:
+            state_string = "stopped"
+        announce_string = ("timer :n:" + str(timer_number) + " shows " + 
+                announce_string + " " + state_string) 
+        speak.say_text(announce_string)
+    
+    @start_thread
+    @synchronized(lock)
+    def dismiss(self, timer_number):
+        """
+        If the specified timer is currently announcing that it is beeping over
+        speakd, this function stops it. Otherwise, this functino does nothing.
+        """
 
 @synchronized(lock)
 def run_periodic_actions():
@@ -223,9 +287,9 @@ def run():
     global timer_object
     global startup_object
     if len(sys.argv) > 1:
-        bus = AutobusConnection(host=sys.argv[1])
+        bus = AutobusConnection(host=sys.argv[1], print_exceptions=True)
     else:
-        bus = AutobusConnection()
+        bus = AutobusConnection(print_exceptions=True)
     speak = bus["speak"]
     rpc = RPC()
     bus.add_interface("timer", rpc)

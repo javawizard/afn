@@ -42,7 +42,11 @@ if is_jython:
 
 from threading import Thread, RLock
 from struct import pack, unpack
-import autobus_protobuf.autobus_pb2 as protobuf
+try:
+    from json import dumps, loads
+except ImportError:
+    from simplejson import dumps, loads
+# import autobus_protobuf.autobus_pb2 as protobuf
 from traceback import print_exc
 from socket import error as SocketError, socket as Socket, SHUT_RDWR
 from functools import update_wrapper
@@ -50,6 +54,7 @@ from Queue import Queue, Empty
 from time import sleep
 import inspect
 from datetime import datetime
+from message_types import *
 if is_jython:
     from java.util import Map, List #@UnresolvedImport
     from org.python.core import Options #@UnresolvedImport
@@ -84,6 +89,8 @@ NOTIFICATION = 3
 
 DEFAULT_PORT = 28862
 
+MESSAGE_SEPARATORS = ",", ":"
+
 next_id = 1
 next_id_lock = RLock()
 
@@ -97,79 +104,19 @@ def get_next_id():
         next_id += 1
     return the_id
 
-class ProtoMultiAccessor(object):
-    def __init__(self, proto_class, prefix, specifier=None):
-        self.proto_class = proto_class
-        self.prefix = prefix
-        if specifier is None:
-            specifier = prefix + "_n"
-        self.specifier = specifier
-        self.fields = {}
-        for field_name, field_descriptor in proto_class.DESCRIPTOR.fields_by_name.items():
-            if field_name.startswith(prefix) and field_name != specifier:
-                self.fields[field_descriptor.message_type._concrete_class] = field_name
-    
-    def __getitem__(self, item):
-        return getattr(item, self.prefix + getattr(item, self.specifier))
-    
-    def __setitem__(self, item, value):
-        set = False
-        for field_class, field_name in self.fields.items():
-            getattr(item, field_name).Clear()
-            if isinstance(value, field_class):
-                set = True
-                getattr(item, field_name).MergeFrom(value)
-                setattr(item, self.specifier, field_name[len(self.prefix):])
-        if not set:
-            raise Exception("Supplied instance is not of a valid type")
-
-MessageValue = ProtoMultiAccessor(protobuf.Message, "value")
-InstanceValue = ProtoMultiAccessor(protobuf.Instance, "value")
-
-def create_message_pair(*args, **kwargs):
-    """
-    Creates a message object and optionally an instance of a particular message
-    type and binds them together. This completely initializes the generic
-    message instance; only the instance of the specific type of message needs
-    to be modified. The first argument passed to this method is either the type
-    of the particular message type to use or an instance of such a type. The
-    second, optional, argument is a message that this message should be
-    initialized to be a reply to or one of the three message type globals to
-    specify the message's type and initialize it with a default message id.
-    
-    Any additional keyword arguments can be used to pre-initialize fields on
-    the specific message type.
-    
-    This function returns the constructed message followed by the constructed
-    specific message (or the first argument if it was a specific message
-    instance instead of a specific message type).
-    
-    The constructed message returned will be None if this method is called to
-    construct a reply to a notification (since, by protocol definition,
-    only commands, and possibly replies, are replied to; notifications are
-    never replied to). The specific message will still be present, though. This
-    allows code to call this function, set up the specific message, and send
-    the constructed message without worrying about whether or not it's None,
-    and the message sending logic will discard it if it's None.
-    """
-    # type_or_instance, in_reply_to, notification
-    type_or_instance = args[0]
-    message_type = COMMAND if len(args) < 2 else args[1]
-    if callable(type_or_instance):
-        type_or_instance = type_or_instance(**kwargs)
-    message = protobuf.Message()
-    MessageValue[message] = type_or_instance
-    if isinstance(message_type, int):
-        message.message_id = get_next_id()
-        message.message_type = message_type
-    else:
-        if message_type.message_type == NOTIFICATION:
-            # Replies to notifications are not allowed
-            message = None
+def create_message(action, message_type=COMMAND, **kwargs):
+    message = {"action": action}
+    if isinstance(message_type, dict):
+        message["message_id"] = message_type["message_id"]
+        if message_type["message_type"] == NOTIFICATION:
+            message["message_type"] = None
         else:
-            message.message_id = message_type.message_id
-            message.message_type = RESPONSE
-    return message, type_or_instance
+            message["message_type"] = RESPONSE
+    else:
+        message["message_id"] = get_next_id()
+        message["message_type"] = message_type
+    message.update(kwargs)
+    return message
 
 def read_fully(socket, length):
     """
@@ -212,8 +159,7 @@ class InputThread(Thread):
 #                print "Receiving message with length " + str(message_length)
                 message_data = read_fully(self.socket, message_length)
 #                print "Message received, decoding..."
-                message = protobuf.Message()
-                message.ParseFromString(message_data)
+                message = loads(message_data)
 #                print "Dispatching received message..."
                 self.message_function(message)
         except EOFError:
@@ -266,7 +212,7 @@ class OutputThread(Thread):
                     if isinstance(message, str):
                         message_data = message
                     else:
-                        message_data = message.SerializeToString()
+                        message_data = dumps(message, separators=MESSAGE_SEPARATORS)
 #                    print "Sending encoded message length..."
                     self.socket.sendall(pack(">i", len(message_data)))
 #                    print "Sending encoded message..."
@@ -321,82 +267,61 @@ def merge_repeated(src, dest):
     for item in src:
         dest.add().MergeFrom(item)
 
-def encode_object(object, instance=None):
+def encode_object(object):
     """
-    Encodes an object to an instance of protobuf.Instance. This does not yet
-    support struct instances.
+    Encodes an object to its json-encoded form.
     """
-    if instance is None:
-        instance = protobuf.Instance()
     object = jython_encode_replace(object)
-    if isinstance(object, bool):
-        InstanceValue[instance] = protobuf.BoolInstance(value=object)
-    elif isinstance(object, int):
-        InstanceValue[instance] = protobuf.IntegerInstance(value=object)
-    elif isinstance(object, long):
-        InstanceValue[instance] = protobuf.LongInstance(value=object)
-    elif isinstance(object, float):
-        InstanceValue[instance] = protobuf.DoubleInstance(value=object)
-    elif isinstance(object, basestring):
-        InstanceValue[instance] = protobuf.StringInstance(value=object)
+    if isinstance(object, (bool, int, long, float, basestring)):
+        instance = object
     elif isinstance(object, datetime):
-        InstanceValue[instance] = protobuf.TimestampInstance(year=object.year,
-                month=object.month, day=object.day, hour=object.hour,
-                minute=object.minute, second=object.second,
-                millisecond=object.microsecond / 1000)
+        instance = ["timestamp", {"year": object.year,
+                "month": object.month, "day": object.day, "hour": object.hour,
+                "minute": object.minute, "second": object.second,
+                "millisecond": object.microsecond / 1000}]
     elif object is None:
-        InstanceValue[instance] = protobuf.NullInstance()
+        instance = ["null", None]
     elif isinstance(object, (list, tuple)):
-        list_instance = protobuf.ListInstance()
-        for list_object in object:
-            list_object_instance = list_instance.value.add()
-            encode_object(list_object, list_object_instance)
-        InstanceValue[instance] = list_instance
+        instance = ["list", [encode_object(o) for o in object]]
     elif isinstance(object, dict):
-        map_instance = protobuf.MapInstance()
+        keys = []
+        values = []
         for key, value in object.items():
-            map_entry = map_instance.value.add()
-            map_entry.key.MergeFrom(encode_object(key))
-            map_entry.value.MergeFrom(encode_object(value))
-        InstanceValue[instance] = map_instance
+            keys.append(encode_object(key))
+            values.append(encode_object(value))
+        instance = ["map", [keys, values]]
     elif isinstance(object, Exception):
-        InstanceValue[instance] = protobuf.ExceptionInstance(
-                text=type(object).__name__ + ": " + str(object))
+        instance = ["exception", {"text": type(object).__name__ + ": " + str(object)}]
     else:
         raise Exception("Invalid instance type to encode: " + 
                 str(type(object)))
     return instance
 
 def decode_object(instance):
-    instance_value = InstanceValue[instance]
-    if isinstance(instance_value, (protobuf.IntegerInstance,
-            protobuf.LongInstance, protobuf.DoubleInstance,
-            protobuf.StringInstance)):
-        return instance_value.value
-    elif isinstance(instance_value, protobuf.BoolInstance):
-        return bool(instance_value.value)
-    elif isinstance(instance_value, protobuf.TimestampInstance):
-        return datetime(year=instance_value.year, month=instance_value.month,
-                day=instance_value.day, hour=instance_value.hour,
-                minute=instance_value.minute, second=instance_value.second,
-                microsecond=instance_value.millisecond * 1000)
-    elif isinstance(instance_value, protobuf.NullInstance):
+    if isinstance(instance, (bool, int, long, float, basestring)):
+        return instance
+    # This is a custom type packed as a list with two items, so we'll unpack it
+    instance_type, value = instance;
+    if instance_type == "timestamp":
+        return datetime(year=value["year"], month=value["month"],
+                day=value["day"], hour=value["hour"],
+                minute=value["minute"], second=value["second"],
+                microsecond=value["millisecond"] * 1000)
+    elif instance_type == "null":
         return None
-    elif isinstance(instance_value, protobuf.ListInstance):
-        result = []
-        for item in instance_value.value:
-            result.append(decode_object(item))
-        return result
-    elif isinstance(instance_value, protobuf.MapInstance):
+    elif instance_type == "list":
+        return [decode_object(o) for o in value]
+    elif instance_type == "map":
         result = {}
-        for item in instance_value.value:
-            result[decode_object(item.key)] = decode_object(item.value)
+        keys, values = value
+        for key, value in zip(keys, values):
+            result[decode_object(key)] = decode_object(value)
         return result
-    elif isinstance(instance_value, protobuf.ExceptionInstance):
-        return Exception(instance_value.text)
+    elif instance_type == "exception":
+        return Exception(value["text"])
     else:
         raise Exception("Invalid instance type to decode: " + 
-                str(type(instance_value)))
+                str(instance_type))
 
 def get_function_doc(interface, function_name):
     function = getattr(interface, function_name)
@@ -456,14 +381,14 @@ class FunctionWrapper(FunctionWrapperSuper):
     
     def __call__(self, *args):
         instance_args = [encode_object(arg) for arg in args]
-        message, call_message = create_message_pair(protobuf.CallFunctionCommand,
+        message = create_message(CallFunctionCommand,
                 interface_name=self.interface.name, function=self.name,
                 arguments=instance_args)
         response = self.connection.query(message)
-        call_response = MessageValue[response]
-        if isinstance(call_response, protobuf.ErrorResponse):
-            raise Exception("Server-side error: " + call_response.text)
-        result = decode_object(call_response.return_value)
+        if response["action"] == ErrorResponse:
+            raise Exception("Server-side error: " + response.get("text",
+                    "No additional error information was sent by the server."))
+        result = decode_object(response["return_value"])
         if isinstance(result, Exception):
             raise result
         return result
@@ -493,7 +418,7 @@ class FunctionWrapper(FunctionWrapperSuper):
         the server, if any, is discarded.
         """
         instance_args = [encode_object(arg) for arg in args]
-        message, call_message = create_message_pair(protobuf.CallFunctionCommand,
+        message = create_message(CallFunctionCommand,
                 NOTIFICATION, interface_name=self.interface.name,
                 function=self.name, arguments=instance_args)
         self.connection.send(message)
@@ -607,14 +532,14 @@ class LocalObject(object):
         changed. The encoded form of the object will be sent in the message.
         """
         with self.interface.connection.on_connect_lock:
-            message, set_message = create_message_pair(protobuf.SetObjectCommand,
+            message = create_message(SetObjectCommand,
                     NOTIFICATION, interface_name=self.interface.name,
                     object_name=self.name, value=encode_object(self.value))
             try:
                 self.interface.connection.send(message)
             except NotConnectedException: # We've already stored the value
                 # locally if we're calling notify, so we'll just rely on the
-                # c connect thread to send this value on next connection.
+                # connect thread to send this value on next connection.
                 pass
 
 class AutobusConnection(AutobusConnectionSuper):
@@ -806,27 +731,23 @@ class AutobusConnection(AutobusConnectionSuper):
         self.output_thread.start()
 #        print "Registering interfaces with the server..."
         for interface in self.interfaces.values():
-            message, register_message = create_message_pair(protobuf.RegisterInterfaceCommand,
-                    NOTIFICATION, name=interface.name, doc=interface.doc)
-            self.send(message)
-            message, register_message = create_message_pair(protobuf.RegisterFunctionCommand,
-                    NOTIFICATION, interface_name=interface.name)
+            self.send(create_message(RegisterInterfaceCommand,
+                    NOTIFICATION, name=interface.name, doc=interface.doc))
+            message = create_message(RegisterFunctionCommand,
+                    NOTIFICATION, interface_name=interface.name, name=[], doc=[])
             for function in interface.functions.values():
-                register_message.name.append(function.name)
-                register_message.doc.append(function.doc)
-            # This is due to the fact that protobuf copies messages, which is
-            # freaking annoying as heck
-            MessageValue[message] = register_message
+                message["name"].append(function.name)
+                message["doc"].append(function.doc)
             self.send(message)
             for object in interface.objects.values():
-                message, register_message = create_message_pair(
-                        protobuf.RegisterObjectCommand, NOTIFICATION,
+                message = create_message(
+                        RegisterObjectCommand, NOTIFICATION,
                         interface_name=interface.name, object_name=object.name,
                         doc=object.doc, value=encode_object(object.value))
                 self.send(message)
         for interface_name, object_name in self.object_listeners.keys():
-            message, register_message = create_message_pair(
-                    protobuf.WatchObjectCommand, COMMAND,
+            message = create_message(
+                    WatchObjectCommand, COMMAND,
                     interface_name=interface_name, object_name=object_name)
             self.send(message) # I used to send this as a query and set the
             # resulting value into the object, but this caused a race condition
@@ -835,25 +756,25 @@ class AutobusConnection(AutobusConnectionSuper):
             # would cause the object to be reset to its initial value. So for
             # now, we're processing the WatchObjectResponse in message_arrived
             # the same as we process SetObjectCommand instances from the
-            # server, which fixes the race condition.
+            # server, which fixes the race condition. That's why it's a command
+            # but we're not querying for the response.
+        # That's it! Now we run the user's on_connect function.
         self.on_connect()
         
     def message_arrived(self, message):
 #        print "Message from the server arrived: " + str((message)) + "\n\n"
-        queue = self.receive_queues.get(message.message_id, None)
+        queue = self.receive_queues.get(message["message_id"], None)
         if queue is not None:
             queue.put(message)
             try:
-                del self.receive_queues[message.message_id]
+                del self.receive_queues[message["message_id"]]
             except KeyError:
                 pass
             return
-        message_value = MessageValue[message]
-        if isinstance(message_value, protobuf.RunFunctionCommand):
-            interface_name = message_value.interface_name
-            function_name = message_value.function
-            arguments = message_value.arguments
-            arguments = [decode_object(arg) for arg in arguments]
+        if message["action"] == RunFunctionCommand:
+            interface_name = message["interface_name"]
+            function_name = message["function"]
+            arguments = [decode_object(arg) for arg in message["arguments"]]
             try:
                 if function_name.startswith("_"):
                     raise Exception("Function names starting with _ are "
@@ -863,9 +784,8 @@ class AutobusConnection(AutobusConnectionSuper):
             except Exception, e:
                 if self.print_exceptions:
                     print_exc()
-                response, run_response = create_message_pair(protobuf.RunFunctionResponse,
-                        message, return_value=encode_object(e))
-                self.send(response)
+                self.send(create_message(RunFunctionResponse,
+                        message, return_value=encode_object(e)))
             def process():
                 try:
                     return_value = function.function(*arguments)
@@ -873,24 +793,22 @@ class AutobusConnection(AutobusConnectionSuper):
                     if self.print_exceptions:
                         print_exc()
                     _, return_value, _ = sys.exc_info() #@UndefinedVariable
-                response, run_response = create_message_pair(protobuf.RunFunctionResponse,
-                        message, return_value=encode_object(return_value))
-                self.send(response)
+                self.send(create_message(RunFunctionResponse,
+                        message, return_value=encode_object(return_value)))
             if function.start_thread:
                 Thread(target=process).start()
             else:
                 process()
             return
-        if isinstance(message_value, (protobuf.SetObjectCommand,
-                protobuf.WatchObjectResponse)):
-            interface_name = message_value.interface_name
-            object_name = message_value.object_name
-            value = message_value.value
+        if message["action"] in (SetObjectCommand, WatchObjectResponse):
+            interface_name = message["interface_name"]
+            object_name = message["object_name"]
+            value = message["value"]
             object_spec = (interface_name, object_name)
             self.object_values[object_spec] = decode_object(value)
             self.notify_object_listeners(object_spec)
             return
-        print "Not processing message"
+        print "Not processing message for action " + message["action"]
     
     def notify_object_listeners(self, object_spec):
         """
@@ -915,13 +833,13 @@ class AutobusConnection(AutobusConnectionSuper):
         by the server will be returned. 
         """
         queue = Queue()
-        self.receive_queues[message.message_id] = queue
+        self.receive_queues[message["message_id"]] = queue
         self.send(message)
         try:
             response = queue.get(block=True, timeout=timeout)
         except Empty:
             try:
-                del self.receive_queues[message.message_id]
+                del self.receive_queues[message["message_id"]]
             except KeyError:
                 pass
             raise TimeoutException()
@@ -992,7 +910,7 @@ class AutobusConnection(AutobusConnectionSuper):
         """
         if in_reply_to == None:
             in_reply_to = NOTIFICATION
-        message, error_message = create_message_pair(protobuf.ErrorResponse, in_reply_to, **kwargs)
+        message = create_message(ErrorResponse, in_reply_to, **kwargs)
         self.send(message)
     
     def get_interface(self, name):

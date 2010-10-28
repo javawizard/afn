@@ -3,14 +3,15 @@
 
 from threading import Thread, RLock
 from Queue import Queue
-from libautobus import ProtoMultiAccessor, read_fully, discard_args
+from libautobus import read_fully, discard_args, create_message
 from libautobus import InputThread, OutputThread, get_next_id
-from libautobus import COMMAND, RESPONSE, NOTIFICATION, create_message_pair
+from libautobus import COMMAND, RESPONSE, NOTIFICATION
 from libautobus import DEFAULT_PORT, NoSuchInterfaceException
 from libautobus import NoSuchFunctionException, encode_object, decode_object
 from libautobus import get_function_doc
+from libautobus.message_types import *
 from struct import pack, unpack
-import autobus_protobuf.autobus_pb2 as protobuf
+from json import dumps, loads
 from traceback import print_exc
 from socket import socket as Socket, SHUT_RDWR, SOL_SOCKET, SO_REUSEADDR
 from functools import partial
@@ -24,6 +25,7 @@ print """\
 Autobus, a message bus that's kind of a cross of D-Bus and RPC, written
 by Alexander Boyd (a.k.a. javawizard or jcp)
 """
+
 autobus_interface = None
 connection_map = {} # connection ids to connection objects
 interface_map = {} # interface names to interfaces
@@ -37,10 +39,26 @@ event_queue = Queue() # A queue of tuples, each of which consists of a
 # the connecton was lost and so should be shut down
 processed_message_count = 0
 
-# We're breaking naming conventions with these two because I'm paranoid of
-# accidentally conflicting them if I use the regular naming convention
-MessageValue = ProtoMultiAccessor(protobuf.Message, "value")
-InstanceValue = ProtoMultiAccessor(protobuf.Instance, "value")
+
+def register_event_listener(interface_name, event_name, connection_id):
+    """
+    Adds a listener on the specified event. This only modifies the global listener
+    map; this does not modify the connection's list of listeners., and this does
+    not cause any RegisterListenerResponse to be sent back to the client.
+    """
+    event_spec = interface_name, event_name
+    if event_spec not in listener_map:
+        listener_map[event_spec] = []
+    listener_map[event_spec].append(connection_id)
+
+def deregister_event_listener(interface_name, event_name, connection_id):
+    """
+    Same as register_event_listener, but deregisters a listener previously added.
+    """
+    event_spec = interface_name, event_name
+    listener_map[event_spec].remove(connection_id)
+    if len(listener_map[event_spec]) == 0:
+        del listener_map[event_spec]
 
 def register_object_watch(interface_name, object_name, connection_id):
     """
@@ -107,8 +125,8 @@ class Function(object):
             if self.doc is None:
                 self.doc = ""
     
-    def invoke_special(self, message, command, connection):
-        args = command.arguments
+    def invoke_special(self, message, connection):
+        args = message["arguments"]
         args = [decode_object(arg) for arg in args]
         try:
             return_value = self.special_target(*args)
@@ -116,7 +134,7 @@ class Function(object):
             print_exc()
             return_value = e
         result = encode_object(return_value)
-        response, call_response = create_message_pair(protobuf.CallFunctionResponse,
+        response = create_message(CallFunctionResponse,
                 message, return_value=result)
         connection.send(response)
 
@@ -126,6 +144,23 @@ class Event(object):
         self.sender = sender
         self.doc = doc
         # TODO: allow special events
+    
+    def notify(self, arguments):
+        """
+        Sends a message to all connections listening for this event containing
+        the specified arguments, which should be passed into this function as
+        a (possibly empty) list or tuple.
+        """
+        listener_spec = (self.interface.name, self.name)
+        if listener_spec in listener_map:
+            message = create_message(FireEventCommand,
+                    NOTIFICATION, interface_name=self.interface.name,
+                    event_name=self.name, arguments=arguments)
+            encoded_message = dumps(message)
+            for connection_id in listener_map[listener_spec]:
+                connection = connection_map[connection_id]
+                connection.send(encoded_message)
+
     
 class Object(object):
     def __init__(self, sender, name, doc, value):
@@ -159,10 +194,10 @@ class Object(object):
         watch_spec = (self.interface.name, self.name)
         if watch_spec in watch_map:
             current_value = self.get()
-            message, set_message = create_message_pair(protobuf.SetObjectCommand,
+            message = create_message(SetObjectCommand,
                     NOTIFICATION, interface_name=self.interface.name,
                     object_name=self.name, value=current_value)
-            encoded_message = message.SerializeToString()
+            encoded_message = dumps(message)
             for connection_id in watch_map[watch_spec]:
                 connection = connection_map[connection_id]
                 connection.send(encoded_message)
@@ -187,11 +222,9 @@ class VirtualObject(Object):
         """
         Initializes this object. Name, and doc are the same as on
         the Object constructor. Accessor is a function that takes no
-        arguments and returns the computed value of the object when it's
-        called. If the accessor returns an object that is not an instance of
-        protobuf.Instance, that object will be converted with
-        libautobus.encode_object before being returned from the virtual
-        object's get() method.
+        arguments and returns the object's current value as a normal Python
+        object. The resulting object will be converted to an encoded instance
+        before being returned from the object's get() function.
         """
         Object.__init__(self, 0, name, doc, None)
         self.accessor = accessor
@@ -201,8 +234,6 @@ class VirtualObject(Object):
     
     def get(self):
         value = self.accessor()
-        if isinstance(value, protobuf.Instance):
-            return value
         return encode_object(value)
 
 class Interface(object):
@@ -283,6 +314,21 @@ class Interface(object):
             autobus_interface.notify_object("interface_items")
         return function
     
+    def register_event(self, event):
+        if event.name in self.event_map:
+            raise KeyError(event.name)
+        print ("Registering event " + event.name + " from " + 
+                str(event.sender) + " on " + self.name)
+        event.interface = self
+        self.event_map[event.name] = event
+        if self is not autobus_interface:
+            autobus_interface.notify_object("interface_items")
+    
+    def create_and_register_event(self, sender, event_name, doc):
+        event = Event(sender, event_name, doc)
+        self.register_event(event)
+        return event
+    
     def register_object(self, object):
         if object.name in self.object_map:
             raise KeyError(object.name)
@@ -298,6 +344,13 @@ class Interface(object):
         object = Object(sender, object_name, doc, value)
         self.register_object(object)
         return object
+    
+    def fire_event(self, name, arguments):
+        """
+        Looks up the specified event, then calls its notify method with the
+        specified arguments.
+        """
+        self.event_map[name].notify(arguments)
     
     def notify_object(self, name):
         """
@@ -356,9 +409,10 @@ class Connection(object):
     def __init__(self, socket):
         self.socket = socket
         self.interfaces = []
-        self.listeners = []
+        self.listeners = [] # List of tuples, each of which contains an
+        # interface name and an event name.
         self.watches = [] # List of tuples, each of which contains an
-        # interface name, an object name, and a listener id.
+        # interface name and an object name.
         self.message_queue = Queue()
         self.id = get_next_id()
         self.pending_responses = {} # Maps message ids of commands sent to this
@@ -415,6 +469,8 @@ class Connection(object):
         command).
         """
         if message is not None:
+            if isinstance(message, dict) and message["message_type"] is None:
+                return
             self.message_queue.put(message, block=True)
     
     def send_error(self, in_reply_to=None, **kwargs):
@@ -429,7 +485,7 @@ class Connection(object):
         """
         if in_reply_to == None:
             in_reply_to = NOTIFICATION
-        message, error_message = create_message_pair(protobuf.ErrorResponse, in_reply_to, **kwargs)
+        message = create_message(ErrorResponse, in_reply_to, **kwargs)
         self.send(message)
     
     def start(self):
@@ -464,18 +520,11 @@ class Connection(object):
             deregister_object_watch(interface_name, object_name, self.id)
 
 def create_error_response(message_id, text):
-    response = protobuf.ErrorResponse()
-    response.text = text
-    message = protobuf.Message()
-    message.message_type = RESPONSE
-    message.message_id = message_id
-    MessageValue[message] = response
-    return message
+    return create_message(ErrorResponse, RESPONSE, message_id=message_id, text=text)
 
 def find_function_for_message(message):
-    class_name = type(MessageValue[message]).__name__
-    function_name = re.sub("([A-Z])", "_\\1", class_name)[1:].lower()
-    function_name = "process_" + function_name
+    action = message["action"]
+    function_name = "process_" + action
     if function_name not in vars(processors):
         raise Exception("Message is missing processor function "
                         + function_name)

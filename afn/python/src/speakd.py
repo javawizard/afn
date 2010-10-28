@@ -171,6 +171,14 @@ def format_t(time_string):
             result.append("pm")
     return result
 
+def format_pt(data):
+    singular, suffix, count = data.split(":")
+    count = int(count)
+    if count == 1:
+        return singular
+    else:
+        return singular + suffix
+
 def format_v(voice_string):
     if voice_string == "":
         voice_string = random.choice(voices.keys())
@@ -258,12 +266,23 @@ class RPC(object):
         lowercase versions are allowed. 12:34pm would be expanded to
         "12 30 4 pm", 5:03pm (or 05:03pm) would be expanded to "5 oh 3 pm",
         and 7:00pm would be expanded to "7 o'clock pm".
+        
+        pt: The data is a string of the form "singular:suffix:count". singular
+        is the singular (in terms of the English language) form of a word. 
+        suffix is the suffix that should be appended to the singular form of
+        the word to turn it into its plural (this is usually "s" for most
+        words). count is a number. If count is not numerically equal to the
+        number 1, this token expands into its plural form (I.E. the singular
+        with the suffix appended). Otherwise, this token expands into the
+        singular form of the word. 
         """
         print "Received request to say text " + str(text) 
         tokens = text.split(" ")
         new_tokens = []
         for token in tokens:
-            if token[0] == ":":
+            if not token:
+                pass
+            elif token[0] == ":":
                 specifier, data = token[1:].split(":", 1)
                 format_result = globals()["format_" + specifier](data)
                 if isinstance(format_result, basestring):

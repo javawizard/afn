@@ -149,7 +149,14 @@ bus.connect()
 
 
 if mode == "list":
-    interfaces = bus["autobus"].list_interfaces()
+    try:
+        interfaces = bus["autobus"].list_interfaces()
+    except Exception as e:
+        print "Exception while getting interface list: " + str(e)
+        if e.__class__ is not Exception:
+            print_exc()
+        bus.shutdown()
+        sys.exit()
     interfaces.sort(cmp=lambda x, y: cmp(x["name"], y["name"]))
     if len(interfaces) == 0:
         print "No interfaces currently available."
@@ -160,7 +167,14 @@ if mode == "list":
     bus.shutdown()
 elif mode == "interface":
     #TODO: list objects and events as well
-    functions = bus["autobus"].list_functions(interface_name)
+    try:
+        functions = bus["autobus"].list_functions(interface_name)
+    except Exception as e:
+        print "Exception while getting function list: " + str(e)
+        if e.__class__ is not Exception:
+            print_exc()
+        bus.shutdown()
+        sys.exit()
     functions.sort(cmp=lambda x, y: cmp(x["name"], y["name"]))
     if len(functions) == 0:
         print "No functions currently available on that interfacce."
