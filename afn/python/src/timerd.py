@@ -69,11 +69,14 @@ class Timer(object):
     def on_manual_state_change(self):
         print ("Manual state change on timer " + str(self.number) + 
                 " with state set to " + str(self.state))
+        manual_state_change_event(self.number, self.state)
         if self.announce_on_state_change:
             rpc.announce(self.number)
     
     def on_beeping(self):
         print "Timer " + str(self.number) + " is beeping"
+        state_change_event(self.number, self.state)
+        timer_beeping_event(self.number)
     
     def get_time_fields(self):
         """
@@ -82,6 +85,12 @@ class Timer(object):
         """
         value = self.get_absolute_time()
         return value / 3600, value / 60 % 60, value % 60
+    
+    def build_object_map(self):
+        return {"number": self.number, "time": self.time, "state":
+                self.state, "name": self.name, "announce_on_state_change":
+        self.announce_on_state_change, "announce_count": self.announce_count,
+        "announce_interval": self.announce_interval}
 
 @synchronized(lock)
 def publish_timer_object():
@@ -91,11 +100,7 @@ def publish_timer_object():
 def build_timer_object():
     result = {}
     for timer in timer_map.values():
-        timer_info = {"number": timer.number, "time": timer.time, "state":
-                timer.state, "name": timer.name, "announce_on_state_change":
-        timer.announce_on_state_change, "announce_count": timer.announce_count,
-        "announce_interval": timer.announce_interval}
-        result[timer.number] = timer_info
+        result[timer.number] = timer.build_object_map()
     return result
 
 class RPC(object):
@@ -150,10 +155,28 @@ class RPC(object):
     
     @start_thread
     @synchronized(lock)
+    def get_time(self, timer_number):
+        """
+        Returns the current absolute time of the specified timer.
+        """
+        return timer_map[timer_number].get_absolute_time()
+    
+    @start_thread
+    @synchronized(lock)
     def set(self, timer_number, attributes):
         """
         Sets the attributes present in the specified map on the specified
         timer.
+        
+        A quick note: to make it easier to set timer state via autosend, a
+        timer's state can be one of "up", "down", or "stopped", which will be
+        translated by this function to 1, 2, and 3. Normal programs using
+        timerd via libautobus should stick with the numeric constants where
+        possible, though, as these names may change. This name translation also
+        works for the set_attribute function.
+        
+        An additional note: "stop" is accepted as a synonym for "stopped" in
+        the above translation. I just added support for that.
         """
         timer = timer_map[timer_number]
         if "announce_interval" in attributes:
@@ -169,9 +192,13 @@ class RPC(object):
             cast(attributes["announce_count"], int, long)
             timer.announce_count = attributes["announce_count"]
         if "state" in attributes:
+            if isinstance(attributes["state"], basestring):
+                attributes["state"] = {"up": 1, "down": 2, "stop": 3, 
+                        "stopped": 3}[attributes["state"]]
             if attributes["state"] != timer.state:
                 timer.set_state(attributes["state"])
                 timer.on_manual_state_change()
+                state_change_event(timer.number, timer.state)
         publish_timer_object()
     
     @start_thread
@@ -221,8 +248,11 @@ class RPC(object):
         if timer.state == STOPPED:
             state_string = "stopped"
         announce_string = ("timer :n:" + str(timer_number) + " shows " + 
-                announce_string + " " + state_string) 
-        speak.say_text(announce_string)
+                announce_string + " " + state_string)
+        try:
+            speak.say_text(announce_string)
+        except:
+            pass
     
     @start_thread
     @synchronized(lock)
@@ -231,6 +261,35 @@ class RPC(object):
         If the specified timer is currently announcing that it is beeping over
         speakd, this function stops it. Otherwise, this functino does nothing.
         """
+    
+    @start_thread
+    @synchronized(lock)
+    def list_timers(self):
+        """
+        Returns a list of the numbers of all timers that currently exist on
+        this timer daemon.
+        """
+        return [timer.number for timer in timer_map.values()]
+    
+    @start_thread
+    @synchronized
+    def get_attribute(self, timer_number, attribute_name):
+        """
+        Returns the current value of the specified attribute on the specified
+        timer. This is equivalent to get(timer_number)[attribute_name].
+        """
+        return self.get(timer_number)[attribute_name]
+    
+    @start_thread
+    @synchronized
+    def get(self, timer_number):
+        """
+        Returns a map of the specified timer's current attributes. Not all of
+        these can be set with set_attributes or set; the timer's number, for
+        example, cannot be changed. This returns the same map that is
+        present in the timers object for the specified timer.
+        """
+        return timer_map[timer_number].build_object_map()
 
 @synchronized(lock)
 def run_periodic_actions():
@@ -286,15 +345,34 @@ def run():
     global rpc
     global timer_object
     global startup_object
-    if len(sys.argv) > 1:
-        bus = AutobusConnection(host=sys.argv[1], print_exceptions=True)
-    else:
-        bus = AutobusConnection(print_exceptions=True)
+    global timer_beeping_event
+    global state_change_event
+    global manual_state_change_event
+    bus = AutobusConnection(host=sys.argv[1] if len(sys.argv) > 1 else None, 
+            port=int(sys.argv[2]) if len(sys.argv) > 2 else None,
+            print_exceptions=True)
     speak = bus["speak"]
     rpc = RPC()
     bus.add_interface("timer", rpc)
     timer_object = bus.add_object("timer", "timers", "", {})
     startup_object = bus.add_object("timer", "startup", "", 0)
+    timer_beeping_event = bus.add_event("timer", "beeping", "This event is "
+            "fired whenever a timer that is counting down reaches zero and "
+            "has its state reset to stopped. It is passed one parameter, "
+            "the number of the timer that just went off. The event is fired "
+            "before the timer object is updated to reflect that the timer is "
+            "now stopped.")
+    state_change_event = bus.add_event("timer", "state_change", "This event "
+            "is fired whenever a timer changes state, both when a user "
+            "manually changes the timer's state and when the state changes "
+            "due to the timer reaching zero. This event is passed two "
+            "parameters: the number of the timer whose state changed and the "
+            "new state of the timer.")
+    manual_state_change_event = bus.add_event("timer", "manual_state_change",
+            "This event is fired whenever a timer's state is changed "
+            "manually by a call to either the set or set_attribute functions. "
+            "This event is passed the same set of parameters that "
+            "state_change_event is passed.")
     bus.start_connecting()
     while not is_shut_down:
         sleep(1)

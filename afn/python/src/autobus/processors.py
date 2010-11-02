@@ -12,7 +12,7 @@ def process_register_interface_command(message, sender, connection):
     try:
         interface.register()
     except KeyError:
-        connection.send_error(message, "An interface with the same name "
+        connection.send_error(message, text="An interface with the same name "
                 "is already registered.")
         return
     response = create_message(RegisterInterfaceResponse, message)
@@ -60,6 +60,12 @@ def process_call_function_command(message, sender, connection):
             " with message id " + str(invoke_message["message_id"]) + 
             " whose response is to be forwarded with id " + 
             str(message["message_id"]))
+    # FIXME: This causes a response to a function invocation sent as a notification
+    # to still be sent when the function returns on the remote side. We need to
+    # somehow not add the message to this list and perhaps suppress the "sporadic
+    # message received" warning that would consequently be printed to stdout once
+    # the remote client sends back the return value if the incoming message here
+    # is a notification.
     interface.connection.pending_responses[invoke_message["message_id"]] = (
             sender, message["message_id"])
 

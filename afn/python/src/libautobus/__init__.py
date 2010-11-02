@@ -1,5 +1,6 @@
 
 from __future__ import with_statement
+import os
 import platform
 import sys
 
@@ -81,6 +82,7 @@ else:
 if not is_jython:
     AutobusConnectionSuper = object
     InterfaceWrapperSuper = object
+    EventWrapperSuper = object # test file
     FunctionWrapperSuper = object
     ObjectWrapperSuper = object
 
@@ -622,13 +624,23 @@ class AutobusConnection(AutobusConnectionSuper):
     useful when a function is raising an unexpected error and more information
     about the error, such as its traceback, is needed. 
     """
-    def __init__(self, host="localhost", port=DEFAULT_PORT, reconnect=True,
+    def __init__(self, host=None, port=None, reconnect=True,
             print_exceptions=False, on_connect=lambda: None,
             on_disconnect=lambda: None):
         """
         Creates a new connection. This doesn't actually connect to the
         autobus server; use connect() or start_connecting() for that.
         """
+        if host is None:
+            host = os.getenv("AUTOBUS_SERVER")
+        if host is None:
+            host = "localhost"
+        if port is None:
+            port = os.getenv("AUTOBUS_PORT")
+        if port is None:
+            port = DEFAULT_PORT
+        if isinstance(port, basestring):
+            port = int(port)
         self.socket = None
         self.host = host
         self.port = port
@@ -764,9 +776,15 @@ class AutobusConnection(AutobusConnectionSuper):
     
     def start_connecting(self):
         """
-        Calls connect(None) in a new thread.
+        Calls connect(None) in a new thread. Any exception thrown by the call
+        to connect(None) is discarded without being printed to stdout.
         """
-        Thread(target=self.connect, kwargs={"attempts": None}).start()
+        def target():
+            try:
+                self.connect(attempts=None)
+            except:
+                pass
+        Thread(target=target).start()
     
     def connect(self, attempts=1):
         """
@@ -892,6 +910,7 @@ class AutobusConnection(AutobusConnectionSuper):
             arguments = message["arguments"]
             event_spec = (interface_name, event_name)
             self.fire_event_listeners(event_spec, [decode_object(o) for o in arguments])
+            return
         if message["action"] in (SetObjectCommand, WatchObjectResponse):
             interface_name = message["interface_name"]
             object_name = message["object_name"]

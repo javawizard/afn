@@ -27,7 +27,7 @@ def interface_items():
     interfaces = special_interface.interface.list_interfaces()
     for interface in interfaces:
         interface["functions"] = special_interface.interface.list_functions(interface["name"])
-        interface["events"] = []
+        interface["events"] = special_interface.interface.list_events(interface["name"])
         interface["objects"] = special_interface.interface.list_objects(interface["name"])
     return interfaces
         

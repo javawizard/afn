@@ -24,7 +24,7 @@ argument is interpreted as a string.
 """
 
 parser = OptionParser(usage=
-        "usage: autosend [options] [interface [item [arguments...]]]",
+        "usage: autosend [-?] [options] [interface [item [arguments...]]]",
         description="!!!INFO!!!",
         add_help_option=False)
 parser.add_option("-h", type="string", action="store", dest="host", help="The host to connect "
@@ -51,9 +51,9 @@ parser.add_option("-f", action="store_const", const="function", dest="mode",
         "specified as the item to be called with the specified arguments. The "
         "function's return value will be printed out.")
 parser.add_option("-e", action="store_const", const="event", dest="mode",
-        help="Event mode. This attaches to the event specified as the item on"
-        "the specified interface and prints out a message to stdout whenever "
-        "the event fires.")
+        help="Event mode. This attaches to the event specified as the item on "
+        "the specified interface. Whenever the event is fired, the event's "
+        "arguments will be printed to stdout, followed by a blank line.")
 parser.add_option("-o", action="store_const", const="object", dest="mode",
         help="Object mode. This gets the current value of the specified "
         "object and prints it to stdout, then exits.")
@@ -79,10 +79,6 @@ if mode == "unspecified":
 
 if mode == "help":
     print parser.format_help(None).replace("!!!INFO!!!", description)
-    sys.exit()
-
-if mode == "event":
-    print "Events are not yet supported."
     sys.exit()
 
 connect_options = {}
@@ -128,6 +124,16 @@ bus = AutobusConnection(**connect_options)
 # We've got everything set up thus far. Now we'll look up the mode and figure
 # out what we need to do before we connect to the Autobus server.
 
+if mode == "event":
+    def event_function(*arguments):
+        for o in arguments:
+            print str(type(o))
+            print str(o)
+        if len(arguments) < 0:
+            print "Function fired with no arguments."
+        print
+    bus.add_event_listener(interface_name, item_name, event_function)
+
 if mode == "object":
     printed = False
     def object_function(new_value):
@@ -163,7 +169,7 @@ if mode == "list":
     for interface in interfaces:
         print "Interface " + interface["name"] + ":"
         print interface["doc"]
-        print "---------------------------------------------------------------"
+        print "-" * 79
     bus.shutdown()
 elif mode == "interface":
     #TODO: list objects and events as well
@@ -181,7 +187,7 @@ elif mode == "interface":
     for function in functions:
         print "Function " + function["name"] + ":"
         print function["doc"]
-        print "---------------------------------------------------------------"
+        print "-" * 79
     bus.shutdown()
 elif mode == "function":
     interface = bus[interface_name]
@@ -206,7 +212,7 @@ elif mode == "object" or mode == "watch" or mode == "event":
     try:
         while not bus.is_shut_down: # Object mode shuts down the bus after
             # it's done
-            sleep(1)
+            sleep(0.25)
     except KeyboardInterrupt:
         bus.shutdown()
 

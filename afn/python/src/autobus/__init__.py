@@ -397,6 +397,14 @@ class Interface(object):
                 result.append({"name": function.name,
                         "special": function.special, "doc": function.doc})
         return result
+    
+    def describe_events(self):
+        return [{"name": event.name, "doc": event.doc} 
+                for event in self.event_map.values()]
+    
+    def describe_objects(self):
+        return [{"name": object.name, "doc": object.doc}
+                for object in self.object_map.values()]
 
 class Connection(object):
     """
@@ -516,6 +524,8 @@ class Connection(object):
                         "on closed unexpectedly"))
         for interface in self.interfaces:
             interface.deregister()
+        for interface_name, event_name in self.listeners:
+            deregister_event_listener(interface_name, event_name, self.id)
         for interface_name, object_name in self.watches:
             deregister_object_watch(interface_name, object_name, self.id)
 

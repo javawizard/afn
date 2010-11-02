@@ -51,12 +51,28 @@ class AutobusInterface(object):
             raise Exception("No such interface.")
         return interface.describe_functions()
     
+    def list_events(self, interface_name):
+        """
+        Sane as list_functions, but returns a list of events available on this
+        interface.
+        """
+        try:
+            interface = autobus.interface_map[interface_name]
+        except KeyError:
+            raise Exception("No such interface.")
+        return interface.describe_events()
+        
     def list_objects(self, interface_name):
         """
         Same as list_functions, but returns a list of objects available on this
         interface. 
         """
-    
+        try:
+            interface = autobus.interface_map[interface_name]
+        except KeyError:
+            raise Exception("No such interface.")
+        return interface.describe_objects()
+        
     def get_processed_message_count(self):
         """
         Returns the number of messages that Autobus has received and processed
