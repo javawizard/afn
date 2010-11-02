@@ -140,7 +140,7 @@ public class AutobusConnection
      */
     public static <T> T unpack(Map<String, ? extends Object> map, T object)
     {
-        System.out.println("Unpacking " + map + " into " + object);
+        //System.out.println("Unpacking " + map + " into " + object);
         for (Entry<String, ?> entry : map.entrySet())
         {
             try
@@ -152,7 +152,7 @@ public class AutobusConnection
                 e.printStackTrace();
             }
         }
-        System.out.println("Object is now " + object);
+        //System.out.println("Object is now " + object);
         return object;
     }
     

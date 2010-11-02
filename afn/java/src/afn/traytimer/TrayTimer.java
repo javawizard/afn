@@ -16,6 +16,7 @@ import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
@@ -458,6 +459,9 @@ public class TrayTimer
     
     public static void onDelete(int number)
     {
+        if (JOptionPane.showConfirmDialog(frame, "Are you sure you want to delete timer "
+            + number + "?", null, JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+            return;
         try
         {
             timerInterface.delete(number);
