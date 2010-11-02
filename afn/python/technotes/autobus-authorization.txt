@@ -1,0 +1,7 @@
+I'm thinking of adding some authorization stuff to Autobus. Only, it's going to be extensible. But not in the way you're probably going to think. I debated adding support for plugins to the Autobus server itself, but then I decided that was quite redundant. So, I'm going with a scheme where clients with appropriate permissions can authenticate other clients.
+
+Autobus will have a concept of permissions. These are built-in and can't be extended right now. I still have yet to compile the full list of permissions, but the three I'm thinking of right now are register_interface, call_function, and modify_permissions. register_interface is a permission that takes one parameter (permissions can have parameters that affect them in a permission-specific way; these are stored in a JSON map) and allows the connection granted it to register new interfaces. The one parameter this permission accepts is name, which is a regular expression. register_interface allows the connection granted it to register interfaces whose names match the specified regular expression.
+
+Actually, I'm just going to make a list of all of the permissions in autobus-permissions.txt.
+
+So, Autobus has built-in support for automatically granting permissions to clients that connect from specified IP addresses. The idea is that connections from, say, localhost would be granted modify-permissions, and then additional permission-managing Autobus clients could be started.

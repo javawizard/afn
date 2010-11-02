@@ -1,0 +1,1 @@
+Another thing I was thinking of writing for Autobus is the PL system. The PL system would be a remote control system for home automation. It would be designed to work with the X10 CM15A module, but I'd like it to be generic enough to work with other systems like Insteon (with which I eventually want to replace my X10 system).

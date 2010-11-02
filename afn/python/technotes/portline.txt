@@ -1,0 +1,13 @@
+The portline system is another Autobus system I'm thinking of writing. I've got a bunch of programs I have ideas for that would require being able to read from and write to the parallel port of multiple machines. The only problem is, multiple applications will need to share the same parallel port. So direct I/O access isn't a possibility. I'm solving that by writing the portline system.
+
+There are two programs that are part of the portline system: portline.master and portline.port. The former is the manager of the whole portline system. Only one master should be started for any given Autobus server. Communications with the portline system go through this master. It registers the portline interface. portline.port is the slave program. You run one instance per parallel port per machine that you want to be able to control with the portline system. portline.master is the only program that communicates with portline.port instances.
+
+Every portline.port instance has a name. It registers the interface portline.port.name, where name is the port instance's name. The portline master watches autobus/interfaces to see what portline interfaces are available.
+
+Hmm, thinking some more...
+
+Things we need to be able to do: We need to be able to listen for changes to I/Os on a particular port without having to busy-query. So port should provide an object for all of their input pins representing the state of the pins. The portline instance would query this every few milliseconds or something.
+
+We should also have an event that allows us to listen for when some pins change. And it should be supplied with the list of pins that changed and their new values.
+
+We should also have an object for the output pins, and functions to control them. The object would show the output pins' current states.

@@ -1,0 +1,13 @@
+This file lists all of the permissions that Autobus provides, along with the parameters they accept. The permissions are:
+
+
+
+register_interface: This permission allows a connection to register new interfaces. It takes one parameter, name, which is a regular expression. The connection can only register new interfaces if their names match the specified regex.
+
+call_function: This permission allows a connection to call certain functions. Two parameters are accepted: interface and function, both of which are regexes. Functions can only be called by a connection if the interface name and connection name of the function to be invoked match the interface and function regexes on a call_function permission granted.
+
+modify_permissions: This permission allows a connection to grant and revoke permissions to and from other connections. Care should be used when granting this; a connection that has this permission can do anything, since it can grant any permissions it wants to itself.
+
+register_listener: This permission allows a connection to register listeners on certain events. Two parameters are accepted: interface and event, both of which follow the same general format of the interface and function parameters of the call_function permission.
+
+watch_object: This permission allows a connection to watch certain objects. Two parameters are accepted: interface and object, both of which follow the same general format of the interface and function parameters of the call_function permission.
