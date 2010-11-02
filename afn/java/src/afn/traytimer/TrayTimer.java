@@ -119,6 +119,9 @@ public class TrayTimer
      */
     public static void main(String[] args)
     {
+        String host = "localhost";
+        if(args.length > 0)
+            host = args[0];
         // UIManager.put("TabbedPane.selected", new Color(225, 225, 225));
         frame = new JFrame("TrayTimer");
         frame.setSize(435, 275);
@@ -141,7 +144,7 @@ public class TrayTimer
         tabs = new JTabbedPane();
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         initAddTimerTab();
-        bus = AutobusConnection.create("localhost", AutobusConnection.DEFAULT_PORT);
+        bus = AutobusConnection.create(host, AutobusConnection.DEFAULT_PORT);
         bus.add_object_watch("timer", "timers", new TimersObjectListener());
         bus.add_object_watch("timer", "startup", new StartupObjectListener());
         timerInterface = bus.get_interface_proxy("timer", TimerInterface.class);
