@@ -32,12 +32,7 @@ def main():
         pynotify.Notification("Timer " + str(timer), "is beeping.").show()
     
     def state_change_listener(timer, state):
-        if state == 1:
-            state_string = "counting up"
-        if state == 2:
-            state_string = "counting down"
-        if state == 3:
-            state_string = "stopped"
+        state_string = {1: "counting up", 2: "counting down", 3: "stopped"}[state]
         pynotify.Notification("Timer " + str(timer), "is now " + state_string + 
                 ".").show()
     

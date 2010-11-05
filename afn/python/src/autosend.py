@@ -175,19 +175,30 @@ elif mode == "interface":
     #TODO: list objects and events as well
     try:
         functions = bus["autobus"].list_functions(interface_name)
+        events = bus["autobus"].list_events(interface_name)
+        objects = bus["autobus"].list_objects(interface_name)
     except Exception as e:
-        print "Exception while getting function list: " + str(e)
+        print "Exception while getting interface member list: " + str(e)
         if e.__class__ is not Exception:
             print_exc()
         bus.shutdown()
         sys.exit()
     functions.sort(cmp=lambda x, y: cmp(x["name"], y["name"]))
-    if len(functions) == 0:
-        print "No functions currently available on that interfacce."
-    for function in functions:
-        print "Function " + function["name"] + ":"
-        print function["doc"]
-        print "-" * 79
+    events.sort(cmp=lambda x, y: cmp(x["name"], y["name"]))
+    objects.sort(cmp=lambda x, y: cmp(x["name"], y["name"]))
+    def print_object_info(type, items):
+        if len(items) == 0:
+            print "No %ss currently available on that interface." % type
+        for index, item in enumerate(items):
+            print "%s%s %s:" % (type[0:1].upper(), type[1:], item["name"])
+            print item["doc"]
+            if index != (len(items) - 1):
+                print "-" * 79
+    print_object_info("function", functions)
+    print "=" * 79
+    print_object_info("event", events)
+    print "=" * 79
+    print_object_info("object", objects)
     bus.shutdown()
 elif mode == "function":
     interface = bus[interface_name]
