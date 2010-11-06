@@ -1,0 +1,11 @@
+There needs to be something in speakd that lets certain phrases be spoken over and over again until either they've been spoken a certain number of times or something cancels that particular phrase.
+
+So I'm thinking, there should be a way to attach a name to a particular sentence. Including normal sentences. Which would allow them to be cancelled out of the speech queue before they're spoken. It would also allow duplicate sentences to not be duplicated, meaning that if "Someone is ringing the doorbell" was added to the speech queue twice, it could use the same name so that it only ends up getting added once. (which is what we want to happen; I'd go crazy if someone ringing my doorbell ten times in a row resulted in that phrase being said ten times repeatedly.)
+
+So I'm thinking that if a sentence doesn't have a name associated with it, speakd essentially generates one at random.
+
+Then there would be a cancel function that cancels a sentence with a given name. And cancel_regex would cancel any sentence whose name matches the specified regex. (I.E. cancel_regex(".*") could be used to clear the speech queue.)
+
+I'm also thinking, as a side note, that there should be a function called skip, which stops the sentence currently being spoken and moves on to the next one. That way, if someone's flooded the speech queue with tons of sentences that are really long, cancel_regex(".*") can be used to remove all of them that are still pending and skip can stop the one currently being spoken. I'm thinking that, for the sake of performance, skip would only stop once the end of a word is hit. Words are all pretty short right now so this shouldn't be much of a problem.
+
+Oh, and I'm thinking that I'm going to re-write a lot of the performance-intensive parts of speakd (and particularly the audio volume adjusting and mixing algorithms) as C functions and then have python stuff call into them.

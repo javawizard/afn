@@ -163,10 +163,12 @@ class RPC(object):
     
     @start_thread
     @synchronized(lock)
-    def set(self, timer_number, attributes):
+    def set(self, timer_number, *args):
         """
-        Sets the attributes present in the specified map on the specified
-        timer.
+        This can be called either as set(timer_number, attribute_map) or as
+        set(timer_number, attribute_name, new_value). The former set all of the
+        attributes in the specified map on the specified timer to the
+        specified values. The latter sets a single attribute.
         
         A quick note: to make it easier to set timer state via autosend, a
         timer's state can be one of "up", "down", or "stopped", which will be
@@ -178,6 +180,11 @@ class RPC(object):
         An additional note: "stop" is accepted as a synonym for "stopped" in
         the above translation. I just added support for that.
         """
+        if len(args) == 1:
+            attributes, = args
+            cast(attributes, dict)
+        else:
+            attributes = {args[0]: args[1]}
         timer = timer_map[timer_number]
         if "announce_interval" in attributes:
             cast(attributes["announce_interval"], int, long)
@@ -206,8 +213,9 @@ class RPC(object):
     def set_attribute(self, timer_number, name, value):
         """
         Sets a single attribute. This is equivalent to
-        set(timer_number, {name: value}). It exists mostly to make setting
-        timer attributes with autosend easier than it would otherwise be.
+        set(timer_number, name, value). It was created back when the set
+        function could only be called with a map, and generally shouldn't be
+        used anymore.
         """
         self.set(timer_number, {name: value})
     
@@ -276,20 +284,34 @@ class RPC(object):
     def get_attribute(self, timer_number, attribute_name):
         """
         Returns the current value of the specified attribute on the specified
-        timer. This is equivalent to get(timer_number)[attribute_name].
+        timer. This is equivalent to get(timer_number, attribute_name), and
+        exists for the same reason that set_attribute exists (and hence
+        generally shouldn't be used anymore).
         """
         return self.get(timer_number)[attribute_name]
     
     @start_thread
     @synchronized
-    def get(self, timer_number):
+    def get(self, timer_number, attribute_name=None):
         """
-        Returns a map of the specified timer's current attributes. Not all of
+        This function can be invoked as either get(timer_number) or
+        get(timer_number, attribute_name).
+        
+        When invoked as get(timer_number), returns a map of the specified
+        timer's current attributes. Not all of
         these can be set with set_attributes or set; the timer's number, for
         example, cannot be changed. This returns the same map that is
         present in the timers object for the specified timer.
+        
+        When invoked as get(timer_number, attribute_name), returns the value
+        of the specified attribute. This would be equivalent to
+        get(timer_number)[attribute_name].
         """
-        return timer_map[timer_number].build_object_map()
+        result = timer_map[timer_number].build_object_map()
+        if attribute_name is not None:
+            return result[attribute_name]
+        else:
+            return result
 
 @synchronized(lock)
 def run_periodic_actions():
