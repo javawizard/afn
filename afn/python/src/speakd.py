@@ -13,7 +13,7 @@ import time
 from itertools import chain
 import re
 from datetime import datetime
-from libautobus import AutobusConnection, DEFAULT_PORT
+from libautobus import AutobusConnection, DEFAULT_PORT, start_thread
 from concurrent import synchronized
 from cStringIO import StringIO
 
@@ -209,6 +209,7 @@ class RPC(object):
     Allows communicating with the speak server. This allows pre-recorded
     phrases and synthesized speech to be spoken.
     """
+    @start_thread
     @synchronized(lock)
     def say(self, components, priority=0, voice=None):
         """
@@ -239,6 +240,7 @@ class RPC(object):
         print "After adding request, speech queue is " + str(speech_queue)
 #        speech_queue_object.set(speech_queue)
     
+    @start_thread
     @synchronized(lock)
     def say_text(self, text, priority=0, voice=None):
         """
@@ -295,14 +297,16 @@ class RPC(object):
                 new_tokens.append(token)
         self.say(new_tokens, priority, voice)
     
+    @start_thread
     @synchronized(lock)
     def get_queue_size(self):
         """
         Returns the number of sentences currently in the queue. This does not
         include the sentence that is currently being spoken if there is one.
         """
-        return len(list(chain(speech_queue.values())))
+        return len(list(chain(*speech_queue.values())))
     
+    @start_thread
     @synchronized(lock)
     def get_voice_names(self):
         """
@@ -311,6 +315,7 @@ class RPC(object):
         """
         return voices.keys()
     
+    @start_thread
     @synchronized(lock)
     def get_default_voice(self):
         """
@@ -321,6 +326,7 @@ class RPC(object):
         """
         return default_voice
     
+    @start_thread
     @synchronized(lock)
     def set_default_voice(self, voice_name):
         """
@@ -333,6 +339,7 @@ class RPC(object):
                             "configured in speakd.conf.")
         default_voice = voice_name
     
+    @start_thread
     @synchronized(lock)
     def get_pid(self):
         """
@@ -340,6 +347,7 @@ class RPC(object):
         """
         return os.getpid()
     
+    @start_thread
     @synchronized(lock)
     def time_format_time(self, time):
         """
@@ -355,6 +363,7 @@ class RPC(object):
             hour = 12
         return ":t:" + str(hour) + ":" + str(minute).rjust(2, "0") + period
     
+    @start_thread
     @synchronized(lock)
     def time_format_month_day(self, time):
         """
@@ -370,6 +379,7 @@ class RPC(object):
         day = str(time.day)
         return month + " :n:" + day
     
+    @start_thread
     @synchronized(lock)
     def time_format_weekday(self, time):
         """
@@ -378,6 +388,7 @@ class RPC(object):
         """
         return time.strftime("%A").lower()
     
+    @start_thread
     @synchronized(lock)
     def time_format_weekday_month_day(self, time):
         """
@@ -397,6 +408,7 @@ def main():
     global autio_stream
     global bus
     global speech_queue_object
+    global speech_queue_size_object
     audio_device = pyaudio.PyAudio()
     audio_stream = audio_device.open(format=audio_device.get_format_from_width(2),
                                      channels=1, rate=44100, output=True,
@@ -405,9 +417,12 @@ def main():
     
     bus = AutobusConnection(host, port, print_exceptions=True)
     bus.add_interface(interface_name, RPC())
-    speech_queue_object = bus.add_object(interface_name, "speech_queue", """
-    This doesn't work yet.
-    """, {})
+    speech_queue_object = bus.add_object(interface_name, "speech_queue",
+    "This doesn't work yet.", {})
+    speech_queue_size_object = bus.add_object(interface_name,
+            "speech_queue_size", "The number of items currently in the "
+            "speech queue. This does not include the item currently being "
+            "spoken, if any.", 0)
     bus.start_connecting()
     
     print ""

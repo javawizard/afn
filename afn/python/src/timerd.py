@@ -259,7 +259,7 @@ class RPC(object):
     def dismiss(self, timer_number):
         """
         If the specified timer is currently announcing that it is beeping over
-        speakd, this function stops it. Otherwise, this functino does nothing.
+        speakd, this function stops it. Otherwise, this function does nothing.
         """
     
     @start_thread
@@ -354,7 +354,9 @@ def run():
     speak = bus["speak"]
     rpc = RPC()
     bus.add_interface("timer", rpc)
-    timer_object = bus.add_object("timer", "timers", "", {})
+    timer_object = bus.add_object("timer", "timers", "This object is a map of "
+            "maps. The outer map maps timer numbers to maps representing "
+            "those timers. Each timer's map ", {})
     startup_object = bus.add_object("timer", "startup", "", 0)
     timer_beeping_event = bus.add_event("timer", "beeping", "This event is "
             "fired whenever a timer that is counting down reaches zero and "
@@ -372,7 +374,7 @@ def run():
             "This event is fired whenever a timer's state is changed "
             "manually by a call to either the set or set_attribute functions. "
             "This event is passed the same set of parameters that "
-            "state_change_event is passed.")
+            "state_change is passed.")
     bus.start_connecting()
     while not is_shut_down:
         sleep(1)
