@@ -1,0 +1,88 @@
+I'm modifying the Fact programming language (this is November 13, 2010, for comparison with older Fact specs) to add object and expression support. Fact is still going to be a lightweight scripting language, as usual, but it will have some support for objects, and more interestingly, I'm planning on adding built-in support for integers (and possibly decimals), an objects (and possibly classes). I'm also going to add a notion of functions as first-class objects, which will help class implementation somewhat. Classes will also be first-class objects.
+
+Metaclasses are not going to be supported. They confuse the royal heck out of me, and for a lightweight scripting language like Fact, adding support for classes is already a stretch. Hence no metaclasses.
+
+Subclasses will most likely be supported. All classes, including the classes of built-in types, will support function addition after the fact. I'm not yet sure if class functions and instance fields will share the same namespace as they do in Python.
+
+Subscripting of maps... That's an interesting question. And assigment to variables. Obviously the {lset} function needs to exist for backwards compatibility, but there should ideally be some less verbose way of assigning values to variables. Oh, and, there are a total of five built-in, so to speak, classes in the new Fact: String, Number, Class, Function, and Null. These are the five core types; additional types, like Map and List, are technically optional (and applications embedding libfact.py can actually create Fact interpreters without those types). The five built-in types are those that the interpreter itself deals with directly. Map and List are included with the reference implementation Fact interpreter, libfact.py, and have native implementations for speed reasons.
+
+So, we're first going to lay out the semantics of class and function use and invocation before we get into declaration, so that I can start writing the interpreter up to the point that it can interpret traditional Fact. Python's traditional "self" argument is implicit in Fact; it is assigned automatically when invoking a function on an instance, and it must not be specified as any formal parameter to the function. (In function declaration, the name of the "self" argument can be changed without affecting the semantics of invoking the function, but we're not getting into that yet.) 
+
+
+
+
+Ok, I'm scrapping all that. Let's see...
+
+We just have strings right now. That makes things simple, but inefficient for numerical computations and downright painful for creating any map or list like structures (since they have to be emulated with delimiters). We need first-class strings, ints, lists, and maps. Then we need to figure out the semantics of the empty string in relation to string concatenation. Or more precisely, what argument gets passed when a function's argument is the empty string, and how to deal with functions that return the empty string. I'm thinking there should be some distinction between these and null. And then we want a way that user-defined objects can be passed in or some such thing. Perhaps, actually, we should just have a general notation of objects, whose behavior is specific to how they were created. We could the define a concept of classes around that later on if we want. Objects have fields, simple as that. Some objects, depending on their type, might allow their fields to be modified, or new fields to be added; others might not. How a value for a particular field is obtained from an object might be different from one object to another; same with assigning a value to a field. Objects can be invoked, passing in a list of positional arguments and an optional list of implicit variables and returning a value. What happens when an object is invoked is object-specific; user-defined functions are objects that run the code when invoked, for example. A notion of classes can later be built on top of this framework if we end up needing one.
+
+Hmm... One thing I remember being a pain in Python was that you'd have colliding method names for things that needed to act under two different protocols. I'm almost thinking objects should have a number of namespaces. How to access those, though...
+
+If I did that, Fact should have a namespace that it presents on objects...
+
+But we also don't want to make things too verbose, either...
+
+K, objects don't have namespaces, but they can overload operators. Or at least most of them; there is one operator, $, which binds the tightest of all operators and cannot be overridden. It provides some concepts built into the Fact programming language. Other than that, I'm thinking they can all have object-specific behaviors. Some operators are prefix operators, some are infix operators, and some are literal operators. Prefix operators are those such as ! that accept a value after them. Infix operators are those such as + that accept a value on their left and a value on their right. Objects on the left side of an infix operator can indicate (in some manner that I haven't yet figured out) that they don't know what to do with the object on right side, at which point the value on the right will be asked if it knows how to process the specified operator. Literal operators are similar to infix operators but interpret the text to the right of the operator as a literal if at all possible; the traditional "." operator present in most languages is an example of a literal operator, returning the attribute denoted by the name to its right. If the right side cannot be interpreted as a literal, it is interpreted instead as a value. Since Fact uses [] to denote embedded traditional string expressions, x.y and x.[y] are the same in Fact. x.'1' (note the single quotes, which cause an otherwise syntactically-invalid identifier to be interpreted as an identifier anyway) is the same as x.[1], and x.'1 2 3' is the same as x.[{numberlist|1|3}] or x.(numberlist(1, 3)). Pretty neat, huh.
+
+Only now do I realize that that messes up the function invocation semantics that Fact relies on for its flow control. Of course, this could be mitigated by having functions specify that they have to receive their input as closures or values. Or at least that's what I'm thinking. The idea would be that all arguments to functions invoked in the normal manner would be passed as closures, but functions could be created such that they automatically convert closures to values by evaluating them before calling the function. Functions that accept closures but get passed values would have the value wrapped in a simple closure that evaluates to the value itself. Should be fairly simple, if done right. Of course, what, then, are closures as passed to other things? And how does the % space interact with them?
+
+Ok so, what if the % space only deals with values, and the traditional space only deals with closures? Transitioning from traditional space to % space would be done by using %, as normal. Transitioning from % space to traditional space would be done with square brackets. That's less than ideal since it precludes using unescaped close brackets in traditional space, but I guess it'd be possible. 
+
+So we're still going to use identifiers surrounded by single quotes to allow identifiers that would otherwise be interpreted differently in % space. For now I'm not going to decide whether backslashes should be allowed within single-quoted identifiers until I figure out whether they should be allowed to escape themselves and what would otherwise by a close single quote.
+
+Brackets convert their contents to a value when returning to % space by evaluating their contained closure. As a result, calling functions like for from within % space will throw an exception indicating that the for function expects closures for some of its arguments but received values instead.
+
+I still haven't figured out the rules for automatic coercion from closures to values when invoking functions, nor how to define a closure short of invoking a function. Maybe the empty function name could be used for that. I'll work on that later.
+
+Functions cannot return indirect closures. By that, I mean that a function's content closure is evaluated on the function's return and the value is what's returned from the function. A function whose contents are "hello {numberlist|1|3}" returns the string "hello 1 2 3", not a closure that evaluates "hello " and the call to the numberlist function and concatenates the two.
+
+Ok, so coercion rules for function arguments. A function argument can be defined to accept a closure or a value when called. If the function is invoked using the traditional notation, any arguments to that function defined to accept values will have their arguments automatically evaluated as closures and the resulting values, even if they themselves are closures, passed in to the function. Other arguments will have the representative closure passed in. If the function is invoked using the % notation (I.E. %somefunction(...)%), any arguments to that function defined to accept values will have their arguments passed in exactly as stated in the invocation, even if those arguments themselves are closures. Any arguments defined to be closures but passed in as other types of values will cause an exception to be thrown. Values that are closures will be passed into the function as-is.
+
+Closures, then, are a special type of built-in object. They are callable, and the result of calling a closure is the value that the closure evaluated to. Closures close on their variables in the scope that they were declared in, not the scope that they were invoked in. Usually. It's possible to detach a closure from its scope so that each invocation of the closure has its own independent variable scope; {def} in particular does this to the closure representing the contents of the to-be-created function. If this detachment process is not performed on a closure, the closure will use the variable scope that it was created in. When detached; multiple simultaneous invocations of a closure on separate threads will each have their own variable scope; when not detached, all invocations will share the same scope. Note that closures still have access to variables declared in the scope in which they were created, but such access is currently read-only; the value contained within a varaible in a parent scope may be altered, but it may not be replaced with a completely new value in the variable. This is similar to how Python 2.6 handles variables within functions defined inside other functions.
+
+When invoking a closure, a list of replacement variables can be specified as a map. The specified variables will be set to the specified values before invoking the closure. Upon the closure finishing, the variables' values will be reset to the value that they had before the closure was invoked.
+
+Closures are detached from their surrounding variable scope by calling their detach function. If a closure has already been detached, its detach function does nothing.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{def|builtins->for|start|end|varname|action closure|delimiter|%current=start%{while|%current<=end%|{%action%|%{varname: current}%}{increment|current}|%delimiter%}}
+
+
+{for|1|3|value|5 times %value% is %value*5%| -- }
+
+5 times 1 is 5 -- 5 times 2 is 10 -- 5 times 3 is 15
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

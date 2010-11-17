@@ -108,6 +108,27 @@ def get_next_id():
     return the_id
 
 def create_message(action, message_type=COMMAND, **kwargs):
+    """
+    Creates a new dictionary representing a message. The dict's action key will
+    be set to the specified action, which should be one of the constants
+    defined in libautobus.message_types. If the specified message type is an
+    integer (as COMMAND, RESPONSE, and NOTIFICATION are), it is set as the
+    dict's message_type attribute, and the dict's message_id attribute is set
+    to a newly-generated id. Otherwise, message_type is assumed to be a dict
+    representing a message that this one should be constructed in reply to, and
+    this dict's message_type will be set to RESPONSE and its message_id will
+    be set to the specified message's message_id. The new dict is then
+    returned.
+    
+    One additional thing I added: if message_type is a message to reply to,
+    but its message_type is NOTIFICATION, the returned dict will have its
+    message_type set to None. Connection.send ignores such messages, which will
+    properly result in a response not being sent for a notification without
+    whatever code that may be using this function having any idea about it.
+    
+    Any additional keyword parameters to this function are set as attributes
+    on the returned dict. 
+    """
     message = {"action": action}
     if isinstance(message_type, dict):
         message["message_id"] = message_type["message_id"]
@@ -919,6 +940,8 @@ class AutobusConnection(AutobusConnectionSuper):
             self.object_values[object_spec] = decode_object(value)
             self.notify_object_listeners(object_spec)
             return
+        if message["action"] == PingCommand:
+            self.send(create_message(PingResponse, message))
         print "Not processing message for action " + message["action"]
     
     def notify_object_listeners(self, object_spec):

@@ -181,3 +181,6 @@ def process_set_object_command(message, sender, connection):
                 "with Autobus before you can set its value.")
         return
     interface.object_map[object_name].set_and_notify(value)
+
+def process_ping_command(message, sender, connection):
+    connection.send_new(PingResponse, message)

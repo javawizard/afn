@@ -280,7 +280,7 @@ class RPC(object):
         return [timer.number for timer in timer_map.values()]
     
     @start_thread
-    @synchronized
+    @synchronized(lock)
     def get_attribute(self, timer_number, attribute_name):
         """
         Returns the current value of the specified attribute on the specified
@@ -291,7 +291,7 @@ class RPC(object):
         return self.get(timer_number)[attribute_name]
     
     @start_thread
-    @synchronized
+    @synchronized(lock)
     def get(self, timer_number, attribute_name=None):
         """
         This function can be invoked as either get(timer_number) or

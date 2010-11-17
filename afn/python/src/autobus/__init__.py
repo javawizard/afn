@@ -481,6 +481,13 @@ class Connection(object):
                 return
             self.message_queue.put(message, block=True)
     
+    def send_new(self, *args, **kwargs):
+        """
+        Exactly the same as
+        self.send(libautobus.create_message(*args, **kwargs)).
+        """
+        self.send(create_message(*args, **kwargs))
+    
     def send_error(self, in_reply_to=None, **kwargs):
         """
         Sends an error back to the client. If in_reply_to is itself a
