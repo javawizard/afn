@@ -37,12 +37,72 @@ Functions cannot return indirect closures. By that, I mean that a function's con
 
 Ok, so coercion rules for function arguments. A function argument can be defined to accept a closure or a value when called. If the function is invoked using the traditional notation, any arguments to that function defined to accept values will have their arguments automatically evaluated as closures and the resulting values, even if they themselves are closures, passed in to the function. Other arguments will have the representative closure passed in. If the function is invoked using the % notation (I.E. %somefunction(...)%), any arguments to that function defined to accept values will have their arguments passed in exactly as stated in the invocation, even if those arguments themselves are closures. Any arguments defined to be closures but passed in as other types of values will cause an exception to be thrown. Values that are closures will be passed into the function as-is.
 
-Closures, then, are a special type of built-in object. They are callable, and the result of calling a closure is the value that the closure evaluated to. Closures close on their variables in the scope that they were declared in, not the scope that they were invoked in. Usually. It's possible to detach a closure from its scope so that each invocation of the closure has its own independent variable scope; {def} in particular does this to the closure representing the contents of the to-be-created function. If this detachment process is not performed on a closure, the closure will use the variable scope that it was created in. When detached; multiple simultaneous invocations of a closure on separate threads will each have their own variable scope; when not detached, all invocations will share the same scope. Note that closures still have access to variables declared in the scope in which they were created, but such access is currently read-only; the value contained within a varaible in a parent scope may be altered, but it may not be replaced with a completely new value in the variable. This is similar to how Python 2.6 handles variables within functions defined inside other functions.
+Closures, then, are a special type of built-in object. They are callable, and the result of calling a closure is the value that the closure evaluated to. Closures close on their variables in the scope that they were declared in, not the scope that they were invoked in. Usually. It's possible to detach a closure from its scope so that each invocation of the closure has its own independent variable scope; {def} in particular does this to the closure representing the contents of the to-be-created function. If this detachment process is not performed on a closure, the closure will use the variable scope that it was created in. When detached, multiple simultaneous invocations of a closure on separate threads will each have their own variable scope; when not detached, all invocations will share the same scope. Note that closures still have access to variables declared in the scope in which they were created, but such access is currently read-only; the value contained within a varaible in a parent scope may be altered, but it may not be replaced with a completely new value in the variable. This is similar to how Python 2.6 handles variables within functions defined inside other functions.
 
 When invoking a closure, a list of replacement variables can be specified as a map. The specified variables will be set to the specified values before invoking the closure. Upon the closure finishing, the variables' values will be reset to the value that they had before the closure was invoked.
 
 Closures are detached from their surrounding variable scope by calling their detach function. If a closure has already been detached, its detach function does nothing.
 
+Traditional-style function invocation specifying a string name as the function to invoke causes the actual function to be resolved against the builtins map. When resolving variables on read access, the local variable scope is checked first. If this doesn't contain the variable of the specified name, the scope that defined the closure being run, if any, is checked, and so on. If none of them contain the specified variable, the builtins map is checked to see if it contains an entry whose name matches the variable we're currently trying to find. If that doesn't yield anything, the variable evaluates to void.
+
+The builtins map can be referenced by the local variable builtins or the local variable $. The only difference is that builtins could be assigned a new (overriding in the local scope) value with a call to lset, while assignments to $ have no effect. ($ is resolved by the Fact interpreter itself to point to the builtins map when used as a local variable reference. Thus, even doing something like %$->locals()->$=0% has no effect on the value of $ immediately thereafter.)
+
+There are two distinct singleton objects: void and null. Empty traditional closures return void. Void concatenated with void is void. Null concatenated with null is null. Null concatenated with a string, however, is the four-character string "null" plus the string. Void concatenated with any other object is, at the language level, that other object, meaning that the other object is never even informed that void is about to be concatenated with it. (Null doesn't know how to concatenate itself with anything, but strings do, and they do the conversion themselves.)
+
+Exception handling. Let's see... We want the exception mechanism to be considerably less language-specific than the original Fact's exception handling is (it was essentially a thin wrapper around Java exceptions, which made actual use of exceptions from within Fact downright painful). We want it to be usable without a concrete notion of classes, which we don't currently have. We want it to be fairly lightweight, which isn't that hard since Python's exception handling mechanisms are lightweight as well (and I'm thinking that Fact exceptions will be implemented in libfact as Python exceptions). I tend to dislike Python's methodology of having exceptions contained in three separate objects: the type, the value, and the traceback; but collapsing exceptions down to a monolithic value tends to call for the use of classes to distinguish between objects that can be thrown and objects that can't, something that we don't currently have.
+
+Ok, what if we compromised? Let's see... Monolithic exception objects. That's ok for now, if we add a notion to objects of whether they can be thrown or not. Fact internally tracks a throwable object's associated stack trace. Whenever a single object gets thrown multiple times in a row, each successive stack trace is pushed onto the object, which helps a bit with exception chaining. I'll add chaining between exception objects at a later point. If an object that is not throwable is thrown, and the object happens to be callable, the object is called with no arguments and the result is thrown. If that result is not throwable, a separate interpreter exception is thrown indicating the problem.
+
+Exception handlers are declared with {catch|code|var|...}. After the code to run, specified as the first argument, and the variable to assign the exception into in case the code throws an exception, come pairs of two arguments, each pair specifying an exception handler. The first argument in the pair is evaluated to see if the second argument should handle the exception. If it evaluates to 1, the second argument will be evaluated as the exception handler, and the catch function call will return the output of that handler. If it evaluates to 0, the next handler pair will be tried. The last pair may omit the condition argument (so it consists of one argument instead of two), which will cause it to handle all exceptions not handled by a previous clause. If a handler does not have such a catch-all handler, the exception will propagate up through the catch statement.
+
+If the code does not throw an exception, the catch statement returns its value. If the code throws an exception, the catch statement returns the value of the handler selected to process the exception. If there is no such handler, the catch statement propagates the exception.
+
+The built-in throw function is used to throw an exception. It takes a throwable object or a callable object that will return a throwable object, as outlined above, and propagates the exception outward.
+
+Void and null are both present under their respective names in the builtins map. Void generally can only be checked for in % space as it's essentially invisible in traditional space (but it's just a normal value in % space).
+
+When two objects are to be concatenated, the first one is instructed to perform the concatenation. If it throws an exception, the second one is asked. If it throws an exception, a generic exception indicating incompatible types is thrown. How an object performs the concatenation is object-specific.
+
+So now I'm thinking on implicit concatenation that all objects should know how to convert themselves to strings on request. Once the list of tokens in a closure has been constructed and their outputs evaluated, all of the values that are void are removed. If there's no values left, the closure returns void. If there's one value left, the closure returns it. If there are multiple values, the closure converts them all to strings and returns the concatenation.
+
+
+
+
+
+
+
+Ok, I think that's enough on Fact itself. Now we need to get on to libfact.
+
+So, I'd like as much as possible of the Fact AST to be compiled directly to Python structures at runtime to make things as fast as possible. My goal is to have the {for} loop be able to compute at the very least 10,000 iterations per second. Fact objects are going to be represented by instances of (or instances of subclasses of) FactObject. FactInteger, FactMap, FactString, FactList, FactNull, FactVoid, FactFunction, FactNumber, FactClosure, and the like are all subclasses of FactObject. FactObject provides some functions that Fact objects must provide, along with some skeleton default implementations for them. I'm thinking the functions will be:
+
+	add, sub, mul, div, mod, pow: These take one argument and behave similarly to Python's __add__, __sub__, and family. They should return a FactObject instance (or an instance of a subclass thereof) or Python's NotImplemented value if they don't know how to implement the specified operation.
+	
+	radd, rsub, ...: These take one argument and behave similarly to Python's __radd__, __rsub__, and family. They follow the same rules as add, sub, etc, in terms of what they're supposed to return. If x.add and y.radd both return NotImplemented during computation of x+y, the Fact interpreter will throw an exception at that point in the program.
+
+
+Hmm, I'm starting to think now that since Fact mirrors a good deal of Python, we could just reuse its functionality. Meaning that we could just use __add__, __radd__, etc, which would allow passing actual Python objects through Fact scripts. That would be really useful. We'd need to define FactVoid since it has no direct analog (None will be used as the null value). Implicit concatenation would invoke str(...) and then concatenate the resulting strings.
+
+What attributes should be readable from Fact, though? Allowing access to all attributes would pose a potential security risk. I'm thinking Fact should recognize some special attributes present on objects passed through the system:
+
+	__fact_read_list__: A list of names of attributes that can be read from this object from within Fact.
+	
+	__fact_write_list__: A list of names of attributes that can be written from this object within Fact.
+	
+	__fact_can_read__: A function that will be called for any attribute not in __fact_read_list__. If it returns true, read access to the variable will be allowed anyway.
+	
+	__fact_can_write__: Same as __fact_can_read__ for __fact_write_list__.
+	
+	__fact_read__: If this is present, attribute reads on the object will be delegated to this function instead of reading the attribute directly off of the object. This is similar to __getattribute__ for native Python, and it has the same general method signature and contract.
+	
+	__fact_write__: Same as __fact_read__ for setting attributes.
+	
+	__fact_get__: If this is present, Fact's -> operator can be used on this object. The name of the entry to be accessed is passed as the single argument, and this function should return the entry's value. -> is Fact's approxmiate equivalent to Python's subscription operator. Most classes that want to use item reading can just do __fact_get__ = __getitem__ in the class definition.
+	
+	__fact_set__: Same as __fact_get__, but for when the -> operator is used for assignment.
+	
+	__fact_call__: Roughly equivalent to __call__, but it can be decorated with @factcall, specifying whether arguments should be passed as closures or as values. If no such decorator is present, all arguments will be passed as values.
+
+ 
 
 
 
@@ -56,12 +116,17 @@ Closures are detached from their surrounding variable scope by calling their det
 
 
 
-{def|builtins->for|start|end|varname|action closure|delimiter|%current=start%{while|%current<=end%|{%action%|%{varname: current}%}{increment|current}|%delimiter%}}
+
+
+
+{def|builtins->for|start|end|varname|action closure|delimiter|%$current=start%{while|%current<=end%|{%action%|%{varname: current}%}{increment|current}|%delimiter%}}
 
 
 {for|1|3|value|5 times %value% is %value*5%| -- }
 
 5 times 1 is 5 -- 5 times 2 is 10 -- 5 times 3 is 15
+
+%$x.y->z=y%
 
 
 
