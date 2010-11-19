@@ -16,6 +16,7 @@ from datetime import datetime
 from libautobus import AutobusConnection, DEFAULT_PORT, start_thread
 from concurrent import synchronized
 from cStringIO import StringIO
+import audioop
 
 lock = RLock()
 
@@ -190,19 +191,7 @@ def format_sl(scale_string):
     return ScaleLevel(*scale_string.split(":", 1))
 
 def scale_sound(block, scale_level):
-    if scale_level == 1:
-        return block
-    result = StringIO()
-    for i in xrange(0, len(block), 2):
-        value = ord(block[i]) | (ord(block[i + 1]) << 8)
-        if value > 32767:
-            value = value - 65536
-        value = int(value * scale_level)
-        if value < 0:
-            value = value + 65536
-        result.write(chr(value & 0xFF))
-        result.write(chr((value >> 8) & 0xFF))
-    return result.getvalue()
+    return audioop.mul(block, 2, scale_level)
 
 class RPC(object):
     """
@@ -401,7 +390,6 @@ class RPC(object):
 def sanitize_file(name):
     return name.replace(".", "").replace("\\", "").replace("/", "")
 
-    print "Opening audio device..."
 
 def main():
     global audio_device
