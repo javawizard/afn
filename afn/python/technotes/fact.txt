@@ -82,27 +82,7 @@ So, I'd like as much as possible of the Fact AST to be compiled directly to Pyth
 
 Hmm, I'm starting to think now that since Fact mirrors a good deal of Python, we could just reuse its functionality. Meaning that we could just use __add__, __radd__, etc, which would allow passing actual Python objects through Fact scripts. That would be really useful. We'd need to define FactVoid since it has no direct analog (None will be used as the null value). Implicit concatenation would invoke str(...) and then concatenate the resulting strings.
 
-What attributes should be readable from Fact, though? Allowing access to all attributes would pose a potential security risk. I'm thinking Fact should recognize some special attributes present on objects passed through the system:
-
-	__fact_read_list__: A list of names of attributes that can be read from this object from within Fact.
-	
-	__fact_write_list__: A list of names of attributes that can be written from this object within Fact.
-	
-	__fact_can_read__: A function that will be called for any attribute not in __fact_read_list__. If it returns true, read access to the variable will be allowed anyway.
-	
-	__fact_can_write__: Same as __fact_can_read__ for __fact_write_list__.
-	
-	__fact_read__: If this is present, attribute reads on the object will be delegated to this function instead of reading the attribute directly off of the object. This is similar to __getattribute__ for native Python, and it has the same general method signature and contract.
-	
-	__fact_write__: Same as __fact_read__ for setting attributes.
-	
-	__fact_get__: If this is present, Fact's -> operator can be used on this object. The name of the entry to be accessed is passed as the single argument, and this function should return the entry's value. -> is Fact's approxmiate equivalent to Python's subscription operator. Most classes that want to use item reading can just do __fact_get__ = __getitem__ in the class definition.
-	
-	__fact_set__: Same as __fact_get__, but for when the -> operator is used for assignment.
-	
-	__fact_call__: Roughly equivalent to __call__, but it can be decorated with @factcall, specifying whether arguments should be passed as closures or as values. If no such decorator is present, all arguments will be passed as values.
-
- 
+What attributes can be read or written from Fact, then? Allowing access to all attributes would be extremely unsafe.
 
 
 
