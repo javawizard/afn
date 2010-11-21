@@ -109,9 +109,6 @@ public class TrayTimer
     public static JPanel addTimerPanel;
     public static JButton addTimerButton;
     
-    // A timer that will be tabbed to on the next change of the timer object
-    public static int switchToOnLoad = 0;
-    
     public static boolean isShowingDisabled = false;
     
     /**
