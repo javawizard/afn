@@ -391,6 +391,15 @@ class InterfaceWrapper(InterfaceWrapperSuper):
     def __getattr__(self, attribute):
         return FunctionWrapper(self.connection, self, attribute)
     
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            if slice.start == "object":
+                return ObjectWrapper(self, item.stop)
+            raise ValueError("Invalid type of proxy to get: " + slice.stop)
+        if isinstance(item, basestring):
+            return self.__getattr__(item)
+        raise TypeError("Invalid item type: " + str(type(item)))
+    
     if is_jython:
         get_function = __getattr__
     
@@ -463,7 +472,23 @@ class FunctionWrapper(FunctionWrapperSuper):
     __repr__ = __str__
 
 class ObjectWrapper(ObjectWrapperSuper):
-    pass
+    def __init__(self, interface, name):
+        self.interface = interface
+        self.name = name
+    
+    def watch(self, function):
+        """
+        Exactly the same as calling add_object_watch on the connection for
+        this object and the specified function. In fact, this function just
+        delegates to add_object_watch at present.
+        """     
+        self.interface.connection.add_object_watch(self.interface.name,
+                self.name, function)   
+    
+    def __str__(self):
+        return ("<ObjectWrapper on object " + self.name + " and interface "
+                + str(self.interface) + ">")
+    __repr__ = __str__
 
 class EventWrapper(EventWrapperSuper):
     pass
@@ -564,9 +589,9 @@ class LocalEvent(object):
                     arguments=[encode_object(o) for o in arguments])
             try:
                 self.interface.connection.send(message)
-            except NotConnectedException: # We've already stored the value
-                # locally if we're calling notify, so we'll just rely on the
-                # connect thread to send this value on next connection.
+            except NotConnectedException: # We don't have a connection to the
+                # server right now, so we'll just ignore the attempt to fire
+                # the event.
                 pass
 
 class LocalObject(object):

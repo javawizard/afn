@@ -1,1 +1,9 @@
 So I've got this idea for some sort of remote widget framework. The idea would be that Autobus clients would be able to provide widgets, and special Autobus clients that know how to render widgets could render them.
+
+I'm thinking of calling it rtk right now, for Remote ToolKit.
+
+It would be based around Autobus.
+
+It would be able to provide separate instances, so to speak, of the application to every user. Instances reside completely on the client side; the only thing that resides on the server side is the model, which instances update by calling Autobus functions on the server side.
+
+The model is made available as an object published by Autobus. The UI description is made available as the return value of a function. It must not change without a restart of the server-side application, which will cause all client-side components to refresh themselves.
