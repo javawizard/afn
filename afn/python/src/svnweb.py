@@ -25,6 +25,8 @@ mimetypes.init()
 class HTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path
+        if ".." in path:
+            raise Exception("Path can't contain two dots in a row")
         if path == "":
             path = "/"
         if path[0] != "/":
@@ -90,7 +92,8 @@ def main():
     print "Port: " + str(port)
     print "Root path: " + root_path
     print "Username: " + str(username)
-    print "Password: " + str(password)
+    print "Password: " + str(("*" * len(password)) if 
+            isinstance(password, basestring) else password)
     print
     print "svnweb has successfully started up."
     HTTPServer(("", port), HTTPHandler).serve_forever()
