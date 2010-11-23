@@ -55,13 +55,16 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write("<html><body>The specified page can't be "
                     "found.</body></html>")
             return
+        print "Got it! Propgetting..."
         # We have the file. Now we send it to the client. If svn:mime-type
         # was specified, we'll use that. Otherwise, we'll use the mimetypes
         # module to guess the file's mime type.
         try:
             mime_type = client.propget("svn:mime-type", path).values[0]
         except:
+            print "Couldn't propget, looking up dynamically"
             mime_type, _ = mimetypes.guess_type(path)
+        print "Mime type is " + mime_type
         self.send_response(200)
         if mime_type != None:
             self.send_header("Content-Type", mime_type)
