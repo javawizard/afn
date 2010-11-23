@@ -22,6 +22,12 @@ import mimetypes
 
 mimetypes.init()
 
+error_response = """
+<html><body>
+There doesn't appear to be a page with that name. Sorry about that.
+</html><body>
+"""
+
 class HTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path
@@ -53,8 +59,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html")
             self.no_cache()
             self.end_headers()
-            self.wfile.write("<html><body>The specified page can't be "
-                    "found.</body></html>")
+            self.wfile.write(error_response)
             return
         print "Got it! Propgetting..."
         # We have the file. Now we send it to the client. If svn:mime-type
