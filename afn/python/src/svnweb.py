@@ -66,9 +66,13 @@ class HTTPHandler(BaseHTTPRequestHandler):
             mime_type, _ = mimetypes.guess_type(path)
         print "Mime type is " + mime_type
         self.send_response(200)
+        print "Response sent"
         if mime_type != None:
+            print "Sending mime type"
             self.send_header("Content-Type", mime_type)
+        print "Sending no-cache headers"
         self.no_cache()
+        print "Ending headers"
         self.end_headers()
         print "Writing..."
         self.wfile.write(result)
