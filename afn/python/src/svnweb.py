@@ -12,6 +12,14 @@ Listing of files and folders is not yet supported.
 If svnweb should authenticate with the subversion server, the username and
 password should be specified as the third and fourth command-line parameters,
 respectively.
+
+To those of you that might ask why I'm writing this when mod_dav_svn already
+provides read access to a repository, the #1 reason is that this script is
+considerably easier to run than a full-blown apache install with mod_dav_svn
+running inside it. Especially since I run my website, www.opengroove.org,
+using Cherokee, which supports reverse-proxying (if you go to
+www.opengroove.org, you'll get redirected to www.opengroove.org/static/,
+which Cherokee proxies over to an instance of svnweb) but not mod_dav_svn.
 """
 
 import sys
