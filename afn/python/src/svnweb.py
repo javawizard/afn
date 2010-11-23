@@ -31,7 +31,8 @@ class HTTPHandler(BaseHTTPRequestHandler):
         if path == "":
             path = "/"
         if path[0] != "/":
-            raise Exception("Path doesn't start with a forward slash")
+            raise Exception("Path doesn't start with a forward slash. It's "
+                    + path)
         path = root_path + path
         print "Getting result"
         try:
