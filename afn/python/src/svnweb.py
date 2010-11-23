@@ -46,6 +46,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
         if result == None:
             self.send_response(404)
             self.send_header("Content-Type", "text/html")
+            self.no_cache()
             self.end_headers()
             self.wfile.write("<html><body>The specified page can't be "
                     "found.</body></html>")
@@ -60,9 +61,15 @@ class HTTPHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         if mime_type != None:
             self.send_header("Content-Type", mime_type)
+        self.no_cache()
         self.end_headers()
         self.wfile.write(result)
         # That's it!
+    
+    def no_cache(self):
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Expires", "Mon, 22 Nov 2010 01:00:00 GMT")
 
 def get_login(*args):
     return True, username, password, False
