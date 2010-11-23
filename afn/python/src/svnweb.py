@@ -27,20 +27,24 @@ class HTTPHandler(BaseHTTPRequestHandler):
         path = self.path
         if ".." in path:
             raise Exception("Path can't contain two dots in a row")
+        print "Initial path: " + path
         if path == "":
             path = "/"
         if path[0] != "/":
             raise Exception("Path doesn't start with a forward slash")
         path = root_path + path
+        print "Getting result"
         try:
             result = client.cat(path)
         except:
+            print "Result not there; trying index.html under it"
             if path[-1] != "/":
                 path += "/"
             path += "index.html"
             try:
                 result = client.cat(path)
             except:
+                print "Couldn't find index.html either"
                 print_exc()
                 result = None
         if result == None:
