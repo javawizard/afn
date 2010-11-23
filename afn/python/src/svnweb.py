@@ -70,7 +70,9 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", mime_type)
         self.no_cache()
         self.end_headers()
+        print "Writing..."
         self.wfile.write(result)
+        print "Output sent!"
         # That's it!
     
     def no_cache(self):
