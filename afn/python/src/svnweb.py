@@ -83,6 +83,12 @@ class HTTPHandler(BaseHTTPRequestHandler):
         self.send_header("Pragma", "no-cache")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Expires", "Mon, 22 Nov 2010 01:00:00 GMT")
+    
+    def address_string(self):
+        # This stops the server from looking up the client's hostname,
+        # which was hugely slowing things down when I tested it out. We'll
+        # just return their IP address instead.
+        return str(self.client_address[0])
 
 def get_login(*args):
     return True, username, password, False
