@@ -56,6 +56,7 @@ from time import sleep
 import inspect
 from datetime import datetime
 from message_types import *
+import atexit
 if is_jython:
     from java.util import Map, List #@UnresolvedImport
     from org.python.core import Options #@UnresolvedImport
@@ -106,6 +107,16 @@ def get_next_id():
         the_id = next_id
         next_id += 1
     return the_id
+
+live_connections = []
+
+@atexit.register
+def on_exit():
+    for connection in live_connections[:]:
+        try:
+            connection.shutdown()
+        except:
+            pass
 
 def create_message(action, message_type=COMMAND, **kwargs):
     """
@@ -668,7 +679,17 @@ class AutobusConnection(AutobusConnectionSuper):
     invoked by a remote client will be printed with traceback.print_exc()
     before being sent back to the client that invoked the function. This is
     useful when a function is raising an unexpected error and more information
-    about the error, such as its traceback, is needed. 
+    about the error, such as its traceback, is needed.
+    
+    Regardless of whether or not you eventually connect an instance of this
+    class, you should call its shutdown function when you're done with it.
+    If you don't, a memory leak will result. The reason for this is that
+    libautobus tracks connections that have not yet been shut down in a list so
+    that they can be automatically shut down when Python exits. Of course, if
+    you're going to create a single long-lived connection to serve from a
+    particular interface, that's fine. But if you're going to be creating
+    several connections over the lifetime of the application, make sure you
+    shut them down when you're done with them. 
     """
     def __init__(self, host=None, port=None, reconnect=True,
             print_exceptions=False, on_connect=lambda: None,
@@ -715,6 +736,7 @@ class AutobusConnection(AutobusConnectionSuper):
         # that object. At least one entry must be present in each list in order
         # for AutobusConnection to auto-register a watch on the object on
         # connect, even if it's as simple as lambda: None.
+        live_connections.append(self)
     
     def shutdown(self):
         self.is_shut_down = True
@@ -726,6 +748,7 @@ class AutobusConnection(AutobusConnectionSuper):
             self.socket.close()
         except:
             pass
+        live_connections.remove(self)
     
     def add_interface(self, name, interface=None):
         """
@@ -1185,6 +1208,8 @@ class AutobusConnection(AutobusConnectionSuper):
         to connect() or start_connecting() immediately after calling this
         function will cause them to be re-registered with the server.
         """
+        if self.is_shut_down:
+            live_connections.append(self)
         self.is_shut_down = False
     
 
