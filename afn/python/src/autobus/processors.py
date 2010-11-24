@@ -184,3 +184,24 @@ def process_set_object_command(message, sender, connection):
 
 def process_ping_command(message, sender, connection):
     connection.send_new(PingResponse, message)
+
+def process_get_object_value_command(message, sender, connection):
+    interface_name = message["interface_name"]
+    object_name = message["object_name"]
+    try:
+        interface = autobus.lookup_interface(interface_name)
+        object = interface.object_map[object_name]
+        object_value = object.get()
+    except (autobus.NoSuchInterfaceException, KeyError): # Object doesn't exist yet
+        object_value = encode_object(None)
+    response = create_message(GetObjectValueResponse,
+            message, interface_name=interface_name, object_name=object_name,
+            value=object_value)
+    connection.send(response)
+
+
+
+
+
+
+
