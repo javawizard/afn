@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 from threading import Thread, RLock
 from functools import partial, update_wrapper
 
