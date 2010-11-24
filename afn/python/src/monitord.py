@@ -37,7 +37,8 @@ def update_status():
     cpu_monitor.refresh()
     cpu_list = [cpu_monitor.get_condensed(cpu) for cpu 
             in range(cpu_monitor.get_processors())]
-    status_object.set({"cpu": cpu_list})
+    status_object.set({"cpu_i": cpu_list, "cpu":
+            cpu_monitor.get_condensed()})
 
 
 

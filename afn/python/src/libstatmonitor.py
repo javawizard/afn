@@ -56,20 +56,30 @@ class CPUMonitor(object):
         self.last_map = current_map
         self.results = results
     
-    def get(self, processor):
+    def get(self, processor=None):
         """
         Returns a tuple (user, user_nice, system) for the specified processor.
+        If processor is None, stats for all of the CPUs will be averaged and
+        returned.
         """
-        results = self.results[processor]
+        if processor is None:
+            results = dict((type, 0.0) for type, _ in CPUMonitor.types)
+            for cpu_results in self.results.values():
+                for type, _ in CPUMonitor.types:
+                    results[type] += cpu_results[type]
+            for type, _ in CPUMonitor.types:
+                results[type] /= len(self.results)
+        else:
+            results = self.results[processor]
         return results["user"], results["user_nice"], results["system"]
     
-    def get_condensed(self, processor):
+    def get_condensed(self, processor=None):
         """
         Returns a tuple (user, system), where user is user and user_nice
         added together.
         """
-        results = self.results[processor]
-        return (results["user"] + results["user_nice"]), results["system"]
+        user, user_nice, system = self.get(processor)
+        return (user + user_nice), system
     
     def get_processors(self):
         """

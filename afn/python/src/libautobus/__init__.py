@@ -4,7 +4,20 @@ import os
 import platform
 import sys
 
+
+# We add some special processing stuff if we're on Jython to get things to
+# work correctly. Additionally, the Java port of libautobus uses the Python
+# version running under Jython; to make its job easier, we'll also do some
+# special processing if Java's libautobus is on the classpath. is_jython is
+# set to true if we're under Jython, and is_java_lib is set to true if Java's
+# libautobus is on the classpath.
 is_jython = platform.system() == "Java"
+try:
+    import afn.libautobus.InterfaceWrapper as iw_temp #@UnresolvedImport
+    del iw_temp
+    is_java_lib = True
+except:
+    is_java_lib = False
 
 __doc__ = """\
 This module is the Python client library for Autobus. It's the authoritative
@@ -57,7 +70,7 @@ import inspect
 from datetime import datetime
 from message_types import *
 import atexit
-if is_jython:
+if is_java_lib:
     from java.util import Map, List #@UnresolvedImport
     from org.python.core import Options #@UnresolvedImport
     from array import array
@@ -70,7 +83,7 @@ if is_jython:
 
 # We want to allow some additional types beyond the normal Python types to be
 # encoded, so we'll use a function to do the translation
-if is_jython:
+if is_java_lib:
     def jython_encode_replace(object):
         if isinstance(object, Map):
             return dict(object)
@@ -80,7 +93,7 @@ if is_jython:
 else:
     def jython_encode_replace(object):
         return object
-if not is_jython:
+if not is_java_lib:
     AutobusConnectionSuper = object
     InterfaceWrapperSuper = object
     EventWrapperSuper = object # test file
@@ -411,7 +424,7 @@ class InterfaceWrapper(InterfaceWrapperSuper):
             return self.__getattr__(item)
         raise TypeError("Invalid item type: " + str(type(item)))
     
-    if is_jython:
+    if is_java_lib:
         get_function = __getattr__
     
     def __str__(self):
@@ -567,7 +580,7 @@ class LocalFunction(object):
         self.doc = doc
         if doc is None:
             self.doc = ""
-        if is_jython and hasattr(function, "run"):
+        if is_java_lib and hasattr(function, "run"):
             self.start_thread = function.isInNewThread()
             self.function = function.run
         else:
