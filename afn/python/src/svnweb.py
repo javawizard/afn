@@ -13,6 +13,12 @@ If svnweb should authenticate with the subversion server, the username and
 password should be specified as the third and fourth command-line parameters,
 respectively.
 
+This module was designed to have very high performance. timing wget on a page
+2KB in size served from svnweb reports 144 milliseconds taken by wget to
+download and save the page. Note, though, that this was with svnweb and the
+backing subversion repository on separate machines but the same local network;
+serving from a remote subversion repository may be quite a bit slower.
+
 To those of you that might ask why I'm writing this when mod_dav_svn already
 provides read access to a repository, the #1 reason is that this script is
 considerably easier to run than a full-blown apache install with mod_dav_svn
