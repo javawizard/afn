@@ -74,6 +74,7 @@ if is_java_lib:
     from java.util import Map, List #@UnresolvedImport
     from org.python.core import Options #@UnresolvedImport
     from array import array
+    from java.lang import System #@UnresolvedImport
     from afn.libautobus import (AutobusConnection as AutobusConnectionSuper, #@UnresolvedImport
             InterfaceWrapper as InterfaceWrapperSuper, #@UnresolvedImport
             FunctionWrapper as FunctionWrapperSuper, #@UnresolvedImport
@@ -720,6 +721,8 @@ class AutobusConnection(AutobusConnectionSuper):
         """
         if host is None:
             host = os.getenv("AUTOBUS_SERVER")
+        if host is None and is_java_lib:
+            host = System.getProperty("autobus.server")
         if host is None:
             host = "localhost"
         if port is None:
