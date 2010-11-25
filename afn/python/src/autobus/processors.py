@@ -43,15 +43,22 @@ def process_register_function_command(message, sender, connection):
     connection.send(response)
 
 def process_call_function_command(message, sender, connection):
+    interface_name = message["interface_name"]
+    function_name = message["function"]
+    print ("Attempting to dispatch function call from " + sender +
+            " to interface " + interface_name + " and function " + function_name)
     try:
-        interface = autobus.lookup_interface(message["interface_name"])
-        function = interface.lookup_function(message["function"])
+        interface = autobus.lookup_interface(interface_name)
+        function = interface.lookup_function(function_name)
     except (autobus.NoSuchInterfaceException, autobus.NoSuchFunctionException) as e:
+        print "No such interface. Dispatch failed."
         connection.send_error(message, text=str(e))
         return
     if function.special:
+        print "Dispatching as special function call"
         function.invoke_special(message, connection)
         return
+    print "Dispatching as normal function call"
     invoke_message = create_message(RunFunctionCommand,
             interface_name=interface.name, function=function.name,
             arguments=message["arguments"])
