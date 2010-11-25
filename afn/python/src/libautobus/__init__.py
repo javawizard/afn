@@ -292,10 +292,17 @@ class NoSuchFunctionException(Exception):
         return "No such function: " + self.function_name
 
 class TimeoutException(Exception):
-    pass
+    """
+    An exception thrown from within function calls and some other places when
+    the server or the remote client didn't respond within a reasonable time
+    (currently 30 seconds).
+    """
 
 class NotConnectedException(Exception):
-    pass
+    """
+    An exception thrown from within function calls and some other places when
+    there is not currently a connection to the Autobus server.
+    """
 
 def discard_args(function):
     """
@@ -1041,6 +1048,8 @@ class AutobusConnection(AutobusConnectionSuper):
         by the server will be returned. 
         """
         queue = Queue()
+        if self.receive_queues is None:
+            raise NotConnectedException()
         self.receive_queues[message["message_id"]] = queue
         self.send(message)
         try:
@@ -1193,6 +1202,26 @@ class AutobusConnection(AutobusConnectionSuper):
         the last time this connection successfully connected to the server).
         """
         return self.object_values.get((interface_name, object_name), None)
+    
+    def get_remote_object_value(self, interface_name, object_name):
+        """
+        Returns the current value of a remote object, or None if the value is
+        not known. Unlike get_object_value, this function does not require the
+        object to have been previously registered with add_object_watch, but
+        it incurs a round-trip to the server to get the object's current
+        value (even if the object has been registered with add_object_watch).
+        Also unlike get_object_value, this function will raise
+        NotConnectedException if there's no connection to the Autobus server
+        or TimeoutException if the server did not respond within a timely
+        manner (currently 30 seconds).
+        """
+        message = create_message(GetObjectValueCommand,
+                interface_name=interface_name, object_name=object_name)
+        response = self.query(message)
+        if response["action"] == ErrorResponse:
+            raise Exception("Server-side error: " + response.get("text",
+                    "No additional error information was sent by the server."))
+        return decode_object(response["value"])        
     
     def flush(self):
         """
