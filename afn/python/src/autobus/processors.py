@@ -45,7 +45,7 @@ def process_register_function_command(message, sender, connection):
 def process_call_function_command(message, sender, connection):
     interface_name = message["interface_name"]
     function_name = message["function"]
-    print ("Attempting to dispatch function call from " + sender +
+    print ("Attempting to dispatch function call from " + str(sender) +
             " to interface " + interface_name + " and function " + function_name)
     try:
         interface = autobus.lookup_interface(interface_name)
