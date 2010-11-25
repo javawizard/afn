@@ -736,6 +736,8 @@ class AutobusConnection(AutobusConnectionSuper):
         self.on_disconnect = on_disconnect
         self.print_exceptions = print_exceptions
         self.on_connect_lock = RLock()
+        self.input_thread = None
+        self.output_thread = None
         self.interfaces = {} # Map of names to LocalInterface objects
         # representing interfaces we've registered
         self.is_shut_down = False
