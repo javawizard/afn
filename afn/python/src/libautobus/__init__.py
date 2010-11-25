@@ -1048,7 +1048,7 @@ class AutobusConnection(AutobusConnectionSuper):
         by the server will be returned. 
         """
         queue = Queue()
-        if self.receive_queues is None:
+        if self.receive_queues is None or self.input_thread is None:
             raise NotConnectedException()
         self.receive_queues[message["message_id"]] = queue
         self.send(message)
