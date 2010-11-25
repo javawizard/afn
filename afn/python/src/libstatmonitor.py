@@ -86,10 +86,48 @@ class CPUMonitor(object):
         Returns the number of processors present on this system.
         """
         return len(self.results)
+
+class MemoryMonitor(object):
+    types = ["MemTotal", "MemFree", "SwapTotal", "SwapFree", "Buffers", "Cached"]
+    def __init__(self):
+        self.map = dict((key, 0) for key in MemoryMonitor.types)
+        self.refresh()
     
-
-
-
+    def refresh(self):
+        with open("/proc/meminfo") as meminfo:
+            for line in meminfo:
+                if ":" not in line:
+                    continue
+                type = line[:line.find(":")]
+                if type not in MemoryMonitor.types:
+                    continue
+                line = line[line.find(":") + 1:].strip()
+                linesplit = line.split(" ")
+                number = linesplit[0]
+                specifier = None
+                if len(linesplit) > 1:
+                    specifier = linesplit[1].lower()
+                number = int(number)
+                if specifier == "kb":
+                    number *= 1000
+                elif specifier == "mb":
+                    number *= 1000000
+                self.map[type] = number
+    
+    def get(self):
+        """
+        returns a tuple (resident, buffers, cached, free, total, swap,
+        swapfree, swaptotal) of memory statistics. Each item is an integer (or
+        a long) representing the number of bytes.
+        """
+        total, free, swaptotal, swapfree, buffers, cached = (
+                self.map["MemTotal"], self.map["MemFree"],
+                self.map["SwapTotal"], self.map["SwapFree"],
+                self.map["Buffers"], self.map["Cached"])
+        swap = swaptotal - swapfree
+        resident = total - (free + buffers + cached)
+        return (resident, buffers, cached, free, total, swap,
+                swapfree, swaptotal)
 
 
 

@@ -2,12 +2,12 @@
 from libautobus import AutobusConnection
 import sys
 from time import sleep
-import re
-from libstatmonitor import CPUMonitor
+from libstatmonitor import CPUMonitor, MemoryMonitor
 
 def main():
     global status_object
     global cpu_monitor
+    global memory_monitor
     if len(sys.argv) <= 1:
         print "You need to specify a name for this monitor instance."
         sys.exit()
@@ -19,6 +19,7 @@ def main():
     bus.start_connecting()
     cpu_monitor = CPUMonitor()
     cpu_monitor.refresh()
+    memory_monitor = MemoryMonitor()
     try:
         while True:
             sleep(5)
@@ -29,16 +30,13 @@ def main():
         bus.shutdown()
 
 
-cpu_user = {}
-cpu_user_nice = {}
-cpu_system = {}
-
 def update_status():
     cpu_monitor.refresh()
     cpu_list = [cpu_monitor.get_condensed(cpu) for cpu 
             in range(cpu_monitor.get_processors())]
+    memory_list = memory_monitor.get()
     status_object.set({"cpu_i": cpu_list, "cpu":
-            cpu_monitor.get_condensed()})
+            cpu_monitor.get_condensed(), "memory": memory_list})
 
 
 
