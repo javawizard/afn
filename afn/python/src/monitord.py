@@ -32,6 +32,7 @@ def main():
 
 def update_status():
     cpu_monitor.refresh()
+    memory_monitor.refresh()
     cpu_list = [cpu_monitor.get_condensed(cpu) for cpu 
             in range(cpu_monitor.get_processors())]
     memory_list = memory_monitor.get()
