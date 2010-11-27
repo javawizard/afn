@@ -28,7 +28,7 @@ def main():
         print "You need to install the ActiveHome Scripting SDK before you"
         print "can use activehomed."
         sys.exit()
-    print "Connecting to server " + os.getenv("AUTOBUS_SERVER")
+    print "Connecting to server " + str(os.getenv("AUTOBUS_SERVER"))
     bus = AutobusConnection()
     bus.add_interface("activehome", RPC())
     bus.start_connecting()
