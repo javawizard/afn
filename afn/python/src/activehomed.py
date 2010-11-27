@@ -3,6 +3,7 @@ from libautobus import AutobusConnection
 from traceback import print_exc
 import sys
 import os
+from time import sleep
 try:
     from win32com.client import Dispatch #@UnresolvedImport
 except ImportError:
@@ -32,6 +33,13 @@ def main():
     bus = AutobusConnection()
     bus.add_interface("activehome", RPC())
     bus.start_connecting()
+    try:
+        while True:
+            sleep(5)
+    except KeyboardInterrupt:
+        print "Interrupted, shutting down"
+    finally:
+        bus.shutdown()
 
 
 
