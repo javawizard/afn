@@ -666,6 +666,7 @@ class LocalObject(object):
                 # connect thread to send this value on next connection.
                 pass
 
+
 class AutobusConnection(AutobusConnectionSuper):
     """
     A connection to an Autobus server. The typical way to use libautobus is to
@@ -1258,6 +1259,26 @@ class AutobusConnection(AutobusConnectionSuper):
         if self.is_shut_down:
             live_connections.append(self)
         self.is_shut_down = False
+    
+    def interrupt_loop(self):
+        """
+        Starts a loop waiting for a KeyboardInterrupt to occur. When one does,
+        this bus will be shut down and this function will return.
+        
+        You don't need to call this function to use an Autobus connection at
+        all, since connections use threads to do all their useful work.
+        It's intended primarily for daemon processes that exist solely to
+        provide an Autobus interface and that would need to be notified when
+        a Ctrl+C is used to kill the daemon.
+        """
+        try:
+            while True:
+                sleep(5)
+        except KeyboardInterrupt:
+            print "Interrupted, shutting down"
+        finally:
+            self.shutdown()
+
     
 
 

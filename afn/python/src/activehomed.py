@@ -33,13 +33,7 @@ def main():
     bus = AutobusConnection()
     bus.add_interface("activehome", RPC())
     bus.start_connecting()
-    try:
-        while True:
-            sleep(5)
-    except KeyboardInterrupt:
-        print "Interrupted, shutting down"
-    finally:
-        bus.shutdown()
+    bus.interrupt_loop()
 
 
 
