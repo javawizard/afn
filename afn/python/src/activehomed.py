@@ -6,6 +6,7 @@ import os
 from time import sleep
 try:
     from win32com.client import Dispatch #@UnresolvedImport
+    import pythoncom
 except ImportError:
     print_exc()
     print "You need to be on a Windows machine to use activehomed, and you"
@@ -14,11 +15,15 @@ except ImportError:
 
 class RPC(object):
     def action(self, mode, *args):
-        args = " ".join(str(arg) for arg in args)
-        print "Mode: " + repr(mode) + ", command: " + repr(args)
-        activehome.SendAction(mode, args)
-        print "Worked!"
-        return "successful"
+        pythoncom.CoInitialize()
+        try:
+            args = " ".join(str(arg) for arg in args)
+            print "Mode: " + repr(mode) + ", command: " + repr(args)
+            activehome.SendAction(mode, args)
+            print "Worked!"
+            return "successful"
+        finally:
+            pythoncom.CoUninitialize()
 
 def main():
     global activehome
