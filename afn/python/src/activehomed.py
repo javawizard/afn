@@ -4,6 +4,7 @@ from traceback import print_exc
 import sys
 import os
 from time import sleep
+#from multiprocessing import Process, Queue
 try:
     from win32com.client import Dispatch #@UnresolvedImport
     import pythoncom
@@ -19,6 +20,7 @@ class RPC(object):
         try:
             args = " ".join(str(arg) for arg in args)
             print "Mode: " + repr(mode) + ", command: " + repr(args)
+            activehome = Dispatch("X10.ActiveHome")
             print "Result is " + str(activehome.SendAction(mode, args))
             print "Worked!"
             return "successful"
@@ -26,10 +28,9 @@ class RPC(object):
             pythoncom.CoUninitialize()
 
 def main():
-    global activehome
     global bus
     try:
-        activehome = Dispatch("X10.ActiveHome")
+        Dispatch("X10.ActiveHome") # Make sure we've got it before hand
     except:
         print_exc()
         print "You need to install the ActiveHome Scripting SDK before you"
