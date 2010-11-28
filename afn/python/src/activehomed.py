@@ -19,7 +19,7 @@ class RPC(object):
         try:
             args = " ".join(str(arg) for arg in args)
             print "Mode: " + repr(mode) + ", command: " + repr(args)
-            activehome.SendAction(mode, args)
+            print "Result is " + str(activehome.SendAction(mode, args))
             print "Worked!"
             return "successful"
         finally:
