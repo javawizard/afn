@@ -29,6 +29,7 @@ class RPC(object):
 
 def main():
     global bus
+    pythoncom.CoInitialize()
     try:
         Dispatch("X10.ActiveHome") # Make sure we've got it before hand
     except:
