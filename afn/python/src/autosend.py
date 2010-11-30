@@ -126,12 +126,9 @@ bus = AutobusConnection(**connect_options)
 
 if mode == "event":
     def event_function(*arguments):
-        for o in arguments:
-            print str(type(o))
-            print str(o)
         if len(arguments) < 0:
             print "Function fired with no arguments."
-        print
+        print str(arguments)
     bus.add_event_listener(interface_name, item_name, event_function)
 
 if mode == "object":
