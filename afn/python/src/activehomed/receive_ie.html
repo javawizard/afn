@@ -3,11 +3,33 @@ This HTML file needs to be opened in Internet Explorer
 -->
 <html>
 <head>
+<script language="Jscript">
+if (!window.XMLHttpRequest) {
+    window.XMLHttpRequest = function() {
+        try {
+            return new ActiveXObject('MSXML2.XMLHTTP.3.0');
+        }
+        catch (ex) {
+            return null;
+        }
+    }
+}
+</script>
 </head>
 <body>
 <OBJECT ID="ActiveHomeObj" width=0 height=0 classid="CLSID:001000AF-2DEF-0208-10B6-DC5BA692C858" codebase="ahscript.dll" standby="Loading X10 net components..." type="application/x-oleobject"></OBJECT>
 <script for="ActiveHomeObj" event="RecvAction(a, b, c, d, e, f, g)" language="Jscript">
-window.alert("Received: " + a + " " + b + " " + c + " " + d + " " + e + " " + f + " " + g);
+xhr = new XMLHttpRequest();
+xhr.open("GET", "post.xml?bogus=" + Math.random() + "_" + Math.random()
+		+ "_" + Math.random() + 
+		"&a=" + encodeURIComponent("" + a) +
+		"&b=" + encodeURIComponent("" + b) + 
+		"&c=" + encodeURIComponent("" + c) + 
+		"&d=" + encodeURIComponent("" + d) + 
+		"&e=" + encodeURIComponent("" + e) + 
+		"&f=" + encodeURIComponent("" + f) + 
+		"&g=" + encodeURIComponent("" + g), false);
+xhr.send()  
 </script>
 </body>
 </html>
