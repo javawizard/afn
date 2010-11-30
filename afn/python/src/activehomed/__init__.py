@@ -19,9 +19,8 @@ except ImportError:
 
 port = 53306
 RF_DELAY = 1.0
-PLC_DELAY = 0.4
+PLC_DELAY = 0.25
 last_plc_time = 0.0
-last_plc_address = "a1"
 last_rf_time = 0.0
 last_rf_address = "a1"
 
@@ -52,10 +51,14 @@ class HTTPHandler(BaseHTTPRequestHandler):
                 mode = mode[4:]
             now = time()
             if mode == "plc":
-                repeat = (address == last_plc_address
-                        and (last_plc_time + PLC_DELAY) > now)
+                # PLC's bandwidth is so low that we can reliably detect repeats
+                # without using addresses, but we can't detect artificial
+                # repeats due to a bug in the CM15A for AllLightsOn and
+                # AllUnitsOff if we use addresses, so we're not going to use
+                # them. I've got more information about the bug in the
+                # documentation for the receive event.
+                repeat = (last_plc_time + PLC_DELAY) > now
                 last_plc_time = now
-                last_plc_address = address
             elif mode == "rf":
                 repeat = (address == last_rf_address
                         and (last_rf_time + RF_DELAY) > now)
