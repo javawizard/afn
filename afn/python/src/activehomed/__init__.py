@@ -15,6 +15,8 @@ except ImportError:
     print "need to have pywin32 installed."
     sys.exit()
 
+port = 53306
+
 class HTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path
@@ -80,6 +82,7 @@ def main():
     bus.add_interface("activehome", RPC())
     receive_event = bus.add_event("activehome", "receive", "")
     bus.start_connecting()
+    HTTPServer(("127.0.0.1", port), HTTPHandler).serve_forever()
     # Server loop here, with finally: bus.shutdown()
     
 
