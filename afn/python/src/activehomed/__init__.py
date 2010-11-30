@@ -30,6 +30,9 @@ class HTTPHandler(BaseHTTPRequestHandler):
                     self.wfile.write(line + " ")
         else: # Incoming event from the script page
             print "Inbound event for url " + path
+            params = dict(parse_qsl(path.split("?")[1]))
+            receive_event(params["a"], params["b"], params["c"], params["d"],
+                    params["e"], params["f"], params["g"])
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
             self.end_headers()
