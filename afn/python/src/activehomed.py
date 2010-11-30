@@ -19,11 +19,7 @@ class RPC(object):
         pythoncom.CoInitialize()
         try:
             args = " ".join(str(arg) for arg in args)
-            print "Mode: " + repr(mode) + ", command: " + repr(args)
-            activehome = Dispatch("X10.ActiveHome")
-            print "Result is " + str(activehome.SendAction(mode, args))
-            print "Worked!"
-            return "successful"
+            Dispatch("X10.ActiveHome").SendAction(mode, args)
         finally:
             pythoncom.CoUninitialize()
 
