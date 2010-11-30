@@ -36,10 +36,7 @@ D 01-08:
 
 D 09-16:
 
-E 01-08: Cameras
-    TBD
-
-E 09-16: Cameras
+E 01-16: Cameras
     TBD
 
 F 01-08:
