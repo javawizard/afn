@@ -18,7 +18,7 @@ except ImportError:
     sys.exit()
 
 port = 53306
-RF_DELAY = 1.0
+RF_DELAY = 0.33
 PLC_DELAY = 0.25
 last_plc_time = 0.0
 last_plc_address = "a1"
@@ -205,7 +205,9 @@ def main():
     powerline), and then an AllLightsOn received on the powerline for that
     house code, the CM15A will report that as two events: A1 AllLightsOff and
     A2 AllLightsOff. The latter will be detected as a repeat when this event
-    is fired.
+    is fired. NOTE: There are currently problems with detecting RF
+    bright/dim repeats, so you should generally ignore this parameter for
+    RF bright/dim commands.
     """)
     bus.start_connecting()
     try:
