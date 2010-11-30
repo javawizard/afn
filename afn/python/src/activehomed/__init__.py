@@ -82,8 +82,12 @@ def main():
     bus.add_interface("activehome", RPC())
     receive_event = bus.add_event("activehome", "receive", "")
     bus.start_connecting()
-    HTTPServer(("127.0.0.1", port), HTTPHandler).serve_forever()
-    # Server loop here, with finally: bus.shutdown()
+    try:
+        HTTPServer(("127.0.0.1", port), HTTPHandler).serve_forever()
+    except KeyboardInterrupt:
+        print "Interrupted, shutting down"
+    finally:
+        bus.shutdown()
     
 
 
