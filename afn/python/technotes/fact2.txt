@@ -1,0 +1,32 @@
+So I've decided that fact.txt is proposing too complicated of a language. It needs to be simpler.
+
+Matias was suggesting that a good majority of % space syntax could be merged into traditional space by using concise function names such as +. For example, instead of %1+2%, you'd do {+|1|2}. All function arguments, then, are made available as closures. Unless, however, the function is decorated with a decorator indicating that arguments should be preserved as closures, all arguments will be resolved first and the resulting values passed in. This simplifies the foreign function interface by quite a bit. @libfact.function can be used to decorate a function that should receive closures as arguments. When a closure is invoked from the Python Fact interpreter, it is given a scope object that it should use to read and write variables.
+
+Percent notation variable access does support one important infix notation. Two, actually: ., which gets an attribute, and ->, which gets an item. %x.y% is equivalent to {.|x|y}, which uses the . function to access an attribute of an object. -> works the same way, but with items. The distinction between attributes and items is the same as Python's distinction between attributes and items; for example, if x were a map, then %x.get% would evaluate to the map's get function (which can be used to get keys with defaults), while %x->get% would be the value of the entry in the map whose key is the string "get".
+
+The whole implicit concatenation notion is still present. null and void are still two separate values; void is programmatically removed from implicit concatenations and is returned by a closure whose contents are empty (or consist entirely of other voids, since they will be programmatically removed), while null must be explicitly returned and is not removed from implicit concatenations. Implicitly concatenating two nulls results in a null; implicitly concatenating anything else results in a string representing the concatenation of the string values of the objects. During implicit concatenation, null's string representation is the empty string; everywhere else, its string value is the four character string "null". Void, being programmatically removed, does not have a string value for implicit concatenation; anywhere else that it would actually be used, its string value would be the four-character string "void".
+
+Exceptions are very similar to maps, believe it or not. They act like a map in that arbitrary items can be assigned to them, which is useful since Fact doesn't yet have a notion of classes. They have an attribute (not item) named message, which contains a string message with more information about the exception. They don't currently make trace information available, but this will likely be changed at some future point.
+
+Function invocation is done as {name|arg1|arg2|...}. name can be either the name of a built-in function or a callable object. arg1, arg2, etc are arguments to be passed to the function. The arguments themselves are not evaluated immediately; instead, a closure representing each is passed into the function, and it's up to the function what to do with it. For example, the for function's syntax is {for|start|stop|varname|action|delimiter}. It immediately evaluates all of its arguents except action. Then, for each number from start to stop, inclusive, it sets the local variable named by varname to the current number and evaluates action. for then returns the implicit concatenation of all of its actions with the delimiter inbetween.
+
+In order to allow better interoperation betwen Fact code and native Python code, the Python Fact interpreter will be like the first incarnation of the Java fact interpreter; callables will return their return value instead of writing it to a sink. All arithmetic built-in functions convert their arguments to Decimal instances before performing arithmetic. Right now I'm going to have them use the default Decimal precision and context, but I may change them to source from a context specified on a per-Fact-interpreter basis.
+
+Numbers, therefore, are represented by Decimal instances, but external Python libraries can pass them in as ints, longs, or floats; Fact will perform the conversion automatically for any of these types. Lists are represented as Python lists. Maps are represented by Python dicts, and therefore share several functions in common with them. (Technically, they share all of them, but only some are required to be present in the Fact language itself and so may not be present in another Fact interpreter.) Strings are represented by instances of python's str and unicode types; Fact prefers str but uses whatever it's given. null and void are represented by libfact.null and None, respectively. (This causes some minor quirks when dealing with maps, because the Python interpreter has their get function return void if the item is not present and a default is not specified. This is considered a bug, and some means of resolving this issue needs to be thought out.) The built-in function nv, which stands for Null to Void, returns null if its argument is void; this may be helpful when dealing with some Python functions.
+
+A string value of an object for implicit concatenation is obtained by calling the object's Python __str__ function. Since I don't yet have any functions that perform string conversion, I haven't decided what functions will be used for other types of string conversion.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
