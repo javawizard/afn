@@ -40,16 +40,29 @@ D 01-08:
 
 D 09-16:
 
-E 01-16: Cameras
-    TBD
+E 01-16:
 
 F 01-08:
 
 F 09-16:
 
-G 01-08:
-
-G 09-16:
+G 01-16: Cameras
+	G1:
+	G2:
+	G3:
+	G4:
+	G5:
+	G6:
+	G7:
+	G8:
+	G9:
+	G10:
+	G11:
+	G12:
+	G13: Family Room SW (above the front door)
+	G14: Hallway West (right below the interior window)
+	G15: Upper Stairway (above the window seat facing down the stairs)
+	G16:
 
 H 01-08:
 
