@@ -1,4 +1,4 @@
-package afn.libautobus;
+package afn.libautobus_jython;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

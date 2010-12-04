@@ -1,4 +1,4 @@
-package afn.libautobus.proxies;
+package afn.libautobus_jython.proxies;
 
 import java.util.Map;
 

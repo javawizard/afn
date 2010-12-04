@@ -1,4 +1,4 @@
-package afn.libautobus;
+package afn.libautobus_jython;
 
 public class ObjectWrapper
 {

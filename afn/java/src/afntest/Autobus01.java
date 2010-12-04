@@ -3,10 +3,10 @@ package afntest;
 import java.util.List;
 import java.util.Map;
 
-import afn.libautobus.AutobusConnection;
-import afn.libautobus.FunctionWrapper;
-import afn.libautobus.InterfaceWrapper;
-import afn.libautobus.ObjectListener;
+import afn.libautobus_jython.AutobusConnection;
+import afn.libautobus_jython.FunctionWrapper;
+import afn.libautobus_jython.InterfaceWrapper;
+import afn.libautobus_jython.ObjectListener;
 
 public class Autobus01
 {

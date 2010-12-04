@@ -24,9 +24,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import afn.Hashutils;
-import afn.libautobus.AutobusConnection;
-import afn.libautobus.ObjectListener;
-import afn.libautobus.proxies.TimerInterface;
+import afn.libautobus_jython.AutobusConnection;
+import afn.libautobus_jython.ObjectListener;
+import afn.libautobus_jython.proxies.TimerInterface;
 import afn.traytimer.ui.TimerPanel;
 
 public class TrayTimer
