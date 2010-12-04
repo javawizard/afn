@@ -1,0 +1,1 @@
+Let's see... MetaView views are described using XML. They source information from Autobus objects. As much of the view as possible should be specified in a semantic manner, although some opinion over the layout should be present.

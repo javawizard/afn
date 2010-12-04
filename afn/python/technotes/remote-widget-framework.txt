@@ -1,4 +1,4 @@
-UPDATE: Everything in this file has been scrapped and replaced with rtk.txt.
+UPDATE: Everything in this file has been scrapped and replaced with metaview.txt.
 
 So I've got this idea for some sort of remote widget framework. The idea would be that Autobus clients would be able to provide widgets, and special Autobus clients that know how to render widgets could render them.
 
