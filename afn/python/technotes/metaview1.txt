@@ -1,1 +1,111 @@
 Let's see... MetaView views are described using XML. They source information from Autobus objects. As much of the view as possible should be specified in a semantic manner, although some opinion over the layout should be present.
+
+Hmm... I'm thinking I'll try designing an example XML file for the timer program that uses layout as much as is needed and then go from there and figure out what of that needs to be changed to semantics. Or something.
+
+So let's see... First off, I think we need a language like XPath that works for json. Such a language could be readily adapted to the model that autobus objects take.
+
+So I searched and wasn't able to find any existing solution that's simple enough for this. It can't be this hard, though.
+
+Although, now I'm thinking about how models should work... and how stuff should be selected from models...
+
+Let's see... We want some sort of list element that causes children to be repeated within the container. I'm not going to add a predicate system for now; the content of a list tag will be repeated precisely once for each element in the list selected from the model, no more, no less.
+
+It'd be nice to be able to select from a number of models as well. For example, various parts of the timer interface need to be able to source from the timers object and the startup object on the timer interface. Those are two separate models. Perhaps the same mechanism used to address attributes in objects in the model could be used to address separate models, as if there was a dictionary that contained all of the models or something.
+
+Perhaps this global dictionary should contain keys for each model for each tag and a key called bus. This key would be a virtual dictionary whose keys represent interface names and whose values are virtual dictionaries whose keys are object names and whose values are the corresponding objects.
+
+There should be a mechanism to predefine components in the xml file. This would allow something such as a multispinner to be created. I'm not going to worry about importing components from other xml files at present.
+
+Separate xml components almost directly transclude their child elements into the location at which they're referenced. However, there needs to be some way to specify information to a particular component. For example, a multispinner needs to know which timer to display, what to divide the timer's seconds by, and what to mod them by.
+
+Which is another point: the client needs to be able to perform simple equations. I'm really tempted to write a basic Fact interpreter into this whole mess, but that might put somewhat of a burden on implementations. Maybe such support could be written directly into the whole mess as xml...
+
+Let's imagine that we're not supporting anything other than sourcing from a single model and that we're using /foo/bar as our attribute retrieval notation. Let's say we have an interface called flipflop that publishes an object named state. This interface has a function called set_state. set_state, when called, causes the state object to be set to the single value passed into the function, which must be an integer. We want to display three toggle buttons titled first, second, and third, respectively. Each of these toggle buttons appears selected when the value of the state object is 1, 2, or 3, respectively. None of the buttons will appear selected if the state object contains a value less than 1 or greater than 3. Clicking on a button calls set_state with that value. I'd imagine something like that looking thus:
+
+<metaview model="/flipflop/state">
+    <view>
+        <vbox>
+            <toggle display="button" state="/1" click="bus/flipflop/set_state 1"/>
+            <toggle display="button" state="/2" click="bus/flipflop/set_state 2"/>
+            <toggle display="button" state="/3" click="bus/flipflop/set_state 3"/>
+        </vbox>
+    </view>
+</metaview>
+
+That was an attempt. And it didn't go very well. Or at least I don't like how it looks. That would assume the model is actually a map containing three attributes, 1, 2, and 3, whose values are booleans. And I don't like the function invocation syntax. Let's run with this for the next 30 seconds, though, and look at the server-side code (which is in Python):
+
+from libautobus import AutobusConnection
+bus = AutobusConnection()
+state_map = {1:True,2:False,3:False}
+class Service(object):
+    def set_state(self, new_state):
+        global state_map
+        state_map = dict((k, False) for k in state_map.keys())
+        state_map[new_state] = True
+        state_object.set(state_map)
+bus.add_interface("flipflop", Service())
+state_object = bus.add_object("flipflop", "state", "Some documentation here", state_map)
+bus.start_connecting()
+
+And that's it. Simple, yes. But I still don't like the look of the xml file. Actions are declared quite stupidly. How to solve that...
+
+The problem is that the entire UI should be declarative. Avoiding anything imperative as much as possible will, in my opinion, dramatically simplify things.
+
+We still have the problem of needing to source from multiple models. What if we introduce a concept of model dependency. Local models can be created by use of the <model> tag. These models can reference other previously-declared models or server-side autobus models. When model X references model Y, a reload sent to model Y will cause a corresponding reload of model X. Models are reloaded before any UI components are reloaded; the models required to reload are reloaded, and then the UI elements referencing those models are reloaded.
+
+What can a local model contain, then? And where does it get stored? How is it referenced? Is it possible to declare a new model inside such as a <list>? What happens if it's referenced outside of the list? Or is it only visible inside the list? If so, what happens if it shadows a model outside of the list, and how does that work with UI element updating?
+
+Perhaps a solution to all this is that models have to be declared outside of any UI code, meaning that, for example, there might be a <models> tag directly under the <metaview> tag in which all models have to be declared. Models can declare models underneath them that can somehow be injected into lists.
+
+Of course, then, is there any difference between models and ordinary objects? Perhaps not. The declarative nature is still important: if a particular value changes in one location, everything should reload so as to show the updated value. Perhaps, then, we have a single <model> tag directly under <metaview> that specifies the model of the entire UI. Normally under that you'd have a <map> specifying that the model is a map. Other tags for providing information would be present, such as <int value="1"/>, <string value="hello world"/>, <true/>, <false/>, <null/>, etc. <list> would also be supported, and would construct a list containing every child element. I haven't figured out how maps would work; <map><entry><key>...</key><value>...</value></entry></map> seems overly verbose, but I'll think about it. Perhaps the most useful information-sourcing element of all, however, would be <object>. This tag is used as <object interface="flipflop" object="state"/>. As might be imagined, this sources from the specified Autobus object. Since this is all declarative, a change to that object would cause the entire model to automatically reload, which would cause all UI elements to correspondingly reload.
+
+Of course, there's one problem where explicitly declaring identified models might come in handy: this doesn't allow for inter-referencing. Meaning, if you write one long portion of the model that needs to be used three separate times to construct other parts of the model, you've got to cut and paste it. And that's frankly annoying. That's the one argument I can see for explicit models. Or at least, some means of inter-referencing within models...
+
+We're not supporting recursive references. I don't see any real point behind them unless you're trying to view infinitely-nested data structures in the UI... hmm, I could see something like that happening for a tree control...
+
+I still don't think recursive references in the model generation is a good idea. Perhaps there will be something that can recursively iterate over lists containing dictionaries containing lists in the future, as a specific element. For now, though, I'm not going to worry about that. Let's see...
+
+Gosh, this is getting slightly frustrating. What I'm thinking I'll do is add an XML layer construct into this. That is that anywhere in the entire document you can have <ref target="foo"/>. That causes the element whose id is foo, which must be defined earlier in the file and must not be an ancestor of the ref tag, to be copied verbatim into where the ref is specified. I think that should do for now. I may add a more complex inter-referencing mechanism to models later on, but I think that's good enough for now.
+
+Oh, and there's an extra element, <refs>, that can appear directly under <metaview> before anything else including <model>. Its contents are completely ignored and can take any form that's syntactically-valid XML. The idea is that elements used purely by reference can be placed in here.
+
+Hmm, that poses one problem: when embedding custom components, how to pass information to them. Let's skip over that for a moment. We'll come back to that in a bit.
+
+Except... I just spotted another problem in the idea of having just one model and embedding with ref tags. That poses problems with building models with the for tag. Perhaps we should have a namespace that the file uses. Values in the namespace are simply models themselves. Instead of having a <model> tag under <metaview>, we have <models>. This can contain zero or more <model> tags which each have name attributes and which each contain exactly one element (which is one of the elements above). Any model can reference a model defined before it.
+
+The namespacing thing will most likely simplify component inclusion too, since values can be assigned into the namespace and the component transcluded. I'll get to that in a bit.
+
+Now, the for loop. It can be supplied with the two attributes var and in. It repeats its child elements precisely once for each item in the list selected by the in attribute, which should be a selector. During each repetition, it assigns that particular element into the namespace under the name specified by var. The for loop can also be used with attributes var1, var2, etc, and in1, in2, etc. This requires the lists selected by the in attributes to be the same length, and iterates over them all at the same time. (This is much the same as the Python statement "for var1, var2, ... in zip(in1, in2, ...): ...", but it causes an error if the input lists are not precisely the same length.)
+
+Some additional elements are allowed in the model. <add>, <subtract>, <multiply>, and <divide> perform the specified arithmetic operations on their children. They must each contain at least two elements, and they can all contain more. When they contain more, they are all left-associative. Right now, their arguments must be integers or floating-point numbers. I'll most likely add more arithmetic operations later.
+
+<value from=""/> can be used to include a value into a model that was declared in a previous model. The value of the from attribute is a selector.
+
+Some conditionals are supplied. <and> and <or> are much like the arithmetic operations, but they compute the boolean and/or of their children and evaluate to a boolean. Their children can be of any type; false, 0, 0.0, the empty string, and null are all false; everything else is true. <not> must contain one child under the same constraints; its value is the boolean inverse. <equal> compares all of its children to make sure they have the same value. (I haven't decided yet whether values of different types, such as 0 and 0.0 or 0 and "0", should compare equal yet.) <greater> and <less> expect two children and compare them as expected, evaluating to a boolean value.
+
+I'm thinking maps will be represented as <map><entry><string value="key"/><string value="value"/></entry>...</map> for now. Actually, string keys can be specified with a shorter syntax: <map><entry key="key"><string value="value"/></entry></map>. I think that should work for now.
+
+So, let's try defining the model part of our previous flipflop example again. We're going to assume 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
