@@ -191,6 +191,13 @@ We could potentially solve the timer problem by having tabbed containers add the
 
 Yeah, I'm thinking that's probably the best way to go. Now, I'm thinking actions can only be referenced if they're injected into the actionspace above where they're referenced. This would allow each element to capture its view of the actionspace when it's created, which would most likely simplify things a lot. I'm not sure if it would cause any problems with <for> statements dynamically injecting elements above another element yet.
 
+Ok, I've decided how I think this should work. Elements that support actions will have some attribute to specify the name they appear as. Certain elements cause action scopes to be created. A default action scope is present at the root view. Right now, the elements that cause new action scopes to be created are <for> and custom component tags. Only then that precludes calling actions on custom components... gah...
+
+I'm going to go see if I can figure out how ZK handles actions...
+
+Turns out they don't. They leave it up to a Java file that binds into the UI to handle them. Ah well, it was worth a try.
+
+I think the main problem with searching for existing solutions is that having everything, even containers, bind to the model is a novel concept in the MVC world. Everything I've seen so far that supports MVC just supports it at the level of individual widgets for which it makes sense, such as 
 
 
 
