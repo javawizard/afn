@@ -85,7 +85,119 @@ Some conditionals are supplied. <and> and <or> are much like the arithmetic oper
 
 I'm thinking maps will be represented as <map><entry><string value="key"/><string value="value"/></entry>...</map> for now. Actually, string keys can be specified with a shorter syntax: <map><entry key="key"><string value="value"/></entry></map>. I think that should work for now.
 
-So, let's try defining the model part of our previous flipflop example again. We're going to assume 
+So, let's try defining the model part of our previous flipflop example again. We're going to assume that the buttons we link to the model have some sort of state attribute that contains a selector, and the button shows as pressed if the selector selects a value and that value is true.
+
+Oh, and, selectors are going to be of the form "name", "name/attribute", "name/attribute/attribute", etc. name is the name of a model in the namespace, and attribute is the name of an attribute on the model, which should be a map or a list if attribute is present (lists' attributes are 0, 1, etc, for items in the list). If a lookup fails for that attribute but the literal text is a valid integer value, it will be converted to such and the lookup tried again. This allows maps to use integers as their keys, which the timer server, for example, does. Any attribute name in that list can be replaced with [...], where ... is also a selector that should select a string or a number. This will be used as the name of the attribute to look up. String-to-int conversion will not be attempted for such an attribute. Selectors that don't find anything don't cause an error; they simply don't select anything. Various elements may treat this as an error condition, though, so it's important to watch out for that. A selector can also take the form "!text" or "#1"; these select precisely a string containing the value "text" and an integer containing the value 1, respectively. "?true" and "?false" select precisely the boolean values true and false as well, and "?null" selects null.
+
+<models>
+    <model name="state">
+        <object interface="flipflop" object="state"/>
+    </model>
+    <model name="buttons">
+        <map>
+            <entry>
+                <value from="state">
+                <true/>
+            </entry>
+        </map>
+    </model>
+</models>
+
+The buttons are then specified to select from buttons/1, buttons/2, and buttons/3, respectively. Only one of those will exist, but it will correspond to the button that should be selected and its value will be true, so all is good. The other buttons won't select anything, and toggle buttons that don't select anything appear unselected, so all is good there too.
+
+Actually, I think I'm going to include an additional optional attribute on toggle buttons specifically. That attribute is named "is". If it's present, then instead of the toggle button appearing selected when its state is true, it appears selected when its state compares equal to the value selected by the is attribute.
+
+So far so good. Now, what about the UI itself? And what about embedding components? We're probably going to want to make it so we can customize all three buttons in one location. Let's try using custom components.
+
+Custom components, I'm thinking, will be declared in a <components> tag below <model> and above anything else. Within this components tag can be any number of <component> tags. Each of these tags has a name specifying the component's name. Each of these should contain a single child tag representing the component. To actually include the component in the UI, you include a tag whose name is the component's name. This tag can't have any children; I'm considering adding support for custom containers later, but I'm not going to do so just yet. Attributes on this tag are set into the namespace as their specified names just before the component is included and removed just after. The value of an attribute is a selector unless it starts with an exclamation point, in which case the remainder of the value is interpreted as a string to set into the namespace. If it's a selector and it doesn't select anything, the corresponding attribute is removed from the namespace if it exists (and re-added afterward). Custom components can include any other custom component (except that I haven't yet decided whether custom components can include components defined after them).
+
+Given this, let's try rewriting our example to display the current state. We're not going to worry about actions yet, so clicking on one of these buttons won't actually do anything. Also, most of the display attributes have been changed to be selectors instead, which should give us some flexibility in how we render the UI.
+
+<metaview>
+	<models>
+		<model name="state">
+			<object interface="flipflop" object="state"/>
+		</model>
+	</models>
+	<components>
+		<component name="statebutton">
+			<toggle text="text" state="state" is="number"/>
+		</component>
+	</components>
+	<view>
+		<vbox>
+			<statebutton text="!first" number="#1"/>
+			<statebutton text="!second" number="#2"/>
+			<statebutton text="!third" number="#3"/>
+		</vbox>
+	</view>
+</metaview> 
+
+That's actually looking pretty cool. Things are simple, too, which is good. Add some additional components and containers (vbox is a container), and you've got a nice UI that can display information. In fact, let's re-write this example to use <for> to display the buttons. The result isn't going to be quite as good as this one, but it will show how the for element can be used.
+
+<metaview>
+	<models>
+		<model name="m">
+			<map>
+				<entry key="state">
+					<object interface="flipflop" object="state">
+				</entry>
+				<entry key="numbers">
+					<list>
+						<int value="1"/>
+						<int value="2"/>
+						<int value="3"/>
+					</list>
+				</entry>
+				<entry key="labels">
+					<list>
+						<string value="first"/>
+						<string value="second"/>
+						<string value="third"/>
+					</list>
+				</entry>
+			</map>
+		</model>
+	</models>
+	<components>
+		<component name="statebutton">
+			<toggle text="text" state="m/state" is="number"/>
+		</component>
+	</components>
+	<view width="150" height="200">
+		<vbox>
+			<for var1="number" in1="m/numbers" var2="text" in2="m/labels">
+				<statebutton/>
+			</for>
+		</vbox>
+	</view>
+</metaview>
+
+That was quite a bit longer. In that particular case, explicitly listing each button would have been a better choice. But it serves to demonstrate how the for tag works, and more importantly, it shows that the buttons themselves could be specified in the model by replacing those two lists with <object> references (or just including them in a complete published model). This is the type of construct that the timer server will use to display each timer in its own tab and potentially in its own popped-out window. (<view> tags can be embedded in <for> lists to create a window per element.)
+
+And speaking of that, we need to get on to actions. I should make one note here, however, that we'll be revisiting the for loop to check out identifiers, which are very important to avoid some problems with tab switchint that we'd have if we simply wrote our timer program based on what we've got so far.
+
+So, actions. This is most likely going to be the most complicated part of this whole business. Actions are how UIs actually do anything besides just show data. Probably the most common type of action would be a call to a function registered on an Autobus interface. This is what we'd use to instruct our server application to set the current state when the user presses one of the buttons. Actions can also be used for local events, however, such as showing or hiding a view, and this is precisely what the pop out button in the timer viewer will do.
+
+So, how to invoke actions. The syntax for doing this isn't, in my opinion, going to be easy. I'm tempted to add an <action> tag that specifies how to call actions that accept arguments, which would certainly make action selection a lot easier. It would have the unfortunate effect, however, of making the action system a lot more verbose.
+
+What if we had actions specified as "name:action arg1 arg2 arg3 ..."? name would be the name of something that accepts actions, and action would be the action to call on it. Note that names here are quite distinct from names in the model namespace. They have their own namespace, which I'm going to call the actionspace. The action can be anything that they understand. Each of the arguments is a selector, which can be surrounded by brackets if it needs to contain spaces.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
