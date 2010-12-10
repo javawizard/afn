@@ -13,11 +13,13 @@ phenoxydine:
 spiro:
 	22     SSH
 	3690   Subversion. This is the official AFN subversion repository.
+	4713   PulseAudio. This plays on the stereo system.
 	8690   ViewVC (SVN web viewer) pointing to the AFN subversion repository
 	28862  Autobus. This is the AFN network's Autobus server.
 
 aster:
 	22     SSH
+	4713   PulseAudio. This plays on the P.A. system.
 	6600   MPD (Music server). Use a client program such as GMPC to connect and play music.
 
 homeschool1:
