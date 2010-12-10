@@ -100,9 +100,9 @@ def process_event_queue():
         try:
             message(sender, connection)
         except:
-            print "FATAL ERROR in a protocol function handler:"
+            print "MAJOR ERROR in a protocol function handler:"
             print_exc()
-            os._exit(1)
+            # os._exit(1)
     print "Shutting down connections..."
     connection_count = len(connection_map)
     for connection in connection_map.values():

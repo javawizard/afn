@@ -617,7 +617,7 @@ class LocalEvent(object):
         with self.interface.connection.on_connect_lock:
             message = create_message(FireEventCommand,
                     NOTIFICATION, interface_name=self.interface.name,
-                    event_name=self.name, 
+                    event_name=self.name,
                     arguments=[encode_object(o) for o in arguments])
             try:
                 self.interface.connection.send(message)
@@ -909,7 +909,7 @@ class AutobusConnection(AutobusConnectionSuper):
             with self.on_connect_lock:
                 self.connection_established()
             return
-        raise Exception("Couldn't connect")
+        raise NotConnectedException("Couldn't connect")
     # messagearrived, inputclosed, readnextmessage
     
     def connection_established(self):
@@ -1016,6 +1016,7 @@ class AutobusConnection(AutobusConnectionSuper):
             return
         if message["action"] == PingCommand:
             self.send(create_message(PingResponse, message))
+            return
         print "Not processing message for action " + message["action"]
     
     def notify_object_listeners(self, object_spec):
@@ -1077,7 +1078,7 @@ class AutobusConnection(AutobusConnectionSuper):
         protobuf.Message, to the send queue. If the message is None, this
         method returns without doing anything.
         """
-        if message is not None:
+        if message is not None and message["message_type"] is not None:
 #            print "Adding message to send queue " + str(self.send_queue) + "..."
             queue = self.send_queue
             if queue is None:

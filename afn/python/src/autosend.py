@@ -30,9 +30,11 @@ parser = OptionParser(usage=
 parser.add_option("-h", type="string", action="store", dest="host", help="The host to connect "
         "to. The default is whatever you've configured in libautobus.conf, or "
         "localhost if you haven't created libautobus.conf.", default=None)
+from libautobus import DEFAULT_PORT
 parser.add_option("-p", type="int", dest="port", help="The port to connect to. "
-        "The default is whatever you've configured in libautobus.conf, or 28862 "
-        "if you haven't created libautobus.conf.", default=None)
+        "The default is whatever you've configured in libautobus.conf, or "
+        + str(DEFAULT_PORT) +
+        " if you haven't created libautobus.conf.", default=None)
 parser.add_option("-l", action="store_const", const="list", dest="mode",
         help="List mode. No additional command-line arguments are needed. This "
         "is the default mode if no command-line options are specified. In "
@@ -118,7 +120,7 @@ for value in command_line_args:
     arguments.append(value)    
     
 
-from libautobus import AutobusConnection
+from libautobus import AutobusConnection, NotConnectedException
 bus = AutobusConnection(**connect_options)
 
 # We've got everything set up thus far. Now we'll look up the mode and figure
@@ -148,7 +150,11 @@ elif mode == "watch":
         print str(new_value)
     bus.add_object_watch(interface_name, item_name, object_function)
 
-bus.connect()
+try:
+    bus.connect()
+except NotConnectedException:
+    print "Couldn't connect to the Autobus server."
+    sys.exit()
 
 
 if mode == "list":

@@ -197,7 +197,7 @@ I'm going to go see if I can figure out how ZK handles actions...
 
 Turns out they don't. They leave it up to a Java file that binds into the UI to handle them. Ah well, it was worth a try.
 
-I think the main problem with searching for existing solutions is that having everything, even containers, bind to the model is a novel concept in the MVC world. Everything I've seen so far that supports MVC just supports it at the level of individual widgets for which it makes sense, such as 
+I think the main problem with searching for existing solutions is that having everything, even containers, bind to the model is a novel concept in the MVC world. Everything I've seen so far that supports MVC just supports it at the level of individual widgets for which it makes sense, such as lists or trees. Metaview extends that to make the entire system MVC, which introduces some corresponding complexities. 
 
 
 
