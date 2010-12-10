@@ -1,0 +1,1 @@
+Idea: write a website thing, kinda a CMS, supports quotes, MLIA-style stuff, blog, static pages, possibly uses its own web framework based on json that would allow html pages to be loaded up and handed a json model (which would work well with using mongodb like I want to) and they use tags like <for> that I was planning for metaview and stuff.
