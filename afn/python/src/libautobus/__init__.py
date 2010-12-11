@@ -236,6 +236,8 @@ class InputThread(Thread):
             pass
         except StopIteration:
             pass
+        except SocketError:
+            pass
         except:
             print_exc()
 #        print "Input thread finished, closing socket..."

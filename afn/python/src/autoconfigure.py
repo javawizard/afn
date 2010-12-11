@@ -46,6 +46,8 @@ remove_section(section)
 """
 
 from ConfigParser import RawConfigParser
+from threading import RLock
+from concurrent import synchronized
 
 class _AutoconfigureInterface(object):
     """
@@ -106,7 +108,17 @@ class _AutoconfigureInterface(object):
     
     def remove_section(self, section):
         return self.config.remove_section(section)
+    
+    # Now we'll copy the docs from RawConfigParser
+    for function in locals().copy():
+        if not function.__name__.startswith("_"):
+            function.__doc__ = getattr(RawConfigParser,
+                    function.__name__).__doc__
+    del function
 
+# TODO: convert this to one lock per Configuration instance at
+# some point in the future
+_lock = RLock()
 
 class Configuration(object):
     def __init__(self, bus, interface_name, file_name):
@@ -120,6 +132,79 @@ class Configuration(object):
                 sections_object_doc, self._compute_sections())
         self.options_object = bus.add_object(interface_name, "options",
                 options_object_doc, self._compute_options())
+    
+    @synchronized(_lock)
+    def _save(self):
+        with open(self.file_name, "w") as file:
+            self.config.write(file)
+        self.sections_object.set(self._compute_sections())
+        self.options_object.set(self._compute_options())
+    
+    @synchronized(_lock)
+    def _compute_sections(self):
+        return self.config.sections()
+    
+    @synchronized(_lock)
+    def _compute_options(self):
+        return dict((section, dict(self.config.items(section)))
+                for section in self.config.sections())
+
+    @synchronized(_lock)
+    def sections(self):
+        return self.config.sections()
+    
+    @synchronized(_lock)
+    def add_section(self, name):
+        self.config.add_section(name)
+        self._save()
+    
+    @synchronized(_lock)
+    def has_section(self, name):
+        return self.config.has_section(name)
+    
+    @synchronized(_lock)
+    def options(self, section):
+        return self.config.options(section)
+    
+    @synchronized(_lock)
+    def has_option(self, section, option):
+        return self.config.has_option(section, option)
+    
+    @synchronized(_lock)
+    def get(self, section, option):
+        return self.config.get(section, option)
+    
+    @synchronized(_lock)
+    def getint(self, section, option):
+        return self.config.getint(section, option)
+    
+    @synchronized(_lock)
+    def getfloat(self, section, option):
+        return self.config.getfloat(section, option)
+    
+    @synchronized(_lock)
+    def getboolean(self, section, option):
+        return self.config.getboolean(section, option)
+    
+    @synchronized(_lock)
+    def items(self, section):
+        return self.config.items(section)
+    
+    @synchronized(_lock)
+    def set(self, section, option, value):
+        self.config.set(section, option, value)
+        self._save()
+    
+    @synchronized(_lock)
+    def remove_option(self, section, option):
+        self.config.remove_option(section, option)
+        self._save()
+    
+    @synchronized(_lock)
+    def remove_section(self, section):
+        self.config.remove_section(section)
+        self._save()
+        
 
 
 
