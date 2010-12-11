@@ -2,6 +2,13 @@ package afn;
 
 public class Pair<E, F>
 {
+    public Pair(E first, F second)
+    {
+        super();
+        this.first = first;
+        this.second = second;
+    }
+    
     public E first;
     public F second;
     

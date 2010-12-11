@@ -1,9 +1,11 @@
 package afn.libautobus;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +22,19 @@ import afn.Pair;
 import afn.Socketutils;
 
 import static afn.libautobus.MessageTypes.*;
+import static afn.libautobus.Messages.*;
+import static afn.libautobus.Translation.*;
 
+/**
+ * A connection to an Autobus server.<br/><br/>
+ * 
+ * DEVELOPERS: This library is intended to be almost a line-for-line port of Python's
+ * libautobus for maintainability. Try to keep it as close to that as possible while still
+ * allowing the library to be Java-like in its usage.
+ * 
+ * @author Alexander Boyd
+ * 
+ */
 public class AutobusConnection
 {
     static void sleep(double delay)
@@ -75,7 +89,7 @@ public class AutobusConnection
     class InputThread extends Thread
     {
         private Socket socket;
-        private DataInputStream in;
+        private BufferedReader in;
         
         InputThread(Socket socket)
         {
@@ -86,13 +100,13 @@ public class AutobusConnection
         {
             try
             {
-                in = new DataInputStream(socket.getInputStream());
-                while (true)
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String line;
+                while ((line = in.readLine()) != null)
                 {
-                    int messageLength = in.readInt();
-                    byte[] messageData = new byte[messageLength];
-                    in.readFully(messageData);
-                    Map message = (Map) JSONValue.parse(new String(messageData));
+                    if (line.trim().equals(""))
+                        continue;
+                    Map message = (Map) JSONValue.parse(line);
                     messageArrived(message);
                 }
             }
@@ -136,8 +150,8 @@ public class AutobusConnection
                         break;
                     String messageData = JSONValue.toJSONString(message);
                     byte[] data = messageData.getBytes();
-                    out.writeInt(data.length);
                     out.write(data);
+                    out.write("\r\n".getBytes());
                     out.flush();
                 }
             }
@@ -211,6 +225,16 @@ public class AutobusConnection
         Socketutils.close(socket);
     }
     
+    public void addObjectWatch(String interfaceName, String objectName,
+            ObjectListener listener)
+    {
+        Pair<String, String> objectSpec =
+                new Pair<String, String>(interfaceName, objectName);
+        if (!objectListeners.containsKey(objectSpec))
+            objectListeners.put(objectSpec, new ArrayList<ObjectListener>());
+        objectListeners.get(objectSpec).add(listener);
+    }
+    
     public void startConnecting()
     {
         new Thread()
@@ -270,6 +294,13 @@ public class AutobusConnection
         receiveQueues = new HashMap<Long, BlockingQueue<Map>>();
         inputThread.start();
         outputThread.start();
+        for (Pair<String, String> objectSpec : objectListeners.keySet())
+        {
+            Map message =
+                    createMessage(WatchObjectCommand, COMMAND, "interface_name",
+                            objectSpec.first, "object_name", objectSpec.second);
+            send(message);
+        }
         onConnect.run();
     }
     
@@ -307,7 +338,32 @@ public class AutobusConnection
     
     private void processSetObjectCommand(Map message)
     {
-        System.out.println("processSetObjectCommand not yet implemented");
+        String interfaceName = (String) message.get("interface_name");
+        String objectName = (String) message.get("object_name");
+        String value = (String) message.get("value");
+        Pair<String, String> objectSpec =
+                new Pair<String, String>(interfaceName, objectName);
+        objectValues.put(objectSpec, decodeObject(value));
+        notifyObjectListeners(objectSpec);
+    }
+    
+    private void notifyObjectListeners(Pair<String, String> objectSpec)
+    {
+        Object value = objectValues.get(objectSpec);
+        if (objectListeners.keySet().contains(objectSpec))
+        {
+            for (ObjectListener listener : objectListeners.get(objectSpec))
+            {
+                try
+                {
+                    listener.changed(value);
+                }
+                catch (Throwable e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
     
     private void processPingCommand(Map message)
