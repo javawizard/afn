@@ -191,7 +191,7 @@ def linesplit(socket):
     """
     A generator that yields lines of text from the socket.
     """
-    buffer = socket.read(512)
+    buffer = socket.recv(512)
     done = False
     while not done:
         if "\n" in buffer:
@@ -201,7 +201,7 @@ def linesplit(socket):
             if line: # Ignore blank lines
                 yield line
         else:
-            more = socket.read(512)
+            more = socket.recv(512)
             if not more:
                 done = True
             else:
