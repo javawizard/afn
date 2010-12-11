@@ -187,6 +187,30 @@ def read_fully(socket, length):
         data += new_data
     return data
 
+def linesplit(socket):
+    """
+    A generator that yields lines of text from the socket.
+    """
+    buffer = socket.read(512)
+    done = False
+    while not done:
+        if "\n" in buffer:
+            line, buffer = buffer.split("\n", 1)
+            if line[-1:] == "\r":
+                line = line[:-1]
+            if line: # Ignore blank lines
+                yield line
+        else:
+            more = socket.read(512)
+            if not more:
+                done = True
+            else:
+                buffer = buffer+more
+    if buffer[-1:] == "\r":
+        buffer = buffer[:-1]
+    if buffer:
+        yield buffer
+
 class InputThread(Thread):
     """
     A thread that reads messages from a socket and calls a user-defined
@@ -196,22 +220,21 @@ class InputThread(Thread):
     def __init__(self, socket, message_function, close_function=None):
         Thread.__init__(self)
         self.socket = socket
+        self.generator = linesplit(socket)
         self.message_function = message_function
         self.close_function = close_function
     
     def run(self):
         try:
             while True:
-#                print "Waiting for client message..."
-                message_length = read_fully(self.socket, 4)
-                message_length = unpack(">i", message_length)[0]
-#                print "Receiving message with length " + str(message_length)
-                message_data = read_fully(self.socket, message_length)
+                message_data = self.generator.next()
 #                print "Message received, decoding..."
                 message = loads(message_data)
 #                print "Dispatching received message..."
                 self.message_function(message)
         except EOFError:
+            pass
+        except StopIteration:
             pass
         except:
             print_exc()
@@ -262,10 +285,7 @@ class OutputThread(Thread):
                         message_data = message
                     else:
                         message_data = dumps(message, separators=MESSAGE_SEPARATORS)
-#                    print "Sending encoded message length..."
-                    self.socket.sendall(pack(">i", len(message_data)))
-#                    print "Sending encoded message..."
-                    self.socket.sendall(message_data)
+                    self.socket.sendall(message_data + "\r\n")
                 finally:
                     self.finished_function()
         except SocketError:
