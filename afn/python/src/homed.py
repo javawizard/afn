@@ -26,7 +26,7 @@ class Interface(object):
         # Assume powerline for now. In the future, we'll want to have some
         # configuration variable that specifies whether this is powerline
         # or rf or what.
-        activehome.action("sendplc", address, "on")
+        activehome.action.send("sendplc", address, "on")
     
     def off(self, address):
         """
@@ -35,7 +35,7 @@ class Interface(object):
         """
         address = address.lower()
         verify_existing_address(address)
-        activehome.action("sendplc", address, "off")
+        activehome.action.send("sendplc", address, "off")
 
 def verify_existing_address(address):
     if len(address) != 2:
@@ -55,4 +55,5 @@ def main():
     bus.add_interface("home", Interface())
     config = Configuration(bus, "configure.home", "homed.conf")
     bus.start_connecting()
+    bus.interrupt_loop()
     

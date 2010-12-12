@@ -1289,7 +1289,7 @@ class AutobusConnection(AutobusConnectionSuper):
         this bus will be shut down and this function will return.
         
         You don't need to call this function to use an Autobus connection at
-        all, since connections use threads to do all their useful work.
+        all since connections use threads to do all their useful work.
         It's intended primarily for daemon processes that exist solely to
         provide an Autobus interface and that would need to be notified when
         a Ctrl+C is used to kill the daemon.
