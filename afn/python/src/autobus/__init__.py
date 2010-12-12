@@ -414,8 +414,9 @@ class Connection(object):
     containing protobuf Message objects to be sent to the corresponding
     socket as soon as possible, and an input and output thread.
     """
-    def __init__(self, socket):
+    def __init__(self, socket, address):
         self.socket = socket
+        self.socket_address = address
         self.interfaces = []
         self.listeners = [] # List of tuples, each of which contains an
         # interface name and an event name.
@@ -436,7 +437,7 @@ class Connection(object):
         Registers this connection with the global connection map. This must
         only be called on the event thread.
         """
-        print "New connection " + str(self.id)
+        print "New connection " + str(self.id) + " from " + str(self.socket_address)
         connection_map[self.id] = self
     
     def message_arrived(self, message):
@@ -518,7 +519,7 @@ class Connection(object):
         for a response from this connection. This must only be called from the
         event thread.
         """
-        print "Connection " + str(self.id) + " shutting down"
+        print "Connection " + str(self.id) + " from " + str(self.socket_address) + " shutting down"
         try:
             self.socket.shutdown(SHUT_RDWR)
         except:
@@ -605,7 +606,7 @@ def main():
     try:
         while True:
             socket, address = server.accept()
-            connection = Connection(socket)
+            connection = Connection(socket, address)
             event_queue.put((connection.id, discard_args(connection.register)), block=True)
             connection.start()
     except KeyboardInterrupt:
