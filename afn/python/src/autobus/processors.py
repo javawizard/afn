@@ -45,7 +45,7 @@ def process_register_function_command(message, sender, connection):
 def process_call_function_command(message, sender, connection):
     interface_name = message["interface_name"]
     function_name = message["function"]
-    print ("Attempting to dispatch function call from " + str(sender) +
+    print ("Attempting to dispatch function call from " + str(sender) + 
             " to interface " + interface_name + " and function " + function_name)
     try:
         interface = autobus.lookup_interface(interface_name)
@@ -161,6 +161,8 @@ def process_register_object_command(message, sender, connection):
 def process_watch_object_command(message, sender, connection):
     interface_name = message["interface_name"]
     object_name = message["object_name"]
+    print ("Registering object watch from " + str(sender) + 
+            " on interface " + interface_name + " object " + object_name)
     autobus.register_object_watch(interface_name, object_name, sender)
     connection.watches.append((interface_name, object_name))
     try:
