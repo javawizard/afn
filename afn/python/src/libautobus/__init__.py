@@ -198,7 +198,7 @@ def linesplit(socket):
             line, buffer = buffer.split("\n", 1)
             if line[-1:] == "\r":
                 line = line[:-1]
-            if line: # Ignore blank lines
+            if line.strip(): # Ignore blank lines
                 yield line
         else:
             more = socket.recv(512)
