@@ -208,6 +208,19 @@ def process_get_object_value_command(message, sender, connection):
             value=object_value)
     connection.send(response)
 
+def process_activate_hack_command(message, sender, connection):
+    hack = message["hack"]
+    valid = True
+    if hack == "buffer":
+        print "Buffer hack activated for connection " + str(sender)
+        connection.output_thread.enable_buffer_hack = True
+    else:
+        valid = False
+    if valid:
+        connection.send(create_message(ActivateHackResponse, message))
+    else:
+        connection.send_error(message, text="No such hack: " + str(hack))
+
 
 
 

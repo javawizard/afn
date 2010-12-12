@@ -205,7 +205,7 @@ def linesplit(socket):
             if not more:
                 done = True
             else:
-                buffer = buffer+more
+                buffer = buffer + more
     if buffer[-1:] == "\r":
         buffer = buffer[:-1]
     if buffer:
@@ -272,6 +272,7 @@ class OutputThread(Thread):
         self.socket = socket
         self.read_function = read_function
         self.finished_function = finished_function
+        self.enable_buffer_hack = False
     
     def run(self):
         try:
@@ -288,6 +289,8 @@ class OutputThread(Thread):
                     else:
                         message_data = dumps(message, separators=MESSAGE_SEPARATORS)
                     self.socket.sendall(message_data + "\r\n")
+                    if self.enable_buffer_hack:
+                        self.socket.sendall((" "*5120) + "\r\n")
                 finally:
                     self.finished_function()
         except SocketError:
