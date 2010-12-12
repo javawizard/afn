@@ -436,6 +436,7 @@ class Connection(object):
         Registers this connection with the global connection map. This must
         only be called on the event thread.
         """
+        print "New connection " + str(self.id)
         connection_map[self.id] = self
     
     def message_arrived(self, message):
@@ -517,6 +518,7 @@ class Connection(object):
         for a response from this connection. This must only be called from the
         event thread.
         """
+        print "Connection " + str(self.id) + " shutting down"
         try:
             self.socket.shutdown(SHUT_RDWR)
         except:
