@@ -39,4 +39,16 @@ public class FunctionWrapper
             throw (RuntimeException) result;
         return result;
     }
+    
+    @SuppressWarnings("unchecked")
+    public void send(Object... args)
+    {
+        List instanceArgs = new ArrayList();
+        for (Object arg : args)
+            instanceArgs.add(encodeObject(arg));
+        Map message =
+                createMessage(MessageTypes.CallFunctionCommand, COMMAND, "interface_name",
+                        this.parent.name, "function", this.name, "arguments", instanceArgs);
+        this.parent.bus.send(message);
+    }
 }

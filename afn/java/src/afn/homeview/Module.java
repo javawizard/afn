@@ -31,7 +31,7 @@ public class Module extends Panel
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            HomeView.bus.getInterface("home").getFunction(state).invoke(address);
+            HomeView.bus.getInterface("home").getFunction(state).send(address);
         }
     }
     
