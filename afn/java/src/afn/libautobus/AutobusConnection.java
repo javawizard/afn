@@ -217,6 +217,7 @@ public class AutobusConnection
             port = DEFAULT_PORT;
         this.host = host;
         this.port = port;
+        System.out.println("Using host " + host + " and port " + port);
     }
     
     public void shutdown()
