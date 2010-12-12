@@ -340,7 +340,7 @@ public class AutobusConnection
     {
         String interfaceName = (String) message.get("interface_name");
         String objectName = (String) message.get("object_name");
-        String value = (String) message.get("value");
+        Object value = message.get("value");
         Pair<String, String> objectSpec =
                 new Pair<String, String>(interfaceName, objectName);
         objectValues.put(objectSpec, decodeObject(value));

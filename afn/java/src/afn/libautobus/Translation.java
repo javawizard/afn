@@ -103,7 +103,7 @@ class Translation
             List values = (List) valueAsList.get(1);
             for (int i = 0; i < keys.size() && i < values.size(); i++)
             {
-                result.put(keys.get(i), values.get(i));
+                result.put(decodeObject(keys.get(i)), decodeObject(values.get(i)));
             }
             return result;
         }

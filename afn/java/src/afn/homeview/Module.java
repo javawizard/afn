@@ -9,11 +9,32 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Label;
 import java.awt.Panel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.BoxLayout;
 
 public class Module extends Panel
 {
+    public static class ButtonListener implements ActionListener
+    {
+        private String address;
+        private String state;
+        
+        public ButtonListener(String address, String state)
+        {
+            super();
+            this.address = address;
+            this.state = state;
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            HomeView.bus.getInterface("home").getFunction(state).invoke(address);
+        }
+    }
+    
     private String address;
     private String name;
     private Label addressLabel;
@@ -27,14 +48,16 @@ public class Module extends Panel
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.address = address;
         this.name = name;
-        this.addressLabel = new Label(address);
+        this.addressLabel = new Label(address.toUpperCase());
         this.nameLabel = new Label(name);
         this.onButton = new Button("on");
         this.offButton = new Button("off");
+        onButton.addActionListener(new ButtonListener(address, "on"));
+        offButton.addActionListener(new ButtonListener(address, "off"));
         addressLabel.setAlignment(Label.CENTER);
         nameLabel.setAlignment(Label.CENTER);
         nameLabel.setFont(Font.decode(null).deriveFont(10f));
-        Panel buttonPanel = new Panel(new GridLayout(1, 2));
+        Panel buttonPanel = new Panel(new GridLayout(1, 2, 1, 1));
         buttonPanel.add(onButton);
         buttonPanel.add(offButton);
         add(addressLabel);
@@ -58,4 +81,19 @@ public class Module extends Panel
     {
         return new Dimension(95, super.getPreferredSize().height);
     }
+    
+    public void setName(String name)
+    {
+        if (!name.equals(this.name))
+        {
+            this.name = name;
+            this.nameLabel.setText(name);
+        }
+    }
+    
+    public String getAddress()
+    {
+        return address;
+    }
+    
 }
