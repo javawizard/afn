@@ -110,10 +110,9 @@ class _AutoconfigureInterface(object):
         return self.config.remove_section(section)
     
     # Now we'll copy the docs from RawConfigParser
-    for function in locals().copy():
-        if not function.__name__.startswith("_"):
-            function.__doc__ = getattr(RawConfigParser,
-                    function.__name__).__doc__
+    for name, function in locals().items()[:]:
+        if not name.startswith("_"):
+            function.__doc__ = getattr(RawConfigParser, name).__doc__
     del function
 
 # TODO: convert this to one lock per Configuration instance at
@@ -127,11 +126,12 @@ class Configuration(object):
         self.file_name = file_name
         self.config = RawConfigParser()
         self.config.read(file_name)
-        bus.add_interface(interface_name, _AutoconfigureInterface(self))
-        self.sections_object = bus.add_object(interface_name, "sections",
-                sections_object_doc, self._compute_sections())
-        self.options_object = bus.add_object(interface_name, "options",
-                options_object_doc, self._compute_options())
+        if interface_name is not None:
+            bus.add_interface(interface_name, _AutoconfigureInterface(self))
+            self.sections_object = bus.add_object(interface_name, "sections",
+                    sections_object_doc, self._compute_sections())
+            self.options_object = bus.add_object(interface_name, "options",
+                    options_object_doc, self._compute_options())
     
     @synchronized(_lock)
     def _save(self):
