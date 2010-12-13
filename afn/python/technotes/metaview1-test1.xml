@@ -8,7 +8,8 @@
 		generally provide the same functionality as the java TrayTimer does.
 	-->
 <metaview xmlns="http://www.opengroove.org/metaview/metaview"
-	xmlns:a="http://www.opengroove.org/metaview/autobus-connector" xmlns:t="http://www.opengroove.org/metaview/tabs">
+	xmlns:a="http://www.opengroove.org/metaview/autobus-connector" xmlns:t="http://www.opengroove.org/metaview/tabs"
+	xmlns:x="http://www.opengroove.org/metaview/xcopy" xmlns:b="http://www.opengroove.org/metaview/borderpanel">
 	<models>
 		<model name="timers">
 			<a:object interface="timer" object="timers" />

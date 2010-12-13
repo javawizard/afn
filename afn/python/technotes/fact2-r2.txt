@@ -1,0 +1,29 @@
+So, in light of metaview really needing a selector language, I'm going to settle on a spec for Fact 2.
+
+Fact 2 introduces support for objects. Only five types of objects, and two special values, are included in the language spec. Additional types can be added as needed by any particular Fact interpreter. The five types are number, string, boolean, map, and list. The two special values are null and void. 
+
+The language spec includes some functions that all Fact interpreters must have. I'm still deciding on what these should be.
+
+Fact 2 introduces one additional syntax construct: the dot operator in variable references. This can be used as %foo.bar.baz%. Its behavior can be specific to the types included in any given Fact interpreter, but its behavior for the built-in types list and map is specifically defined by the language spec: %map.key% evaluates to the value of the specified key in a particular map, and %list.0%, %list.1%, etc evaluate to the first and second items, respectively, in the specified list. The dot operator can be chained: %x.y.z% gets the value of the key y in the map x, then evaluates to the value of the key z in the resulting map.
+
+Implicit concatenation is still an important concept in Fact. Its behavior is slightly different, however. An empty function argument or value is, instead of the empty string that it was in previous versions of Fact, the special value void. A value containing precisely one construct is the value of that construct (literal strings are always strings even if they contain only numbers). A value containing multiple constructs is always a string representing the concatenation of the string conversions of its constructs. However, there is a special catch that prevents this from being determined statically: constructs that end up evaluating to void act as if they weren't even there. For example, assume the function {example} evaluates to void. {example}{int|1} is the number 1, even though it would appear at first glance as if it would be the string "1" due to two constructs being present. Null does not have this special rule; it's treated just like any other value and converts to the four-character string "null" in a string concatenation.
+
+Since Fact does not define functions to allow the user to create their own functions, variable scoping is not well defined and is left up to the interpreter. For that matter, the interpretation of variables is left up to the interpreter. Some interpreters (such as the one present in metaview) have two scopes in the same namespace (metaview has its own model scope and Fact's local variable scope in the same namespace for simplicity; variables set from within Fact only live as long as a single Fact script runs, and attempts to assign to variables present in the model scope cause an error).
+
+I'm not going to define semantics for exception handling at present. This will likely be added at some point. Interpreters, for now, are free to do whatever they want when some major error occurs.
+
+So, I'm thinking that the functions +, -, *, /, and // will be included in the list of built-in functions. The latter takes its syntax from Python; since there's no integral type in Fact (all numbers are floating-point and would typically be represented by decimal.Decimal in Python and java.math.BigDecimal in Java), / divides floating-point types normally, while // rounds the argument down to the next whole integer after dividing. (This is called the floordiv operator in Python.) All of the arithmetic operators take at least two arguments but can be provided with as many as are needed. They are all left-associative (arithmetic is performed from left to right), although this is generally only relevant for subtraction and the division operators.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
