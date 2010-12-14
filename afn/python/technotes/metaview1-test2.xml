@@ -1,0 +1,13 @@
+<metaview xmlns="http://www.opengroove.org/metaview/metaview"
+	xmlns:a="http://www.opengroove.org/metaview/autobus-connector" xmlns:m="http://www.opengroove.org/metaview/models">
+	<models>
+		<a:object m:name="state" a:interface="flipflop" a:object="state" />
+	</models>
+	<view>
+		<box direction="vertical">
+			<toggle state="{eq|%state%|1}" text="first" click="{bus|flipflop|set|1}" />
+			<toggle state="{eq|%state%|2}" text="second" click="{bus|flipflop|set|2}" />
+			<toggle state="{eq|%state%|3}" text="third" click="{bus|flipflop|set|3}" />
+		</box>
+	</view>
+</metaview>
