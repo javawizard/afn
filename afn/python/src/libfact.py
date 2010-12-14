@@ -448,6 +448,10 @@ def make_default_functions():
             result = result[:-1]
         return implicit_cat(result)
     
+    @function(name="list", context=False, other=False)
+    def _list(*args):
+        return list(args)
+    
     return [_v for _k, _v in locals().copy().items()
             if not (_k.startswith("__") or _k.startswith("_["))]
     # The cukoobirdie syntax with checking for _[ is that for some totally
