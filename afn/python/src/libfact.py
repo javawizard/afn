@@ -326,8 +326,10 @@ def foreign_get(object, item):
     if object is None or object is Null:
         return None
     try:
+        if isinstance(object, (list, tuple)):
+            item = int(item)
         return foreign_translate(object[item])
-    except KeyError:
+    except (KeyError, IndexError):
         return None
 
 def foreign_translate(object):
@@ -451,6 +453,14 @@ def make_default_functions():
     @function(name="list", context=False, other=False)
     def _list(*args):
         return list(args)
+    
+    @function(False, False, name="set")
+    def _set(context, name, value):
+        context[name] = value
+    
+    @function(False)
+    def get(context, name):
+        return context[name]
     
     return [_v for _k, _v in locals().copy().items()
             if not (_k.startswith("__") or _k.startswith("_["))]
