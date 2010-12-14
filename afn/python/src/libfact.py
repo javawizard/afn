@@ -405,6 +405,10 @@ def make_default_functions():
     def _floordiv(*args):
         return reduce(lambda x, y: x // y, (Decimal(i) for i in args))
     
+    @function(name="2pad0", context=False)
+    def _twopad0(value):
+        return str(value).rjust(2, "0")
+    
     def identity(value):
         return value
     
