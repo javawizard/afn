@@ -252,10 +252,16 @@ class Closure(object):
 class Entity(object):
     def resolve(self, context):
         raise Exception("resolve not implemented by an entity")
+    
+    def __repr__(self):
+        return self.__str__()
 
-class Void(object):
+class Void(Entity):
     def resolve(self, context):
         return None
+    
+    def __str__(self):
+        return "<Void>"
 
 class Literal(Entity):
     def __init__(self, text):
@@ -266,6 +272,9 @@ class Literal(Entity):
     
     def append(self, text):
         self.text += text
+    
+    def __str__(self):
+        return "<Literal: " + repr(self.text) + ">"
 
 class VarReference(Entity):
     def __init__(self, strings):
@@ -278,6 +287,9 @@ class VarReference(Entity):
         for specifier in self.strings[1:]:
             value = foreign_get(value, specifier)
         return value
+    
+    def __str__(self):
+        return "<VarReference: " + ".".join(self.strings) + ">"
 
 class FunctionCall(Entity):
     def __init__(self, interpreter, items):
@@ -291,6 +303,9 @@ class FunctionCall(Entity):
                     + str(function_name))
         function = self.interpreter.lookup_function(function_name, context)
         return function.run(self.items[1:])
+    
+    def __str__(self):
+        return "<FunctionCall: " + str(self.items) + ">"
 
 class Sequence(Entity):
     def __init__(self, items):
@@ -298,7 +313,10 @@ class Sequence(Entity):
     
     def resolve(self, context):
         return implicit_cat([i.resolve(context) for i in self.items])
-
+    
+    def __str__(self):
+        return "<Sequence: " + str(self.items) + ">"
+    
 class StaticVarContainer(object):
     def __init__(self, container, static_vars):
         self.container = container
