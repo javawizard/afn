@@ -106,7 +106,6 @@ public class AutobusConnection
                 {
                     if (line.trim().equals(""))
                         continue;
-                    System.out.println("Data incoming! " + line);
                     Map message = (Map) JSONValue.parse(line);
                     messageArrived(message);
                 }
@@ -151,12 +150,17 @@ public class AutobusConnection
                         break;
                     String messageData = JSONValue.toJSONString(message);
                     byte[] data = messageData.getBytes();
-                    System.out.println("Writing data " + messageData);
                     out.write(data);
                     out.write('\r');
                     out.write('\n');
                     out.flush();
-                    System.out.println("Sent!");
+                    // String s = "          ";
+                    // for (int i = 0; i < 9; i++)
+                    // s = s + s;
+                    // out.write(s.getBytes());
+                    // out.write('\r');
+                    // out.write('\n');
+                    // out.flush();
                 }
             }
             catch (IOException e)

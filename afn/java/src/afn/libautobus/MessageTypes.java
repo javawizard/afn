@@ -34,5 +34,7 @@ public class MessageTypes
     public static final String GetObjectValueResponse = "get_object_value_response";
     public static final String PingCommand = "ping_command";
     public static final String PingResponse = "ping_response";
+    public static final String ActivateHackCommand = "activate_hack_command";
+    public static final String ActivateHackResponse = "activate_hack_response";
     
 }
