@@ -4,11 +4,14 @@ services throughout the AFN server cluster.
 phenoxydine:
 	22     SSH
 	80     Public-facing website. This runs www.opengroove.org, and is run by Cherokee.
+	5222   Openfire XMPP client
+	5269   Openfire XMPP server-to-server
 	6227   ZNC. This is the IRC port for actually connecting to ZNC.
 	6228   ZNC web administration interface
 	8032   SuperTunnel. Cherokee proxies over to this for www.opengroove.org/supertunnel/.
 	8034   SVNWeb. Cherokee proxies over to this for www.opengroove.org/static.
 	8073   Tomcat. Cherokee proxies over to this for any unknown page on www.opengroove.org.
+	9090   Openfire web administration interface
 
 spiro:
 	22     SSH
