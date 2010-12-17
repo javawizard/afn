@@ -1,0 +1,78 @@
+So, how to implement this whole business...
+
+Well... I'm assuming there are going to be a couple of UI components in metaview itself. I think those should themselves be written in metaview. To that end, I think a particular view should be contained within a class. The class would somehow be instantiated, passing in a parent widget (since this will use Tkinter for PythonCE compatibility).
+
+It should also be possible to embed the Python metaview client as a library in other Tkinter applications, so a metaview view can be embedded as a widget.
+
+Of course, then there's the issue of how plugins should be managed. Obviously, they map to namespaces. But the functionality those provides is where this gets interesting. Should all of the widgets, even ones such as <box> and <button>, be in separate namespaces? I'm thinking no. But there needs to be a way to map those tags. Perhaps plugins provide a list of namespace-tag pairs for each tag they support. The built-in widgets could just use metaview's namespace for that.
+
+Model sources should correspondingly be implemented in plugins. The Autobus data source is a great example of where this is useful. The metaview viewer should include the Autobus data source itself, but how it gets the bus object to use is something else that needs to be figured out. Maybe per-plugin context is passed to a viewer when constructing it.
+
+Oh, and this will be dependent on the Tkinter mainloop using threads. And I need to go check up on this, but I'm thinking that each toplevel might have to have its own main thread, which makes things a lot more complicated. This is TBD tomorrow.
+
+So tkinter is slightly stupid in its handling of toplevels. You have to call mainloop() on a single particular toplevel, but it loops for all of the toplevels. And it drops out of the loop once all of the Tks have closed. But there needs to be some ability to add additional Tks in an application. And there needs to be a way to destroy a metaview... hmm...
+
+So... I'm kind of thinking... the viewer library should provide a class I'm thinking will be called Viewer. This class will extend from Frame. It's constructed with a piece of xml. It also needs some context that plugins might use. Maybe plugins should have names or something, and the context can specify a dict of plugin names to structures for initializing the plugin. Or something.
+
+Although, now I'm thinking maybe plugins should just be objects that are passed into the viewer's load_plugin function or something. Then you'd just do something like
+
+from metaview.autobus_connector import AutobusPlugin
+from metaview import Viewer
+bus = AutobusConnection()
+plugin = AutobusPlugin(bus)
+viewer = Viewer()
+viewer.load_plugin(plugin)
+viewer.load("example.xml")
+bus.start_connecting()
+viewer.mainloop()
+
+So that should work pretty well. Of course, another problem I just thought of is how to handle when the model's not available, such as when no connection to Autobus can be established. The problem is that this needs to be handled in a pluggable manner. What I'm thinking at this point is that there should be a specially-namespaced attribute that checks a precondition for a tag it's present on. If the precondition fails, the tag acts like it's not there. If <for> is instructed to iterate over null, it doesn't perform any iterations.
+
+This seems to call for the ability of plugins to provide custom tags and attributes and affect the behavior of child elements and elements with certain attributes present on them. There could be a condition attribute that causes an element to disappear if the condition is not satisfied at that point.
+
+Oh, and this also seems to call for the ability to specify which attributes contain Fact scripts and which attributes contain plain text. The name of a particular model, for example, should be plain-text. This simplifies lots of things. Perhaps, actually, plugins that provide tags and attributes should be able to choose whether or not to evaluate those as scripts. If they choose to, they'd pass them through some function passed into the plugin that would evaluate them and hand back the return value. If not, they just use the value of the attribute as-is.
+
+The interpreting ability should be fairly trivial, and should probably consist of some function like interpret(fact_code, var="value") or something. Perhaps even special functions could be passed in as an optional second positional argument (which would be a dict mapping function names to function objects that could optionally be annotated with libfact.function if they are to be special in some way). The return value of the interpret function would be the result of invoking the script, but most likely with Nulls throughout the returned value translated to Nones. interpret_preserve or some such function could be used to preserve the return value.
+
+Of course, this has the downside of precluding static analysis on Fact scripts since there's no way to make sure of what's going to be a script and what's not.
+
+You know what, scratch this whole thing. This Fact thing is getting too complicated.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

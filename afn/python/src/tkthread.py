@@ -5,7 +5,7 @@ from traceback import print_exc
 
 class TkThread(object):
     """
-    This class starts a thread that runs Tkinter.mainloop(). It allows UI
+    This class starts a thread that runs a Tkinter mainloop(). It allows UI
     tasks to be submitted to it, which it will execute as fast as it can and
     in order. The return value from those tasks can be captured if needed. This
     makes it a bit easier for multithreaded applications to use Tkinter.
@@ -16,17 +16,19 @@ class TkThread(object):
         should create the root Tk window and return it.
         
         After you create a new TkThread, you need to call its start function
-        to actually get things going.
+        to actually get things going. The thread will then call the init
+        function
         """
         self.init_function = init_function
         self.queue = Queue()
     
     def run(self):
         toplevel = self.init_function()
-        toplevel.after(100, self.process_events)
+        self.toplevel = toplevel
+        toplevel.after(100, self._process_events)
         toplevel.mainloop()
     
-    def process_events(self):
+    def _process_events(self):
         try:
             while True:
                 event = self.queue.get_nowait()
@@ -36,6 +38,8 @@ class TkThread(object):
                     print_exc()
         except Empty:
             pass
+        finally:
+            self.toplevel.after(100, self._process_events)
     
     def call(self, function, *args):
         """

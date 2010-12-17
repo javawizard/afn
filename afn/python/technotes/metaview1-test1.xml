@@ -20,7 +20,7 @@
 		<a:object m:name="timers" a:interface="timer" a:object="timers" />
 		<a:object m:name="startup" a:interface="timer" a:object="startup" />
 		<map m:name="realtimes">
-			<for key="number" value="timer" in="%timers%">
+			<for key="number" value="timer" in="%timers%" identifier="%number%">
 				<entry>
 					<value from="%number%" />
 					<value
@@ -29,7 +29,7 @@
 			</for>
 		</map>
 		<map m:name="displaytimes">
-			<for key="number" value="time" in="%realtimes%">
+			<for key="number" value="time" in="%realtimes%" identifier="%number%">
 				<value from="%number%" />
 				<list>
 					<value from="{2pad0|{extrange|%time%|1|60}}" />
@@ -42,7 +42,7 @@
 	<view>
 		<t:tabs>
 			<for key="number" value1="timer" value2="display"
-				in="{zipvalues|%timers%|%displaytimes%}">
+				in="{zipvalues|%timers%|%displaytimes%}" identifier="%number%">
 				<box t:title="Timer %number%: %display.0%:%display.1%:%display.2%"
 					direction="horizontal">
 					<label
