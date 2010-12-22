@@ -30,7 +30,7 @@ public class PidginIrcFilter
     }
     
     public static final int listenPort = 44297;
-    public static String targetHost = "phenoxydine.afn";
+    public static String targetHost = "10.236.1.61";
     public static int targetPort = 6227;
     
     public static final Object pythonScriptLock = new Object();
@@ -168,7 +168,7 @@ public class PidginIrcFilter
                                     drop = true;
                         if (mode == Mode.server_to_client
                             && line
-                                    .matches(":\\*buffextras![^ ]+ .* :(jcp|javawizard)![^ ]* joined.*"))
+                                    .matches(":\\*buffextras![^ ]+ .* :(jcp|javawizard)![^ ]* (joined|quit|is now known as).*"))
                             line =
                                     line.replace("jcp", "*YOU_3*").replace("javawizard",
                                             "*YOU_10*");
