@@ -167,8 +167,9 @@ public class PidginIrcFilter
                                 if (line.startsWith("JOIN"))
                                     drop = true;
                         if (mode == Mode.server_to_client
-                            && line
-                                    .matches(":\\*buffextras![^ ]+ .* :(jcp|javawizard)![^ ]* (joined|quit|is now known as).*"))
+                            && (line
+                                    .matches(":\\*buffextras![^ ]+ .* :(jcp|javawizard)![^ ]* (joined|quit|is now known as).*")
+                                    || line.matches(":\\*buffextras![^ ]+ .* :(ChanServ|X)![^ ]* set mode: +(o|v) .*")))
                             line =
                                     line.replace("jcp", "*YOU_3*").replace("javawizard",
                                             "*YOU_10*");
