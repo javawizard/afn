@@ -45,6 +45,12 @@ There doesn't appear to be a page with that name. Sorry about that.
 </html><body>
 """
 
+index_names = ["index.html", "index.xhtml", "index.w"]
+
+def make_index_paths(path):
+    return [(path if path[-1:] == "/" else path + "/") 
+            + index for index in index_names]
+
 class HTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path
@@ -57,20 +63,17 @@ class HTTPHandler(BaseHTTPRequestHandler):
             raise Exception("Path doesn't start with a forward slash. It's "
                     + path)
         path = root_path + path
-        print "Getting result for path " + path
-        try:
-            result = client.cat(path)
-        except:
-            print "Result not there; trying index.html under it"
-            if path[-1] != "/":
-                path += "/"
-            path += "index.html"
+        check_paths = [path] + make_index_paths(path)
+        print "Trying possible paths"
+        result = None
+        for test_path in check_paths:
+            print "Getting result for path " + test_path
             try:
-                result = client.cat(path)
+                result = client.cat(test_path)
+                path = test_path
+                break
             except:
-                print "Couldn't find index.html either"
-                print_exc()
-                result = None
+                print "No such file."
         if result == None:
             self.send_response(404)
             self.send_header("Content-Type", "text/html")
@@ -162,10 +165,16 @@ def main():
 
 def display_mediawiki(request, path, text):
     article = simpleparse(text)
-    article.caption = path.rpartition("/")[2]
-    if "." in article.caption:
-        article.caption = article.caption.rpartition(".")[0]
-    caption = article.caption
+    try:
+        # Try to figure out a title by looking up svn properties
+        caption = client.propget("svnweb:mediawiki:title", path).values()[0]
+    except:
+        caption = None
+    if caption is None: # No explicit name, so we'll derive it from the filename
+        caption = path.rpartition("/")[2]
+        if "." in caption:
+            caption = caption.rpartition(".")[0]
+    article.caption = caption
     writer = MWXHTMLWriter()
     writer.xwriteStyle = mediawiki_xwriteStyle
     element = writer.write(article)
@@ -184,14 +193,15 @@ def display_mediawiki(request, path, text):
     .content div[class~="mwx.paragraph"] {margin-bottom: 11px}
     
     .content > div > h1 {font-size: 24px; width: 100%%;
-                         border-bottom: 1px solid #aaa}
+                         border-bottom: 1px solid #aaa; margin-bottom: 1px}
     
     .content > div > div > h2 {font-size: 19px; width: 100%%; 
                            border-bottom: 1px solid #aaa;
-                           margin-bottom: 0px}
-    .content > div > div > div > h2 {font-size: 17px; margin-bottom: 0px}
-    .content > div > div > div > div > h2 {font-size: 15px; margin-bottom: 0px}
-    .content > div > div > div > div > div > h2 {font-size: 13px; margin-bottom: 0px}
+                           margin-bottom: 8px}
+    .content > div > div > div > h2 {font-size: 17px; margin-bottom: 7px;
+                                     margin-top: 18px}
+    .content > div > div > div > div > h2 {font-size: 15px; margin-bottom: 4px}
+    .content > div > div > div > div > div > h2 {font-size: 13px; margin-bottom: 4px}
     
     span[class~="mwx.svnweb.bold"] {font-weight: bold}
     span[class~="mwx.svnweb.italic"] {font-style: italic}
