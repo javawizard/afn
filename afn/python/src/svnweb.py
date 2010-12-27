@@ -191,7 +191,7 @@ def display_mediawiki(request, path, text):
     .content {border: 1px solid #aaa; padding: 10px; padding-top: 0px;
               background-color: white}
     
-    .content div[class~="mwx.paragraph"] {margin-bottom: 11px}
+    .content div[class~="mwx.paragraph"] {margin-bottom: 12px}
     
     .content > div > h1 {font-size: 24px; width: 100%%;
                          border-bottom: 1px solid #aaa; margin-bottom: 12px;
