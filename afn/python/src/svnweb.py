@@ -193,7 +193,8 @@ def display_mediawiki(request, path, text):
     .content div[class~="mwx.paragraph"] {margin-bottom: 11px}
     
     .content > div > h1 {font-size: 24px; width: 100%%;
-                         border-bottom: 1px solid #aaa; margin-bottom: 1px}
+                         border-bottom: 1px solid #aaa; margin-bottom: 12px;
+                         margin-top: 7px}
     
     .content > div > div > h2 {font-size: 19px; width: 100%%; 
                            border-bottom: 1px solid #aaa;
