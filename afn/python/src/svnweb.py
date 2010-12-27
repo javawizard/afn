@@ -166,7 +166,9 @@ def display_mediawiki(request, path, text):
     if "." in article.caption:
         article.caption = article.caption.rpartition(".")[0]
     caption = article.caption
-    element = MWXHTMLWriter().write(article)
+    writer = MWXHTMLWriter()
+    writer.xwriteStyle = mediawiki_xwriteStyle
+    element = writer.write(article)
     result = ElementTree.tostring(element)
     result = """
     <html><head><title>%s</title>
@@ -185,10 +187,14 @@ def display_mediawiki(request, path, text):
                          border-bottom: 1px solid #aaa}
     
     .content > div > div > h2 {font-size: 19px; width: 100%%; 
-                           border-bottom: 1px solid #aaa}
-    .content > div > div > div > h2 {font-size: 17px}
-    .content > div > div > div > div > h2 {font-size: 15px}
-    .content > div > div > div > div > div > h2 {font-size: 13px}
+                           border-bottom: 1px solid #aaa;
+                           margin-bottom: 0px}
+    .content > div > div > div > h2 {font-size: 17px; margin-bottom: 0px}
+    .content > div > div > div > div > h2 {font-size: 15px; margin-bottom: 0px}
+    .content > div > div > div > div > div > h2 {font-size: 13px; margin-bottom: 0px}
+    
+    span[class~="mwx.svnweb.bold"] {font-weight: bold}
+    span[class~="mwx.svnweb.italic"] {font-style: italic}
     
     </style>
     
@@ -200,6 +206,18 @@ def display_mediawiki(request, path, text):
     return "text/html", result
 
 
+def mediawiki_xwriteStyle(style):
+    """
+    A custom writer function that writes style elements. This is the part that
+    generates the html from ''' and '' in mediawiki pages.
+    """
+    e = ElementTree.Element("span")
+    caption_map = {"'''": "mwx.svnweb.bold", "''": "mwx.svnweb.italic"}
+    try:
+        e.set("class", caption_map[style.caption])
+    except KeyError:
+        raise Exception("No style information for " + str(style.caption))
+    return e
 
 
 
