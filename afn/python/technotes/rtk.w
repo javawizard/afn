@@ -122,7 +122,6 @@ So, the properties, events, etc supported by the widgets:
 
 
 = Containers =
-Here they are
 == HBox ==
 This container lays its contents out horizontally. Components are laid out left to right.
 
