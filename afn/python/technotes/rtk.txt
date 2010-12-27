@@ -118,7 +118,9 @@ So, the properties, events, etc supported by the widgets:
 
 
 
-== HBox ==
+
+== Containers ==
+=== HBox ===
 
 
 	
