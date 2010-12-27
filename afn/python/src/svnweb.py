@@ -82,7 +82,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
         # We have the file. Now we go figure out if we're supposed to use an
         # alternate displayer.
         try:
-            display_type = client.propget("svnweb:display", path).values[0]
+            display_type = client.propget("svnweb:display", path).values()[0]
         except:
             display_type = None
         print "svnweb:display is " + str(display_type)
@@ -92,7 +92,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
         else:
             print "No known renderer set with svnweb:display, displaying directly"
             try:
-                mime_type = client.propget("svn:mime-type", path).values[0]
+                mime_type = client.propget("svn:mime-type", path).values()[0]
             except:
                 print "Couldn't propget, looking up dynamically"
                 mime_type, _ = mimetypes.guess_type(path)

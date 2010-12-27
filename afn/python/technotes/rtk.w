@@ -120,7 +120,7 @@ So, the properties, events, etc supported by the widgets:
 
 
 == Containers ==
-=== HBox ===
+==== HBox ====
 
 
 	
