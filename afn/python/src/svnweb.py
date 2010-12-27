@@ -177,6 +177,7 @@ def display_mediawiki(request, path, text):
     article.caption = caption
     writer = MWXHTMLWriter()
     writer.xwriteStyle = mediawiki_xwriteStyle
+    writer.xwriteArticleLink = mediawiki_xwriteArticleLink
     element = writer.write(article)
     result = ElementTree.tostring(element)
     result = """
@@ -230,7 +231,12 @@ def mediawiki_xwriteStyle(style):
         raise Exception("No style information for " + str(style.caption))
     return e
 
-
+def mediawiki_xwriteArticleLink(obj):
+    a = ElementTree.Element("a", href=obj.url or obj.target or "#")
+    a.set("class", "mwx.link.article")
+    if not obj.children:
+        a.text = obj.target
+    return a
 
 
 
