@@ -121,11 +121,25 @@ So, the properties, events, etc supported by the widgets:
 
 = Containers =
 == HBox ==
-This container lays its contents out vertically in a row. Components are laid out top to bottom.
+This container lays its contents out horizontally. Components are laid out left to right.
 
 No widget properties.
 
+No layout properties.
 
+No state properties.
+
+== VBox ==
+Same as HBox, but lays out its components top to bottom instead of left to right.
+
+No widget properties.
+
+No layout properties.
+
+No state properties.
+
+== Deck ==
+This container shows only one of its children at a time.
 
 
 	
