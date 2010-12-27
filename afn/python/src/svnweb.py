@@ -57,7 +57,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
             raise Exception("Path doesn't start with a forward slash. It's "
                     + path)
         path = root_path + path
-        print "Getting result"
+        print "Getting result for path " + path
         try:
             result = client.cat(path)
         except:
@@ -85,11 +85,12 @@ class HTTPHandler(BaseHTTPRequestHandler):
             display_type = client.propget("svnweb:display", path).values[0]
         except:
             display_type = None
+        print "svnweb:display is " + str(display_type)
         if display_type == "mediawiki":
             print "Forwarding to mediawiki renderer"
             mime_type, result = display_mediawiki(self, path, result)
         else:
-            print "No custom renderer set with svnweb:display, displaying directly"
+            print "No known renderer set with svnweb:display, displaying directly"
             try:
                 mime_type = client.propget("svn:mime-type", path).values[0]
             except:
