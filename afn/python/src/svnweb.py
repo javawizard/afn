@@ -169,9 +169,33 @@ def display_mediawiki(request, path, text):
     element = MWXHTMLWriter().write(article)
     result = ElementTree.tostring(element)
     result = """
-    <html><head><title>%s</title></head><body>
+    <html><head><title>%s</title>
+    
+    <style type="text/css">
+    
+    body {font-size: 13px; font-family: sans-serif; padding: 30px;
+          background-color: #f9f9f9}
+    
+    .content {border: 1px solid #aaa; padding: 10px; padding-top: 0px;
+              background-color: white}
+    
+    .content div[class~="mwx.paragraph"] {margin-bottom: 11px}
+    
+    .content > div > h1 {font-size: 24px; width: 100%%;
+                         border-bottom: 1px solid #aaa}
+    
+    .content > div > div > h2 {font-size: 19px; width: 100%%; 
+                           border-bottom: 1px solid #aaa}
+    .content > div > div > div > h2 {font-size: 17px}
+    .content > div > div > div > div > h2 {font-size: 15px}
+    .content > div > div > div > div > div > h2 {font-size: 13px}
+    
+    </style>
+    
+    </head><body>
+    <div class="content">
     """ % caption + result + """
-    </body></html>
+    </div></body></html>
     """
     return "text/html", result
 

@@ -119,8 +119,13 @@ So, the properties, events, etc supported by the widgets:
 
 
 
-== Containers ==
-==== HBox ====
+= Containers =
+== HBox ==
+This container lays its contents out vertically in a row. Components are laid out top to bottom.
+
+No widget properties.
+
+
 
 
 	
