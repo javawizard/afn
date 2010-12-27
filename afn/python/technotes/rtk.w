@@ -70,7 +70,7 @@ There'll still be a list of resident widgets and the features they depend on, bu
 
 So, the server library is going to be implemented in librtk. librtkviewer will contain the (embeddable and extendable) Tkinter viewer; that will be discussed in another file. This file is just going to discuss RTK itself and librtk.
 
-Let's see... the protocol. Commands I can think of from server to client are create, destroy, set_widget, set_layout, call, and error. Commands the other way around are set_state, event, and error. Note that errors are not fatal; server-to-client errors show a message in a box to the user and client-to-server errors cause a message to be logged. If a fatal error happens, such as the server telling the client to create a component that it doesn't support, an error is sent and the connection is immediately dropped. To use the nonexistent component example, the client would send an error to the server and then immediately drop the connection, close all the windows, and pop up a dialog telling the user about the problem.
+Let's see... the protocol. Commands I can think of from server to client are create, destroy, reorder, set_widget, set_layout, call, and error. Commands the other way around are set_state, event, and error. Note that errors are not fatal; server-to-client errors show a message in a box to the user and client-to-server errors cause a message to be logged. If a fatal error happens, such as the server telling the client to create a component that it doesn't support, an error is sent and the connection is immediately dropped. To use the nonexistent component example, the client would send an error to the server and then immediately drop the connection, close all the windows, and pop up a dialog telling the user about the problem.
 
 So, the protocol itself is json-based. It uses lines, similar to Autobus. Each line is a json object containing the following keys:
 
@@ -82,9 +82,11 @@ Additional keys are present depending on the type of command. Since commands are
 
 Now, let's start documenting the actions themselves. They are:
 
-	create: Sent to the client to tell it to create a new widget. id is the new id for the widget. parent is the id of the widget that this widget is to be created under (which should be a container). type is the name of the widget's type. p_widget is a map containing the widget properties. p_layout is a map containing the layout properties.
+	create: Sent to the client to tell it to create a new widget. id is the new id for the widget. parent is the id of the widget that this widget is to be created under (which should be a container). type is the name of the widget's type. index is the index at which the widget is to be created, which can range from 0 to the number of components currently in the widget, inclusive (with the latter indicating the widget should be added to the end). p_widget is a map containing the widget properties. p_layout is a map containing the layout properties.
 	
 	destroy: Sent to the client to tell it to destroy a widget. A container's children must be destroyed by the server before the container itself is destroyed; the client should report an error and drop the connection if the server tries to destroy a non-empty container.
+	
+	reorder: Sent to the client to tell it to logically reorder a widget within its parent. id is the id of the widget. index is the new index within its parent at which it should be located. Clients don't really have to reorder the widget; they simply have to make it show up in the container's layout as if it were present at that position.
 	
 	set_widget: Sent to the client to modify widget properties. set and delete are the two keys: set is a map of properties to set and delete is a list of properties to delete. Some properties can't be changed after the widget is created; these are documented on a per-widget basis, and attempting to change one of them will result in the client sending back an error and dropping the connection.
 	
@@ -141,8 +143,24 @@ No state properties.
 == Deck ==
 This container shows only one of its children at a time.
 
+Widget properties:
+ * *index*: The 0-based index of the child that should show. 
+ 
+No layout properties.
 
-	
+No state properties.
+
+== TabbedPane ==
+This container shows a series of tabs, one per child.
+
+No widget properties.
+
+Layout properties:
+ * *title*: The text that should be used as the tab's title.
+ * *tooltip*: The text that should be used as the tab title's tooltip. This is optional.
+
+
+
 
 
 
