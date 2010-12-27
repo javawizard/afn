@@ -33,6 +33,9 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from pysvn import Client
 from traceback import print_exc
 import mimetypes
+from mwlib.uparser import simpleparse
+from mwlib.xhtmlwriter import MWXHTMLWriter
+from xml.etree import ElementTree
 
 mimetypes.init()
 
@@ -76,14 +79,22 @@ class HTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(error_response)
             return
         print "Got it! Propgetting..."
-        # We have the file. Now we send it to the client. If svn:mime-type
-        # was specified, we'll use that. Otherwise, we'll use the mimetypes
-        # module to guess the file's mime type.
+        # We have the file. Now we go figure out if we're supposed to use an
+        # alternate displayer.
         try:
-            mime_type = client.propget("svn:mime-type", path).values[0]
+            display_type = client.propget("svnweb:display", path).values[0]
         except:
-            print "Couldn't propget, looking up dynamically"
-            mime_type, _ = mimetypes.guess_type(path)
+            display_type = None
+        if display_type == "mediawiki":
+            print "Forwarding to mediawiki renderer"
+            mime_type, result = display_mediawiki(self, path, result)
+        else:
+            print "No custom renderer set with svnweb:display, displaying directly"
+            try:
+                mime_type = client.propget("svn:mime-type", path).values[0]
+            except:
+                print "Couldn't propget, looking up dynamically"
+                mime_type, _ = mimetypes.guess_type(path)
         print "Mime type is " + mime_type
         self.send_response(200)
         print "Response sent"
@@ -144,6 +155,21 @@ def main():
     print "svnweb has successfully started up."
     HTTPServer(("", port), HTTPHandler).serve_forever()
 
+
+def display_mediawiki(request, path, text):
+    article = simpleparse(text)
+    article.caption = path.rpartition("/")[2]
+    if "." in article.caption:
+        article.caption = article.caption.rpartition(".")[0]
+    caption = article.caption
+    element = MWXHTMLWriter().write(article)
+    result = ElementTree.tostring(element)
+    result = """
+    <html><head><title>%s</title></head><body>
+    """ % caption + result + """
+    </body></html>
+    """
+    return "text/html", result
 
 
 
