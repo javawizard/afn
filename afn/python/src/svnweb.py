@@ -95,6 +95,9 @@ class HTTPHandler(BaseHTTPRequestHandler):
             except:
                 print "Couldn't propget, looking up dynamically"
                 mime_type, _ = mimetypes.guess_type(path)
+                if mime_type is None:
+                    print "Dynamic lookup didn't find anything. Using text/plain."
+                    mime_type = "text/plain"
         print "Mime type is " + mime_type
         self.send_response(200)
         print "Response sent"
