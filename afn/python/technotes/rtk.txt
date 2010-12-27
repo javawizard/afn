@@ -100,7 +100,30 @@ Now, let's start documenting the actions themselves. They are:
 
 These are all of the commands that I think are needed for now. Widget-specific commands (such as set_state for a checkbox or add_item or set_selection for a list or dropdown box) are implemented simply as calls.
 
+When a client first connects, it sends what's called the request line. Right now, this contains two keys, action and features, the former of which contains the string "request" and the latter of which is a list of strings representing the features the client supports, but in the future this may contain additional keys for specifying a particular application to show (thereby allowing multiple applications to be served from a single port) or other such request parameters.
+
+The server then responds with the response line, which contains two keys, which are the same format as the request, except that the action will be "response". If the server decides that the client doesn't support enough features to run the application on even a basic level, it can instead send an error action as described above, after which it must drop the connection (and the client will do so even if the server does not). An error that occurs after the response is sent is not deemed a fatal error, whereas one sent instead of the response is.
+
+Commands as specified above commence from then on.
+
 I think that's just about it for the protocol. Now all that's left is to document the core set of widgets that should be supported.
+
+So, let's see... The container types I'm thinking should be supported are HBox, VBox, Deck, Table, and TabbedPane. And, of course, Window. The presence of each of these widgets corresponds to a feature named widget:WidgetName, where WidgetName is the widget's type (so widget:HBox, widget:TabbedPane, etc).
+
+The widget types I'm thinking should be supported, then, are Checkbox, RadioButton, ToggleButton, Button, TextBox, TextArea, ColorButton, DropdownBox, Label, ListBox, ProgressBar, ScrollBar, ScrollPane, Separator, and Slider. These are all matched by a corresponding widget:WidgetName feature same as containers. A viewer is not required to implement all these, particularly if the backing GUI toolkit it uses to display the application does not support one of these widgets. However, it may not be able to view all applications provided by all servers.
+
+All widgets have a tooltip widget property that specifies the widget's tooltip. The server generally should not word-wrap this; it's up to the client to wrap it how it wants. It's also up to the client how to display this. Most clients will use tooltips to display these, but some clients, such as those running on pocket pcs, may not have the ability to detect mouse hovers and so might implement this with an extra "?" menubar option that, when clicked, opens a window displaying the tooltip of the widget clicked immediately thereafter. Clients that provide a meaningful display of the tooltip should provide the tooltips feature.
+
+So, the properties, events, etc supported by the widgets:
+
+
+
+== HBox ==
+
+
+	
+
+
 
 
 

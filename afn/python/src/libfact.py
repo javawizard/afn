@@ -84,11 +84,28 @@ indicate an extraneous | or } character.
 from decimal import Decimal
 
 class NullType(object):
+    """
+    The type of the Fact Null object. Null and NullType are analogous to None
+    and NoneType; None is used to represent void in Fact, so Null is used to
+    represent null. Similarly to NoneType, this class should not be
+    instantiated; the singleton instance Null should be used instead.
+    """
     pass
 
 Null = NullType()
 
 class Interpreter(object):
+    """
+    A Fact interpreter. This is the main class that you'll use to interpret
+    and run Fact scripts. At its simplest, this class can be used thus:
+    
+    >>> from libfact import Interpreter, Context
+    >>> Interpreter().parse("One plus two is {+|1|2}.").resolve(Context())
+    
+    which would print "One plus two is 3.". Each individual interpreter
+    maintains a map of functions available to scripts run on it. Functions
+    can be registered using Interpreter.register_function.
+    """
     def __init__(self, install_defaults=True):
         """
         Creates a new interpreter. If install_defaults is true, all of the
@@ -106,8 +123,8 @@ class Interpreter(object):
         
         Registers the specified function. If name is specified, it's used as
         the name for the function. Otherwise, the function's fact_name
-        attribute is used as the name, or __name__ if the function does not
-        have any such attribute.
+        attribute is used as the name, or function.__name__ if the function
+        does not have any such attribute.
         """
         if len(args) == 1:
             function = args[0]
@@ -122,27 +139,57 @@ class Interpreter(object):
         self.functions[name] = function
     
     def lookup_function(self, name, context):
+        """
+        Returns a Function wrapper around the specified function. This is used
+        by the Fact interpreter and is generally not needed by outside code.
+        """
         if name not in self.functions:
             raise Exception("No such function: " + str(name))
         return Function(self.functions[name], context)
     
     def parse(self, text):
+        """
+        Parses the specified Fact script into an instance of one of the
+        subclasses of Entity. The resulting syntax tree is bound to this
+        interpreter but is not otherwise state-bound; it can be resolved
+        multiple times to run the same script multiple times without the
+        overhead of reparsing it.
+        
+        The resolve(context) function can be called on the return value of
+        this function, passing in an instance of Context. This will cause the
+        script to be actually run; the return value from resolve() will be the
+        value that the script evaluated to.
+        """
         chars = list(text)
         chars.reverse()
         result = self.parse_closure(chars)
         if chars:
-            raise Exception("Extra | or } detected outside of a function call")
+            raise Exception("Extra | or } in the script. Remember, | cannot "
+                    "appear outside of a function call. You can escape it "
+                    "with a backslash if you need an actual | in the text.")
         return result
     
     def parse_function(self, chars):
+        """
+        Parses the specified char stack, which should start with a function
+        call. This is used by the Fact interpreter and is generally not needed
+        by outside code.
+        """
         if chars[-1] != "{":
             raise Exception("Functions must start with {")
         items = []
         while chars.pop() != "}":
             items.append(self.parse_closure(chars))
+            if not chars:
+                raise Exception("Extra { in the specified script")
         return FunctionCall(self, items)
     
     def parse_closure(self, chars):
+        """
+        Parses the specified char stack, which should start with a closure.
+        This parses until the end of the current closure. This is used by the
+        Fact interpreter and is generally not needed by outside code.
+        """
         items = []
         while(chars):
             char = chars.pop()
@@ -190,9 +237,17 @@ class Context(object):
         self.vars = vars
         
     def __getitem__(self, item):
+        """
+        Gets the specified local variable from this context, translating it
+        with foreign_get if need be before returning it.
+        """
         return foreign_get(self.vars, item)
     
     def __setitem__(self, item, value):
+        """
+        Sets the specified local variable on this context. No translation is
+        performed by this function.
+        """
         self.vars[item] = value
     
     def varcopy(self, vars):
@@ -211,6 +266,10 @@ class Context(object):
         return Context(StaticVarContainer(self.vars, vars))
 
 class Function(object):
+    """
+    A wrapper around a Python function representing a function available to
+    the Fact interpreter. This class is what actually runs a function.
+    """
     def __init__(self, function, context):
         self.function = function
         self.context = context
@@ -240,16 +299,30 @@ class Function(object):
         return self.function(*args)
 
 class Closure(object):
+    """
+    A closure object. Instances of this class are passed into functions
+    registered with Interpreter.register_function for arguments that are to be
+    preserved as closures. Calling an instance of this class causes the
+    specified closure to be evaluated.
+    """
     def __init__(self, entity, context):
         self.entity = entity
         self.context = context
     
     def __call__(self, context=None):
+        """
+        Evaluates this closure and returns the result. If context is None (the
+        default), the context used to invoke the function that the instance is
+        being passed into will be used.
+        """
         if context is None:
             context = self.context
         return self.entity.resolve(context)
 
 class Entity(object):
+    """
+    A Fact AST node. Calling resolve actually runs the node.
+    """
     def resolve(self, context):
         raise Exception("resolve not implemented by an entity")
     
@@ -257,6 +330,10 @@ class Entity(object):
         return self.__str__()
 
 class Void(Entity):
+    """
+    An entity that always resolves to None (which represents the Fact value
+    void). This is used to represent closures that have no contents.
+    """
     def resolve(self, context):
         return None
     
@@ -264,20 +341,38 @@ class Void(Entity):
         return "<Void>"
 
 class Literal(Entity):
+    """
+    An entity that resolves to a piece of literal text.
+    """
     def __init__(self, text):
+        """
+        Creates a Literal that will resolve to the specified text.
+        """
         self.text = text
     
     def resolve(self, context):
         return self.text
     
     def append(self, text):
+        """
+        Appends some text to the text that this literal will resolve to.
+        """
         self.text += text
     
     def __str__(self):
         return "<Literal: " + repr(self.text) + ">"
 
 class VarReference(Entity):
+    """
+    An entity that resolves to the value of a particular variable. This
+    represents %foo.bar.baz% constructs.
+    """
     def __init__(self, strings):
+        """
+        Creates a new VarReference with the specified identifiers, which
+        should be a list. The construct %foo.bar.baz% is parsed as
+        VarReference(["foo", "bar", "baz"]).
+        """
         self.strings = strings
     
     def resolve(self, context):
@@ -292,7 +387,19 @@ class VarReference(Entity):
         return "<VarReference: " + ".".join(self.strings) + ">"
 
 class FunctionCall(Entity):
+    """
+    An entity that resolves its first argument, which must result in a
+    string, then looks up the function with the specified name and calls it
+    with the rest of the arguments being passed in.
+    """
     def __init__(self, interpreter, items):
+        """
+        Creates a new FunctionCall under the specified interpreter (which is
+        used to look up the name of the function to run at invocation time)
+        and with the specified items. {foo|bar|baz} is parsed as
+        FunctionCall(interpreter, Literal("foo"), Literal("bar"),
+        Literal("baz")).
+        """
         self.interpreter = interpreter
         self.items = items
     
@@ -308,7 +415,18 @@ class FunctionCall(Entity):
         return "<FunctionCall: " + str(self.items) + ">"
 
 class Sequence(Entity):
+    """
+    An entity representing a sequence of entities occurring one after another.
+    Resolving a sequence causes its items to be resolved in order, and the
+    implicit concatenation (as performed by the implicit_cat function)
+    returned.
+    """
     def __init__(self, items):
+        """
+        Creates a new sequence with the specified items. "Hello %name%!", for
+        example, would be parsed as Sequence([Literal("Hello "),
+        VarReference(["name"]), Literal("!")]).
+        """
         self.items = items
     
     def resolve(self, context):
@@ -318,7 +436,21 @@ class Sequence(Entity):
         return "<Sequence: " + str(self.items) + ">"
     
 class StaticVarContainer(object):
+    """
+    A subscriptable object that additionally provides a set of defaults, or
+    static variables. Upon attempting to access a particular variable, the
+    static variable container is checked, and if it contains the variable, the
+    value from the static container is returned. Otherwise the normal container
+    is checked. Upon attempting to set a particular variable, the static
+    variable container is checked, and if it contains the variable, an
+    exception indicating the variable is read-only is thrown. Otherwise, the
+    variable is set into the normal container.
+    """
     def __init__(self, container, static_vars):
+        """
+        Creates a new StaticVarContainer with the specified normal container
+        and static container.
+        """
         self.container = container
         self.special_vars = static_vars
     
@@ -331,8 +463,20 @@ class StaticVarContainer(object):
         if item in self.special_vars:
             raise Exception("Assignment to a static variable is not allowed.")
         self.container[item] = value
+    
+    def __contains__(self, item):
+        return item in self.special_vars or item in self.container
 
 def implicit_cat(values):
+    """
+    Computes the implicit concatenation of the specified values, which should
+    be some sort of sequence. First, a new list is created containing all items
+    in the specified list that are not None. If there's no elements in the
+    resulting list, None is returned. If there's one element, that element is
+    returned. If there are more, the values are converted to strings with str()
+    and the resulting strings concatenated together (with no characters in
+    between each string) and the resulting concatenation returned.
+    """
     values = [value for value in values if value is not None]
     if len(values) == 0:
         return None
@@ -341,6 +485,14 @@ def implicit_cat(values):
     return "".join(str(value) for value in values)
 
 def foreign_get(object, item):
+    """
+    Gets the specified item from the specified object. If the object is None
+    or Null, None is returned. If the object is an instance of list or tuple,
+    item is converted to an integer first. Then a value is obtained by calling
+    object[item], and the result passed into foreign_translate and then
+    returned. If object[item] throws a KeyError or IndexError, None will be
+    returned instead. This is used to implement %x.y% in the interpreter.
+    """
     if object is None or object is Null:
         return None
     try:
@@ -351,6 +503,12 @@ def foreign_get(object, item):
         return None
 
 def foreign_translate(object):
+    """
+    Translates a foreign Python object into a Fact-compatible object. If the
+    argument is None, Null is returned. If the argument is an instance of int,
+    long, or float, Decimal(object) is returned. Otherwise, the object is
+    returned as-is.
+    """
     if object == None:
         return Null
     if isinstance(object, (int, long, float)):
@@ -367,6 +525,7 @@ def process_escape(chars):
         return "\t"
     if char == "x":
         return chr(int(chars.pop() + chars.pop(), 16))
+    return char
 
 def function(*args, **kwargs):
     """
