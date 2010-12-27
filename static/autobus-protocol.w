@@ -10,4 +10,6 @@ Ya know, we can do '''bold''' and ''italic'' stuffs here. And of course
 * just like MediaWiki itself can do.
 
 Pretty neat, huh.
+===Oh, and of course, subheadings===
+which can contain additional information underneath them.
 
