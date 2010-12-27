@@ -144,7 +144,7 @@ No state properties.
 This container shows only one of its children at a time.
 
 Widget properties:
- * *index*: The 0-based index of the child that should show. 
+* '''index''': The 0-based index of the child that should show. 
  
 No layout properties.
 
@@ -156,8 +156,8 @@ This container shows a series of tabs, one per child.
 No widget properties.
 
 Layout properties:
- * *title*: The text that should be used as the tab's title.
- * *tooltip*: The text that should be used as the tab title's tooltip. This is optional.
+* '''title''': The text that should be used as the tab's title.
+* '''tooltip''': The text that should be used as the tab title's tooltip. This is optional.
 
 
 
