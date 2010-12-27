@@ -194,7 +194,7 @@ def display_mediawiki(request, path, text):
     
     .content > div > h1 {font-size: 24px; width: 100%%;
                          border-bottom: 1px solid #aaa; margin-bottom: 13px;
-                         margin-top: 7px}
+                         margin-top: 8px}
     
     .content > div > div > h2 {font-size: 19px; width: 100%%; 
                            border-bottom: 1px solid #aaa;
