@@ -106,5 +106,4 @@ Selection changes, whether server-generated or user-generated, result in a chang
 == ScrollBar ==
 == ScrollPane ==
 == Separator ==
-== Divider ==
 
