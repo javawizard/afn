@@ -15,7 +15,3 @@ which can contain additional information underneath them.
 
 
 
-*******************************************
-* TODO: Figure out why bold isn't working *
-*******************************************
-
