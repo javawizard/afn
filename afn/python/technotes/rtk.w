@@ -158,6 +158,12 @@ This container shows a series of tabs, one per child.
 This container lays out its components in a grid. Rows and columns take on the size of the largest component in the row or column, and components can take up more than one cell.
 
 * No widget properties.
+* Layout properties:
+** '''row''': The row that the widget should be placed on.
+** '''col''': The column that the widget should be placed on.
+** '''rowspan''': How many rows high the widget should be.
+** '''colspan''': How many columns wide the widget should be.
+* No state properties.
 
 
 
