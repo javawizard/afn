@@ -124,6 +124,14 @@ TODO: This widget needs to be thought out, especially how often updates as to th
 TODO: Same problems with TextBox apply here.
 
 == ColorButton ==
+This widget is a button that, when clicked, opens a color chooser allowing the user to select a color.
+
+* No widget properties.
+* State properties:
+** '''color''': The currently-selected color, as a list of three integers in the order red/green/blue, which are all in the range 0-255.
+* No functions.
+* No events.
+
 == DropdownBox ==
 == Label ==
 This widget shows a piece of text that the user cannot change. It's typically used for labeling UI fields.
