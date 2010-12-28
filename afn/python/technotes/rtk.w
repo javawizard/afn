@@ -128,6 +128,7 @@ This container lays its contents out horizontally. Components are laid out left 
 * No widget properties.
 * No layout properties.
 * No state properties.
+* No functions.
 
 == VBox ==
 Same as HBox, but lays out its components top to bottom instead of left to right.
@@ -135,6 +136,7 @@ Same as HBox, but lays out its components top to bottom instead of left to right
 * No widget properties.
 * No layout properties.
 * No state properties.
+* No functions.
 
 == Deck ==
 This container shows only one of its children at a time.
@@ -143,6 +145,7 @@ This container shows only one of its children at a time.
 ** '''index''': The 0-based index of the child that should show. 
 * No layout properties.
 * No state properties.
+* No functions:
 
 == TabbedPane ==
 This container shows a series of tabs, one per child.
@@ -153,6 +156,8 @@ This container shows a series of tabs, one per child.
 ** '''tooltip''': The text that should be used as the tab title's tooltip. This is optional.
 * State properties:
 ** '''index''': The 0-based index of the currently-selected tab.
+* Functions:
+** '''switch(index)''': Switches the tabbed pane to show the tab at the specified index.
 
 == Table ==
 This container lays out its components in a grid. Rows and columns take on the size of the largest component in the row or column, and components can take up more than one cell.
@@ -164,6 +169,38 @@ This container lays out its components in a grid. Rows and columns take on the s
 ** '''rowspan''': How many rows high the widget should be.
 ** '''colspan''': How many columns wide the widget should be.
 * No state properties.
+* No functions.
+
+== Window ==
+This container represents a toplevel window. Unlike other widgets, windows do not have a parent. They can only contain one widget; adding a second widget without removing the first will cause a fatal client-side error.
+
+* Widget properties:
+** '''title''': The title of the window.
+* No layout properties.
+* State properties:
+** '''size''': The size of the window, as a list of length 2.
+* Functions:
+** '''pack()''': Resizes the window to fit the components it contains.
+** 
+
+= Widgets =
+== Checkbox ==
+== RadioButton ==
+== ToggleButton ==
+== Button ==
+== TextBox ==
+== TextArea ==
+== ColorButton ==
+== DropdownBox ==
+== Label ==
+== ListBox ==
+== ProgressBar ==
+== ScrollBar ==
+== ScrollPane ==
+== Separator ==
+== Divider ==
+
+
 
 
 
