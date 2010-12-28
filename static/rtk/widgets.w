@@ -93,9 +93,30 @@ Selection changes, whether server-generated or user-generated, result in a chang
 
 * Widget properties:
 ** '''text''': The text of this radio button
+** '''group''': The name of the group that this radio button belongs to. This can be any arbitrary string; any radio buttons with the same group name are considered to be in the same group.
 ** '''flip''': Same as flip on a checkbox. However, the state property of a radio button with flip set to false can still be changed if another radio button in the same group with flip set to true is clicked, causing this radio button to lose selection.
+* State properties:
+** '''state''': True if this radio button is currently marked, false if it is not.
+* Functions:
+** '''set_state(state)''': Sets whether or not this radio button is marked. If this is called with true as the argument, any other selected radio button in this radio button's group will lose selection.
+** '''mark()''': Same as set_state(true).
+** '''clear()''': Same as set_state(false).
+* Events:
+** '''clicked()''': Same as the clicked event on checkboxes.
+
 == ToggleButton ==
+A toggle button is exactly identical to a checkbox in behavior, but it displays as a button instead of as a checkbox. Refer to checkbox's documentation for the attributes, functions, and events supported by this widget.
+
 == Button ==
+This widget is a button that can be clicked. Clicking a button causes an event to be fired.
+
+* Widget properties:
+** '''text''': The text of this button
+* No state properties.
+* No functions.
+* Events:
+** '''clicked()''': Fired when this button is clicked.
+
 == TextBox ==
 == TextArea ==
 == ColorButton ==
