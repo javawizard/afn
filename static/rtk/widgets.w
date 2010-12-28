@@ -118,10 +118,22 @@ This widget is a button that can be clicked. Clicking a button causes an event t
 ** '''clicked()''': Fired when this button is clicked.
 
 == TextBox ==
+TODO: This widget needs to be thought out, especially how often updates as to the current text should be sent back to the client and whether they should be sent as a diff, and what should happen if the server attempts to modify the text field's text and if it should provide a diff or what.
+
 == TextArea ==
+TODO: Same problems with TextBox apply here.
+
 == ColorButton ==
 == DropdownBox ==
 == Label ==
+This widget shows a piece of text that the user cannot change. It's typically used for labeling UI fields.
+
+* Widget properties:
+** '''text''': The text that should show in the label
+* No state properties.
+* No functions.
+* No events.
+
 == ListBox ==
 == ProgressBar ==
 == ScrollBar ==
