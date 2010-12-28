@@ -123,41 +123,41 @@ So, the properties, events, etc supported by the widgets:
 
 = Containers =
 == HBox ==
-This container lays its contents out horizontally. Components are laid out left to right. [[page.w|Hello world]]
+This container lays its contents out horizontally. Components are laid out left to right.
 
-No widget properties.
-
-No layout properties.
-
-No state properties.
+* No widget properties.
+* No layout properties.
+* No state properties.
 
 == VBox ==
 Same as HBox, but lays out its components top to bottom instead of left to right.
 
-No widget properties.
-
-No layout properties.
-
-No state properties.
+* No widget properties.
+* No layout properties.
+* No state properties.
 
 == Deck ==
 This container shows only one of its children at a time.
 
-Widget properties:
-* '''index''': The 0-based index of the child that should show. 
- 
-No layout properties.
-
-No state properties.
+* Widget properties:
+** '''index''': The 0-based index of the child that should show. 
+* No layout properties.
+* No state properties.
 
 == TabbedPane ==
 This container shows a series of tabs, one per child.
 
-No widget properties.
+* No widget properties.
+* Layout properties:
+** '''title''': The text that should be used as the tab's title.
+** '''tooltip''': The text that should be used as the tab title's tooltip. This is optional.
+* State properties:
+** '''index''': The 0-based index of the currently-selected tab.
 
-Layout properties:
-* '''title''': The text that should be used as the tab's title.
-* '''tooltip''': The text that should be used as the tab title's tooltip. This is optional.
+== Table ==
+This container lays out its components in a grid. Rows and columns take on the size of the largest component in the row or column, and components can take up more than one cell.
+
+* No widget properties.
 
 
 
