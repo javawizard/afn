@@ -102,9 +102,11 @@ Now, let's start documenting the actions themselves. They are:
 
 These are all of the commands that I think are needed for now. Widget-specific commands (such as set_state for a checkbox or add_item or set_selection for a list or dropdown box) are implemented simply as calls.
 
-When a client first connects, it sends what's called the request line. Right now, this contains two keys, action and features, the former of which contains the string "connect" and the latter of which is a list of strings representing the features the client supports, but in the future this may contain additional keys for specifying a particular application to show (thereby allowing multiple applications to be served from a single port) or other such request parameters.
+When a client first connects, it sends what's called the request line. Right now, this contains three keys, action, features, and application. Action contains the string "connect". Features is a list of strings representing the features the client supports, but in the future this may contain additional keys for specifying a particular application to show (thereby allowing multiple applications to be served from a single port) or other such request parameters. Application may or may not be used by the server, and specifies the name of the application to view. This allows for the future potential for multiple applications to be served by the same server; in the future, there may be a protocol command to ask the viewer to load up an application with a particular name. (This also allows for the potential of future rtk URLs of the style rtk://server:port/application_name.)
 
-The server then responds with the response line, which contains two keys which are the same format as the request. If the server decides that the client doesn't support enough features to run the application on even a basic level, it can instead send a packet with its action set to "drop" and one additional key, text, which contains the reason for the drop. Additional keys may be added to such a packet later.
+The server then responds with the response line, which contains two keys which are the same format as the request's action and features keys (except that the action is "accept"). If the server decides that the client doesn't support enough features to run the application on even a basic level, it can instead send a packet with its action set to "drop" and one additional key, text, which contains the reason for the drop. Additional keys may be added to such a packet later.
+
+Clients and servers should ignore keys in the connect and accept packets that they don't support.
 
 Commands as specified above commence from then on.
 
