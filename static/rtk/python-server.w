@@ -100,6 +100,8 @@ Each list in the list of events contains only one item for now, the name of the 
 
 So I've decided I'm going to call this whole structure the widget schema.
 
+A QUICK NOTE: The user key sent back by events is ignored at present. In the future, this will likely be put into a threadlocal by the function that runs on the event thread just before it calls the event listeners or the state change listeners.
+
 
 
 
