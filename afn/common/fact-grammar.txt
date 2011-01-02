@@ -1,0 +1,9 @@
+
+text = <Any char except those in "{}|%\">*
+factoid = text ((variable OR function) text)*
+variable = "%" name ("." name)* "%"
+name = <Any char except those in ".%">*
+function = "{" factoid ("|" factoid)* "}"
+
+
+

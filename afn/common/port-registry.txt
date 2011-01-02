@@ -11,6 +11,7 @@ phenoxydine:
 	8032   SuperTunnel. Cherokee proxies over to this for www.opengroove.org/supertunnel/.
 	8034   SVNWeb. Cherokee proxies over to this for www.opengroove.org/static.
 	8073   Tomcat. Cherokee proxies over to this for any unknown page on www.opengroove.org.
+	8100   Apache. Right now the only thing running on this is FreePBX.
 	9090   Openfire web administration interface
 
 spiro:
