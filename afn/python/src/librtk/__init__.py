@@ -1,7 +1,7 @@
 
 from threading import Thread, RLock
 from Queue import Queue
-from traceback import print_exc
+from traceback import print_exc, format_exc
 import default_widget_schema, default_features
 import libautobus
 from threading import RLock
@@ -203,6 +203,12 @@ class Connection(object):
                 return
             self.send({"action": "accept", "features": self.features})
             self.handshake_finished = True
+            try:
+                self.connect_function(self)
+            except:
+                print_exc()
+                self.fatal_error("Exception in connect function")
+                return
             return
         # TODO: process the message here
     
