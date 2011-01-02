@@ -122,6 +122,7 @@ class Connection(object):
         self.features = default_features.features + custom_features
         self.handshake_finished = False
         self.started = False
+        self.closed = False
         self.pre_start_messages = []
         self.protocol_init()
     
@@ -175,7 +176,7 @@ class Connection(object):
         # potential problems with their application.
         print "FATAL CONNECTION ERROR: " + message
         self.send({"action": "drop", "text": message})
-        self.close()
+        self.close(True)
     
     @locked
     def protocol_receive(self, data):
@@ -210,7 +211,25 @@ class Connection(object):
                 self.fatal_error("Exception in connect function")
                 return
             return
-        # TODO: process the message here
+        # If this is directed to a widget, we'll look it up and dispatch it.
+        # If it's not, we'll ignore it for now and issue a message about it,
+        # since there aren't any messages at present that don't target widgets.
+        #
+        # We'll do the actual dispatching on the event queue so that widgets
+        # aren't modified while a listener is running. 
+        if "id" in data:
+            def dispatch():
+                widget = self.widgets.get(data["id"], None)
+                if widget is None: # Ignore messages targeted to nonexistent
+                    # widgets; most likely the widget was deleted just before
+                    # the event arrived across the wire.
+                    return
+                # Dispatch the message.
+                widget.dispatch(data)
+            self.schedule(dispatch)
+        else:
+            print ("Message (with action " + data["action"] + ") ignored "
+                    "because it does not have a target id")
     
     @locked
     def protocol_connection_lost(self):
@@ -218,8 +237,28 @@ class Connection(object):
         Called by subclasses of Connection when the connection has been lost.
         If Connection previously called protocol_close (which subclasses
         themselves implement), the connection is not required (but is allowed)
-        to call this function.
+        to call this function. If protocol_close has not been called, this
+        will cause it to be called.
         """
+        self.close(True)
+    
+    @locked
+    def close(self, hard=False):
+        """
+        Closes this connection. If hard is True, a hard close is performed,
+        which essentially calls protocol_close without doing anything else. If
+        hard is False (the default), various cleanup actions (such as
+        destroying all of this connection's widgets) are performed first.
+        
+        If the connection has already been closed, this does nothing. 
+        """
+        if self.closed:
+            return
+        self.closed = True
+        if not hard:
+            for widget in self.children[:]:
+                widget.destroy()
+        self.protocol_close()
 
 class ResidentWidget(object):
     pass
