@@ -3,6 +3,7 @@ from threading import Thread, RLock
 from Queue import Queue
 from traceback import print_exc
 import default_widget_schema
+import libautobus
 
 class EventThread(Thread):
     """
@@ -31,6 +32,12 @@ class EventThread(Thread):
                 item()
             except:
                 print_exc()
+    
+    def schedule(self, function):
+        """
+        Same as self.queue.put(function).
+        """
+        self.queue.put(function)
 
 class Event(object):
     """
@@ -80,7 +87,7 @@ class Event(object):
                 print_exc()
 
 class Connection(object):
-    def __init__(self, connect_function, validators=[],
+    def __init__(self, socket, connect_function, validators=[],
             use_default_widgets=True):
         try:
             self.protocol_init
@@ -91,6 +98,7 @@ class Connection(object):
                     "subclasses included with librtk. Try "
                     "help(librtk.ThreadedServer) or help(librtk.AsyncoreServer) "
                     "for more information.")
+        self.socket = socket
         self.connect_function = connect_function
         self.validators = validators[:]
         if use_default_widgets:
@@ -102,6 +110,12 @@ class Connection(object):
     
     def start(self):
         self.protocol_start()
+    
+    def send(self, packet):
+        self.protocol_send(packet)
+    
+    def schedule(self, function):
+        self.protocol_event_ready(function)
     
     def protocol_receive(self, data):
         """
@@ -126,16 +140,23 @@ class ThreadedServer(Thread):
 
 class ThreadedConnection(Connection):
     def protocol_init(self):
-        pass
+        self.threaded_out_queue = Queue()
+        self.input_thread = libautobus.InputThread(self.socket,
+                self.protocol_receive, self.protocol_connection_lost)
+        self.output_thread = libautobus.OutputThread(self.socket,
+                self.threaded_out_queue.get)
+        self.event_thread = EventThread()
     
     def protocol_start(self):
-        pass
+        self.input_thread.start()
+        self.output_thread.start()
+        self.event_thread.start()
     
     def protocol_send(self, data):
-        pass
+        self.threaded_out_queue.put(data)
     
-    def protocol_event_ready(self, data):
-        pass
+    def protocol_event_ready(self, function):
+        self.event_thread.schedule(function)
     
     def protocol_close(self):
-        pass
+        self.threaded_out_queue.put(None)
