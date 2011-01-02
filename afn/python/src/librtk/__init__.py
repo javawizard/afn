@@ -4,6 +4,11 @@ from Queue import Queue
 from traceback import print_exc
 import default_widget_schema, default_features
 import libautobus
+from threading import RLock
+from concurrent import synchronized
+
+global_lock = RLock()
+locked = synchronized(global_lock)
 
 class MissingFeatures(Exception):
     """
@@ -94,6 +99,7 @@ class Event(object):
                 print_exc()
 
 class Connection(object):
+    @locked
     def __init__(self, socket, connect_function, validators=[],
             use_default_widgets=True, custom_features=[]):
         try:
@@ -115,15 +121,28 @@ class Connection(object):
         self.widget_schema = {}
         self.features = default_features.features + custom_features
         self.handshake_finished = False
+        self.started = False
+        self.pre_start_messages = []
         self.protocol_init()
     
+    @locked
     def start(self):
         """
         Starts this connection. This should be called after the connection has
         been set up (all validators have been added with add_validator, etc).
         """
+        if self.started:
+            raise Exception("You can't call Connection.start twice.")
+        self.started = True
         self.protocol_start()
+        # If any messages were buffered up by self.protocol_receive before
+        # we started, we'll process them now.
+        messages = self.pre_start_messages
+        self.pre_start_messages = None
+        for message in messages:
+            self.protocol_receive(message)
     
+    @locked
     def send(self, packet):
         """
         Used by internal RTK code to send a packet to the client. The packet
@@ -131,12 +150,14 @@ class Connection(object):
         """
         self.protocol_send(packet)
     
+    @locked
     def add_validator(self, validator):
         """
         Adds a new validator function. TODO: more on this later.
         """
         self.validators.append(validator)
     
+    @locked
     def schedule(self, function):
         """
         Schedules a function to be run as soon as possible. The function will
@@ -145,6 +166,7 @@ class Connection(object):
         """
         self.protocol_event_ready(function)
     
+    @locked
     def fatal_error(self, message):
         # TODO: Right now, errors that are most likely the fault of the
         # programmer and errors that result from the client messing up are
@@ -155,12 +177,17 @@ class Connection(object):
         self.send({"action": "drop", "text": message})
         self.close()
     
+    @locked
     def protocol_receive(self, data):
         """
         Called by subclasses of Connection when they have new data for
         Connection to process. data should be the return value of json.loads
         or a compatible object.
         """
+        if not self.started: # Haven't started yet, so buffer up messages
+            # until when someone calls self.start()
+            self.pre_start_messages.append(data)
+            return
         if not self.handshake_finished: # Perform handshake
             if not data["action"] == "connect":
                 self.fatal_error("First message must be a connect message")
@@ -179,6 +206,7 @@ class Connection(object):
             return
         # TODO: process the message here
     
+    @locked
     def protocol_connection_lost(self):
         """
         Called by subclasses of Connection when the connection has been lost.
