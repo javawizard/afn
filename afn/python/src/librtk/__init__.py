@@ -2,8 +2,15 @@
 from threading import Thread, RLock
 from Queue import Queue
 from traceback import print_exc
-import default_widget_schema
+import default_widget_schema, default_features
 import libautobus
+
+class MissingFeatures(Exception):
+    """
+    Thrown by a validator if it decides that the client doesn't have enough
+    features for the program to sanely run on it.
+    """
+    pass
 
 class EventThread(Thread):
     """
@@ -88,7 +95,7 @@ class Event(object):
 
 class Connection(object):
     def __init__(self, socket, connect_function, validators=[],
-            use_default_widgets=True):
+            use_default_widgets=True, custom_features=[]):
         try:
             self.protocol_init
         except AttributeError:
@@ -106,6 +113,7 @@ class Connection(object):
         self.children = []
         self.widgets = {}
         self.widget_schema = {}
+        self.features = default_features.features + custom_features
         self.handshake_finished = False
         self.protocol_init()
     
@@ -138,6 +146,11 @@ class Connection(object):
         self.protocol_event_ready(function)
     
     def fatal_error(self, message):
+        # TODO: Right now, errors that are most likely the fault of the
+        # programmer and errors that result from the client messing up are
+        # both printed by this function. Perhaps split them out so the
+        # application developer knows what to look for to know if they have
+        # potential problems with their application.
         print "FATAL CONNECTION ERROR: " + message
         self.send({"action": "drop", "text": message})
         self.close()
@@ -152,7 +165,19 @@ class Connection(object):
             if not data["action"] == "connect":
                 self.fatal_error("First message must be a connect message")
                 return
-            
+            features = data["features"]
+            application = data.get("application", None)
+            self.application = application
+            try:
+                for validator in self.validators:
+                    validator(features, self.widget_schema, self)
+            except MissingFeatures, e:
+                self.fatal_error("Missing features: " + str(e))
+                return
+            self.send({"action": "accept", "features": self.features})
+            self.handshake_finished = True
+            return
+        # TODO: process the message here
     
     def protocol_connection_lost(self):
         """
@@ -168,7 +193,7 @@ class ResidentWidget(object):
 class ResidentWidgetConstructor(object):
     pass
     
-def default_validator(features, schema):
+def default_validator(features, schema, connection):
     schema.update(default_widget_schema.schema)
 
 class ThreadedServer(Thread):
