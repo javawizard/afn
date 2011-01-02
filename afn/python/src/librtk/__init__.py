@@ -121,7 +121,10 @@ class Connection(object):
 def default_validator(features, schema):
     schema.update(default_widget_schema.schema)
 
-class ThreadedServer(Thread):
+class ThreadedServer(object):
+    pass
+
+class ThreadedConnection(Connection):
     def protocol_init(self):
         pass
     
@@ -136,6 +139,3 @@ class ThreadedServer(Thread):
     
     def protocol_close(self):
         pass
-
-class ThreadedConnection(Connection):
-    pass
