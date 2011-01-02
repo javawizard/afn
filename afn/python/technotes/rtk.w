@@ -96,6 +96,8 @@ Now, let's start documenting the actions themselves. They are:
 	
 	error: Sent either way to indicate an error. Right now, this has one key, text, which contains a textual description of the message. More keys will likely be added later.
 	
+	drop: Sent either way to indicate a huge error that means the respective client is about to disconnect.
+	
 	set_state: Same format as set_widget, but from client to server to notify of a change to a state property, and with one additional key: user, which is true if the change was a result of a user action (such as clicking a checkbox) and false if the change was a result of a function call (such as calling set_state on a checkbox). State changes are always sent before any events that may have been triggered by the same action.
 	
 	event: Sent to the server when a client-side event happens, after any set_state messages relating to the event have been sent. This contains three keys, name, args, and user. Name is the name of the event (such as "clicked" for a button or a checkbox), args is a list of the arguments to the event (which are widget-specific), and user has the same meaning as the user key in the set_state command.

@@ -106,16 +106,41 @@ class Connection(object):
         self.children = []
         self.widgets = {}
         self.widget_schema = {}
+        self.handshake_finished = False
         self.protocol_init()
     
     def start(self):
+        """
+        Starts this connection. This should be called after the connection has
+        been set up (all validators have been added with add_validator, etc).
+        """
         self.protocol_start()
     
     def send(self, packet):
+        """
+        Used by internal RTK code to send a packet to the client. The packet
+        should be a dict ready to be put into json.dumps.
+        """
         self.protocol_send(packet)
     
+    def add_validator(self, validator):
+        """
+        Adds a new validator function. TODO: more on this later.
+        """
+        self.validators.append(validator)
+    
     def schedule(self, function):
+        """
+        Schedules a function to be run as soon as possible. The function will
+        be put on the event queue, so no incoming changes will be processed
+        while the function is running.
+        """
         self.protocol_event_ready(function)
+    
+    def fatal_error(self, message):
+        print "FATAL CONNECTION ERROR: " + message
+        self.send({"action": "drop", "text": message})
+        self.close()
     
     def protocol_receive(self, data):
         """
@@ -123,6 +148,11 @@ class Connection(object):
         Connection to process. data should be the return value of json.loads
         or a compatible object.
         """
+        if not self.handshake_finished: # Perform handshake
+            if not data["action"] == "connect":
+                self.fatal_error("First message must be a connect message")
+                return
+            
     
     def protocol_connection_lost(self):
         """
@@ -131,6 +161,12 @@ class Connection(object):
         themselves implement), the connection is not required (but is allowed)
         to call this function.
         """
+
+class ResidentWidget(object):
+    pass
+
+class ResidentWidgetConstructor(object):
+    pass
     
 def default_validator(features, schema):
     schema.update(default_widget_schema.schema)
