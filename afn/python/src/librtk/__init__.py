@@ -8,6 +8,10 @@ import libautobus
 from threading import RLock
 from concurrent import synchronized
 from categories import TOPLEVEL, CONTAINER, WIDGET
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 global_lock = RLock()
 locked = synchronized(global_lock)
@@ -542,7 +546,7 @@ class AsyncDispatcher(asyncore.dispatcher):
 			map = asyncore.socket_map
 		
 		while True:
-			if len(map)==0:
+			if len(map) == 0:
 				break
 			self.poll(timeout=timeout, map=map)
 
