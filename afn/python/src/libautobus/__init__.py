@@ -267,12 +267,14 @@ class OutputThread(Thread):
     several recipients), it may be more efficient to pre-encode the message
     and send it as a string.
     """
-    def __init__(self, socket, read_function, finished_function=lambda: None):
+    def __init__(self, socket, read_function, finished_function=lambda: None,
+            shut_on_end=False):
         Thread.__init__(self)
         self.socket = socket
         self.read_function = read_function
         self.finished_function = finished_function
         self.enable_buffer_hack = False
+        self.shut_on_end=shut_on_end
     
     def run(self):
         try:
@@ -297,7 +299,15 @@ class OutputThread(Thread):
             pass
         except:
             print_exc()
-        self.socket.close()
+        if self.shut_on_end:
+            try:
+                self.socket.shutdown(SHUT_RDWR)
+            except:
+                pass
+        try:
+            self.socket.close()
+        except:
+            pass
 
 class NoSuchInterfaceException(Exception):
     def __init__(self, interface_name, info=None):

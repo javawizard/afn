@@ -125,7 +125,7 @@ class Connection(object):
             self.validators.append(default_validator)
         self.children = []
         self.widgets = {}
-        self.widget_schema = {}
+        self.schema = {}
         self.features = default_features.features + custom_features
         self.handshake_finished = False
         self.started = False
@@ -205,7 +205,7 @@ class Connection(object):
             self.application = application
             try:
                 for validator in self.validators:
-                    validator(features, self.widget_schema, self)
+                    validator(features, self.schema, self)
             except MissingFeatures, e:
                 self.fatal_error("Missing features: " + str(e))
                 return
@@ -266,11 +266,19 @@ class Connection(object):
             for widget in self.children[:]:
                 widget.destroy()
         self.protocol_close()
+    
+    def add_child(self, child):
+        self.children.append(child)
+        child.send_create()
+    
+    def get_child_index(self, child):
+        return self.children.index(child)
 
 class ResidentWidget(object):
     @locked
     def __init__(self, type, parent, **kwargs):
         object.__setattr__(self, "resident_ready", False)
+        self.type = type
         self.id = libautobus.get_next_id()
         if isinstance(parent, Connection):
             self.parent = None
@@ -290,7 +298,7 @@ class ResidentWidget(object):
         if self.category != TOPLEVEL and self.parent.category == WIDGET:
             raise Exception("Containers and widgets can only be added to "
                     "toplevels and containers, not other widgets.")
-        (self.wiget_schema, self.layout_schema, self.state_schema,
+        (self.widget_schema, self.layout_schema, self.state_schema,
         self.call_schema, self.event_schema) = convert_widget_schema_to_maps(
                 self.connection.schema[type])
         for key, (writable, default_value) in self.widget_schema.items():
@@ -387,8 +395,8 @@ class ResidentWidget(object):
             self.events[message["name"]](*message["args"])
     
     def __getattr__(self, name):
-        if not object.__getattr__(self, "resident_ready"):
-            return object.__getattr__(self, name)
+        if not object.__getattribute__(self, "resident_ready"):
+            return object.__getattribute__(self, name)
         if name in self.widget_schema:
             return self.widget_properties[name]
         elif self.parent is not None and name in self.parent.layout_schema:
@@ -402,11 +410,13 @@ class ResidentWidget(object):
         elif (name.endswith("_changed") and
                 name[:-len("_changed")] in self.state_schema):
             return self.state_events[name]
+        # We don't need to delegate to object since __getattr__ is only
+        # called if Python can't find the attribute any other way
         raise AttributeError("Widget of type " + self.type + 
                 " has no property " + name)
     
     def __setattr__(self, name, value):
-        if not object.__getattr__(self, "resident_ready"):
+        if not object.__getattribute__(self, "resident_ready"):
             object.__setattr__(self, name, value)
             return
         if name in self.widget_schema:
@@ -415,7 +425,7 @@ class ResidentWidget(object):
                 raise Exception("You can't modify the widget property " + name
                         + " on a widget of type " + self.type)
             self.widget_properties[name] = value
-            self.send_set_widget(name)
+            self.connection.send_set_widget(name)
         elif self.parent is not None and name in self.parent.layout_schema:
             writable, default = self.parent.layout_schema[name]
             if not writable:
@@ -448,11 +458,11 @@ class ResidentWidget(object):
             object.__setattr__(self, name, value)
     
     def send_set_widget(self, name):
-        self.send({"action": "set_widget", "id": self.id, "properties":
+        self.connection.send({"action": "set_widget", "id": self.id, "properties":
                 {name: getattr(self, name)}})
     
     def send_set_layout(self, child, name):
-        self.send({"action": "set_layout", "id": self.id, "properties":
+        self.connection.send({"action": "set_layout", "id": self.id, "properties":
                 {name: getattr(child, name)}})
 
 class ResidentWidgetConstructor(object):
@@ -485,7 +495,7 @@ class ThreadedConnection(Connection):
         self.input_thread = libautobus.InputThread(self.socket,
                 self.protocol_receive, self.protocol_connection_lost)
         self.output_thread = libautobus.OutputThread(self.socket,
-                self.threaded_out_queue.get)
+                self.threaded_out_queue.get, shut_on_end=True)
         self.event_thread = EventThread()
     
     def protocol_start(self):
