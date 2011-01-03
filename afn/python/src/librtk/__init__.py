@@ -370,6 +370,13 @@ class ResidentWidget(object):
         must only be called on the event queue. This will take care of
         notifying any interested listeners.
         """
+        if message["action"] == "set_state":
+            properties = message["properties"]
+            self.state_properties.update(properties)
+            for k in properties.keys():
+                self.state_events[k]()
+        elif message["action"] == "event":
+            self.events[message["name"]](*message["args"])
 
 class ResidentWidgetConstructor(object):
     def __init__(self, type):
