@@ -311,6 +311,7 @@ class ResidentWidget(object):
             self.parent.validate_layout_attributes(kwargs)
         # At this point we've validated everything, so we can do ahead and
         # start setting stuff up.
+        self.connection.widgets[self.id] = self
         self.widget_properties = dict([(k, kwargs.get(k, d)) 
                 for k, (w, d) in self.widget_schema.items()])
         if self.parent is not None:
