@@ -212,6 +212,7 @@ class Connection(object):
                 return
             self.send({"action": "accept", "features": self.features})
             self.handshake_finished = True
+            self.create_widget_constructors()
             try:
                 self.connect_function(self)
             except:
@@ -274,6 +275,18 @@ class Connection(object):
     
     def get_child_index(self, child):
         return self.children.index(child)
+    
+    def create_widget_constructors(self):
+        """
+        Called by internal code to create self.Window, self.Button, etc.
+        These are generated from the widget schema. External code should not
+        use this.
+        """
+        for name, value in self.schema.items():
+            if value[1] == TOPLEVEL:
+                setattr(self, name, ResidentToplevelConstructor(value[0], self))
+            else:
+                setattr(self, name, ResidentWidgetConstructor(value[0]))
 
 class ResidentWidget(object):
     @locked
@@ -326,7 +339,8 @@ class ResidentWidget(object):
         self.owner.add_child(self)
         self.resident_ready = True
     
-    @property
+    @property # Doesn't need to be locked since self.parent and self.connection
+    # never change after construction
     def owner(self):
         """
         The owner of this widget. This is the same as the widget's parent, or
@@ -334,6 +348,7 @@ class ResidentWidget(object):
         """
         return self.parent or self.connection
     
+    @locked
     def validate_layout_attributes(self, attributes):
         """
         Validates that the layout attributes required by this widget, which
@@ -350,6 +365,7 @@ class ResidentWidget(object):
                         + "children of " + self.category + "s of type "
                          + self.type + ", but this property was unspecified.")
     
+    @locked
     def add_child(self, child):
         """
         Requests that this container or toplevel adopt the specified child.
@@ -363,6 +379,7 @@ class ResidentWidget(object):
         self.children.append(child)
         child.send_create()
     
+    @locked
     def send_create(self):
         """
         Sends a message to the client telling it to perform the actual
@@ -376,6 +393,7 @@ class ResidentWidget(object):
             message["parent"] = self.parent.id
         self.connection.send(message)
     
+    @locked
     def get_child_index(self, child):
         """
         Returns the index at which a particular child is located in this
@@ -384,6 +402,7 @@ class ResidentWidget(object):
         """
         return self.children.index(child)
     
+    @locked
     def dispatch(self, message):
         """
         Dispatches an event or a state property change to this widget. This
@@ -398,6 +417,7 @@ class ResidentWidget(object):
         elif message["action"] == "event":
             self.events[message["name"]](*message["args"])
     
+    @locked
     def __getattr__(self, name):
         if not object.__getattribute__(self, "resident_ready"):
             return object.__getattribute__(self, name)
@@ -419,6 +439,7 @@ class ResidentWidget(object):
         raise AttributeError("Widget of type " + self.type + 
                 " has no property " + name)
     
+    @locked
     def __setattr__(self, name, value):
         if not object.__getattribute__(self, "resident_ready"):
             object.__setattr__(self, name, value)
@@ -461,21 +482,40 @@ class ResidentWidget(object):
         else:
             object.__setattr__(self, name, value)
     
+    @locked
     def send_set_widget(self, name):
         self.connection.send({"action": "set_widget", "id": self.id, "properties":
                 {name: getattr(self, name)}})
     
+    @locked
     def send_set_layout(self, child, name):
         self.connection.send({"action": "set_layout", "id": self.id, "properties":
                 {name: getattr(child, name)}})
     
+    @locked
     def destroy(self):
         for child in self.children[:]:
             child.destroy()
         self.connection.send({"action": "destroy", "id": self.id})
         # TODO: perhaps route this through the parent
         self.owner.children.remove(self)
-
+        del self.connection.widgets[self.id]
+    
+    def __getitem__(self, item):
+        # TODO: in the future, perhaps allow this as a shortcut for getattr
+        # for string items
+        return self.children[item] # This will raise an IndexError for us if
+        # the specified child doesn't exist so we don't need to
+    
+    def __len__(self):
+        return len(self.children)
+    
+    def __nonzero__(self):
+        return True
+    
+    def __str__(self):
+        return "<ResidentWidget " + str(self.id) + ": " + self.type + ">"
+    
 class ResidentWidgetConstructor(object):
     def __init__(self, type):
         self.type = type
@@ -483,6 +523,24 @@ class ResidentWidgetConstructor(object):
     def __call__(self, parent, **kwargs):
         return ResidentWidget(self.type, parent, **kwargs)
     
+    def __str__(self):
+        return "<ResidentWidgetConstructor for widget type " + self.type + ">"
+    
+    __repr__ = __str__
+
+class ResidentToplevelConstructor(object):
+    def __init__(self, type, connection):
+        self.type = type
+        self.connection = connection
+    
+    def __call__(self, **kwargs):
+        return ResidentWidget(self.type, self.connection, **kwargs)
+    
+    def __str__(self):
+        return "<ResidentToplevelConstructor for widget type " + self.type + ">"
+    
+    __repr__ = __str__
+
 def default_validator(features, schema, connection):
     schema.update(default_widget_schema.schema)
 
@@ -539,7 +597,7 @@ class AsyncDispatcher(asyncore.dispatcher):
 		
 		self.connect_function = connect_function
 		
-		self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+		self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.bind((bindhost, bindport))
 		
 		self.listen(5)
