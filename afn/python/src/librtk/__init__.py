@@ -365,7 +365,7 @@ class ResidentWidget(object):
         creation of this widget. Outside code generally shouldn't call this;
         it's called by a widget's parent-to-be in add_child.
         """
-        message = {"action": "add", "id": self.id, "type": self.type,
+        message = {"action": "create", "id": self.id, "type": self.type,
                 "index": self.owner.get_child_index(self), "p_widget":
                 self.widget_properties, "p_layout": self.layout_properties}
         if self.parent is not None:
@@ -425,7 +425,7 @@ class ResidentWidget(object):
                 raise Exception("You can't modify the widget property " + name
                         + " on a widget of type " + self.type)
             self.widget_properties[name] = value
-            self.connection.send_set_widget(name)
+            self.send_set_widget(name)
         elif self.parent is not None and name in self.parent.layout_schema:
             writable, default = self.parent.layout_schema[name]
             if not writable:
@@ -464,6 +464,11 @@ class ResidentWidget(object):
     def send_set_layout(self, child, name):
         self.connection.send({"action": "set_layout", "id": self.id, "properties":
                 {name: getattr(child, name)}})
+    
+    def destroy(self):
+        for child in self.children[:]:
+            child.destroy()
+        self.connection.send({"action": "destroy", "id": self.id})
 
 class ResidentWidgetConstructor(object):
     def __init__(self, type):
