@@ -1,7 +1,8 @@
 
 from threading import Thread, RLock
-from Queue import Queue
+from Queue import Queue, Empty
 from traceback import print_exc, format_exc
+import socket, asyncore, asynchat
 import default_widget_schema, default_features
 import libautobus
 from threading import RLock
@@ -488,3 +489,102 @@ class ThreadedConnection(Connection):
     
     def protocol_close(self):
         self.threaded_out_queue.put(None)
+
+# Async Implementation.
+
+class AsyncDispatcher(asyncore.dispatcher):
+	def __init_(self, (bindhost, bindport)=("0.0.0.0", 0)):
+		asyncore.dispatcher.__init__(self)
+		
+		assert bindport > 0
+		assert bindport < 65536
+		
+		self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.bind((bhost, bport))
+		self.listen(5)
+	
+	def handle_accept(self):
+		both = self.accept()
+		if both is not None:
+			sock, addr = both
+			connection = AsyncConnection(AsyncSocket(sock, addr))
+			connection.start()
+	
+	def poll(self, timeout=0.0, map=None):
+		if map is None:
+			map = asyncore.socket_map
+		
+		assert map.__class__ is dict
+		assert timeout.__class__ in (int, float)
+		
+		if hasattr(asyncore.select, "poll"):
+			mypoll = asyncore.poll2
+		else:
+			mypoll = asyncore.poll
+		
+		mypoll(timeout, map)
+		
+		# Parse the event queue.
+		
+		for fds, obj in map.items():
+			try:
+				while True: # We'll raise Empty when we have nothing else to run.
+					item = obj.connection.eventq.get_nowait()
+					try:
+						item()
+					except:
+						print_exc()
+			except Empty, AttributeError:
+				continue
+	
+	def loop(self, timeout=10.0, use_poll=False, map=None):
+		if map is None:
+			map = asyncore.socket_map
+		
+		while True:
+			if len(map)==0:
+				break
+			self.poll(timeout=timeout, map=map)
+
+class AsyncSocket(asynchat.async_chat):
+	def __init__(self, sock, addr):
+		asynchat.async_chat.__init__(self, sock=sock)
+		
+		assert sock.__class__ is socket.socket
+		assert addr.__class__ is str
+		
+		self.addr = addr
+		self.set_terminator("\r\n")
+		
+		self.recvq = ""
+	
+	def collect_incoming_data(self, data):
+		self.recvq += data
+	
+	def get_data(self):
+		data, self.recvq = self.recvq, ""
+		return data
+	
+	def found_terminator(self):
+		data = self.get_data()
+		self.connection.protocol_recv(data)
+
+class AsyncConnection(Connection):
+    def protocol_init(self):
+    	assert self.socket.__class__ is AsyncSocket
+    	
+    	self.socket.connection = self
+    	self.async_eventq = Queue()
+    
+    def protocol_start(self):
+    	pass
+    
+    def protocol_send(self, data):
+    	self.socket.push(json.dumps(data))
+    
+    def protocol_event_ready(self, function):
+        self.async_eventq.put_nowait(function)
+    
+    def protocol_close(self):
+        self.socket.close_when_done()
+
