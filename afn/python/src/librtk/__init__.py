@@ -377,6 +377,23 @@ class ResidentWidget(object):
                 self.state_events[k]()
         elif message["action"] == "event":
             self.events[message["name"]](*message["args"])
+    
+    def __getattr__(self, name):
+        if name in self.widget_schema:
+            return self.widget_properties[name]
+        elif self.parent is not None and name in self.parent.layout_schema:
+            return self.layout_properties[name]
+        elif name in self.state_schema:
+            return self.state_properties[name]
+        elif name in self.call_schema:
+            raise Exception("Calls aren't supported yet.")
+        elif name in self.event_schema:
+            return self.events[name]
+        elif (name.endswith("_changed") and
+                name[:-len("_changed")] in self.state_schema):
+            return self.state_events[name]
+        raise AttributeError("Widget of type " + self.type + 
+                " has no attribute " + name)
 
 class ResidentWidgetConstructor(object):
     def __init__(self, type):
