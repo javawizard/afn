@@ -114,10 +114,10 @@ class Connection(object):
         except AttributeError:
             raise Exception("Connection cannot be instantiated directly. You "
                     "need to instantiate one of its subclasses. "
-                    "ThreadedConnection and AsyncoreConnection are two such "
+                    "ThreadedConnection and AsyncSocket are two such "
                     "subclasses included with librtk. Try "
                     "help(librtk.ThreadedConnection) or "
-                    "help(librtk.AsyncoreConnection) for more information.")
+                    "help(librtk.AsyncSocket) for more information.")
         self.socket = socket
         self.connect_function = connect_function
         self.validators = validators[:]
@@ -515,21 +515,28 @@ class ThreadedConnection(Connection):
 # Async Implementation.
 
 class AsyncDispatcher(asyncore.dispatcher):
-	def __init_(self, (bindhost, bindport)=("0.0.0.0", 0)):
+	connection = None
+	
+	def __init__(self, connect_function, bindhost="0.0.0.0", bindport=1337):
 		asyncore.dispatcher.__init__(self)
+		self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
 		
+		assert bindhost.__class__ == str
 		assert bindport > 0
 		assert bindport < 65536
 		
-		self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.bind((bhost, bport))
+		self.connect_function = connect_function
+		
+		self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+		self.bind((bindhost, bindport))
+		
 		self.listen(5)
 	
 	def handle_accept(self):
 		both = self.accept()
 		if both is not None:
 			sock, addr = both
-			connection = AsyncConnection(AsyncSocket(sock, addr))
+			connection = AsyncConnection(AsyncSocket(sock, addr), self.connect_function)
 			connection.start()
 	
 	def poll(self, timeout=0.0, map=None):
@@ -549,9 +556,11 @@ class AsyncDispatcher(asyncore.dispatcher):
 		# Parse the event queue.
 		
 		for fds, obj in map.items():
+			if obj.connection is None:
+				continue
 			try:
 				while True: # We'll raise Empty when we have nothing else to run.
-					item = obj.connection.eventq.get_nowait()
+					item = obj.connection.async_eventq.get_nowait()
 					try:
 						item()
 					except:
@@ -573,10 +582,10 @@ class AsyncSocket(asynchat.async_chat):
 		asynchat.async_chat.__init__(self, sock=sock)
 		
 		assert sock.__class__ is socket.socket
-		assert addr.__class__ is str
+		assert addr.__class__ is tuple
 		
 		self.addr = addr
-		self.set_terminator("\r\n")
+		self.set_terminator("\n")
 		
 		self.recvq = ""
 	
@@ -589,7 +598,7 @@ class AsyncSocket(asynchat.async_chat):
 	
 	def found_terminator(self):
 		data = self.get_data()
-		self.connection.protocol_recv(json.loads(data))
+		self.connection.protocol_receive(json.loads(data))
 
 class AsyncConnection(Connection):
     def protocol_init(self):
