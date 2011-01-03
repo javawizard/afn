@@ -39,6 +39,7 @@ class EventThread(Thread):
         This doesn't start the event thread; you need to remember to call
         start on the event thread to start it.
         """
+        Thread.__init__(self)
         if queue is None:
             queue = Queue()
         self.queue = queue
