@@ -571,7 +571,7 @@ class AsyncSocket(asynchat.async_chat):
 	
 	def found_terminator(self):
 		data = self.get_data()
-		self.connection.protocol_recv(data)
+		self.connection.protocol_recv(json.loads(data))
 
 class AsyncConnection(Connection):
     def protocol_init(self):
