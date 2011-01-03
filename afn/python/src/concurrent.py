@@ -2,6 +2,7 @@ from __future__ import with_statement
 
 from threading import Thread, RLock
 from functools import partial, update_wrapper
+import inspect
 
 def as_new_thread(function):
     """
@@ -47,7 +48,19 @@ def synchronized(lock=None, function=None):
             return function(*args, **kwargs)
     update_wrapper(wrapper, function)
     wrapper.wrapped = function
+    wrapper.__doc__ = format_argspec(function) + "\n\n" + getdoc(function)
     return wrapper
+
+def format_argspec(function):
+    argspec = inspect.getargspec(function)
+    args = inspect.formatargspec(*argspec)
+    return function.__name__ + args
+
+def getdoc(function):
+    doc = inspect.getdoc(function)
+    if doc is None:
+        doc = ""
+    return doc
 
 class AtomicInteger(object):
     """

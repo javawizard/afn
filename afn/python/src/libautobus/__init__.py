@@ -404,7 +404,7 @@ def decode_object(instance):
         raise Exception("Invalid instance type to decode: " + 
                 str(instance_type))
 
-def get_function_doc(interface, function_name):
+def get_function_doc(interface, function_name, remove_self=True):
     function = getattr(interface, function_name)
     is_method_before = inspect.ismethod(function)
     while hasattr(function, "wrapped"):
@@ -412,7 +412,8 @@ def get_function_doc(interface, function_name):
     if is_method_before or inspect.ismethod(function):
         argspec = inspect.getargspec(function)
         # Remove the leading "self" argument
-        argspec = (argspec[0][1:],) + argspec[1:]
+        if remove_self:
+            argspec = (argspec[0][1:],) + argspec[1:]
         args = inspect.formatargspec(*argspec)
     elif inspect.isfunction(function):
         args = inspect.formatargspec(*inspect.getargspec(function))

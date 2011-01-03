@@ -113,10 +113,10 @@ class Connection(object):
         except AttributeError:
             raise Exception("Connection cannot be instantiated directly. You "
                     "need to instantiate one of its subclasses. "
-                    "ThreadedServer and AsyncoreServer are two such "
+                    "ThreadedConnection and AsyncoreConnection are two such "
                     "subclasses included with librtk. Try "
-                    "help(librtk.ThreadedServer) or help(librtk.AsyncoreServer) "
-                    "for more information.")
+                    "help(librtk.ThreadedConnection) or "
+                    "help(librtk.AsyncoreConnection) for more information.")
         self.socket = socket
         self.connect_function = connect_function
         self.validators = validators[:]

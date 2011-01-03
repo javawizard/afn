@@ -82,13 +82,13 @@ Additional keys are present depending on the type of command. Since commands are
 
 Now, let's start documenting the actions themselves. They are:
 
-	create: Sent to the client to tell it to create a new widget. id is the new id for the widget. parent is the id of the widget that this widget is to be created under (which should be a container). type is the name of the widget's type. index is the index at which the widget is to be created, which can range from 0 to the number of components currently in the widget, inclusive (with the latter indicating the widget should be added to the end). p_widget is a map containing the widget properties. p_layout is a map containing the layout properties.
+	create: Sent to the client to tell it to create a new widget. id is the new id for the widget. parent is the id of the widget that this widget is to be created under (which should be a container); this should not be present for toplevels such as windows. type is the name of the widget's type. index is the index at which the widget is to be created, which can range from 0 to the number of components currently in the widget, inclusive (with the latter indicating the widget should be added to the end). p_widget is a map containing the widget properties. p_layout is a map containing the layout properties.
 	
 	destroy: Sent to the client to tell it to destroy a widget. A container's children must be destroyed by the server before the container itself is destroyed; the client should report an error and drop the connection if the server tries to destroy a non-empty container.
 	
 	reorder: Sent to the client to tell it to logically reorder a widget within its parent. id is the id of the widget. index is the new index within its parent at which it should be located. Clients don't really have to reorder the widget; they simply have to make it show up in the container's layout as if it were present at that position.
 	
-	set_widget: Sent to the client to modify widget properties. set and delete are the two keys: set is a map of properties to set and delete is a list of properties to delete. Some properties can't be changed after the widget is created; these are documented on a per-widget basis, and attempting to change one of them will result in the client sending back an error and dropping the connection.
+	set_widget: Sent to the client to modify widget properties. properties is a key containing a map of properties whose values are to be set. Some properties can't be changed after the widget is created; these are documented on a per-widget basis, and attempting to change one of them will result in the client sending back an error and dropping the connection.
 	
 	set_layout: Same format and use as set_widget, but sets a widget's layout properties.
 	
