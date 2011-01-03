@@ -51,6 +51,7 @@ class EventThread(Thread):
                 item()
             except:
                 print_exc()
+            item = self.queue.get()
     
     def schedule(self, function):
         """
@@ -308,6 +309,8 @@ class ResidentWidget(object):
                         "property was unspecified.")
         if self.parent is not None:
             self.parent.validate_layout_attributes(kwargs)
+        # At this point we've validated everything, so we can do ahead and
+        # start setting stuff up.
         self.widget_properties = dict([(k, kwargs.get(k, d)) 
                 for k, (w, d) in self.widget_schema.items()])
         if self.parent is not None:
@@ -469,6 +472,8 @@ class ResidentWidget(object):
         for child in self.children[:]:
             child.destroy()
         self.connection.send({"action": "destroy", "id": self.id})
+        # TODO: perhaps route this through the parent
+        self.owner.children.remove(self)
 
 class ResidentWidgetConstructor(object):
     def __init__(self, type):
@@ -516,6 +521,7 @@ class ThreadedConnection(Connection):
     
     def protocol_close(self):
         self.threaded_out_queue.put(None)
+        self.event_thread.schedule(None)
 
 # Async Implementation.
 
