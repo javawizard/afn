@@ -270,6 +270,7 @@ class Connection(object):
 class ResidentWidget(object):
     @locked
     def __init__(self, type, parent, **kwargs):
+        object.__setattr__(self, "resident_ready", False)
         self.id = libautobus.get_next_id()
         if isinstance(parent, Connection):
             self.parent = None
@@ -311,6 +312,7 @@ class ResidentWidget(object):
         self.state_events = dict([(k, Event()) for k in self.state_schema.keys()])
         self.events = dict([(k, Event()) for k in self.event_schema.keys()])
         self.owner.add_child(self)
+        self.resident_ready = True
     
     @property
     def owner(self):
@@ -385,6 +387,8 @@ class ResidentWidget(object):
             self.events[message["name"]](*message["args"])
     
     def __getattr__(self, name):
+        if not object.__getattr__(self, "resident_ready"):
+            return object.__getattr__(self, name)
         if name in self.widget_schema:
             return self.widget_properties[name]
         elif self.parent is not None and name in self.parent.layout_schema:
@@ -402,6 +406,9 @@ class ResidentWidget(object):
                 " has no property " + name)
     
     def __setattr__(self, name, value):
+        if not object.__getattr__(self, "resident_ready"):
+            object.__setattr__(self, name, value)
+            return
         if name in self.widget_schema:
             writable, default = self.widget_schema[name]
             if not writable:
