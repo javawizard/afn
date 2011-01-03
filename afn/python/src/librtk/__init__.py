@@ -393,7 +393,54 @@ class ResidentWidget(object):
                 name[:-len("_changed")] in self.state_schema):
             return self.state_events[name]
         raise AttributeError("Widget of type " + self.type + 
-                " has no attribute " + name)
+                " has no property " + name)
+    
+    def __setattr__(self, name, value):
+        if name in self.widget_schema:
+            writable, default = self.widget_schema[name]
+            if not writable:
+                raise Exception("You can't modify the widget property " + name
+                        + " on a widget of type " + self.type)
+            self.widget_properties[name] = value
+            self.send_set_widget(name)
+        elif self.parent is not None and name in self.parent.layout_schema:
+            writable, default = self.parent.layout_schema[name]
+            if not writable:
+                raise Exception("You can't modify the layout property " + name
+                        + " on a widget of type " + self.type + " contained "
+                        " in a parent of type " + self.parent.type)
+            self.layout_properties[name] = value
+            self.parent.send_set_layout(self, name)
+        elif name in self.state_schema:
+            raise Exception("You can't modify the state property " + name
+                    + " on a widget of type " + self.type + ". State "
+                    "attributes can only be modified by the client.")
+        elif name in self.call_schema:
+            raise Exception("You can't set values for properties "
+                    "corresponding to calls on widgets. You just tried to "
+                    "set the property " + name + " on a widget of type "
+                    + self.type + ".")
+        elif name in self.event_schema:
+            raise Exception("Events can't be set for now. In the future, this "
+                    "will be allowed, with the result that all listeners on "
+                    "the specified event will be removed and replaced with "
+                    "the value you're assigning to this property.")
+        elif (name.endswith("_changed") and
+                name[:-len("_changed")] in self.state_schema):
+            raise Exception("State events can't be set for now. In the future, this "
+                    "will be allowed, with the result that all listeners on "
+                    "the specified state event will be removed and replaced with "
+                    "the value you're assigning to this property.")
+        else:
+            object.__setattr__(self, name, value)
+    
+    def send_set_widget(self, name):
+        self.send({"action": "set_widget", "id": self.id, "properties":
+                {name: getattr(self, name)}})
+    
+    def send_set_layout(self, child, name):
+        self.send({"action": "set_layout", "id": self.id, "properties":
+                {name: getattr(child, name)}})
 
 class ResidentWidgetConstructor(object):
     def __init__(self, type):
