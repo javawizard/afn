@@ -6,6 +6,7 @@ import default_widget_schema, default_features
 import libautobus
 from threading import RLock
 from concurrent import synchronized
+from categories import TOPLEVEL, CONTAINER, WIDGET
 
 global_lock = RLock()
 locked = synchronized(global_lock)
@@ -261,13 +262,135 @@ class Connection(object):
         self.protocol_close()
 
 class ResidentWidget(object):
-    pass
+    @locked
+    def __init__(self, type, parent, **kwargs):
+        self.id = libautobus.get_next_id()
+        if isinstance(parent, Connection):
+            self.parent = None
+            self.connection = parent
+        else:
+            self.parent = parent
+            self.connection = parent.connection
+        self.children = [] # Create even for non-container types to make some
+        # iteration stuff simpler. This will just be empty for such types.
+        self.server_name, self.category = self.connection.schema[type][0:2]
+        if self.parent is None and self.category != TOPLEVEL:
+            raise Exception("Only a toplevel can have the connection as "
+                    "its parent.")
+        if self.parent is not None and self.category == TOPLEVEL:
+            raise Exception("Toplevels must have a connection as their "
+                    "parent, not another container or widget.")
+        if self.category != TOPLEVEL and self.parent.category == WIDGET:
+            raise Exception("Containers and widgets can only be added to "
+                    "toplevels and containers, not other widgets.")
+        (self.wiget_schema, self.layout_schema, self.state_schema,
+        self.call_schema, self.event_schema) = convert_widget_schema_to_maps(
+                self.connection.schema[type])
+        for key, (writable, default_value) in self.widget_schema.items():
+            if default_value is None and key not in kwargs:
+                raise Exception("Widget property " + key + " is required to "
+                        "construct a widget of type " + type + ", but this "
+                        "property was unspecified.")
+        if self.parent is not None:
+            self.parent.validate_layout_attributes(kwargs)
+        self.widget_properties = dict([(k, kwargs.get(k, d)) 
+                for k, (w, d) in self.widget_schema.items()])
+        if self.parent is not None:
+            self.layout_properties = dict([(k, kwargs.get(k, d)) 
+                    for k, (w, d) in self.parent.layout_schema.items()])
+        else:
+            self.layout_properties = {}
+        self.state_properties = dict([(k, d)
+                for k, (d,) in self.state_schema.items()])
+        self.state_events = dict([(k, Event()) for k in self.state_schema.keys()])
+        self.events = dict([(k, Event()) for k in self.event_schema.keys()])
+        self.owner.add_child(self)
+    
+    @property
+    def owner(self):
+        """
+        The owner of this widget. This is the same as the widget's parent, or
+        the connection if this widget is a toplevel widget.
+        """
+        return self.parent or self.connection
+    
+    def validate_layout_attributes(self, attributes):
+        """
+        Validates that the layout attributes required by this widget, which
+        must be a container or a toplevel, are present in the specified map of
+        attributes.
+        
+        This is used by ResidentWidget for a child widget to validate that it
+        contains all of the layout attributes needed by its parent-to-be.
+        Outside code generally shouldn't call this.
+        """
+        for key, (writable, default_value) in self.layout_schema.items():
+            if default_value is None and key not in attributes:
+                raise Exception("Layout property " + key + " is required for "
+                        + "children of " + self.category + "s of type "
+                         + self.type + ", but this property was unspecified.")
+    
+    def add_child(self, child):
+        """
+        Requests that this container or toplevel adopt the specified child.
+        This class implements this to add the child to the list of child
+        widgets and call the child's send_add function.
+        
+        This generally should not be called by outside code. It's called
+        implicitly when constructing a ResidentWidget instance, so you don't
+        need to call it yourself.
+        """
+        self.children.append(child)
+        child.send_create()
+    
+    def send_create(self):
+        """
+        Sends a message to the client telling it to perform the actual
+        creation of this widget. Outside code generally shouldn't call this;
+        it's called by a widget's parent-to-be in add_child.
+        """
+        message = {"action": "add", "id": self.id, "type": self.type,
+                "index": self.owner.get_child_index(self), "p_widget":
+                self.widget_properties, "p_layout": self.layout_properties}
+        if self.parent is not None:
+            message["parent"] = self.parent.id
+        self.connection.send(message)
+    
+    def get_child_index(self, child):
+        """
+        Returns the index at which a particular child is located in this
+        container or toplevel. If the specified widget is not a child of this
+        widget, ValueError will be raised.
+        """
+        return self.children.index(child)
+    
+    def dispatch(self, message):
+        """
+        Dispatches an event or a state property change to this widget. This
+        must only be called on the event queue. This will take care of
+        notifying any interested listeners.
+        """
 
 class ResidentWidgetConstructor(object):
-    pass
+    def __init__(self, type):
+        self.type = type
+    
+    def __call__(self, parent, **kwargs):
+        return ResidentWidget(self.type, parent, **kwargs)
     
 def default_validator(features, schema, connection):
     schema.update(default_widget_schema.schema)
+
+def convert_widget_schema_to_maps(schema):
+    """
+    Converts the schema for a particular widget (the value of a key in the
+    overall schema) to a five-element list, with each element corresponding
+    to a property type, of maps, each map containing the name of a property
+    of that type as the key and a list of all of the info about the property
+    (essentially, all of the items in its list in the schema after the
+    property's name) as the value.
+    """
+    return [dict([(k[0], k[1:]) for k in i]) for i in schema[2:7]]
 
 class ThreadedServer(Thread):
     pass
