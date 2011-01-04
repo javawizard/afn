@@ -68,7 +68,8 @@ This container represents a toplevel window. Unlike other widgets, windows do no
 ** '''resize(width, height)''': Resizes the window to the specified dimensions.
 ** '''relocate(x, y)''': Moves the window to a different location on the screen.
 ** '''center()''': Centers the window on the screen.
-* No events.
+* Events:
+** '''close_request()''': Fired when the user clicks the window's close button. Most applications will want to have this destroy the window, which they could do in, for example, the Python RTK library with window.close_request.listen(window.destroy).
 
 = Widgets =
 == Checkbox ==
@@ -138,6 +139,16 @@ This widget shows a piece of text that the user cannot change. It's typically us
 
 * Widget properties:
 ** '''text''': The text that should show in the label
+* No state properties.
+* No functions.
+* No events.
+
+== Spacer ==
+This widget is an empty region of space that has a fixed width and height.
+
+* Widget properties:
+** '''width''': The width of the spacer, in pixels
+** '''height''': The height of the spacer, in pixels
 * No state properties.
 * No functions.
 * No events.
