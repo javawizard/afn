@@ -3,8 +3,12 @@ This file is a list of devices with static IP addresses at Alex's house.
 New static IP addresses should be allocated starting at 10.236.1.150. DHCP
 runs from 10.236.1.25 to 10.236.1.100.
 
+The table specifies the ip address, the afn hostname if there is one, and a
+short description of the device.
+
+10.236.1.1    router    Router
+10.236.1.10   printer   Printer (The HP LaserJet 1200 in dad's office)
+10.236.1.151  sunstone  Phone gateway (Cisco SPA3102 located right by the router)
 
 
-10.236.1.1    Router
-10.236.1.10   Printer (The HP LaserJet 1200 in dad's office)
-10.236.1.151  Phone gateway (Cisco SPA3102 located right by the router)
+
