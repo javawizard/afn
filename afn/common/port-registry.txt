@@ -36,6 +36,12 @@ homeschool1:
 	       port temporarily. Make sure you know what you're doing as this ends up being
 	       web-visible at www.opengroove.org/cameras.
 
+sunstone:
+	80     Public web interface for configuring the telephony adapter
+
+router:
+	80     Public web interface for configuring the router
+
 
 
 
