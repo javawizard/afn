@@ -108,18 +108,9 @@ class Event(object):
 
 class Connection(object):
     @locked
-    def __init__(self, socket, connect_function, validators=[],
+    def __init__(self, protocol, connect_function, validators=[],
             use_default_widgets=True, custom_features=[]):
-        try:
-            self.protocol_init
-        except AttributeError:
-            raise Exception("Connection cannot be instantiated directly. You "
-                    "need to instantiate one of its subclasses. "
-                    "ThreadedConnection and AsyncSocket are two such "
-                    "subclasses included with librtk. Try "
-                    "help(librtk.ThreadedConnection) or "
-                    "help(librtk.AsyncSocket) for more information.")
-        self.socket = socket
+        self.protocol = protocol
         self.connect_function = connect_function
         self.validators = validators[:]
         if use_default_widgets:
@@ -128,11 +119,11 @@ class Connection(object):
         self.widgets = {}
         self.schema = {}
         self.features = default_features.features + custom_features
-        self.handshake_finished = False
         self.started = False
+        self.handshake_finished = False
         self.closed = False
         self.pre_start_messages = []
-        self.protocol_init()
+        protocol.protocol_init(self)
     
     @locked
     def start(self):
@@ -143,7 +134,7 @@ class Connection(object):
         if self.started:
             raise Exception("You can't call Connection.start twice.")
         self.started = True
-        self.protocol_start()
+        self.protocol.protocol_start()
         # If any messages were buffered up by self.protocol_receive before
         # we started, we'll process them now.
         messages = self.pre_start_messages
@@ -157,7 +148,7 @@ class Connection(object):
         Used by internal RTK code to send a packet to the client. The packet
         should be a dict ready to be put into json.dumps.
         """
-        self.protocol_send(packet)
+        self.protocol.protocol_send(packet)
     
     @locked
     def add_validator(self, validator):
@@ -173,7 +164,7 @@ class Connection(object):
         be put on the event queue, so no incoming changes will be processed
         while the function is running.
         """
-        self.protocol_event_ready(function)
+        self.protocol.protocol_event_ready(function)
     
     @locked
     def fatal_error(self, message):
@@ -236,6 +227,11 @@ class Connection(object):
                 # Dispatch the message.
                 widget.dispatch(data)
             self.schedule(dispatch)
+        elif data["action"] == "error":
+            print "CLIENT REPORTED AN ERROR: " + data["text"]
+        elif data["action"] == "drop":
+            print "CLIENT REPORTED A FATAL ERROR: " + data["text"]
+            self.close(hard=True)
         else:
             print ("Message (with action " + data["action"] + ") ignored "
                     "because it does not have a target id")
@@ -267,7 +263,7 @@ class Connection(object):
         if not hard:
             for widget in self.children[:]:
                 widget.destroy()
-        self.protocol_close()
+        self.protocol.protocol_close()
     
     def add_child(self, child):
         self.children.append(child)
@@ -558,13 +554,17 @@ def convert_widget_schema_to_maps(schema):
 class ThreadedServer(Thread):
     pass
 
-class ThreadedConnection(Connection):
-    def protocol_init(self):
-        self.threaded_out_queue = Queue()
+class ThreadedProtocol(object):
+    def __init__(self, socket):
+        self.socket = socket
+    
+    def protocol_init(self, connection):
+        self.connection = connection
+        self.out_queue = Queue()
         self.input_thread = libautobus.InputThread(self.socket,
-                self.protocol_receive, self.protocol_connection_lost)
+                connection.protocol_receive, connection.protocol_connection_lost)
         self.output_thread = libautobus.OutputThread(self.socket,
-                self.threaded_out_queue.get, shut_on_end=True)
+                self.out_queue.get, shut_on_end=True)
         self.event_thread = EventThread()
     
     def protocol_start(self):
@@ -573,7 +573,7 @@ class ThreadedConnection(Connection):
         self.event_thread.start()
     
     def protocol_send(self, data):
-        self.threaded_out_queue.put(data)
+        self.out_queue.put(data)
     
     def protocol_event_ready(self, function):
         self.event_thread.schedule(function)
