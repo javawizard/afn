@@ -131,6 +131,7 @@ class Dispatcher(object):
         besides dispatcher_init and dispatcher_close will be called before
         this function is called.
         """
+        raise Exception("Not implemented")
     
     def dispatcher_close(self):
         """
@@ -138,6 +139,7 @@ class Dispatcher(object):
         destroy all widgets that have not yet been destroyed. This will be the
         last function called on the dispatcher.
         """
+        raise Exception("Not implemented")
     
     def dispatcher_received_error(self, error):
         """
@@ -147,12 +149,14 @@ class Dispatcher(object):
         function as a dictionary with one key, text, which is the text of the
         error.
         """
+        raise Exception("Not implemented")
     
     def dispatcher_received_drop(self, error):
         """
         Same as dispatcher_received_error, but the error is fatal;
         dispatcher_close will be called shortly after this function returns. 
         """
+        raise Exception("Not implemented")
     
     def dispatcher_create(self, id, parent, type, index, widget_properties,
             layout_properties):
@@ -168,24 +172,28 @@ class Dispatcher(object):
         layout_properties is a dictionary of the layout properties the widget
         is to be created with.
         """
+        raise Exception("Not implemented")
     
     def dispatcher_destroy(self, id):
         """
         Called to destroy a widget. id is the integer id of the widget to
         destroy.
         """
+        raise Exception("Not implemented")
     
     def dispatcher_set_widget(self, id, properties):
         """
         Called to change a widget's widget properties. id is the integer id of
         the widget. properties is a dictionary of properties to change.
         """
+        raise Exception("Not implemented")
     
     def dispatcher_set_layout(self, id, properties):
         """
         Same as dispatcher_set_widget, but sets layout properties instead of
         widget properties.
         """
+        raise Exception("Not implemented")
     
 
 
