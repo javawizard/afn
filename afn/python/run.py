@@ -11,4 +11,9 @@ if len(sys.argv) <= 1:
     sys.exit(0)
 module_name = sys.argv[1]
 del sys.argv[1]
-__import__(module_name).main()
+module = __import__(module_name)
+if "." in module_name:
+    subnames = module_name.split(".")[1:]
+    for subname in subnames:
+        module = getattr(module, subname)
+module.main()
