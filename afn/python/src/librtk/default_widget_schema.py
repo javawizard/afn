@@ -14,6 +14,7 @@ schema = {
             ["relocate"],
             ["center"], 
         ], [ # Events:
+            ["close_request"],
         ]
     ],
     "VBox": [

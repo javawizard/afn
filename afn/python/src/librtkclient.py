@@ -45,6 +45,8 @@ class Connection(object):
         (as opposed to a widget function being called). *args are the arguments
         to be sent with the event.
         """
+        self.send({"action":"event", "id":id, "name":name,
+                "user":user, "args":args})
     
     @locked
     def fatal_error(self, message):

@@ -39,6 +39,7 @@ class TkinterDispatcher(Dispatcher):
         """
         self.master = master
         self.schedule = event_function
+        self.close_function = close_function
         self.widget_constructors = {}
         # Update with defaults first, then user-specified so that
         # user-specified constructors override the buit-in ones
@@ -61,8 +62,7 @@ class TkinterDispatcher(Dispatcher):
         pass
 
     def dispatcher_close(self):
-        print "Tkinter dispatcher closed"
-        print "FIXME: actually destroy windows etc here"
+        self.schedule(partial(self.close))
 
     def dispatcher_received_error(self, error):
         self.schedule(partial(self.received_error, error))
@@ -138,6 +138,12 @@ class TkinterDispatcher(Dispatcher):
         widget.layout_properties.update(properties)
         if widget.parent is not None:
             widget.parent.update_layout_properties(widget, properties)
+    
+    def close(self):
+        for toplevel in self.toplevels[:]:
+            toplevel.destroy()
+        self.close_function()
+        # TODO: consider whether the children should be destroyed first
 
 
 class Widget(object):
@@ -168,8 +174,7 @@ class Widget(object):
 class Window(Widget):
     def setup(self):
         self.widget = tkinter.Toplevel(self.dispatcher.master)
-        self.widget.protocol("WM_DELETE_WINDOW", partial(self.send_event, 
-                "close_request", True))
+        self.widget.protocol("WM_DELETE_WINDOW", self.window_close_request)
         if "title" in self.widget_properties:
             self.widget.title(self.widget_properties["title"])
     
@@ -179,6 +184,9 @@ class Window(Widget):
     def update_widget_properties(self, properties):
         if "title" in properties:
             self.widget.title(properties["title"])
+    
+    def window_close_request(self):
+        self.send_event("close_request", True)
 
 
 class Label(Widget):
@@ -207,9 +215,23 @@ class HBox(Widget):
         child.widget.pack(side=tkinter.LEFT)
 
 
+class Button(Widget):
+    def setup(self):
+        self.widget = tkinter.Button(self.parent.container,
+                text=self.widget_properties["text"], 
+                command=self.button_clicked)
+    
+    def update_widget_properties(self, properties):
+        if "text" in properties:
+            self.widget["text"] = properties["text"]
+    
+    def button_clicked(self):
+        self.send_event("clicked", True)
+
+
 default_widgets = {}
 default_widgets.update(dict([(w.__name__, w) for w in
-        [Window, Label, VBox, HBox] 
+        [Window, Label, VBox, HBox, Button] 
         ]))
 default_features = []
 default_features += ["widget:" + w for w in default_widgets.keys()]

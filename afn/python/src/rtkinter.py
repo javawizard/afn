@@ -30,7 +30,11 @@ def main():
     connection = Connection(protocol, dispatcher, default_features)
     connection.start()
     print "Started up!"
-    tk.mainloop()
+    try:
+        tk.mainloop()
+    except KeyboardInterrupt:
+        print "Interrupted, shutting down"
+        connection.close()
     print "Terminated."
     
 
