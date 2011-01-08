@@ -552,7 +552,39 @@ def convert_widget_schema_to_maps(schema):
     return [dict([(k[0], k[1:]) for k in i]) for i in schema[2:7]]
 
 class ThreadedServer(Thread):
-    pass
+    def __init__(self, host, port, connect_function, **kwargs):
+        """
+        Creates a new ThreadedServer that will listen on the specified host
+        and port and call the specified function when a new connection has
+        been received. The argument to the function will be the connection
+        itself.
+        
+        The specified keyword arguments will be passed into
+        Connection.__init__. protocol and connect_function will already be
+        specified, but values for any of the other arguments can be passed in.
+        """
+        self.host = host
+        self.port = port
+        self.connect_function = connect_function
+        self.kwargs = kwargs
+        self.socket = socket.socket()
+        self.socket.connect((host, port))
+        self.running = True
+    
+    def run(self):
+        while self.running:
+            socket = self.socket.accept()
+            protocol = ThreadedProtocol(socket)
+            connection = Connection(protocol, self.connect_function,
+                    **self.kwargs)
+            connection.start()
+    
+    def shutdown(self):
+        self.running = False
+        try:
+            self.socket.close()
+        except:
+            pass
 
 class ThreadedProtocol(object):
     def __init__(self, socket):

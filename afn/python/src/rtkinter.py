@@ -20,6 +20,7 @@ def main():
     if ":" not in location:
         location += ":" + str(DEFAULT_PORT)
     host, port = location.split(":")
+    port = int(port)
     tk = tkinter.Tk()
     tk.withdraw()
     socket = Socket()
