@@ -37,6 +37,16 @@ class Connection(object):
         self.protocol.protocol_send(packet)
     
     @locked
+    def send_event(self, id, name, user, *args):
+        """
+        Sends an event to the server. id is the id of the widget that the
+        event occurred on. name is the name of the event. user is whether or
+        not the event was triggered by a user interacting with the interface
+        (as opposed to a widget function being called). *args are the arguments
+        to be sent with the event.
+        """
+    
+    @locked
     def fatal_error(self, message):
         # TODO: Right now, errors that are most likely the fault of the
         # programmer and errors that result from the client messing up are

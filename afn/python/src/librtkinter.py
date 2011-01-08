@@ -42,7 +42,7 @@ class TkinterDispatcher(Dispatcher):
         self.widget_constructors = {}
         # Update with defaults first, then user-specified so that
         # user-specified constructors override the buit-in ones
-        if self.use_default_widgets:
+        if use_default_widgets:
             self.widget_constructors.update(default_widgets)
         self.widget_constructors.update(widget_constructors)
         self.widget_map = {} # Map of widget ids to widgets
@@ -53,6 +53,9 @@ class TkinterDispatcher(Dispatcher):
 
     def dispatcher_init(self, connection):
         self.connection = connection
+    
+    def dispatcher_start(self):
+        pass
 
     def dispatcher_ready(self):
         pass
@@ -96,6 +99,9 @@ class TkinterDispatcher(Dispatcher):
             self.fatal_error("Trying to add child " + str(id) + " to parent "
                     + str(parent) + ", which does not exist.")
             return
+        if id in self.widget_map:
+            self.fatal_error("Trying to add a widget with id " + str(id) +
+                    " but there's already a non-destroyed widget with that id")
         constructor = self.widget_constructors[type]
         widget = constructor()
         widget.dispatcher = self
@@ -107,6 +113,8 @@ class TkinterDispatcher(Dispatcher):
         widget.widget_properties = widget_properties.copy()
         widget.layout_properties = layout_properties.copy()
         widget.state_properties = {}
+        widget.send_event = partial(self.connection.send_event, id)
+        self.widget_map[id] = widget
         if parent is None:
             self.toplevels.append(widget)
         else:
@@ -115,8 +123,21 @@ class TkinterDispatcher(Dispatcher):
         if parent is not None:
             widget.parent.setup_child(widget)
     
+    def destroy(self, id):
+        widget = self.widget_map[id]
+        # FIXME: Tell the parent about the destroy, too
+        widget.destroy()
+    
     def set_widget(self, id, properties):
-        print "FIXME: implement TkinterDispatcher.set_widget"
+        widget = self.widget_map[id]
+        widget.widget_properties.update(properties)
+        widget.update_widget_properties(properties)
+    
+    def set_layout(self, id, properties):
+        widget = self.widget_map[id]
+        widget.layout_properties.update(properties)
+        if widget.parent is not None:
+            widget.parent.update_layout_properties(widget, properties)
 
 
 class Widget(object):
@@ -124,6 +145,15 @@ class Widget(object):
         self.dispatcher.connection.fatal_error("Widget type " + type(self)
                 + " is not a container, but you just tried to add a child "
                 "to it.")
+    
+    def destroy(self):
+        self.widget.destroy()
+    
+    def update_widget_properties(self, properties):
+        pass
+    
+    def update_layout_properties(self, child, properties):
+        pass
     
     @property
     def container(self):
@@ -138,33 +168,43 @@ class Widget(object):
 class Window(Widget):
     def setup(self):
         self.widget = tkinter.Toplevel(self.dispatcher.master)
+        self.widget.protocol("WM_DELETE_WINDOW", partial(self.send_event, 
+                "close_request", True))
         if "title" in self.widget_properties:
             self.widget.title(self.widget_properties["title"])
     
     def setup_child(self, child):
-        child.pack()
+        child.widget.pack()
+    
+    def update_widget_properties(self, properties):
+        if "title" in properties:
+            self.widget.title(properties["title"])
 
 
 class Label(Widget):
     def setup(self):
-        self.widget = tkinter.Label(self.parent, 
+        self.widget = tkinter.Label(self.parent.container, 
                 text=self.widget_properties["text"])
+    
+    def update_widget_properties(self, properties):
+        if "text" in properties:
+            self.widget["text"] = properties["text"]
 
 
 class VBox(Widget):
     def setup(self):
-        self.widget = tkinter.Frame(self.parent)
+        self.widget = tkinter.Frame(self.parent.container)
     
     def setup_child(self, child):
-        child.pack(side=tkinter.TOP)
+        child.widget.pack(side=tkinter.TOP)
 
 
 class HBox(Widget):
     def setup(self):
-        self.widget = tkinter.Frame(self.parent)
+        self.widget = tkinter.Frame(self.parent.container)
     
     def setup_child(self, child):
-        child.pack(side=tkinter.LEFT)
+        child.widget.pack(side=tkinter.LEFT)
 
 
 default_widgets = {}

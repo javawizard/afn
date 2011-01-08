@@ -563,17 +563,19 @@ class ThreadedServer(Thread):
         Connection.__init__. protocol and connect_function will already be
         specified, but values for any of the other arguments can be passed in.
         """
+        Thread.__init__(self)
         self.host = host
         self.port = port
         self.connect_function = connect_function
         self.kwargs = kwargs
         self.socket = socket.socket()
-        self.socket.connect((host, port))
+        self.socket.bind((host, port))
+        self.socket.listen(5)
         self.running = True
     
     def run(self):
         while self.running:
-            socket = self.socket.accept()
+            socket, _ = self.socket.accept()
             protocol = ThreadedProtocol(socket)
             connection = Connection(protocol, self.connect_function,
                     **self.kwargs)
@@ -611,7 +613,7 @@ class ThreadedProtocol(object):
         self.event_thread.schedule(function)
     
     def protocol_close(self):
-        self.threaded_out_queue.put(None)
+        self.out_queue.put(None)
         self.event_thread.schedule(None)
 
 # Async Implementation.
