@@ -23,10 +23,11 @@ class TkinterDispatcher(Dispatcher):
     """
     This is the Tkinter dispatcher implementation.
     """
-    def __init__(self, event_function, close_function, widget_constructors,
-            use_default_widgets=True):
+    def __init__(self, master, event_function, close_function,
+            widget_constructors={}, use_default_widgets=True):
         """
-        Creates a new Tkinter dispatcher. event_function is a function that
+        Creates a new Tkinter dispatcher. master is a Tk instance under which
+        widgets and windows will be created. event_function is a function that
         will be called whenever this class needs a function run on the Tkinter
         event loop. close_function is a function that will be called when the
         dispatcher is informed that the connection has been lost.
@@ -36,6 +37,7 @@ class TkinterDispatcher(Dispatcher):
         dictionary; widgets specified in widget_constructors will override
         those specified in default_widgets.
         """
+        self.master = master
         self.schedule = event_function
         self.widget_constructors = {}
         # Update with defaults first, then user-specified so that
@@ -96,6 +98,7 @@ class TkinterDispatcher(Dispatcher):
             return
         constructor = self.widget_constructors[type]
         widget = constructor()
+        widget.dispatcher = self
         widget.id = id
         widget.parent = self.widget_map[parent] if parent is not None else None
         widget.type = type
@@ -115,8 +118,61 @@ class TkinterDispatcher(Dispatcher):
     def set_widget(self, id, properties):
         print "FIXME: implement TkinterDispatcher.set_widget"
 
+
+class Widget(object):
+    def setup_child(self, child):
+        self.dispatcher.connection.fatal_error("Widget type " + type(self)
+                + " is not a container, but you just tried to add a child "
+                "to it.")
     
+    @property
+    def container(self):
+        return self.widget
     
+    @container.setter
+    def container(self, value):
+        # Override the property if the container is set
+        self.__dict__["container"] = value
+
+
+class Window(Widget):
+    def setup(self):
+        self.widget = tkinter.Toplevel(self.dispatcher.master)
+        if "title" in self.widget_properties:
+            self.widget.title(self.widget_properties["title"])
+    
+    def setup_child(self, child):
+        child.pack()
+
+
+class Label(Widget):
+    def setup(self):
+        self.widget = tkinter.Label(self.parent, 
+                text=self.widget_properties["text"])
+
+
+class VBox(Widget):
+    def setup(self):
+        self.widget = tkinter.Frame(self.parent)
+    
+    def setup_child(self, child):
+        child.pack(side=tkinter.TOP)
+
+
+class HBox(Widget):
+    def setup(self):
+        self.widget = tkinter.Frame(self.parent)
+    
+    def setup_child(self, child):
+        child.pack(side=tkinter.LEFT)
+
+
+default_widgets = {}
+default_widgets.update(dict([(w.__name__, w) for w in
+        [Window, Label, VBox, HBox] 
+        ]))
+default_features = []
+default_features += ["widget:" + w for w in default_widgets.keys()]
 
 
 
