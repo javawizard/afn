@@ -114,7 +114,7 @@ def main():
     if len(sys.argv) <= 2:
         print "You need to specify a port and an example name."
         return
-    server = serve_example(int(sys.argv[1]), sys.argv[2])
+    server = serve_example(int(sys.argv[1]), sys.argv[2], localhost_only=False)
     from time import sleep
     try:
         while True:

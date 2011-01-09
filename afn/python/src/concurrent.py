@@ -4,7 +4,7 @@ from threading import Thread, RLock
 from functools import partial, update_wrapper
 import inspect
 
-def as_new_thread(function):
+def as_new_thread(function): 
     """
     A decorator that causes the decorated function to be invoked in a new
     thread. The function returned will invoke the specified function on a
