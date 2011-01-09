@@ -1,4 +1,5 @@
 
+from __future__ import with_statement
 import librtk
 
 __doc__ = """\
