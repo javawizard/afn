@@ -123,7 +123,15 @@ class Connection(object):
         self.handshake_finished = False
         self.closed = False
         self.pre_start_messages = []
+        self.close_functions = []
         protocol.protocol_init(self)
+    
+    @locked
+    def add_close_function(self, function):
+        """
+        Adds a function that will be called when this connection is closed.
+        """
+        self.close_functions.append(function)
     
     @locked
     def start(self):
@@ -264,6 +272,11 @@ class Connection(object):
             for widget in self.children[:]:
                 widget.destroy()
         self.protocol.protocol_close()
+        for function in self.close_functions:
+            try:
+                function()
+            except:
+                print_exc()
     
     def add_child(self, child):
         self.children.append(child)
