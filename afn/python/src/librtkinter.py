@@ -152,7 +152,7 @@ class Widget(librtkclient.Widget):
     def post_setup(self, child):
         # This will always be overridden to pack the widget in its parent,
         # so we'll use it to send back an error.
-        self.dispatcher.connection.fatal_error("Widget type " + type(self)
+        self.connection.fatal_error("Widget type " + type(self)
                 + " is not a container, but you just tried to add a child "
                 "to it.")
     
@@ -181,12 +181,12 @@ class Widget(librtkclient.Widget):
 
 class Window(Widget):
     def setup(self):
-        self.widget = tkinter.Toplevel(self.dispatcher.master)
+        self.widget = tkinter.Toplevel(self.connection.tk_master)
         self.widget.protocol("WM_DELETE_WINDOW", self.window_close_request)
         if "title" in self.widget_properties:
             self.widget.title(self.widget_properties["title"])
     
-    def setup_child(self, child):
+    def post_setup(self, child):
         child.widget.pack()
     
     def update_widget(self, properties):

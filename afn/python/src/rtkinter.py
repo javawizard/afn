@@ -1,7 +1,7 @@
 
 from librtk import ThreadedProtocol
 from librtkclient import Connection
-from librtkinter import TkinterDispatcher, default_features
+from librtkinter import widget_set, feature_set
 from librtk.constants import DEFAULT_PORT
 from socket import socket as Socket
 import Tkinter as tkinter
@@ -26,8 +26,9 @@ def main():
     socket = Socket()
     socket.connect((host, port))
     protocol = ThreadedProtocol(socket)
-    dispatcher = TkinterDispatcher(tk, tk.after_idle, lambda: tk.destroy())
-    connection = Connection(protocol, dispatcher, default_features)
+    connection = Connection(protocol, tk.after_idle, tk.destroy, feature_set,
+            widget_set)
+    connection.tk_master = tk
     connection.start()
     print "Started up!"
     try:

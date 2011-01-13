@@ -9,7 +9,7 @@ locked = synchronized(global_lock)
 class Connection(object):
     @locked
     def __init__(self, protocol, event_function, close_function, features,
-            error_function=lambda fatal, packet: None, widget_constructors={}):
+            widget_constructors={}, error_function=lambda fatal, packet: None):
         self.protocol = protocol
         self.schedule = event_function
         self.close_function = close_function
@@ -160,7 +160,7 @@ class Connection(object):
             parent_widget.children[index:index] = [widget]
         self.tri_call(widget, "setup")
     
-    def destroy(self, id):
+    def on_destroy(self, id):
         widget = self.widget_map[id]
         for child in widget.children[:]:
             self.destroy(child.id)
@@ -172,12 +172,12 @@ class Connection(object):
         else:
             self.toplevels.remove(widget)
     
-    def set_widget(self, id, properties):
+    def on_set_widget(self, id, properties):
         widget = self.widget_map[id]
         widget.widget_properties.update(properties)
         widget.update_widget(properties)
     
-    def set_layout(self, id, properties):
+    def on_set_layout(self, id, properties):
         widget = self.widget_map[id]
         widget.layout_properties.update(properties)
         if widget.parent:
