@@ -246,12 +246,9 @@ class Button(Widget):
         self.send_event("clicked", True)
 
 
-widget_set = {}
-widget_set.update(dict([(w.__name__, w) for w in
-        [Window, Label, VBox, HBox, BorderPanel, Button] 
-        ]))
-feature_set = []
-feature_set += ["widget:" + w for w in widget_set.keys()]
+widget_list = [Window, Label, VBox, HBox, BorderPanel, Button]
+widget_set = dict([(w.__name__, w) for w in widget_list])
+feature_set = ["widget:" + w for w in widget_set.keys()]
 
 
 
