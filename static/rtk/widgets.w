@@ -19,6 +19,13 @@ Same as HBox, but lays out its components top to bottom instead of left to right
 * No functions.
 * No events.
 
+== BorderPanel ==
+A container that can contain exactly one child element. It places a border around the child. The border's size, style, and color can be set; clients are not required to support all of these, and the ones they do support can be discovered by the presence of the features widget:BorderPanel:size, widget:BorderPanel:style, and widget:BorderPanel:color. In the future, features will specify the availability of particular styles.
+
+* Widget properties:
+** '''size''': The size, in pixels, of the border.
+** '''style''': The style of the border. Right now this is a string, one of "solid", "raised", "etched", "sunken", etc. TODO: decide on the supported names, and perhaps write a function in connection that chooses the first supported border type of a list of types based on the connection's features
+
 == Deck ==
 This container shows only one of its children at a time.
 
