@@ -1,0 +1,12 @@
+This file contains the authoritative list of extensions in the phone system, as well as the mapping patterns that should be used for new extensions.
+
+Patterns:
+
+	[1-3]X:   Normal extensions
+	4XX:  Trunks (PSTN, GTalk, etc)
+
+Extensions:
+	
+	11:   Analog house line (portable phones, fax machine, etc)
+	12:   Alex's laptop
+	401:  PSTN
