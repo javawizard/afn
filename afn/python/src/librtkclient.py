@@ -1,34 +1,39 @@
 
 from concurrent import synchronized
 from threading import RLock
+from functools import partial
 
 global_lock = RLock()
 locked = synchronized(global_lock)
 
 class Connection(object):
     @locked
-    def __init__(self, protocol, dispatcher, features):
+    def __init__(self, protocol, event_function, close_function, features,
+            error_function=lambda fatal, packet: None, widget_constructors={}):
         self.protocol = protocol
-        self.dispatcher = dispatcher
+        self.schedule = event_function
+        self.close_function = close_function
+        self.error_function = error_function
         self.features = features
+        self.widget_constructors = widget_constructors.copy()
         self.started = False
         self.handshake_finished = False
         self.closed = False
+        self.widget_map = {}
+        self.toplevels = []
         # We shouldn't need a pre-start list of messages like the server does
         # since the server's not supposed to send us anything until after we
         # send it the handshake packet. I might add such a list later if a lot
         # of non-conformant servers (the type that want to accept every client
         # and so send the accept message immediately after a connect) start
         # turning up on the internet.
-        if self.started:
-            raise Exception("You can't call Connection.start twice.")
         protocol.protocol_init(self)
-        dispatcher.dispatcher_init(self)
     
     @locked
     def start(self):
+        if self.started:
+            raise Exception("You can't call Connection.start twice.")
         self.started = True
-        self.dispatcher.dispatcher_start()
         self.protocol.protocol_start()
         self.send({"action": "connect", "features": self.features})
     
@@ -47,6 +52,12 @@ class Connection(object):
         """
         self.send({"action":"event", "id":id, "name":name,
                 "user":user, "args":args})
+    
+    @locked
+    def send_set_state(self, id, properties):
+        """
+        """
+        self.send({"action":"set_state", "id":id, "properties": properties})
     
     @locked
     def fatal_error(self, message):
@@ -70,11 +81,11 @@ class Connection(object):
             return
         if packet["action"] == "error":
             print "SERVER REPORTED AN ERROR: " + packet["text"]
-            self.dispatcher.dispatcher_received_error(packet)
+            self.error_function(False, packet)
             return
         if packet["action"] == "drop":
             print "SERVER REPORTED A FATAL ERROR: " + packet["text"]
-            self.dispatcher.dispatcher_received_drop(packet)
+            self.error_function(True, packet)
             self.close()
             return
         if not self.handshake_finished:
@@ -83,25 +94,24 @@ class Connection(object):
                 return
             self.server_features = packet["features"]
             self.handshake_finished = True
-            self.dispatcher.dispatcher_ready()
         action = packet["action"]
         if action == "create":#i,parent,typein,dex,p_widget,p_layout
-            self.dispatcher.dispatcher_create(packet["id"],
+            self.schedule(partial(self.on_create, packet["id"],
                     packet.get("parent", None), packet["type"],
                     packet.get("index", None), packet.get("p_widget", {}),
-                    packet.get("p_layout", {}))
+                    packet.get("p_layout", {})))
         elif action == "destroy":
-            self.dispatcher.dispatcher_destroy(packet["id"])
+            self.schedule(partial(self.on_destroy, packet["id"]))
         elif action == "reorder":
-            self.dispatcher.dispatcher_reorder(packet)
+            self.schedule(partial(self.on_reorder, packet))
         elif action == "set_widget":
-            self.dispatcher.dispatcher_set_widget(packet["id"],
-                    packet["properties"])
+            self.schedule(partial(self.on_set_widget, packet["id"],
+                    packet["properties"]))
         elif action == "set_layout":
-            self.dispatcher.dispatcher_set_layout(packet["id"],
-                    packet["properties"])
+            self.schedule(partial(self.on_set_layout, packet["id"],
+                    packet["properties"]))
         elif action == "call":
-            self.dispatcher.dispatcher_call(packet)
+            self.schedule(partial(self.on_call, packet))
         else:
             print "Ignoring message with action " + action
     
@@ -109,103 +119,181 @@ class Connection(object):
     def protocol_connection_lost(self):
         self.close()
     
+    def tri_call(self, widget, name, *args):
+        if widget.parent and hasattr(widget.parent, "pre_" + name):
+            getattr(widget.parent, "pre_" + name)(widget, *args)
+        if hasattr(widget, name):
+            getattr(widget, name)(*args)
+        if widget.parent and hasattr(widget.parent, "post_" + name):
+            getattr(widget.parent, "post_" + name)(widget, *args)
+    
     @locked
     def close(self):
         if self.closed:
             return
         self.closed = True
+        for toplevel in self.toplevels[:]:
+            self.on_destroy(toplevel.id)
         self.protocol.protocol_close()
-        self.dispatcher.dispatcher_close()
-
-class Dispatcher(object):
-    """
-    This class specifies the dispatcher interface. Dispatchers are objects
-    passed into Connection instances. They implement the actual display
-    function of an RTK client.
+        self.closed_function()
     
-    Dispatchers are not required to subclass from this class, but they can;
-    This class exists primarily to document the functions a dispatcher must
-    have. All functions on this class raise exceptions indicating that they
-    have not been implemented.
-    """
-    def dispatcher_init(self, connection):
-        """
-        Initializes this dispatcher. The connection this dispatcher was passed
-        to is passed as the argument.
-        """
-        raise Exception("Not implemented")
-    
-    def dispatcher_ready(self):
-        """
-        Called once the connection has been started and the handshake has been
-        completed. The dispatcher should expect widget function calls to start
-        arriving shortly after this function is called. No other functions
-        besides dispatcher_init and dispatcher_close will be called before
-        this function is called.
-        """
-        raise Exception("Not implemented")
-    
-    def dispatcher_close(self):
-        """
-        Called when the connection has been shut down. The dispatcher should
-        destroy all widgets that have not yet been destroyed. This will be the
-        last function called on the dispatcher.
-        """
-        raise Exception("Not implemented")
-    
-    def dispatcher_received_error(self, error):
-        """
-        Called when an error is sent by the server. This is not a fatal error;
-        communications will continue as normal after the error. The dispatcher
-        should inform the user of the error, which is passed into this
-        function as a dictionary with one key, text, which is the text of the
-        error.
-        """
-        raise Exception("Not implemented")
-    
-    def dispatcher_received_drop(self, error):
-        """
-        Same as dispatcher_received_error, but the error is fatal;
-        dispatcher_close will be called shortly after this function returns. 
-        """
-        raise Exception("Not implemented")
-    
-    def dispatcher_create(self, id, parent, type, index, widget_properties,
+    def on_create(self, id, parent_id, type, index, widget_properties,
             layout_properties):
-        """
-        Called to create a widget. id is the integer id that is to be assigned
-        to the widget. parent is the id of the parent widget, or None if this
-        is to be a toplevel. type is the type of the widget ("Window", "VBox",
-        "Button", "Label", etc). index is the index within the widget's parent
-        at which the widget is to be created (which will range from 0 to the
-        number of widgets the parent currently contains, inclusive); this is
-        unspecified in the case of a toplevel. widget_properties is a
-        dictionary of the properties the widget is to be created with.
-        layout_properties is a dictionary of the layout properties the widget
-        is to be created with.
-        """
-        raise Exception("Not implemented")
+        if type not in self.widget_constructors:
+            self.fatal_error("Unsupported widget type: " + type)
+            return
+        if parent_id is not None and parent_id not in self.widget_map:
+            self.fatal_error("Trying to add child " + str(id) + " to parent "
+                    + str(parent_id) + ", which does not exist.")
+            return
+        if id in self.widget_map:
+            self.fatal_error("Trying to add a widget with id " + str(id) + 
+                    " but there's already a non-destroyed widget with that id")
+        constructor = self.widget_constructors[type]
+        parent_widget = self.widget_map[parent_id] if parent_id is not None else None
+        widget = constructor(self, id, parent_widget, type, index,
+                widget_properties.copy(), layout_properties.copy())
+        self.widget_map[id] = widget
+        if parent_widget is None:
+            self.toplevels.append(widget)
+        else:
+            parent_widget.children[index:index] = [widget]
+        self.tri_call(widget, "setup")
     
-    def dispatcher_destroy(self, id):
-        """
-        Called to destroy a widget. id is the integer id of the widget to
-        destroy.
-        """
-        raise Exception("Not implemented")
+    def destroy(self, id):
+        widget = self.widget_map[id]
+        for child in widget.children[:]:
+            self.destroy(child.id)
+        self.tri_call(widget, "destroy")
+        del self.widget_map[id]
+        if widget.parent:
+            widget.parent.children.remove(widget)
+            widget.parent = None # Unlink to try and minimize reference cycles
+        else:
+            self.toplevels.remove(widget)
     
-    def dispatcher_set_widget(self, id, properties):
-        """
-        Called to change a widget's widget properties. id is the integer id of
-        the widget. properties is a dictionary of properties to change.
-        """
-        raise Exception("Not implemented")
+    def set_widget(self, id, properties):
+        widget = self.widget_map[id]
+        widget.widget_properties.update(properties)
+        widget.update_widget(properties)
     
-    def dispatcher_set_layout(self, id, properties):
-        """
-        Same as dispatcher_set_widget, but sets layout properties instead of
-        widget properties.
-        """
-        raise Exception("Not implemented")
+    def set_layout(self, id, properties):
+        widget = self.widget_map[id]
+        widget.layout_properties.update(properties)
+        if widget.parent:
+            widget.parent.update_layout(widget, properties)
+    
+
+class Widget(object):
+    def __init__(self, connection, id, parent, type, index,
+            widget_properties, layout_properties):
+        self.connection = connection
+        self.id = id
+        self.parent = parent
+        self.type = type
+        self.index = index
+        self.widget_properties = widget_properties
+        self.layout_properties = layout_properties
+        self.children = []
+    
+    def send_event(self, name, user, *args):
+        self.connection.send_event(self.id, name, user, *args)
+    
+    def send_set_state(self, name, properties, **kwargs):
+        p = {}
+        p.update(properties)
+        p.update(kwargs)
+        self.connection.send_set_state(self.id, name, p)
+
+#class Dispatcher(object):
+#    """
+#    This class specifies the dispatcher interface. Dispatchers are objects
+#    passed into Connection instances. They implement the actual display
+#    function of an RTK client.
+#    
+#    Dispatchers are not required to subclass from this class, but they can;
+#    This class exists primarily to document the functions a dispatcher must
+#    have. All functions on this class raise exceptions indicating that they
+#    have not been implemented.
+#    """
+#    def dispatcher_init(self, connection):
+#        """
+#        Initializes this dispatcher. The connection this dispatcher was passed
+#        to is passed as the argument.
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_ready(self):
+#        """
+#        Called once the connection has been started and the handshake has been
+#        completed. The dispatcher should expect widget function calls to start
+#        arriving shortly after this function is called. No other functions
+#        besides dispatcher_init and dispatcher_close will be called before
+#        this function is called.
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_close(self):
+#        """
+#        Called when the connection has been shut down. The dispatcher should
+#        destroy all widgets that have not yet been destroyed. This will be the
+#        last function called on the dispatcher.
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_received_error(self, error):
+#        """
+#        Called when an error is sent by the server. This is not a fatal error;
+#        communications will continue as normal after the error. The dispatcher
+#        should inform the user of the error, which is passed into this
+#        function as a dictionary with one key, text, which is the text of the
+#        error.
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_received_drop(self, error):
+#        """
+#        Same as dispatcher_received_error, but the error is fatal;
+#        dispatcher_close will be called shortly after this function returns. 
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_create(self, id, parent, type, index, widget_properties,
+#            layout_properties):
+#        """
+#        Called to create a widget. id is the integer id that is to be assigned
+#        to the widget. parent is the id of the parent widget, or None if this
+#        is to be a toplevel. type is the type of the widget ("Window", "VBox",
+#        "Button", "Label", etc). index is the index within the widget's parent
+#        at which the widget is to be created (which will range from 0 to the
+#        number of widgets the parent currently contains, inclusive); this is
+#        unspecified in the case of a toplevel. widget_properties is a
+#        dictionary of the properties the widget is to be created with.
+#        layout_properties is a dictionary of the layout properties the widget
+#        is to be created with.
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_destroy(self, id):
+#        """
+#        Called to destroy a widget. id is the integer id of the widget to
+#        destroy.
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_set_widget(self, id, properties):
+#        """
+#        Called to change a widget's widget properties. id is the integer id of
+#        the widget. properties is a dictionary of properties to change.
+#        """
+#        raise Exception("Not implemented")
+#    
+#    def dispatcher_set_layout(self, id, properties):
+#        """
+#        Same as dispatcher_set_widget, but sets layout properties instead of
+#        widget properties.
+#        """
+#        raise Exception("Not implemented")
     
 
 
