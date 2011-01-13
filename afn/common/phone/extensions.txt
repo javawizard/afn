@@ -10,3 +10,4 @@ Extensions:
 	11:   Analog house line (portable phones, fax machine, etc)
 	12:   Alex's laptop
 	401:  PSTN
+	7:    P.A. system
