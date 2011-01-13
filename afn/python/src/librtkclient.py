@@ -132,10 +132,8 @@ class Connection(object):
         if self.closed:
             return
         self.closed = True
-        for toplevel in self.toplevels[:]:
-            self.on_destroy(toplevel.id)
         self.protocol.protocol_close()
-        self.closed_function()
+        self.schedule(partial(self.on_close))
     
     def on_create(self, id, parent_id, type, index, widget_properties,
             layout_properties):
@@ -182,6 +180,11 @@ class Connection(object):
         widget.layout_properties.update(properties)
         if widget.parent:
             widget.parent.update_layout(widget, properties)
+    
+    def on_close(self):
+        for toplevel in self.toplevels[:]:
+            self.on_destroy(toplevel.id)
+        self.close_function()
     
 
 class Widget(object):
