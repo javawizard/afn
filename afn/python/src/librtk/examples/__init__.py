@@ -1,6 +1,7 @@
 
 from __future__ import with_statement
 import librtk
+import librtk.protocols
 
 """
 This package contains a number of RTK example applications. All of them are
@@ -26,7 +27,7 @@ def serve_example(port, name, localhost_only=True):
     """
     __import__("librtk.examples." + name)
     import sys
-    return librtk.ThreadedServer("127.0.0.1" if localhost_only else "", 
+    return librtk.protocols.ThreadedServer("127.0.0.1" if localhost_only else "", 
             port, sys.modules["librtk.examples." + name].start)
 
 def main():

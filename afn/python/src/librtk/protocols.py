@@ -6,7 +6,10 @@ from Queue import Queue, Empty
 import libautobus
 import asyncore, asynchat
 from traceback import print_exc
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 """
 This module contains some protocols included with librtk.
@@ -184,3 +187,5 @@ class AsyncConnection(librtk.Connection):
     def protocol_close(self):
         self.socket.close_when_done()
 
+class LinkedProtocol(object):
+    pass

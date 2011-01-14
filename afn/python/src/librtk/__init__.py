@@ -2,16 +2,68 @@
 from threading import Thread, RLock
 from Queue import Queue, Empty
 from traceback import print_exc, format_exc
-import socket, asyncore, asynchat
 import default_widget_schema, default_features
 import libautobus
-from threading import RLock
 from concurrent import synchronized
 from categories import TOPLEVEL, CONTAINER, WIDGET
-try:
-    import json
-except ImportError:
-    import simplejson as json
+
+"""
+RTK is a remote widget library. It stands for Remote ToolKit, and it's similar
+to X, with two differences: it reverses the roles of client and server used in
+X, and it sends specific instructions about which widgets to create and how to
+lay them out instead of lower-level graphics instructions. The result is that
+RTK applications look native to the operating system that the viewer is run
+on.
+
+Since an RTK application is a server instead of a client, multiple users can
+connect to the same application at once. Each one receives a different copy
+of the application, but they all run in the same process so they can
+inter-communicate. (With the threading protocol, each copy of the application
+runs in its own thread, while with the async protocol, a single thread manages
+them all and Python's asyncore library is used to manage communication with
+the viewers.)
+
+A reference implementation viewer is provided in the form of the rtkinter
+module. This viewer uses Tkinter to display the application.
+
+Various RTK examples are provided in the examples package. A simple
+"Hello, world" application that shows a window titled "Hello" containing one
+label whose text is "Hello, world!" could be written thus:
+
+from librtk.protocols import ThreadedServer
+def start_app(connection):
+    w = connection.Window(title="Hello")
+    w.close_request.listen(connection.close)
+    l = connection.Label(w, text="Hello, world!")
+server = ThreadedServer("", 6785, start_app)
+server.start()
+
+A viewer would then be started and connected to port 6785. rtkinter could be
+used to view this application thus:
+
+./run rtkinter rtk://localhost:6785
+
+This can be run multiple times simultaneously, or run from a different machine
+than the one that the application is running on.
+
+If you want to experiment around with a single viewer from the Python REPL,
+you can use the listen utility function in librtk to listen for one viewer to
+connect and return the connection. This can be used like so:
+
+from librtk import listen
+connection = listen(6785) # This will return once you start up a viewer,
+                               # such as rtkinter, pointing at it
+w = connection.Window(title="Hello")
+...etc...
+
+Updates will be sent to the viewer immediately as each line is executed. So as
+soon as you hit enter after typing connection.Window(title="Hello"), the
+window will pop open in the viewer.
+
+dir() can be used on the connection to find out what widgets are available.
+
+RTK can also be used as a traditional widget toolkit by using... TODO: finish 
+"""
 
 global_lock = RLock()
 locked = synchronized(global_lock)
@@ -563,4 +615,82 @@ def convert_widget_schema_to_maps(schema):
     property's name) as the value.
     """
     return [dict([(k[0], k[1:]) for k in i]) for i in schema[2:7]]
+
+def listen(port, localhost_only=True, handshake_timeout=10):
+    """
+    Listens on the specified port for a single connection from a single
+    viewer. The connection's handshake is then performed and the connection
+    object returned.
+    
+    If localhost_only is True (the default), only connections on the loopback
+    adapter will be allowed. If it's False, connections on any interface will
+    be allowed.
+    
+    handshake_timeout is the number of seconds to wait after a connection is
+    received for the handshake to be performed by the client. This defaults to
+    10 seconds. If the handshake is not performed within this many seconds,
+    the connection will be closed and an exception thrown. This does not
+    affect actually listening for a connection before one is established;
+    this function will wait indefinitely for this to happen.
+    """
+    from protocols import ThreadedProtocol
+    import socket
+    server = socket.socket()
+    server.bind(("127.0.0.1" if localhost_only else "", port))
+    server.listen(1)
+    client, _ = server.accept()
+    protocol = ThreadedProtocol(client)
+    queue = Queue()
+    def connected(connection):
+        queue.put(None)
+    connection = Connection(protocol, connected)
+    connection.start()
+    try:
+        queue.get(block=True, handshake_timeout)
+    except Empty:
+        try:
+            connection.close()
+        except:
+            pass
+        raise Exception("Handshake not completed within the specified number "
+                "of seconds (which was " + str(handshake_timeout) + ")")
+    return connection
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
