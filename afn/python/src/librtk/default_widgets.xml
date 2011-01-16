@@ -1,0 +1,47 @@
+<widgets>
+	<toplevel name="Window"
+		doc="A toplevel window. These can only contain one child widget at present; another container should be used to effect layout.">
+		<widget name="title" default='""' doc="The title of this window" />
+		<state name="size" default="[0, 0]" doc="The window's current size" />
+		<call name="resize"
+			doc="resize(width, height): Resizes this window to have the specified width and height." />
+		<call name="relocate"
+			doc="relocate(x, y): Moves the upper-left corner of this window to the specified position." />
+		<call name="center" doc="center(): Centers this window on the user's screen." />
+		<event name="close_request"
+			doc="close_request(): Fired when the user clicks the close button on the window. The window doesn't actually close; it's up to the application to link this to the window's destroy function or the connection's close function or another function of the application's choosing." />
+	</toplevel>
+	<container name="VBox"
+		doc="A container that arranges its components vertically, top-to-bottom." />
+	<container name="HBox"
+		doc="A container that arranges its components horizontally, left-to-right." />
+	<widget name="Label" doc="A widget that shows a static piece of text.">
+		<widget name="text" default='""' doc="The text of this label" />
+	</widget>
+	<widget name="Button" doc="A button that can be clicked by the user.">
+		<widget name="text" default='""' doc="The text showing on this button" />
+		<event name="clicked" doc="clicked(): Fired when the user clicks this button." />
+	</widget>
+</widgets>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

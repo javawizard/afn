@@ -1,5 +1,5 @@
 
-from librtk import ThreadedProtocol
+from librtk.protocols import ThreadedProtocol
 from librtkclient import Connection
 from librtkinter import widget_set, feature_set
 from librtk.constants import DEFAULT_PORT

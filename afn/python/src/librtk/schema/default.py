@@ -1,5 +1,6 @@
 
 from categories import TOPLEVEL, CONTAINER, WIDGET, number
+from collections import namedtuple
 
 schema = {
     "Window": [
@@ -12,7 +13,7 @@ schema = {
             ["pack"],
             ["resize"],
             ["relocate"],
-            ["center"], 
+            ["center"],
         ], [ # Events:
             ["close_request"],
         ]
@@ -64,3 +65,4 @@ Template for an individual widget:
     ],
 
 """
+

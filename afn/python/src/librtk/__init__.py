@@ -479,6 +479,30 @@ class ResidentWidget(object):
             self.events[message["name"]](*message["args"])
     
     @locked
+    def _get_widget(self, name):
+        return self.widget_properties[name]
+    
+    @locked
+    def _get_layout(self, name):
+        return self.layout_properties[name]
+    
+    @locked
+    def _get_state(self, name):
+        return self.state_properties[name]
+    
+    @locked
+    def _get_call(self, name):
+        raise Exception("Calls aren't supported yet.")
+    
+    @locked
+    def _get_event(self, name):
+        return self.events[name]
+    
+    @locked
+    def _get_state_event(self, name):
+        return self.state_events[name]
+    
+    @locked
     def __getattr__(self, name):
         if not object.__getattribute__(self, "resident_ready"):
             return object.__getattribute__(self, name)
@@ -499,6 +523,12 @@ class ResidentWidget(object):
         # called if Python can't find the attribute any other way
         raise AttributeError("Widget of type " + self.type + 
                 " has no property " + name)
+    
+    def _set_widget(self, name, value):
+        pass
+    
+    def _set_layout(self, name, value):
+        pass
     
     @locked
     def __setattr__(self, name, value):
@@ -565,8 +595,7 @@ class ResidentWidget(object):
     def __getitem__(self, item):
         # TODO: in the future, perhaps allow this as a shortcut for getattr
         # for string items
-        return self.children[item] # This will raise an IndexError for us if
-        # the specified child doesn't exist so we don't need to
+        return self.children[item]
     
     def __len__(self):
         return len(self.children)
@@ -576,6 +605,41 @@ class ResidentWidget(object):
     
     def __str__(self):
         return "<ResidentWidget " + str(self.id) + ": " + self.type + ">"
+
+class Property(object):
+    """
+    A property on a resident widget. Instances of this class are data
+    descriptors that are assigned to the classes created for each resident
+    widget for each connection. Two functions are passed into the property:
+    the getter and the setter. The name of this property is also passed in.
+    The getter should be of the form getter(self, name); when this property's
+    __get__ is called, it will invoke the getter, passing in the object on
+    which the property is being called and the name used to construct the
+    property. The setter is setter(self, name, value), which functions the
+    same way, additionally passing in the value that is to be set into this
+    property. Deleting throws an exception indicating that widget properties
+    cannot be deleted.
+    
+    The idea is that the getter and setter functions would be one of
+    Widget's _get_something and _set_something functions. Widget classes
+    created for each widget subclass from Widget, so this would work properly.
+    """
+    def __init__(self, name, doc, getter, setter):
+        self.name = name
+        self.getter = getter
+        self.setter = setter
+        self.__doc__ = doc
+    
+    def __get__(self, instance, owner):
+        return self.getter(instance, self.name)
+    
+    def __set__(self, instance, value):
+        self.setter(instance, self.name, value)
+
+def create_widget_class(type, default_parent=None):
+    """
+    Creates and returns a new subclass of ResidentWidget.
+    """
     
 class ResidentWidgetConstructor(object):
     def __init__(self, type):
@@ -639,6 +703,7 @@ def listen(port, localhost_only=True, handshake_timeout=10):
     server.bind(("127.0.0.1" if localhost_only else "", port))
     server.listen(1)
     client, _ = server.accept()
+    server.close()
     protocol = ThreadedProtocol(client)
     queue = Queue()
     def connected(connection):
@@ -646,7 +711,7 @@ def listen(port, localhost_only=True, handshake_timeout=10):
     connection = Connection(protocol, connected)
     connection.start()
     try:
-        queue.get(block=True, handshake_timeout)
+        queue.get(block=True, timeout=handshake_timeout)
     except Empty:
         try:
             connection.close()
