@@ -1,7 +1,7 @@
 
-import default_widget_schema
+import schema.default
 
 features = []
 
-for value in default_widget_schema.schema.values():
-    features.append("widget:" + value[0])
+for key in schema.default.schema:
+    features.append("widget:" + key)

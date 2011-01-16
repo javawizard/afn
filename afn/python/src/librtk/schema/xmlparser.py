@@ -36,31 +36,38 @@ def parse_widget(element):
     doc = get_doc(element)
     type = {"toplevel":categories.TOPLEVEL, "container":categories.CONTAINER,
             "widget":categories.WIDGET}[element.tag]
-    widget_props = []
-    layout_props = []
-    state_props = []
-    calls = []
-    events = []
+    widget_props = {}
+    layout_props = {}
+    state_props = {}
+    calls = {}
+    events = {}
     for e in element.find("widget"):
-        widget_props.append(structure.WidgetPropertySchema(name=e.attrib["name"],
-                doc=get_doc(e), writable=e.attrib.get("writable", "true") == "true",
-                default=eval(e.attrib.get("default", '""'))))
-    for e in element.find("layout"):
-        layout_props.append(structure.LayoutPropertySchema(name=e.attrib["name"],
-                doc=get_doc(e), writable=e.attrib.get("writable", "true") == "true",
-                default=eval(e.attrib.get("default", '""'))))
-    for e in element.find("state"):
-        state_props.append(structure.StatePropertySchema(name=e.attrib["name"],
+        widget_props[e.attrib["name"]] = structure.WidgetPropertySchema(
+                name=e.attrib["name"],
                 doc=get_doc(e),
-                default=eval(e.attrib.get("default", '""'))))
+                writable=e.attrib.get("writable", "true") == "true",
+                default=eval(e.attrib.get("default", '""')))
+    for e in element.find("layout"):
+        layout_props[e.attrib["name"]] = structure.LayoutPropertySchema(
+                name=e.attrib["name"],
+                doc=get_doc(e),
+                writable=e.attrib.get("writable", "true") == "true",
+                default=eval(e.attrib.get("default", '""')))
+    for e in element.find("state"):
+        state_props[e.attrib["name"]] = structure.StatePropertySchema(
+                name=e.attrib["name"],
+                doc=get_doc(e),
+                default=eval(e.attrib.get("default", '""')))
     for e in element.find("call"):
-        calls.append(structure.CallSchema(name=e.attrib["name"],
-                doc=get_doc(e)))
+        calls[e.attrib["name"]] = structure.CallSchema(
+                name=e.attrib["name"],
+                doc=get_doc(e))
     for e in element.find("event"):
-        events.append(structure.EventSchema(name=e.attrib["name"],
-                doc=get_doc(e)))
+        events[e.attrib["name"]] = structure.EventSchema(
+                name=e.attrib["name"],
+                doc=get_doc(e))
     return structure.WidgetSchema(name=name, doc=doc, type=type,
-            widget_properties = widget_props, layout_properties=layout_props,
+            widget_properties=widget_props, layout_properties=layout_props,
             state_properties=state_props, calls=calls, events=events)
 
 def get_doc(element):

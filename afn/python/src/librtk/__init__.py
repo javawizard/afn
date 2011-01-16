@@ -2,10 +2,11 @@
 from threading import Thread, RLock
 from Queue import Queue, Empty
 from traceback import print_exc, format_exc
-import default_widget_schema, default_features
+from schema import default as default_widget_schema
+import default_features
 import libautobus
 from concurrent import synchronized
-from categories import TOPLEVEL, CONTAINER, WIDGET
+from schema.categories import TOPLEVEL, CONTAINER, WIDGET
 
 """
 RTK is a remote widget library. It stands for Remote ToolKit, and it's similar
@@ -263,7 +264,7 @@ class Connection(object):
                 return
             self.send({"action": "accept", "features": self.features})
             self.handshake_finished = True
-            self.create_widget_constructors()
+            self.create_widget_classes()
             try:
                 self.connect_function(self)
             except:
@@ -337,22 +338,32 @@ class Connection(object):
     def get_child_index(self, child):
         return self.children.index(child)
     
-    def create_widget_constructors(self):
+    def create_widget_classes(self):
         """
         Called by internal code to create self.Window, self.Button, etc.
-        These are generated from the widget schema. External code should not
-        use this.
+        These are generated from the widget schema, and are their own fully-
+        functional classes deriving from ResidentWidget. External code should
+        not use this function.
         """
-        for name, value in self.schema.items():
-            if value[1] == TOPLEVEL:
-                setattr(self, name, ResidentToplevelConstructor(value[0], self))
-            else:
-                setattr(self, name, ResidentWidgetConstructor(value[0]))
+        for name, schema in self.schema.items():
+            map = {"_gen_schema": schema, "_gen_connection": self}
+            for schema_type, getter_type in [("widget_properties", "widget"),
+                    ("layout_properties", "layout"),
+                    ("state_properties", "state"),
+                    ("calls", "call"), ("events", "event")]:
+                for property_name, property in getattr(schema, schema_type).items():
+                    if property_name in map:
+                        raise Exception("Conflicting property names " + 
+                                property_name + " in " + name)
+                    map[property_name] = Property(property_name, property.doc,
+                            getattr(ResidentWidget, "_get_" + getter_type),
+                            getattr(ResidentWidget, "_set_" + getter_type))
+            widget_class = type(name, (ResidentWidget,), map)
+            setattr(self, name, widget_class)
 
 class ResidentWidget(object):
     @locked
-    def __init__(self, type, parent, **kwargs):
-        object.__setattr__(self, "resident_ready", False)
+    def __init__(self, parent=None, **kwargs):
         self.type = type
         self.id = libautobus.get_next_id()
         if isinstance(parent, Connection):
@@ -363,7 +374,7 @@ class ResidentWidget(object):
             self.connection = parent.connection
         self.children = [] # Create even for non-container types to make some
         # iteration stuff simpler. This will just be empty for such types.
-        self.server_name, self.category = self.connection.schema[type][0:2]
+        self.server_name, self.category = self.connection.schema[type][0:3]
         if self.parent is None and self.category != TOPLEVEL:
             raise Exception("Only a toplevel can have the connection as "
                     "its parent.")
@@ -668,17 +679,6 @@ class ResidentToplevelConstructor(object):
 
 def default_validator(features, schema, connection):
     schema.update(default_widget_schema.schema)
-
-def convert_widget_schema_to_maps(schema):
-    """
-    Converts the schema for a particular widget (the value of a key in the
-    overall schema) to a five-element list, with each element corresponding
-    to a property type, of maps, each map containing the name of a property
-    of that type as the key and a list of all of the info about the property
-    (essentially, all of the items in its list in the schema after the
-    property's name) as the value.
-    """
-    return [dict([(k[0], k[1:]) for k in i]) for i in schema[2:7]]
 
 def listen(port, localhost_only=True, handshake_timeout=10):
     """
