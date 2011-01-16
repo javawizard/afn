@@ -2,5 +2,5 @@
 import xmlparser
 import os
 
-schema = xmlparser.parse(os.path.join(os.path.sep(__file__)[0], "default.xml"))
+schema = xmlparser.parse_file(os.path.join(os.path.split(__file__)[0], "default.xml"))
 

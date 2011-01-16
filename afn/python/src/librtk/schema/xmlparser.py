@@ -41,28 +41,28 @@ def parse_widget(element):
     state_props = {}
     calls = {}
     events = {}
-    for e in element.find("widget"):
+    for e in element.findall("widget"):
         widget_props[e.attrib["name"]] = structure.WidgetPropertySchema(
                 name=e.attrib["name"],
                 doc=get_doc(e),
                 writable=e.attrib.get("writable", "true") == "true",
                 default=eval(e.attrib.get("default", None)))
-    for e in element.find("layout"):
+    for e in element.findall("layout"):
         layout_props[e.attrib["name"]] = structure.LayoutPropertySchema(
                 name=e.attrib["name"],
                 doc=get_doc(e),
                 writable=e.attrib.get("writable", "true") == "true",
                 default=eval(e.attrib.get("default", None)))
-    for e in element.find("state"):
+    for e in element.findall("state"):
         state_props[e.attrib["name"]] = structure.StatePropertySchema(
                 name=e.attrib["name"],
                 doc=get_doc(e),
                 default=eval(e.attrib.get("default", '""')))
-    for e in element.find("call"):
+    for e in element.findall("call"):
         calls[e.attrib["name"]] = structure.CallSchema(
                 name=e.attrib["name"],
                 doc=get_doc(e))
-    for e in element.find("event"):
+    for e in element.findall("event"):
         events[e.attrib["name"]] = structure.EventSchema(
                 name=e.attrib["name"],
                 doc=get_doc(e))
