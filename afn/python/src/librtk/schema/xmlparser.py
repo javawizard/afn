@@ -19,6 +19,10 @@ code. Do not parse untrusted schemas.
 import structure
 import categories
 
+def parse_file(filename):
+    with open(filename) as file:
+        return parse(file.read())
+
 def parse(xml):
     root = ElementTree.fromstring(xml)
     schema = {}
