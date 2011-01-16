@@ -46,13 +46,13 @@ def parse_widget(element):
                 name=e.attrib["name"],
                 doc=get_doc(e),
                 writable=e.attrib.get("writable", "true") == "true",
-                default=eval(e.attrib.get("default", '""')))
+                default=eval(e.attrib.get("default", None)))
     for e in element.find("layout"):
         layout_props[e.attrib["name"]] = structure.LayoutPropertySchema(
                 name=e.attrib["name"],
                 doc=get_doc(e),
                 writable=e.attrib.get("writable", "true") == "true",
-                default=eval(e.attrib.get("default", '""')))
+                default=eval(e.attrib.get("default", None)))
     for e in element.find("state"):
         state_props[e.attrib["name"]] = structure.StatePropertySchema(
                 name=e.attrib["name"],

@@ -346,7 +346,8 @@ class Connection(object):
         not use this function.
         """
         for name, schema in self.schema.items():
-            map = {"_gen_schema": schema, "_gen_connection": self}
+            map = {"_schema": schema, "_gen_connection": self,
+                    "__doc__": schema.doc}
             for schema_type, getter_type in [("widget_properties", "widget"),
                     ("layout_properties", "layout"),
                     ("state_properties", "state"),
@@ -358,14 +359,25 @@ class Connection(object):
                     map[property_name] = Property(property_name, property.doc,
                             getattr(ResidentWidget, "_get_" + getter_type),
                             getattr(ResidentWidget, "_set_" + getter_type))
+            for property_name, property in schema.state_properties:
+                if property_name + "_changed" in map:
+                    raise Exception("Conflicting state event name for "
+                            "property " + property_name + " in " + name)
+                map[property_name + "_changed"] = Property(property_name,
+                        property_name + "_changed(): Fired when the value of "
+                        "the state property " + property_name + " changes.",
+                        ResidentWidget._get_state_event,
+                        ResidentWidget._set_state_event)
             widget_class = type(name, (ResidentWidget,), map)
             setattr(self, name, widget_class)
 
 class ResidentWidget(object):
     @locked
     def __init__(self, parent=None, **kwargs):
-        self.type = type
+        self.type = self._schema.name
         self.id = libautobus.get_next_id()
+        if parent is None:
+            parent = self._gen_connection
         if isinstance(parent, Connection):
             self.parent = None
             self.connection = parent
@@ -374,21 +386,21 @@ class ResidentWidget(object):
             self.connection = parent.connection
         self.children = [] # Create even for non-container types to make some
         # iteration stuff simpler. This will just be empty for such types.
-        self.server_name, self.category = self.connection.schema[type][0:3]
+        self.server_name, self.doc, self.category = self._schema[0:3]
         if self.parent is None and self.category != TOPLEVEL:
-            raise Exception("Only a toplevel can have the connection as "
-                    "its parent.")
+            raise Exception("Containers and widgets must have a container or "
+                    "a toplevel specified as the parent when creating the "
+                    "widget.")
         if self.parent is not None and self.category == TOPLEVEL:
-            raise Exception("Toplevels must have a connection as their "
-                    "parent, not another container or widget.")
+            raise Exception("Toplevels must not have a parent specified (or "
+                    "the parent must be a connection).")
         if self.category != TOPLEVEL and self.parent.category == WIDGET:
             raise Exception("Containers and widgets can only be added to "
                     "toplevels and containers, not other widgets.")
         (self.widget_schema, self.layout_schema, self.state_schema,
-        self.call_schema, self.event_schema) = convert_widget_schema_to_maps(
-                self.connection.schema[type])
-        for key, (writable, default_value) in self.widget_schema.items():
-            if default_value is None and key not in kwargs:
+        self.call_schema, self.event_schema) = self._schema[3:8]
+        for key, (name, doc, writable, default) in self.widget_schema.items():
+            if default is None and key not in kwargs:
                 raise Exception("Widget property " + key + " is required to "
                         "construct a widget of type " + type + ", but this "
                         "property was unspecified.")
@@ -398,18 +410,17 @@ class ResidentWidget(object):
         # start setting stuff up.
         self.connection.widgets[self.id] = self
         self.widget_properties = dict([(k, kwargs.get(k, d)) 
-                for k, (w, d) in self.widget_schema.items()])
+                for k, (n, doc, w, d) in self.widget_schema.items()])
         if self.parent is not None:
             self.layout_properties = dict([(k, kwargs.get(k, d)) 
-                    for k, (w, d) in self.parent.layout_schema.items()])
+                    for k, (n, doc, w, d) in self.parent.layout_schema.items()])
         else:
             self.layout_properties = {}
         self.state_properties = dict([(k, d)
-                for k, (d,) in self.state_schema.items()])
+                for k, (n, doc, d,) in self.state_schema.items()])
         self.state_events = dict([(k, Event()) for k in self.state_schema.keys()])
         self.events = dict([(k, Event()) for k in self.event_schema.keys()])
         self.owner.add_child(self)
-        self.resident_ready = True
     
     @property # Doesn't need to be locked since self.parent and self.connection
     # never change after construction
@@ -431,8 +442,8 @@ class ResidentWidget(object):
         contains all of the layout attributes needed by its parent-to-be.
         Outside code generally shouldn't call this.
         """
-        for key, (writable, default_value) in self.layout_schema.items():
-            if default_value is None and key not in attributes:
+        for key, (name, doc, writable, default) in self.layout_schema.items():
+            if default is None and key not in attributes:
                 raise Exception("Layout property " + key + " is required for "
                         + "children of " + self.category + "s of type "
                          + self.type + ", but this property was unspecified.")
@@ -513,76 +524,120 @@ class ResidentWidget(object):
     def _get_state_event(self, name):
         return self.state_events[name]
     
-    @locked
-    def __getattr__(self, name):
-        if not object.__getattribute__(self, "resident_ready"):
-            return object.__getattribute__(self, name)
-        if name in self.widget_schema:
-            return self.widget_properties[name]
-        elif self.parent is not None and name in self.parent.layout_schema:
-            return self.layout_properties[name]
-        elif name in self.state_schema:
-            return self.state_properties[name]
-        elif name in self.call_schema:
-            raise Exception("Calls aren't supported yet.")
-        elif name in self.event_schema:
-            return self.events[name]
-        elif (name.endswith("_changed") and
-                name[:-len("_changed")] in self.state_schema):
-            return self.state_events[name]
-        # We don't need to delegate to object since __getattr__ is only
-        # called if Python can't find the attribute any other way
-        raise AttributeError("Widget of type " + self.type + 
-                " has no property " + name)
+#    @locked
+#    def __getattr__(self, name):
+#        if not object.__getattribute__(self, "resident_ready"):
+#            return object.__getattribute__(self, name)
+#        if name in self.widget_schema:
+#            return self.widget_properties[name]
+#        elif self.parent is not None and name in self.parent.layout_schema:
+#            return self.layout_properties[name]
+#        elif name in self.state_schema:
+#            return self.state_properties[name]
+#        elif name in self.call_schema:
+#            raise Exception("Calls aren't supported yet.")
+#        elif name in self.event_schema:
+#            return self.events[name]
+#        elif (name.endswith("_changed") and
+#                name[:-len("_changed")] in self.state_schema):
+#            return self.state_events[name]
+#        # We don't need to delegate to object since __getattr__ is only
+#        # called if Python can't find the attribute any other way
+#        raise AttributeError("Widget of type " + self.type + 
+#                " has no property " + name)
     
+    @locked
     def _set_widget(self, name, value):
-        pass
-    
-    def _set_layout(self, name, value):
-        pass
+        if not self.widget_schema[name].writable:
+            raise Exception("You can't modify the widget property " + name
+                    + " on a widget of type " + self.type + ". This property "
+                    "can only be specified when the widget is created.")
+        self.widget_properties[name] = value
+        self.send_set_widget(name)
     
     @locked
-    def __setattr__(self, name, value):
-        if not object.__getattribute__(self, "resident_ready"):
-            object.__setattr__(self, name, value)
-            return
-        if name in self.widget_schema:
-            writable, default = self.widget_schema[name]
-            if not writable:
-                raise Exception("You can't modify the widget property " + name
-                        + " on a widget of type " + self.type)
-            self.widget_properties[name] = value
-            self.send_set_widget(name)
-        elif self.parent is not None and name in self.parent.layout_schema:
-            writable, default = self.parent.layout_schema[name]
-            if not writable:
-                raise Exception("You can't modify the layout property " + name
-                        + " on a widget of type " + self.type + " contained "
-                        " in a parent of type " + self.parent.type)
-            self.layout_properties[name] = value
-            self.parent.send_set_layout(self, name)
-        elif name in self.state_schema:
-            raise Exception("You can't modify the state property " + name
-                    + " on a widget of type " + self.type + ". State "
-                    "attributes can only be modified by the client.")
-        elif name in self.call_schema:
-            raise Exception("You can't set values for properties "
-                    "corresponding to calls on widgets. You just tried to "
-                    "set the property " + name + " on a widget of type "
-                    + self.type + ".")
-        elif name in self.event_schema:
-            raise Exception("Events can't be set for now. In the future, this "
-                    "will be allowed, with the result that all listeners on "
-                    "the specified event will be removed and replaced with "
-                    "the value you're assigning to this property.")
-        elif (name.endswith("_changed") and
-                name[:-len("_changed")] in self.state_schema):
-            raise Exception("State events can't be set for now. In the future, this "
-                    "will be allowed, with the result that all listeners on "
-                    "the specified state event will be removed and replaced with "
-                    "the value you're assigning to this property.")
-        else:
-            object.__setattr__(self, name, value)
+    def _set_layout(self, name, value):
+        if not self.layout_schema[name].writable:
+            raise Exception("You can't modify the layout property " + name
+                    + " on a widget of type " + self.type + " contained "
+                    " in a parent of type " + self.parent.type + ". This "
+                    "property can only be specified when the widget is created.")
+        self.layout_properties[name] = value
+        self.parent.send_set_layout(self, name)
+    
+    @locked
+    def _set_state(self, name, value):
+        raise Exception("You can't modify the state property " + name
+                + " on a widget of type " + self.type + ". State "
+                "properties can only be modified by the client.")
+    
+    @locked
+    def _set_call(self, name, value):
+        raise Exception("You can't set values for properties "
+                "corresponding to calls on widgets. You just tried to "
+                "set the property " + name + " on a widget of type "
+                + self.type + ".")
+    
+    @locked
+    def _set_event(self, name, value):
+        raise Exception("Events can't be set for now. In the future, this "
+                "will be allowed, with the result that all listeners on "
+                "the specified event will be removed and replaced with "
+                "the value you're assigning to this property. You just "
+                "tried to set the value for the event " + name + " on a "
+                "wiget of type " + self.type + ".")
+    
+    @locked
+    def _set_state_event(self, name, value):
+        raise Exception("State events can't be set for now. In the future, this "
+                "will be allowed, with the result that all listeners on "
+                "the specified state event will be removed and replaced with "
+                "the value you're assigning to this property. You just "
+                "tried to set the value for the state event " + name + "_changed "
+                "on a widget of type " + self.type + ".")
+    
+#    @locked
+#    def __setattr__(self, name, value):
+#        if not object.__getattribute__(self, "resident_ready"):
+#            object.__setattr__(self, name, value)
+#            return
+#        if name in self.widget_schema:
+#            writable, default = self.widget_schema[name]
+#            if not writable:
+#                raise Exception("You can't modify the widget property " + name
+#                        + " on a widget of type " + self.type)
+#            self.widget_properties[name] = value
+#            self.send_set_widget(name)
+#        elif self.parent is not None and name in self.parent.layout_schema:
+#            writable, default = self.parent.layout_schema[name]
+#            if not writable:
+#                raise Exception("You can't modify the layout property " + name
+#                        + " on a widget of type " + self.type + " contained "
+#                        " in a parent of type " + self.parent.type)
+#            self.layout_properties[name] = value
+#            self.parent.send_set_layout(self, name)
+#        elif name in self.state_schema:
+#            raise Exception("You can't modify the state property " + name
+#                    + " on a widget of type " + self.type + ". State "
+#                    "attributes can only be modified by the client.")
+#        elif name in self.call_schema:
+#            raise Exception("You can't set values for properties "
+#                    "corresponding to calls on widgets. You just tried to "
+#                    "set the property " + name + " on a widget of type "
+#                    + self.type + ".")
+#        elif name in self.event_schema:
+#            raise Exception("Events can't be set for now. In the future, this "
+#                    "will be allowed, with the result that all listeners on "
+#                    "the specified event will be removed and replaced with "
+#                    "the value you're assigning to this property.")
+#        elif (name.endswith("_changed") and
+#                name[:-len("_changed")] in self.state_schema):
+#            raise Exception("State events can't be set for now. In the future, this "
+#                    "will be allowed, with the result that all listeners on "
+#                    "the specified state event will be removed and replaced with "
+#                    "the value you're assigning to this property.")
+#        else:
+#            object.__setattr__(self, name, value)
     
     @locked
     def send_set_widget(self, name):
@@ -615,7 +670,9 @@ class ResidentWidget(object):
         return True
     
     def __str__(self):
-        return "<ResidentWidget " + str(self.id) + ": " + self.type + ">"
+        return "<" + self.__class__.__name__ + " instance " + self.id + ">"
+    
+    __repr__ = __str__
 
 class Property(object):
     """
