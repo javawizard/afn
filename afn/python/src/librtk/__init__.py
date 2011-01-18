@@ -348,30 +348,56 @@ class Connection(object):
         for name, schema in self.schema.items():
             map = {"_schema": schema, "_gen_connection": self,
                     "__doc__": schema.doc}
-            for schema_type, getter_type in [("widget_properties", "widget"),
-                    ("layout_properties", "layout"),
-                    ("state_properties", "state"),
-                    ("calls", "call"), ("events", "event")]:
+            for schema_type, getter_type, english_type in [
+                    ("widget_properties", "widget", "W"),
+                    ("layout_properties", "layout", "L"),
+                    ("state_properties", "state", "S"),
+                    ("calls", "call", "C"),
+                    ("events", "event", "E")]:
                 for property_name, property in getattr(schema, schema_type).items():
                     if property_name in map:
                         raise Exception("Conflicting property names " + 
                                 property_name + " in " + name)
-                    map[property_name] = Property(property_name, property.doc,
+                    map[property_name] = Property(property_name,
+                            english_type + ": " + property.doc,
                             getattr(ResidentWidget, "_get_" + getter_type),
                             getattr(ResidentWidget, "_set_" + getter_type))
-            for property_name, property in schema.state_properties:
+            for property_name, property in schema.state_properties.items():
                 if property_name + "_changed" in map:
                     raise Exception("Conflicting state event name for "
                             "property " + property_name + " in " + name)
                 map[property_name + "_changed"] = Property(property_name,
-                        property_name + "_changed(): Fired when the value of "
-                        "the state property " + property_name + " changes.",
+                        "O: " + property_name +
+                        "_changed(): Fired when the value of "
+                        'the state property "' + property_name + '" changes.',
                         ResidentWidget._get_state_event,
                         ResidentWidget._set_state_event)
             widget_class = type(name, (ResidentWidget,), map)
+            widget_class.__module__ = "librtk.generated"
             setattr(self, name, widget_class)
 
 class ResidentWidget(object):
+    """
+    A client-side widget. Subclasses of this class are dynamically created for
+    each connection for every widget supported by the client. These classes
+    are assigned to fields on the connection object, so connection.Button
+    would be the subclass of ResidentWidget that can be used to construct
+    buttons on this client.
+    
+    Each subclass has a data descriptor for every widget property, layout
+    property, state property, call, and event defined in that particular
+    widget's schema. There's also a data descriptor for every state
+    property named property_changed, where property is the name of the
+    property. This descriptor is read-only and returns an Event instance 
+    that will be fired when the state property is changed by the client.
+    
+    The docstring for these data descriptors is of the form
+    "N: Some documentation here", where N is a single letter identifying the
+    type of this property (W = widget property, L = layout property, S = state
+    property, O = state property event (O for observer), C for call, E for
+    event) and "Some documentation here" is the documentation for the widget
+    specifieid on the widget's schema. 
+    """
     @locked
     def __init__(self, parent=None, **kwargs):
         self.type = self._schema.name
@@ -670,7 +696,7 @@ class ResidentWidget(object):
         return True
     
     def __str__(self):
-        return "<" + self.__class__.__name__ + " instance " + self.id + ">"
+        return "<" + self.__class__.__name__ + " instance " + str(self.id) + ">"
     
     __repr__ = __str__
 
@@ -699,6 +725,10 @@ class Property(object):
         self.__doc__ = doc
     
     def __get__(self, instance, owner):
+        # Pydoc seems to like to randomly call this with instance set to None.
+        # We'll just ignore such calls for now.
+        if instance is None:
+            return None
         return self.getter(instance, self.name)
     
     def __set__(self, instance, value):

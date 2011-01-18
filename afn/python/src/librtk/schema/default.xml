@@ -1,8 +1,10 @@
 <widgets>
 	<toplevel name="Window"
 		doc="A toplevel window. These can only contain one child widget at present; another container should be used to effect layout.">
-		<widget name="title" default='""' doc="The title of this window" />
-		<state name="size" default="[0, 0]" doc="The window's current size" />
+		<widget name="title" default='""' doc="The title of this window." />
+		<state name="size" default="[0, 0]" doc="The window's current size. This is a list of two integers, the first being the width and the second being the height." />
+		<state name="location" default="[0, 0]" doc="The location of this window on the user's screen. This takes the same format as the size property."/>
+		<state name="screen_size" default="[0, 0]" doc="The size of the monitor that the window is currently showing on, in the same format as the size property. This may change if the user changes resolution or if they drag the window to a different monitor."/> 
 		<call name="resize"
 			doc="resize(width, height): Resizes this window to have the specified width and height." />
 		<call name="relocate"
@@ -15,12 +17,25 @@
 		doc="A container that arranges its components vertically, top-to-bottom." />
 	<container name="HBox"
 		doc="A container that arranges its components horizontally, left-to-right." />
+	<container name="BorderPanel"
+		doc="A container that draws a border around itself.">
+		<widget name="border_width" default="1" doc="The width of the border." />
+	</container>
 	<widget name="Label" doc="A widget that shows a static piece of text.">
-		<widget name="text" default='""' doc="The text of this label" />
+		<widget name="text" default='""' doc="The text of this label." />
 	</widget>
 	<widget name="Button" doc="A button that can be clicked by the user.">
-		<widget name="text" default='""' doc="The text showing on this button" />
+		<widget name="text" default='""' doc="The text showing on this button." />
 		<event name="clicked" doc="clicked(): Fired when the user clicks this button." />
+	</widget>
+	<widget name="TextBox" doc="A single-line text input field.">
+		<widget name="width" default="20"
+			doc="The width, in characters, of the text box." />
+		<widget name="max" default="0"
+			doc="The maximum number of characters that can be stored in this text box, or 0 to allow an unlimited number of characters." />
+		<state name="text" default='""' doc="The current text in this text box."/>
+		<call name="set_text" doc="set_text(text): Sets the text of this text field to the specified string."/>
+		<event name="enter" doc="enter(): Fired when the user hits the enter key while the text field is focused. Alternative viewers may provide some other mechanism to trigger the text box's enter event."/>
 	</widget>
 </widgets>
 
