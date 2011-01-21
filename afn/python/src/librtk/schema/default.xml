@@ -1,10 +1,13 @@
 <widgets>
 	<toplevel name="Window"
-		doc="A toplevel window. These can only contain one child widget at present; another container should be used to effect layout.">
+		doc="A toplevel window. These can only contain one child widget at present; another container should be placed within a window to effect layout.">
 		<widget name="title" default='""' doc="The title of this window." />
-		<state name="size" default="[0, 0]" doc="The window's current size. This is a list of two integers, the first being the width and the second being the height." />
-		<state name="location" default="[0, 0]" doc="The location of this window on the user's screen. This takes the same format as the size property."/>
-		<state name="screen_size" default="[0, 0]" doc="The size of the monitor that the window is currently showing on, in the same format as the size property. This may change if the user changes resolution or if they drag the window to a different monitor."/> 
+		<state name="size" default="[0, 0]"
+			doc="The window's current size. This is a list of two integers, the first being the width and the second being the height." />
+		<state name="location" default="[0, 0]"
+			doc="The location of this window on the user's screen. This takes the same format as the size property." />
+		<state name="screen_size" default="[0, 0]"
+			doc="The size of the monitor that the window is currently showing on, in the same format as the size property. This may change if the user changes resolution or if they drag the window to a different monitor. Viewers that do not support this will set this to [0, 0]." />
 		<call name="resize"
 			doc="resize(width, height): Resizes this window to have the specified width and height." />
 		<call name="relocate"
@@ -21,6 +24,18 @@
 		doc="A container that draws a border around itself.">
 		<widget name="border_width" default="1" doc="The width of the border." />
 	</container>
+	<container name="Table"
+		doc="A container that allows children to be arranged on a grid. This is very nearly identical to an HTML table.">
+		<layout name="row" default="0"
+			doc="The row on the grid at which this widget should be placed. The first row is 0." />
+		<layout name="col" default="0"
+			doc="The column on the grid at which this widget should be placed. The first column is 0." />
+		<layout name="rowspan" default="1"
+			doc="The number of rows that this widget should occupy. The last row that this widget extends into is (row+rowspan)-1." />
+		<layout name="colspan" default="1"
+			doc="The number of columns
+			that this widget should occupy , in the same format as rowspan." />
+	</container>
 	<widget name="Label" doc="A widget that shows a static piece of text.">
 		<widget name="text" default='""' doc="The text of this label." />
 	</widget>
@@ -33,9 +48,27 @@
 			doc="The width, in characters, of the text box." />
 		<widget name="max" default="0"
 			doc="The maximum number of characters that can be stored in this text box, or 0 to allow an unlimited number of characters." />
-		<state name="text" default='""' doc="The current text in this text box."/>
-		<call name="set_text" doc="set_text(text): Sets the text of this text field to the specified string."/>
-		<event name="enter" doc="enter(): Fired when the user hits the enter key while the text field is focused. Alternative viewers may provide some other mechanism to trigger the text box's enter event."/>
+		<state name="text" default='""' doc="The current text in this text box." />
+		<call name="set_text"
+			doc="set_text(text): Sets the text of this text field to the specified string." />
+		<event name="enter"
+			doc="enter(): Fired when the user hits the enter key while the text field is focused. Alternative viewers may provide some other mechanism to trigger the text box's enter event." />
+	</widget>
+	<widget name="Checkbox" doc="A check box.">
+		<widget name="text" default='""'
+			doc="The text showing on this checkbox. Most UI toolkits show this as a piece of text to the right of the box itself." />
+		<widget name="flip" writable="false" default="True"
+			doc="True if this checkbox should automatically toggle its state when the user clicks on it, false if this checkbox should just fire its clicked event but not change its state. Most traditional UI toolkits act as if this were true." />
+		<state name="state" default="False"
+			doc="Whether or not this checkbox is currently marked. If flip is set to false, this will never change." />
+		<call name="set_state"
+			doc="set_state(state): Sets this checkbox's state to the specified state." />
+		<call name="mark"
+			doc="mark(): Marks this checkbox. Same as set_state(True)." />
+		<call name="clear"
+			doc="clear(): Clears this checkbox. Same as set_state(False)." />
+		<event name="clicked"
+			doc="clicked(): Fired when the user clicks this checkbox, regardless of whether or not flip is set to true." />
 	</widget>
 </widgets>
 
