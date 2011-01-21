@@ -29,6 +29,10 @@ the viewers.)
 A reference implementation viewer is provided in the form of the rtkinter
 module. This viewer uses Tkinter to display the application.
 
+RTK is thread-safe. Multiple threads can access and modify RTK widgets
+concurrently. Instances of an application can even pass connections around and
+modify widgets on other connections in the same process.
+
 Various RTK examples are provided in the examples package. A simple
 "Hello, world" application that shows a window titled "Hello" containing one
 label whose text is "Hello, world!" could be written thus:
@@ -55,7 +59,7 @@ connect and return the connection. This can be used like so:
 
 from librtk import listen
 connection = listen(6785) # This will return once you start up a viewer,
-                               # such as rtkinter, pointing at it
+                          # such as rtkinter, pointing at it
 w = connection.Window(title="Hello")
 ...etc...
 
@@ -64,6 +68,17 @@ soon as you hit enter after typing connection.Window(title="Hello"), the
 window will pop open in the viewer.
 
 dir() can be used on the connection to find out what widgets are available.
+
+To get help with a particular widget from the command line, use
+some_widget.help(). This will open an interactive help console similar to
+Python's built-in help function that shows information about that widget and
+what attributes it supports. This function is available on both widget
+constructors (connection.Window.help(), for example) and widget instances
+(w = connection.Window(...); w.help(), for example). Since the help function
+derives its information solely from the widget schema (which is available as a
+field on the connection object), it should be possible to write an HTML
+documentation generator for this; this is something I plan on doing in the
+future.
 
 RTK can also be used as a traditional widget toolkit by using... TODO: finish 
 """
@@ -268,7 +283,7 @@ class Connection(object):
                 return
             self.send({"action": "accept", "features": self.features})
             self.handshake_finished = True
-            self.create_widget_classes()
+            self.create_widget_constructors()
             try:
                 self.connect_function(self)
             except:
@@ -342,122 +357,36 @@ class Connection(object):
     def get_child_index(self, child):
         return self.children.index(child)
     
-    def create_widget_classes(self):
+    def create_widget_constructors(self):
         """
         Called by internal code to create self.Window, self.Button, etc.
-        These are generated from the widget schema, and are their own fully-
-        functional classes deriving from ResidentWidget. External code should
-        not use this function.
+        These are generated from the widget schema. External code should not
+        use this.
         """
-        for name, schema in self.schema.items():
-            map = {"_schema": schema, "_gen_connection": self,
-                    "__doc__": linewrap(schema.doc), "_combined_class": False}
-            for schema_type, getter_type, english_type in [
-                    ("widget_properties", "widget", "W"),
-                    ("layout_properties", "layout", "L"),
-                    ("state_properties", "state", "S"),
-                    ("calls", "call", "C"),
-                    ("events", "event", "E")]:
-                for property_name, property in getattr(schema, schema_type).items():
-                    if property_name in map:
-                        raise Exception("Conflicting property names " + 
-                                property_name + " in " + name)
-                    map[property_name] = Property(property_name,
-                            linewrap(english_type + ": " + property.doc),
-                            getattr(ResidentWidget, "_get_" + getter_type),
-                            getattr(ResidentWidget, "_set_" + getter_type))
-            for property_name, property in schema.state_properties.items():
-                if property_name + "_changed" in map:
-                    raise Exception("Conflicting state event name for "
-                            "property " + property_name + " in " + name)
-                map[property_name + "_changed"] = Property(property_name,
-                        linewrap("O: " + property_name + 
-                        "_changed(): Fired when the value of "
-                        'the state property "' + property_name + '" changes.'),
-                        ResidentWidget._get_state_event,
-                        ResidentWidget._set_state_event)
-            widget_class = type(name, (ResidentWidget,), map)
-            widget_class.__module__ = "librtk.generated"
-            setattr(self, name, widget_class)
+        for name, value in self.schema.items():
+            if value.type == TOPLEVEL:
+                setattr(self, name, ResidentWidgetConstructor(value[0], self))
+            else:
+                setattr(self, name, ResidentWidgetConstructor(value[0]))
     
-    def create_layout_classes(self):
-        """
-        Creates the layout classes. These all extend from object and are put
-        into self.layout_classes, mapping the container name to the
-        corresponding class. Each of these classes defines one property for
-        every layout attribute.
-        
-        ResidentWidget defines a __new__ that checks to see if what we're
-        instantiating is one of the proper subclasses of ResidentWidget. If
-        so, it figures out the connection from the class's _gen_connection
-        and calls get_widget_class, specifying the widget type and the type
-        of the parent, if there is one. It then calls __new__ on this class
-        and returns that value.
-        
-        get_widget_class returns a class for that widget. The class is
-        generated on the fly and cached in self.combined_class_cache. There's
-        one class per combination of a widget type and its parent type. The
-        name of this class is WidgetType_in_ParentType. For example, a button
-        placed in a border panel would be represented by an instance of
-        Button_in_BorderPanel.
-        
-        This class (Button_in_BorderPanel in that example) extends from both
-        Button (the class representing buttons, which itself extends from
-        ResidentWidget) and the class for BorderPanel generated by this
-        method (create_layout_classes), which would, in that case, be named
-        Widget_in_BorderPanel. (These layout class mix-ins are named
-        Widget_in_ContainerType, where ContainerType is the type of
-        container.) The properties specified in a container mix-in are
-        precisely the same as those in the actual widget type; the actual
-        behavioral difference is implemented in ResidentWidget, in
-        _set_layout, where it delegates to the widget's parent.
-        
-        Toplevel classes are named WidgetType_in_Connection. They do not have
-        a mix-in associated with them, although they may in the future.
-        """
-
 class ResidentWidget(object):
     """
-    A client-side widget. Subclasses of this class are dynamically created for
-    each connection for every widget supported by the client. These classes
-    are assigned to fields on the connection object, so connection.Button
-    would be the subclass of ResidentWidget that can be used to construct
-    buttons on this client.
-    
-    Each subclass has a data descriptor for every widget property, layout
-    property, state property, call, and event defined in that particular
-    widget's schema. There's also a data descriptor for every state
-    property named property_changed, where property is the name of the
-    property. This descriptor is read-only and returns an Event instance 
-    that will be fired when the state property is changed by the client.
-    
-    The docstring for these data descriptors is of the form
-    "N: Some documentation here", where N is a single letter identifying the
-    type of this property (W = widget property, L = layout property, S = state
-    property, O = state property event (O for observer), C for call, E for
-    event) and "Some documentation here" is the documentation for the widget
-    specifieid on the widget's schema. 
+    A client-side widget. Instances of this class correspond to specific
+    widgets being used on the client side.
     """
-    def __new__(cls, parent=None, **kwargs):
-        if cls.__dict__["_combined_class"]:
-            return object.__new__(cls, parent, **kwargs)
-        else:
-            widget_class = cls._gen_connection.get_widget_class(cls.__name__, 
-                    parent.__class__.__name__)
-            return widget_class.__new__(widget_class, parent, **kwargs)
     
     @locked
-    def __init__(self, parent=None, **kwargs):
-        self.type = self._schema.name
+    def __init__(self, type, parent, **kwargs):
+        object.__setattr__(self, "_resident_ready", False)
+        self.type = type
         self.id = libautobus.get_next_id()
-        if parent is None:
-            parent = self._gen_connection
         if isinstance(parent, Connection):
             self.parent = None
             self.connection = parent
         else:
             self.parent = parent
             self.connection = parent.connection
+        self._schema = self.connection.schema[type]
         self.children = [] # Create even for non-container types to make some
         # iteration stuff simpler. This will just be empty for such types.
         self.server_name, self.doc, self.category = self._schema[0:3]
@@ -495,6 +424,7 @@ class ResidentWidget(object):
         self.state_events = dict([(k, Event()) for k in self.state_schema.keys()])
         self.events = dict([(k, Event()) for k in self.event_schema.keys()])
         self.owner.add_child(self)
+        self._resident_ready = True
     
     @property # Doesn't need to be locked since self.parent and self.connection
     # never change after construction
@@ -596,29 +526,33 @@ class ResidentWidget(object):
     
     @locked
     def _get_state_event(self, name):
+        """
+        Name should be the name of the state property without "_changed" on
+        the end
+        """
         return self.state_events[name]
     
-#    @locked
-#    def __getattr__(self, name):
-#        if not object.__getattribute__(self, "resident_ready"):
-#            return object.__getattribute__(self, name)
-#        if name in self.widget_schema:
-#            return self.widget_properties[name]
-#        elif self.parent is not None and name in self.parent.layout_schema:
-#            return self.layout_properties[name]
-#        elif name in self.state_schema:
-#            return self.state_properties[name]
-#        elif name in self.call_schema:
-#            raise Exception("Calls aren't supported yet.")
-#        elif name in self.event_schema:
-#            return self.events[name]
-#        elif (name.endswith("_changed") and
-#                name[:-len("_changed")] in self.state_schema):
-#            return self.state_events[name]
-#        # We don't need to delegate to object since __getattr__ is only
-#        # called if Python can't find the attribute any other way
-#        raise AttributeError("Widget of type " + self.type + 
-#                " has no property " + name)
+    @locked
+    def __getattr__(self, name):
+        if not object.__getattribute__(self, "_resident_ready"):
+            return object.__getattribute__(self, name)
+        if name in self.widget_schema:
+            return self._get_widget(name)
+        elif self.parent is not None and name in self.parent.layout_schema:
+            return self._get_layout(name)
+        elif name in self.state_schema:
+            return self._get_state(name)
+        elif name in self.call_schema:
+            return self._get_call(name)
+        elif name in self.event_schema:
+            return self._get_event(name)
+        elif (name.endswith("_changed") and
+                name[:-len("_changed")] in self.state_schema):
+            return self._get_state_event(name[:-len("_changed")])
+        # We don't need to delegate to object since __getattr__ is only
+        # called if Python can't find the attribute any other way
+        raise AttributeError("Widget of type " + self.type + 
+                " has no property " + name)
     
     @locked
     def _set_widget(self, name, value):
@@ -663,6 +597,10 @@ class ResidentWidget(object):
     
     @locked
     def _set_state_event(self, name, value):
+        """
+        Name should be the name of the state property without "_changed" on
+        the end
+        """
         raise Exception("State events can't be set for now. In the future, this "
                 "will be allowed, with the result that all listeners on "
                 "the specified state event will be removed and replaced with "
@@ -670,48 +608,28 @@ class ResidentWidget(object):
                 "tried to set the value for the state event " + name + "_changed "
                 "on a widget of type " + self.type + ".")
     
-#    @locked
-#    def __setattr__(self, name, value):
-#        if not object.__getattribute__(self, "resident_ready"):
-#            object.__setattr__(self, name, value)
-#            return
-#        if name in self.widget_schema:
-#            writable, default = self.widget_schema[name]
-#            if not writable:
-#                raise Exception("You can't modify the widget property " + name
-#                        + " on a widget of type " + self.type)
-#            self.widget_properties[name] = value
-#            self.send_set_widget(name)
-#        elif self.parent is not None and name in self.parent.layout_schema:
-#            writable, default = self.parent.layout_schema[name]
-#            if not writable:
-#                raise Exception("You can't modify the layout property " + name
-#                        + " on a widget of type " + self.type + " contained "
-#                        " in a parent of type " + self.parent.type)
-#            self.layout_properties[name] = value
-#            self.parent.send_set_layout(self, name)
-#        elif name in self.state_schema:
-#            raise Exception("You can't modify the state property " + name
-#                    + " on a widget of type " + self.type + ". State "
-#                    "attributes can only be modified by the client.")
-#        elif name in self.call_schema:
-#            raise Exception("You can't set values for properties "
-#                    "corresponding to calls on widgets. You just tried to "
-#                    "set the property " + name + " on a widget of type "
-#                    + self.type + ".")
-#        elif name in self.event_schema:
-#            raise Exception("Events can't be set for now. In the future, this "
-#                    "will be allowed, with the result that all listeners on "
-#                    "the specified event will be removed and replaced with "
-#                    "the value you're assigning to this property.")
-#        elif (name.endswith("_changed") and
-#                name[:-len("_changed")] in self.state_schema):
-#            raise Exception("State events can't be set for now. In the future, this "
-#                    "will be allowed, with the result that all listeners on "
-#                    "the specified state event will be removed and replaced with "
-#                    "the value you're assigning to this property.")
-#        else:
-#            object.__setattr__(self, name, value)
+    @locked
+    def __setattr__(self, name, value):
+        if not object.__getattribute__(self, "_resident_ready"):
+            object.__setattr__(self, name, value)
+            return
+        if name in self.widget_schema:
+            self._set_widget(name, value)
+        elif self.parent is not None and name in self.parent.layout_schema:
+            self._set_layout(name, value)
+        elif name in self.state_schema:
+            raise Exception("You can't modify the state property " + name
+                    + " on a widget of type " + self.type + ". State "
+                    "attributes can only be modified by the client.")
+        elif name in self.call_schema:
+            self._set_call(name, value)
+        elif name in self.event_schema:
+            self._set_event(name, value)
+        elif (name.endswith("_changed") and
+                name[:-len("_changed")] in self.state_schema):
+            self._set_state_event(name[:-len("_changed")], value)
+        else:
+            object.__setattr__(self, name, value)
     
     @locked
     def send_set_widget(self, name):
@@ -744,80 +662,40 @@ class ResidentWidget(object):
         return True
     
     def __str__(self):
-        return "<" + self.__class__.__name__ + " instance " + str(self.id) + ">"
+        if self.parent is not None:
+            in_string = (" with parent " + self.parent.type + " "
+                    + str(self.parent.id))
+        else:
+            in_string = "" 
+        return "<" + self.type + " instance " + str(self.id) + in_string + ">"
     
     __repr__ = __str__
 
-class Property(object):
-    """
-    A property on a resident widget. Instances of this class are data
-    descriptors that are assigned to the classes created for each resident
-    widget for each connection. Two functions are passed into the property:
-    the getter and the setter. The name of this property is also passed in.
-    The getter should be of the form getter(self, name); when this property's
-    __get__ is called, it will invoke the getter, passing in the object on
-    which the property is being called and the name used to construct the
-    property. The setter is setter(self, name, value), which functions the
-    same way, additionally passing in the value that is to be set into this
-    property. Deleting throws an exception indicating that widget properties
-    cannot be deleted.
-    
-    The idea is that the getter and setter functions would be one of
-    Widget's _get_something and _set_something functions. Widget classes
-    created for each widget subclass from Widget, so this would work properly.
-    """
-    def __init__(self, name, doc, getter, setter):
-        self.name = name
-        self.getter = getter
-        self.setter = setter
-        self.__doc__ = doc
-    
-    def __get__(self, instance, owner):
-        # Pydoc seems to like to randomly call this with instance set to None.
-        # We'll just ignore such calls for now.
-        if instance is None:
-            return None
-        return self.getter(instance, self.name)
-    
-    def __set__(self, instance, value):
-        self.setter(instance, self.name, value)
-
-def create_widget_class(type, default_parent=None):
-    """
-    Creates and returns a new subclass of ResidentWidget.
-    """
 
 def linewrap(text, width=70):
     return "\n\n".join([textwrap.fill(x, width) for x in text.split("\n\n")])
 
 class ResidentWidgetConstructor(object):
-    """
-    DEPRECATED. Since classes extending from ResidentWidget are created
-    at runtime on a per-connection basis, this shouldn't be needed anymore.
-    """
-    def __init__(self, type):
+    def __init__(self, type, default_parent=None):
         self.type = type
+        self.default_parent = default_parent
     
-    def __call__(self, parent, **kwargs):
+    def __call__(self, parent=None, **kwargs):
+        if parent is not None and self.default_parent is not None:
+            raise Exception("Can't specify explicit parent for a constructor "
+                    "with a default parent specified")
+        if parent is None:
+            parent = self.default_parent
+        if parent is None:
+            raise Exception("Need to specify the parent to create this "
+                    "widget under, since it's not a toplevel")
         return ResidentWidget(self.type, parent, **kwargs)
     
     def __str__(self):
-        return "<ResidentWidgetConstructor for widget type " + self.type + ">"
+        return "<" + self.type + " constructor>"
     
     __repr__ = __str__
 
-class ResidentToplevelConstructor(object):
-    def __init__(self, type, connection):
-        self.type = type
-        self.connection = connection
-    
-    def __call__(self, **kwargs):
-        return ResidentWidget(self.type, self.connection, **kwargs)
-    
-    def __str__(self):
-        return "<ResidentToplevelConstructor for widget type " + self.type + ">"
-    
-    __repr__ = __str__
 
 def default_validator(features, schema, connection):
     schema.update(default_widget_schema.schema)
