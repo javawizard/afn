@@ -188,7 +188,7 @@ class Window(Widget):
             self.widget.title(self.widget_properties["title"])
     
     def post_setup(self, child):
-        child.widget.pack()
+        child.widget.pack(fill=tkinter.BOTH, expand=True)
     
     def update_widget(self, properties):
         if "title" in properties:
@@ -200,7 +200,7 @@ class Window(Widget):
 
 class Table(Widget):
     grid_rule_map = {"rowspan": "rowspan", "colspan": "columnspan",
-            "row": "row", "col": "column"}
+            "row": "row", "col": "column", "pin": "sticky"}
      
     def setup(self):
         self.widget = tkinter.Frame(self.parent.container)
@@ -247,7 +247,7 @@ class BorderPanel(Widget):
                 if "border_width" in self.widget_properties else 1)
     
     def post_setup(self, child):
-        child.widget.pack()
+        child.widget.pack(fill=tkinter.BOTH, expand=True)
 
 
 class Button(Widget):
@@ -260,6 +260,14 @@ class Button(Widget):
     
     def button_clicked(self):
         self.send_event("clicked", True)
+
+
+class TextBox(Widget):
+    tk_fields = [["width", "width"]]
+    
+    def setup(self):
+        self.widget = tkinter.Entry(self.parent.container,
+                width=self.widget_properties["width"])
 
 
 widget_list = [Window, Label, VBox, HBox, BorderPanel, Button, Table]
