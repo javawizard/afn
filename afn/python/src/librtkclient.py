@@ -173,13 +173,13 @@ class Connection(object):
     def on_set_widget(self, id, properties):
         widget = self.widget_map[id]
         widget.widget_properties.update(properties)
-        widget.update_widget(properties)
+        widget.update_widget(properties.copy())
     
     def on_set_layout(self, id, properties):
         widget = self.widget_map[id]
         widget.layout_properties.update(properties)
         if widget.parent:
-            widget.parent.update_layout(widget, properties)
+            widget.parent.update_layout(widget, properties.copy())
     
     def on_close(self):
         for toplevel in self.toplevels[:]:

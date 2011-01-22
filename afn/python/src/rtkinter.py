@@ -3,7 +3,7 @@ from librtk.protocols import ThreadedProtocol
 from librtkclient import Connection
 from librtkinter import widget_set, feature_set
 from librtk.constants import DEFAULT_PORT
-from socket import socket as Socket
+from socket import socket as Socket, error as SocketError
 import Tkinter as tkinter
 import sys
 from urlparse import urlparse
@@ -24,7 +24,11 @@ def main():
     tk = tkinter.Tk()
     tk.withdraw()
     socket = Socket()
-    socket.connect((host, port))
+    try:
+        socket.connect((host, port))
+    except SocketError, e:
+        print "Error while connecting: " + str(e)
+        return
     protocol = ThreadedProtocol(socket)
     connection = Connection(protocol, tk.after_idle, tk.destroy, feature_set,
             widget_set)

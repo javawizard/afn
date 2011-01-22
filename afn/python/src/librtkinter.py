@@ -2,8 +2,9 @@
 import Tkinter as tkinter
 import librtkclient
 from functools import partial
+from utils import filter_dict
 
-__doc__ = """\
+"""
 This module is an RTK viewer library that uses Tkinter to show the
 application.
 
@@ -197,11 +198,26 @@ class Window(Widget):
         self.send_event("close_request", True)
 
 
+class Table(Widget):
+    grid_rule_map = {"rowspan": "rowspan", "colspan": "columnspan",
+            "row": "row", "col": "column"}
+     
+    def setup(self):
+        self.widget = tkinter.Frame(self.parent.container)
+    
+    def post_setup(self, child):
+        child.widget.grid(**filter_dict(child.layout_properties,
+                Table.grid_rule_map))
+    
+    def update_layout(self, child, properties):
+        child.widget.grid(**filter_dict(properties, Table.grid_rule_map))
+
+
 class Label(Widget):
     tk_fields = [["text", "text"]]
     
     def setup(self):
-        self.widget = tkinter.Label(self.parent.container, 
+        self.widget = tkinter.Label(self.parent.container,
                 text=self.widget_properties["text"])
     
 
@@ -239,14 +255,14 @@ class Button(Widget):
     
     def setup(self):
         self.widget = tkinter.Button(self.parent.container,
-                text=self.widget_properties["text"], 
+                text=self.widget_properties["text"],
                 command=self.button_clicked)
     
     def button_clicked(self):
         self.send_event("clicked", True)
 
 
-widget_list = [Window, Label, VBox, HBox, BorderPanel, Button]
+widget_list = [Window, Label, VBox, HBox, BorderPanel, Button, Table]
 widget_set = dict([(w.__name__, w) for w in widget_list])
 feature_set = ["widget:" + w for w in widget_set.keys()]
 

@@ -575,7 +575,7 @@ class ResidentWidget(object):
     
     @locked
     def _set_layout(self, name, value):
-        if not self.layout_schema[name].writable:
+        if not self.parent.layout_schema[name].writable:
             raise Exception("You can't modify the layout property " + name
                     + " on a widget of type " + self.type + " contained "
                     " in a parent of type " + self.parent.type + ". This "
@@ -648,7 +648,7 @@ class ResidentWidget(object):
     
     @locked
     def send_set_layout(self, child, name):
-        self.connection.send({"action": "set_layout", "id": self.id, "properties":
+        self.connection.send({"action": "set_layout", "id": child.id, "properties":
                 {name: getattr(child, name)}})
     
     @locked
@@ -728,7 +728,7 @@ def gen_widget_doc(schema, instance=False, parent_schema=None):
     is "toplevel" instead if the parent is a toplevel.
     """
     doc = schema.type + " " + text_doc.bold(schema.name) + "\n"
-    child_doc = schema.doc
+    child_doc = linewrap(schema.doc, 74)
     group_docs = [
             gen_group_doc(schema.widget_properties, "Widget properties"),
             (
@@ -786,7 +786,7 @@ class ResidentWidgetConstructor(object):
 def default_validator(features, schema, connection):
     schema.update(default_widget_schema.schema)
 
-def listen(port, localhost_only=True, handshake_timeout=10):
+def listen(port=6785, localhost_only=True, handshake_timeout=10):
     """
     Listens on the specified port for a single connection from a single
     viewer. The connection's handshake is then performed and the connection
