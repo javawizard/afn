@@ -270,7 +270,7 @@ class TextBox(Widget):
                 width=self.widget_properties["width"])
 
 
-widget_list = [Window, Label, VBox, HBox, BorderPanel, Button, Table]
+widget_list = [Window, Label, VBox, HBox, BorderPanel, Button, Table, TextBox]
 widget_set = dict([(w.__name__, w) for w in widget_list])
 feature_set = ["widget:" + w for w in widget_set.keys()]
 

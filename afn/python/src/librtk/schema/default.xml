@@ -50,7 +50,7 @@
 			doc="The maximum number of characters that can be stored in this text box, or 0 to allow an unlimited number of characters." />
 		<state name="text" default='""' doc="The current text in this text box." />
 		<call name="set_text"
-			doc="set_text(text): Sets the text of this text field to the specified string." />
+			doc="set_text(text): Sets the text of this text box to the specified string." />
 		<event name="enter"
 			doc="enter(): Fired when the user hits the enter key while the text field is focused. Alternative viewers may provide some other mechanism to trigger the text box's enter event." />
 	</widget>
