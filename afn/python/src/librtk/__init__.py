@@ -806,7 +806,7 @@ def listen(port=6785, localhost_only=True, handshake_timeout=10):
     from protocols import ThreadedProtocol
     import socket
     server = socket.socket()
-    server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind(("127.0.0.1" if localhost_only else "", port))
     server.listen(1)
     client, _ = server.accept()
