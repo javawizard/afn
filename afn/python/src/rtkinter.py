@@ -30,6 +30,13 @@ def main():
             widget_set)
     connection.tk_master = tk
     connection.start()
+    def idle(): # This causes the tkinter main thread to return into Python
+        # code at least once every second, which allows us to properly respond
+        # to KeyboardInterrupts. Without this, a KeyboardInterrupt would not
+        # be received until a tkinter event was fired after the interrupt was
+        # triggered.
+        tk.after(1000, idle)
+    tk.after_idle(idle)
     print "Started up!"
     try:
         tk.mainloop()

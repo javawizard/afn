@@ -33,8 +33,7 @@
 		<layout name="rowspan" default="1"
 			doc="The number of rows that this widget should occupy. The last row that this widget extends into is (row+rowspan)-1." />
 		<layout name="colspan" default="1"
-			doc="The number of columns
-			that this widget should occupy , in the same format as rowspan." />
+			doc="The number of columns that this widget should occupy, in the same format as rowspan." />
 	</container>
 	<widget name="Label" doc="A widget that shows a static piece of text.">
 		<widget name="text" default='""' doc="The text of this label." />
@@ -54,7 +53,7 @@
 		<event name="enter"
 			doc="enter(): Fired when the user hits the enter key while the text field is focused. Alternative viewers may provide some other mechanism to trigger the text box's enter event." />
 	</widget>
-	<widget name="Checkbox" doc="A check box.">
+	<widget name="Checkbox" doc="A check box. This shows a label next to a box that can be clicked to toggle the check box's state.">
 		<widget name="text" default='""'
 			doc="The text showing on this checkbox. Most UI toolkits show this as a piece of text to the right of the box itself." />
 		<widget name="flip" writable="false" default="True"

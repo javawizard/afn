@@ -9,6 +9,7 @@ import libautobus
 from concurrent import synchronized
 from schema.categories import TOPLEVEL, CONTAINER, WIDGET
 import textwrap
+import pydoc
 
 """
 RTK is a remote widget library. It stands for Remote ToolKit, and it's similar
@@ -84,6 +85,7 @@ RTK can also be used as a traditional widget toolkit by using... TODO: finish
 """
 
 global_lock = RLock()
+text_doc = pydoc.TextDoc()
 locked = synchronized(global_lock)
 
 class MissingFeatures(Exception):
@@ -365,9 +367,9 @@ class Connection(object):
         """
         for name, value in self.schema.items():
             if value.type == TOPLEVEL:
-                setattr(self, name, ResidentWidgetConstructor(value[0], self))
+                setattr(self, name, ResidentWidgetConstructor(value, value[0], self))
             else:
-                setattr(self, name, ResidentWidgetConstructor(value[0]))
+                setattr(self, name, ResidentWidgetConstructor(value, value[0]))
     
 class ResidentWidget(object):
     """
@@ -425,6 +427,14 @@ class ResidentWidget(object):
         self.events = dict([(k, Event()) for k in self.event_schema.keys()])
         self.owner.add_child(self)
         self._resident_ready = True
+    
+    def help(self):
+        """
+        Shows help for this widget. This is quite similar to Python's built-in
+        help function, but the format is specific to RTK widgets.
+        """
+        show_help(self._schema, True, self.parent._schema
+                if self.parent is not None else None)
     
     @property # Doesn't need to be locked since self.parent and self.connection
     # never change after construction
@@ -672,13 +682,89 @@ class ResidentWidget(object):
     __repr__ = __str__
 
 
+def gen_attribute_doc(attribute):
+    """
+    Generates documentation for a single attribute on a widget. attribute
+    should be an instance of WidgetPropertySchema, LayoutPropertySchema,
+    StatePropertySchema, CallSchema, or EventSchema, in
+    librtk.schema.structure.
+    """
+    return (text_doc.bold(attribute.name) + "\n" + 
+            text_doc.indent(linewrap(attribute.doc), "    "))
+
+def gen_group_doc(map, title, add_suffix=True):
+    """
+    Generates documentation for a particular group of attributes on a widget.
+    The group should be specified as a dictionary, and is typically the
+    value of one of the attributes on a WidgetSchema instance such as
+    widget_properties. The title defines what we're talking about; for
+    example, it could be "Widget properties".
+    
+    Normally, the title will have " defined here:" automatically appended to
+    the end of it. Specifying add_suffix=False will disable this.
+    
+    If the specified map is empty, the empty string will be returned.
+    """
+    if len(map) == 0:
+        return ""
+    doc = title
+    if add_suffix:
+        doc += " defined here:"
+    doc += "\n\n"
+    keys = list(map.keys())
+    keys.sort()
+    doc += "\n\n".join(gen_attribute_doc(map[key]) for key in keys)
+    return doc
+
+def gen_widget_doc(schema, instance=False, parent_schema=None):
+    """
+    Generates documentation for the specified widget schema. If instance is
+    False, the widget's layout properties will be included under a section
+    titled "Layout properties defined here". If instance is True, the
+    widget's layout properties will not be included; the specified parent's
+    layout properties will be included instead, and they will be included
+    under a section titled "Layout properties specified by parent container
+    ParentType", where ParentType is the type of the parent and "container"
+    is "toplevel" instead if the parent is a toplevel.
+    """
+    doc = schema.type + " " + text_doc.bold(schema.name) + "\n"
+    child_doc = schema.doc
+    group_docs = [
+            gen_group_doc(schema.widget_properties, "Widget properties"),
+            (
+                None
+                if instance and parent_schema is None else
+                gen_group_doc(parent_schema.layout_properties,
+                        "Layout properties specified by parent " +
+                        parent_schema.type + " " + parent_schema.name + ":",
+                        add_suffix=False)
+                if instance else
+                gen_group_doc(schema.layout_properties, "Layout properties")
+            ),
+            gen_group_doc(schema.state_properties, "State properties"),
+            gen_group_doc(schema.calls, "Calls"),
+            gen_group_doc(schema.events, "Events")]
+    group_docs = filter(None, group_docs)
+    if group_docs:
+        child_doc += "\n\n"
+        child_doc += ("\n\n" + "-" * 70 + "\n").join(group_docs)
+    doc += text_doc.indent(child_doc, " |  ")
+    return doc
+
+def show_help(schema, instance=False, parent_schema=None):
+    pydoc.pager(gen_widget_doc(schema, instance, parent_schema))
+
 def linewrap(text, width=70):
     return "\n\n".join([textwrap.fill(x, width) for x in text.split("\n\n")])
 
 class ResidentWidgetConstructor(object):
-    def __init__(self, type, default_parent=None):
+    def __init__(self, schema, type, default_parent=None):
+        self.schema = schema
         self.type = type
         self.default_parent = default_parent
+    
+    def help(self):
+        show_help(self.schema)
     
     def __call__(self, parent=None, **kwargs):
         if parent is not None and self.default_parent is not None:
