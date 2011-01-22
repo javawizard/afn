@@ -33,6 +33,7 @@ class ThreadedServer(Thread):
         self.connect_function = connect_function
         self.kwargs = kwargs
         self.socket = socket.socket()
+        self.socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socket.bind((host, port))
         self.socket.listen(5)
         self.running = True
