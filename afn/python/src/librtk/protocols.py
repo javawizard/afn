@@ -86,15 +86,18 @@ class ThreadedProtocol(object):
 class AsyncDispatcher(asyncore.dispatcher):
     connection = None
     
-    def __init__(self, connect_function, bindhost="0.0.0.0", bindport=1337):
+    def __init__(self, host, port, connect_function, **kwargs):
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        assert bindhost.__class__ == str
-        assert bindport > 0
-        assert bindport < 65536
+        assert host.__class__ == str
+        assert port > 0
+        assert port < 65536
         
+        self.host = host
+        self.port = port
         self.connect_function = connect_function
+        self.kwargs = kwargs
         
         self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.bind((bindhost, bindport))
@@ -146,16 +149,12 @@ class AsyncDispatcher(asyncore.dispatcher):
                 break
             self.poll(timeout=timeout, map=map)
 
-class AsyncSocket(asynchat.async_chat):
-    def __init__(self, sock, addr):
-        asynchat.async_chat.__init__(self, sock=sock)
-        
+class AsyncProtocol(asynchat.async_chat):
+    def __init__(self, sock):
         assert sock.__class__ is socket.socket
-        assert addr.__class__ is tuple
         
-        self.addr = addr
+        asynchat.async_chat.__init__(self, sock=sock)
         self.set_terminator("\n")
-        
         self.recvq = ""
     
     def collect_incoming_data(self, data):
@@ -169,7 +168,6 @@ class AsyncSocket(asynchat.async_chat):
         data = self.get_data()
         self.connection.protocol_receive(json.loads(data))
 
-class AsyncConnection(librtk.Connection):
     def protocol_init(self):
         assert self.socket.__class__ is AsyncSocket
         
