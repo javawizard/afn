@@ -7,7 +7,7 @@ multiple clients do.
 """
 
 def start(connection):
-    value = [0] # Store as an array so that it's mutable from closures
+    value = [0] # Store as a list so that it's mutable from closures
     window = connection.Window(title="The Counter")
     window.close_request.listen(connection.close)
     box = connection.VBox(window)

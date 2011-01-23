@@ -7,7 +7,10 @@ from socket import socket as Socket, error as SocketError
 import Tkinter as tkinter
 import sys
 from urlparse import urlparse
-
+from Queue import Queue, Empty
+from traceback import print_exc
+from utils import print_exceptions
+from functools import partial
 
 def main():
     if len(sys.argv) <= 1:
@@ -30,22 +33,31 @@ def main():
         print "Error while connecting: " + str(e)
         return
     protocol = ThreadedProtocol(socket)
-    connection = Connection(protocol, tk.after_idle, tk.destroy, feature_set,
+    event_queue = Queue()
+    connection = Connection(protocol, event_queue.put, tk.destroy, feature_set,
             widget_set)
     connection.tk_master = tk
     connection.start()
-    def idle(): # This causes the tkinter main thread to return into Python
-        # code at least once every second, which allows us to properly respond
-        # to KeyboardInterrupts. Without this, a KeyboardInterrupt would not
-        # be received until a tkinter event was fired after the interrupt was
-        # triggered.
-        tk.after(1000, idle)
-    tk.after_idle(idle)
+    def idle():
+        try:
+            for event in iter(partial(event_queue.get, block=False), None):
+                with print_exceptions:
+                    event()
+            # If we get here, we didn't throw Empty while iterating but we got
+            # a None, so we're supposed to drop out of the loop
+            return
+        except Empty:
+            pass
+        except:
+            print_exc()
+        tk.after(200, idle)
+    tk.after(200, idle)
     print "Started up!"
     try:
         tk.mainloop()
     except KeyboardInterrupt:
         print "Interrupted, shutting down"
+        event_queue.put(None)
         connection.close()
     print "Terminated."
     

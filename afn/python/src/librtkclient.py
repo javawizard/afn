@@ -10,6 +10,20 @@ class Connection(object):
     @locked
     def __init__(self, protocol, event_function, close_function, features,
             widget_constructors={}, error_function=lambda fatal, packet: None):
+        """
+        Creates a new connection. TODO: document this more later.
+        
+        WARNING: If you're using librtkinter or any Tkinter UI with this,
+        DO NOT pass tk.after_idle as the event function. This will cause
+        sporadic deadlocks, which won't be noticeable unless the server sends
+        a whole bunch of UI updates all at once. Instead, have event_function
+        be the put function of a queue, and then write a function that
+        registers itself with tk.after to run every, say, 200ms and runs all
+        the events in the queue.
+        http://me.opengroove.org/2011/01/threading-locks-and-tkinters-afteridle.html
+        (which is a blog post I wrote on this issue) provides more info as to
+        why these deadlocks occur.
+        """
         self.protocol = protocol
         self.schedule = event_function
         self.close_function = close_function
@@ -57,7 +71,9 @@ class Connection(object):
     def send_set_state(self, id, properties):
         """
         """
+        print "Sending 2"
         self.send({"action":"set_state", "id":id, "properties": properties})
+        print "Sending 3"
     
     @locked
     def fatal_error(self, message):
@@ -95,7 +111,7 @@ class Connection(object):
             self.server_features = packet["features"]
             self.handshake_finished = True
         action = packet["action"]
-        if action == "create":#i,parent,typein,dex,p_widget,p_layout
+        if action == "create":#id,parent,type,index,p_widget,p_layout
             self.schedule(partial(self.on_create, packet["id"],
                     packet.get("parent", None), packet["type"],
                     packet.get("index", None), packet.get("p_widget", {}),
@@ -121,10 +137,13 @@ class Connection(object):
     
     def tri_call(self, widget, name, *args):
         if widget.parent and hasattr(widget.parent, "pre_" + name):
+            print "Pre call"
             getattr(widget.parent, "pre_" + name)(widget, *args)
         if hasattr(widget, name):
+            print "Actual call " + widget.__class__.__name__
             getattr(widget, name)(*args)
         if widget.parent and hasattr(widget.parent, "post_" + name):
+            print "Post call"
             getattr(widget.parent, "post_" + name)(widget, *args)
     
     @locked
@@ -137,6 +156,7 @@ class Connection(object):
     
     def on_create(self, id, parent_id, type, index, widget_properties,
             layout_properties):
+        print "Start create " + str(id)
         if type not in self.widget_constructors:
             self.fatal_error("Unsupported widget type: " + type)
             return
@@ -147,16 +167,21 @@ class Connection(object):
         if id in self.widget_map:
             self.fatal_error("Trying to add a widget with id " + str(id) + 
                     " but there's already a non-destroyed widget with that id")
+            return
         constructor = self.widget_constructors[type]
         parent_widget = self.widget_map[parent_id] if parent_id is not None else None
+        print "Constructing"
         widget = constructor(self, id, parent_widget, type, index,
                 widget_properties.copy(), layout_properties.copy())
         self.widget_map[id] = widget
+        print "Parenting"
         if parent_widget is None:
             self.toplevels.append(widget)
         else:
             parent_widget.children[index:index] = [widget]
+        print "Tricalling"
         self.tri_call(widget, "setup")
+        print "End create " + str(id)
     
     def on_destroy(self, id):
         widget = self.widget_map[id]
@@ -202,11 +227,13 @@ class Widget(object):
     def send_event(self, name, user, *args):
         self.connection.send_event(self.id, name, user, *args)
     
-    def send_set_state(self, name, properties, **kwargs):
+    def send_set_state(self, properties={}, **kwargs):
         p = {}
         p.update(properties)
         p.update(kwargs)
-        self.connection.send_set_state(self.id, name, p)
+        print "Sending 1"
+        self.connection.send_set_state(self.id, p)
+        print "Sending over nine thousand"
 
 #class Dispatcher(object):
 #    """

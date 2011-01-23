@@ -266,8 +266,20 @@ class TextBox(Widget):
     tk_fields = [["width", "width"]]
     
     def setup(self):
+        print "Setup 1"
+        self.var = tkinter.StringVar(self.connection.tk_master, "")
+        print "Setup 2"
         self.widget = tkinter.Entry(self.parent.container,
-                width=self.widget_properties["width"])
+                width=self.widget_properties["width"], textvariable=self.var)
+        print "Setup 3"
+        self.var.trace_variable("w", self.text_changed)
+        print "Setup 4"
+        self.send_set_state(text="")
+        print "Setup 5"
+    
+    def text_changed(self, *args):
+        text = self.var.get()
+        self.send_set_state(text=text)
 
 
 widget_list = [Window, Label, VBox, HBox, BorderPanel, Button, Table, TextBox]

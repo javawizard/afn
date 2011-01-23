@@ -25,12 +25,16 @@ class NoExceptions(object):
     def __exit__(self, *args):
         return True
 
+no_exceptions = NoExceptions()
+
 class PrintExceptions(object):
     def __enter__(self):
         pass
     
     def __exit__(self, *args):
         _print_exc()
+
+print_exceptions = PrintExceptions()
 
 def filter_dict(input, rule_map):
     """

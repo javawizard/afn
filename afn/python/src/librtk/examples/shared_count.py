@@ -1,5 +1,6 @@
 
-from utils import PrintExceptions
+from utils import print_exceptions
+from librtk.various import tracker
 
 """
 Identical to count, but the counter is shared among clients so that
@@ -11,11 +12,10 @@ intended to be a proof-of-concept, not a perfect application.
 """
 
 shared_count_state = 0
-shared_count_labels = []
+shared_count_clients = []
 
+@tracker(shared_count_clients)
 def start(connection):
-    global shared_count_state
-    global shared_count_labels
     window = connection.Window(title="The Shared Counter")
     window.close_request.listen(connection.close)
     box = connection.VBox(window)
@@ -25,11 +25,10 @@ def start(connection):
     def clicked():
         global shared_count_state
         shared_count_state += 1
-        for s_label in shared_count_labels[:]:
-            with PrintExceptions():
-                s_label.text = str(shared_count_state)
+        for s_con in shared_count_clients[:]:
+            with print_exceptions:
+                s_con[0][0][0].text = str(shared_count_state)
     button.clicked.listen(clicked)
-    shared_count_labels.append(label)
-    def closed():
-        shared_count_labels.remove(label)
-    connection.add_close_function(closed)
+
+
+

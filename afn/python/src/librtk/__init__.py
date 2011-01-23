@@ -371,6 +371,15 @@ class Connection(object):
             else:
                 setattr(self, name, ResidentWidgetConstructor(value, value[0]))
     
+    def __getitem__(self, item):
+        return self.children[item]
+    
+    def __len__(self):
+        return len(self.children)
+    
+    def __nonzero__(self):
+        return True
+    
 class ResidentWidget(object):
     """
     A client-side widget. Instances of this class correspond to specific
