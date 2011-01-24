@@ -3,6 +3,9 @@ import Tkinter as tkinter
 import librtkclient
 from functools import partial
 from utils import filter_dict
+from Queue import Queue, Empty
+from traceback import print_exc
+from utils import print_exceptions
 
 """
 This module is an RTK viewer library that uses Tkinter to show the
@@ -285,6 +288,46 @@ class TextBox(Widget):
 widget_list = [Window, Label, VBox, HBox, BorderPanel, Button, Table, TextBox]
 widget_set = dict([(w.__name__, w) for w in widget_list])
 feature_set = ["widget:" + w for w in widget_set.keys()]
+
+def start_connection(protocol):
+    """
+    Sets up a Tkinter viewer connected to the specified protocol instance. A
+    toplevel Tk instance will be created and all the event processing stuff
+    set up for it. A connection wrapping it will then be created and started,
+    and this function will return a 2-tuple of the connection and the master
+    Tk instance. This can be used to implement a simple RTK viewer like so:
+    
+    import socket, librtkinter
+    from librtk.protocols import ThreadedProtocol
+    s = socket.connect(("localhost", 6785))
+    connection, tk = librtkinter.start_connection(ThreadedProtocol(s))
+    tk.mainloop()
+    
+    
+    """
+    tk = tkinter.Tk()
+    tk.withdraw()
+    event_queue = Queue()
+    connection = librtkclient.Connection(protocol, event_queue.put, tk.destroy,
+            feature_set, widget_set)
+    connection.tk_master = tk
+    connection.start()
+    def idle():
+        try:
+            for event in iter(partial(event_queue.get, block=False), None):
+                with print_exceptions:
+                    event()
+            # If we get here, we didn't throw Empty while iterating but we got
+            # a None, so we're supposed to drop out of the loop
+            return
+        except Empty:
+            pass
+        except:
+            print_exc()
+        tk.after(100, idle)
+    tk.after(100, idle)
+    return connection, tk
+
 
 
 

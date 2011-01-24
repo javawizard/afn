@@ -1,7 +1,7 @@
 
 from librtk.protocols import ThreadedProtocol
 from librtkclient import Connection
-from librtkinter import widget_set, feature_set
+import librtkinter
 from librtk.constants import DEFAULT_PORT
 from socket import socket as Socket, error as SocketError
 import Tkinter as tkinter
@@ -24,8 +24,6 @@ def main():
         location += ":" + str(DEFAULT_PORT)
     host, port = location.split(":")
     port = int(port)
-    tk = tkinter.Tk()
-    tk.withdraw()
     socket = Socket()
     try:
         socket.connect((host, port))
@@ -33,31 +31,12 @@ def main():
         print "Error while connecting: " + str(e)
         return
     protocol = ThreadedProtocol(socket)
-    event_queue = Queue()
-    connection = Connection(protocol, event_queue.put, tk.destroy, feature_set,
-            widget_set)
-    connection.tk_master = tk
-    connection.start()
-    def idle():
-        try:
-            for event in iter(partial(event_queue.get, block=False), None):
-                with print_exceptions:
-                    event()
-            # If we get here, we didn't throw Empty while iterating but we got
-            # a None, so we're supposed to drop out of the loop
-            return
-        except Empty:
-            pass
-        except:
-            print_exc()
-        tk.after(200, idle)
-    tk.after(200, idle)
+    connection, tk = librtkinter.start_connection(protocol)
     print "Started up!"
     try:
         tk.mainloop()
     except KeyboardInterrupt:
         print "Interrupted, shutting down"
-        event_queue.put(None)
         connection.close()
     print "Terminated."
     

@@ -187,4 +187,61 @@ class AsyncProtocol(asynchat.async_chat):
         self.socket.close_when_done()
 
 class LinkedProtocol(object):
-    pass
+    def __init__(self, link=None):
+        """
+        Creates one end of a linked connection. The first of the two ends
+        should be created with link omitted, and the second one should be
+        created with the the first one passed in as link. In other words, you
+        could construct a pair of linked protocols like this:
+        
+        first = LinkedProtocol()
+        second = LinkedProtocol(first)
+        """
+        self.other = None
+        self.queue = Queue() # Holds messages going from other to self
+        if link is not None:
+            if link.other is not None:
+                raise Exception("The specified linked protocol is already "
+                        "linked to another protocol object.")
+            self.other = link
+            link.other = self
+    
+    def stream(self):
+        for value in iter(self.queue.get, None):
+            self.connection.protocol_receive(value)
+        self.connection.protocol_connection_lost()
+    
+    def protocol_init(self, connection):
+        self.connection = connection
+        self.thread = Thread(target=self.stream)
+        self.event_thread = librtk.EventThread()
+    
+    def protocol_start(self):
+        self.thread.start()
+        self.event_thread.start()
+    
+    def protocol_send(self, data):
+        self.other.queue.put(data)
+    
+    def protocol_event_ready(self, function):
+        self.event_thread.schedule(function)
+    
+    def protocol_close(self):
+        self.event_thread.schedule(None)
+        self.queue.put(None)
+        self.other.queue.put(None)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
