@@ -71,9 +71,7 @@ class Connection(object):
     def send_set_state(self, id, properties):
         """
         """
-        print "Sending 2"
         self.send({"action":"set_state", "id":id, "properties": properties})
-        print "Sending 3"
     
     @locked
     def fatal_error(self, message):
@@ -110,6 +108,7 @@ class Connection(object):
                 return
             self.server_features = packet["features"]
             self.handshake_finished = True
+            return
         action = packet["action"]
         if action == "create":#id,parent,type,index,p_widget,p_layout
             self.schedule(partial(self.on_create, packet["id"],
@@ -137,13 +136,10 @@ class Connection(object):
     
     def tri_call(self, widget, name, *args):
         if widget.parent and hasattr(widget.parent, "pre_" + name):
-            print "Pre call"
             getattr(widget.parent, "pre_" + name)(widget, *args)
         if hasattr(widget, name):
-            print "Actual call " + widget.__class__.__name__
             getattr(widget, name)(*args)
         if widget.parent and hasattr(widget.parent, "post_" + name):
-            print "Post call"
             getattr(widget.parent, "post_" + name)(widget, *args)
     
     @locked
@@ -156,7 +152,6 @@ class Connection(object):
     
     def on_create(self, id, parent_id, type, index, widget_properties,
             layout_properties):
-        print "Start create " + str(id)
         if type not in self.widget_constructors:
             self.fatal_error("Unsupported widget type: " + type)
             return
@@ -170,18 +165,14 @@ class Connection(object):
             return
         constructor = self.widget_constructors[type]
         parent_widget = self.widget_map[parent_id] if parent_id is not None else None
-        print "Constructing"
         widget = constructor(self, id, parent_widget, type, index,
                 widget_properties.copy(), layout_properties.copy())
         self.widget_map[id] = widget
-        print "Parenting"
         if parent_widget is None:
             self.toplevels.append(widget)
         else:
             parent_widget.children[index:index] = [widget]
-        print "Tricalling"
         self.tri_call(widget, "setup")
-        print "End create " + str(id)
     
     def on_destroy(self, id):
         widget = self.widget_map[id]
@@ -231,9 +222,7 @@ class Widget(object):
         p = {}
         p.update(properties)
         p.update(kwargs)
-        print "Sending 1"
         self.connection.send_set_state(self.id, p)
-        print "Sending over nine thousand"
 
 #class Dispatcher(object):
 #    """

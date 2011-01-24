@@ -10,7 +10,7 @@ Ok, so the editor itself. It keeps the configuration in-memory. It has some glob
 
 When it loads up, it creates all of the keys. For each key, it creates a text box and ties it to a particular var in the configuration via most likely some sort of function. This function loads the char in the var into the text field and registers a listener on the text field's text state property that saves the var back into the in-memory config when the text field's modified.
 
-There'd then be a save button that saves the config to disk, and a generate function that generates an XKB map from the config.
+There'd then be a save button that saves the config to disk, and a generate function that generates an XKB map from the config (and a button to actually run this function).
 
 
 

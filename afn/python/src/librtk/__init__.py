@@ -434,6 +434,9 @@ class ResidentWidget(object):
                 for k, (n, doc, d,) in self.state_schema.items()])
         self.state_events = dict([(k, Event()) for k in self.state_schema.keys()])
         self.events = dict([(k, Event()) for k in self.event_schema.keys()])
+        for k in self.events:
+            if k in kwargs:
+                self.events[k].listen(kwargs[k])
         self.owner.add_child(self)
         self._resident_ready = True
     

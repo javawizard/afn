@@ -2,6 +2,8 @@
 	<toplevel name="Window"
 		doc="A toplevel window. These can only contain one child widget at present; another container should be placed within a window to effect layout.">
 		<widget name="title" default='""' doc="The title of this window." />
+		<widget name="visible" default='True'
+			doc="Whether or not this window is currently visible." />
 		<state name="size" default="[0, 0]"
 			doc="The window's current size. This is a list of two integers, the first being the width and the second being the height." />
 		<state name="location" default="[0, 0]"
@@ -13,6 +15,8 @@
 		<call name="relocate"
 			doc="relocate(x, y): Moves the upper-left corner of this window to the specified position." />
 		<call name="center" doc="center(): Centers this window on the user's screen." />
+		<call name="focus"
+			doc="focus(): Requests focus for this window. On Windows, for example, the window turns orange in the start bar when this is called. This should not be called when the window is not visible." />
 		<event name="close_request"
 			doc="close_request(): Fired when the user clicks the close button on the window. The window doesn't actually close; it's up to the application to link this to the window's destroy function or the connection's close function or another function of the application's choosing." />
 	</toplevel>
@@ -34,7 +38,8 @@
 			doc="The number of rows that this widget should occupy. The last row that this widget extends into is (row+rowspan)-1." />
 		<layout name="colspan" default="1"
 			doc="The number of columns that this widget should occupy, in the same format as rowspan." />
-		<layout name="pin" default='""' doc="This property specifies how the child widget should be placed in its cell if the cell is bigger than the child. It's a string that can contain any (or multiple) of the letters NSEW. Each of these letters, when present, causes that side of the child to be pinned to that side of the cell. Specifying NS or EW at the same time will cause the widget to stretch the height or width of the cell, respectively."/>
+		<layout name="pin" default='""'
+			doc="This property specifies how the child widget should be placed in its cell if the cell is bigger than the child. It's a string that can contain any (or multiple) of the letters NSEW. Each of these letters, when present, causes that side of the child to be pinned to that side of the cell. Specifying NS or EW at the same time will cause the widget to stretch the height or width of the cell, respectively." />
 	</container>
 	<widget name="Label" doc="A widget that shows a static piece of text.">
 		<widget name="text" default='""' doc="The text of this label." />
