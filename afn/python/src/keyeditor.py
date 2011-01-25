@@ -15,8 +15,8 @@ import time
 # and the fourth altgr uppercase (I.E. altgr+shift). Once I figure out how to
 # add additional components with XKB groups, I'll likely add more entries.
 KEY_COMPONENTS = [[3, 0, "#ffffff"], [2, 0, "#ccccff"],
-                  [3, 1, "#ffffcc"], [2, 1, "#ccffcc"],
-                  [1, 0, "#ffcccc"], [0, 0, "#ffccff"],
+                  [3, 1, "#ffcccc"], [2, 1, "#ffccff"],
+                  [1, 0, "#ffffcc"], [0, 0, "#ccffcc"],
                   [1, 1, "#ffeacc"], [0, 1, "#eeeeee"]]
 # The names of each component. These contain representatiosn of what key
 # combinations cause that component to be used.
@@ -64,6 +64,10 @@ def start_app(*args): # We don't need the connection since it's stored in the
     # global field connection in main()
     global save_button, generate_button
     window = connection.Window(title="KeyEditor")
+    def on_close():
+        save()
+        connection.close()
+    window.close_request.listen(on_close)
     box = connection.VBox(window)
     key_table = connection.Table(box)
     connection.Label(box, text=" ") # Spacer
