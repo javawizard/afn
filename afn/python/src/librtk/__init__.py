@@ -540,7 +540,7 @@ class ResidentWidget(object):
     
     @locked
     def _get_call(self, name):
-        raise Exception("Calls aren't supported yet.")
+        return ResidentCall(self, name)
     
     @locked
     def _get_event(self, name):
@@ -692,6 +692,21 @@ class ResidentWidget(object):
         return "<" + self.type + " instance " + str(self.id) + in_string + ">"
     
     __repr__ = __str__
+
+class ResidentCall(object):
+    def __init__(self, widget, name):
+        self.widget = widget
+        self.name = name
+    
+    def __call__(self, *args):
+        self.widget.connection.send({"action": "call", "id": self.widget.id,
+                "name": self.name, "args": args})
+    
+    def __repr__(self):
+        return ("<Call " + self.widget.type + "." + self.name + " on " +
+                str(self.widget.id) + ">")
+    
+    __str__ = __repr__
 
 
 def gen_attribute_doc(attribute):

@@ -43,6 +43,10 @@
 	</container>
 	<widget name="Label" doc="A widget that shows a static piece of text.">
 		<widget name="text" default='""' doc="The text of this label." />
+		<widget name="background" default='""' doc="Same as TextBox.background." />
+		<widget name="font_size" default='""' doc="Same as TextBox.font_size." />
+		<widget name="font_family" default='""'
+			doc="Same as TextBox.font_family." />
 	</widget>
 	<widget name="Button" doc="A button that can be clicked by the user.">
 		<widget name="text" default='""' doc="The text showing on this button." />
@@ -53,6 +57,12 @@
 			doc="The width, in characters, of the text box." />
 		<widget name="max" default="0"
 			doc="The maximum number of characters that can be stored in this text box, or 0 to allow an unlimited number of characters." />
+		<widget name="background" default='""'
+			doc="The background color, in HTML #rrggbb notation, of this text box. Setting this to the empty string (the default) uses the viewer's default background color." />
+		<widget name="font_size" default='""'
+			doc="The size of the font to use for this text box, in points." />
+		<widget name="font_family" default='""'
+			doc="The name of the font to use for this text box." />
 		<state name="text" default='""' doc="The current text in this text box." />
 		<call name="set_text"
 			doc="set_text(text): Sets the text of this text box to the specified string." />

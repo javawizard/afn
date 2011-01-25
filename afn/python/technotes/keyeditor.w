@@ -1,6 +1,6 @@
 Let's see... What file format should be used by the keyboard editor stuff...
 
-I'm thinking it'll take the form of a config file. There'll be one section per key, with the section named x-y, where x is the row starting at the bottom and y is the column starting at the leftmost key on that row that's normally used to type an actual character or symbol (tilde for row 4, A for row 2, for example). This section will have a number of options named a number from 0 to 15; 0-3 will be group 1 level 0-3, 4-7 will be group 2 level 0-3, and so on.
+I'm thinking it'll take the form of a config file. There'll be one section per key, with the section named x-y, where x is the XKB row letter and y is the column starting at the leftmost key on that row that's normally used to type an actual character or symbol (tilde for row 4, A for row 2, for example). This section will have a number of options named a number from 0 to 15; 0-3 will be group 1 level 0-3, 4-7 will be group 2 level 0-3, and so on.
 
 The value of these options will be a base-10 number representing the unicode value of the symbol to be inserted.
 

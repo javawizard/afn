@@ -5,7 +5,8 @@ from functools import partial
 from utils import filter_dict
 from Queue import Queue, Empty
 from traceback import print_exc
-from utils import print_exceptions
+from utils import print_exceptions, filter_dict
+import tkFont
 
 """
 This module is an RTK viewer library that uses Tkinter to show the
@@ -153,6 +154,8 @@ Connection(ThreadedProtocol(socket), TkinterDispatcher(), default_features).star
 
 
 class Widget(librtkclient.Widget):
+    tk_use_font = False
+    
     def post_setup(self, child):
         # This will always be overridden to pack the widget in its parent,
         # so we'll use it to send back an error.
@@ -164,11 +167,43 @@ class Widget(librtkclient.Widget):
         self.widget.destroy()
     
     def update_widget(self, properties=None):
+        """
+        Default implementation of update_widget. This looks for a field on the
+        widget class named tk_fields. If it's present, it should be a list of
+        fields, with each field represented by a list containing either two
+        or three items: [rtk_field_name, tkinter_field_name, default]. The
+        default, if present, will be substituted for the value to set on the
+        field if bool(value_to_be_set) == False.
+        
+        This also sets up font information if the widget class has a field
+        tk_use_font = True.
+        """
         if hasattr(self, "tk_fields"):
-            fields = self.tk_fields
-            for rtk_name, tkinter_name in fields:
+            for field in self.tk_fields:
+                # Get the name of the field and its corresponding TK name
+                rtk_name, tkinter_name = field[0:2]
+                # Now we se if this request is supposed to change this field
                 if rtk_name in properties:
-                    self.widget[tkinter_name] = properties[rtk_name]
+                    # Looks like it is. We'll set the field's value if it has
+                    # a true value or if there's no default to look to in case
+                    # the specified value is a false value.
+                    if properties[rtk_name] or len(field) <= 2:
+                        # Yep, it's true! We'll set the value and we're done.
+                        self.widget[tkinter_name] = properties[rtk_name]
+                    else: # The value we're supposed to set this field to is
+                        # a false value and the field has a default. We'll set
+                        # the field to the default value.
+                        self.widget[tkinter_name] = field[2]
+        if self.tk_use_font:
+            if "font_size" or "font_family" in properties:
+                self.update_font()
+    
+    def update_font(self):
+        font_info = filter_dict(self.widget_properties,
+                {"font_size": "size", "font_family": "family"})
+        font_info = dict([(k, v) for k, v in font_info.items() if v])
+        font = tkFont.Font(**font_info)
+        self.widget["font"] = font
     
     def update_layout(self, child, properties):
         pass
@@ -218,11 +253,25 @@ class Table(Widget):
 
 class Label(Widget):
     tk_fields = [["text", "text"]]
+    tk_use_font = True
     
     def setup(self):
         self.widget = tkinter.Label(self.parent.container,
                 text=self.widget_properties["text"])
+        self.default_background = self.widget["bg"]
+        if self.widget_properties["background"]:
+            self.widget["bg"] = self.widget_properties["background"]
+        if (self.widget_properties["font_size"] or
+                self.widget_properties["font_family"]):
+            self.update_font()
     
+    def update_widget(self, properties):
+        Widget.update_widget(self, properties)
+        if "background" in properties:
+            if properties["background"]:
+                self.widget["bg"] = properties["background"]
+            else:
+                self.widget["bg"] = self.default_background
 
 class VBox(Widget):
     def setup(self):
@@ -266,18 +315,35 @@ class Button(Widget):
 
 
 class TextBox(Widget):
-    tk_fields = [["width", "width"]]
+    tk_fields = [["width", "width"], ["background", "bg", "#ffffff"]]
+    tk_use_font = True
     
     def setup(self):
         self.var = tkinter.StringVar(self.connection.tk_master, "")
         self.widget = tkinter.Entry(self.parent.container,
-                width=self.widget_properties["width"], textvariable=self.var)
+                width=self.widget_properties["width"], textvariable=self.var,
+                bg=self.widget_properties["background"] or "#ffffff")
         self.var.trace_variable("w", self.text_changed)
         self.send_set_state(text="")
+        self.user_set = False
+        if (self.widget_properties["font_size"] or
+                self.widget_properties["font_family"]):
+            self.update_font()
     
     def text_changed(self, *args):
         text = self.var.get()
+        # FIXME: include user_set as the _user argument, or add something to
+        # librtkclient to do this
         self.send_set_state(text=text)
+        self.user_set = False
+    
+    def call(self, name, args):
+        if name == "set_text":
+            text, = args
+            self.user_set = True
+            self.var.set(text)
+        else:
+            self.connection.fatal_error("Invalid call " + name + " on TextBox")
 
 
 widget_list = [Window, Label, VBox, HBox, BorderPanel, Button, Table, TextBox]
@@ -309,17 +375,13 @@ def start_connection(protocol):
     connection.start()
     def idle():
         try:
-            for event in iter(partial(event_queue.get, block=False), None):
-                with print_exceptions:
-                    event()
-            # If we get here, we didn't throw Empty while iterating but we got
-            # a None, so we're supposed to drop out of the loop
-            return
+            event_queue.get(block=False)()
+            tk.after(0, idle)
         except Empty:
-            pass
+            tk.after(100, idle)
         except:
+            tk.after(100, idle)
             print_exc()
-        tk.after(100, idle)
     tk.after(100, idle)
     return connection, tk
 

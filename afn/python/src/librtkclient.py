@@ -126,7 +126,8 @@ class Connection(object):
             self.schedule(partial(self.on_set_layout, packet["id"],
                     packet["properties"]))
         elif action == "call":
-            self.schedule(partial(self.on_call, packet))
+            self.schedule(partial(self.on_call, packet["id"], packet["name"],
+                    packet["args"]))
         else:
             print "Ignoring message with action " + action
     
@@ -177,7 +178,7 @@ class Connection(object):
     def on_destroy(self, id):
         widget = self.widget_map[id]
         for child in widget.children[:]:
-            self.destroy(child.id)
+            self.on_destroy(child.id)
         self.tri_call(widget, "destroy")
         del self.widget_map[id]
         if widget.parent:
@@ -196,6 +197,10 @@ class Connection(object):
         widget.layout_properties.update(properties)
         if widget.parent:
             widget.parent.update_layout(widget, properties.copy())
+    
+    def on_call(self, id, name, args):
+        widget = self.widget_map[id]
+        widget.call(name, args)
     
     def on_close(self):
         for toplevel in self.toplevels[:]:
@@ -223,6 +228,11 @@ class Widget(object):
         p.update(properties)
         p.update(kwargs)
         self.connection.send_set_state(self.id, p)
+    
+    def call(self, name, args):
+        self.connection.fatal_error("Widget " + str(self.id) + " of type "
+                + self.type + " does not provide any calls, but the server "
+                "just tried to perform a call.")
 
 #class Dispatcher(object):
 #    """

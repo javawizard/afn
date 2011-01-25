@@ -1,5 +1,7 @@
 
 from traceback import print_exc as _print_exc
+import time
+from threading import Thread
 
 class BlankObject(object):
     """
@@ -52,6 +54,17 @@ def filter_dict(input, rule_map):
         if old_key in input:
             new[new_key] = input[old_key]
     return new
+
+def at(seconds, function):
+    """
+    Starts a new thread that will run the specified function after the
+    specified number of seconds. The function will only be run once; after
+    running the function, the thread will die.
+    """
+    def run():
+        time.sleep(seconds)
+        function()
+    Thread(target=run).start()
 
 
 
