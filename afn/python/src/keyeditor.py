@@ -131,22 +131,16 @@ def generate():
     print "Generating..."
     with open(output_file, "w") as file:
         file.write('xkb_symbols "' + output_name + '"\n{\n')
-        file.write('    name[Group1] = "' + output_desc + '";\n')
+        file.write('    name[Group1] = "' + output_desc + ' - 1";\n')
+        file.write('    name[Group2] = "' + output_desc + ' - 2";\n')
         for row_name, _, _, keys in KEY_ROWS:
             for index in range(keys):
                 keyname = row_name + "-" + str(index)
                 output_key = get_output_key(row_name, index)
                 file.write("    key " + output_key + " { [ ")
-                keycodes = []
-                for i in range(0, 4):
-                    if (config.has_section(keyname) and 
-                            config.has_option(keyname, str(i)) and
-                            config.get(keyname, str(i))):
-                        keycodes.append("U" + hex(config.getint(keyname, str(i)))[2:]
-                                .rjust(4, "0").upper())
-                    else:
-                        keycodes.append("NoSymbol")
-                file.write(", ".join([k.rjust(12) for k in keycodes]))
+                file.write(generate_key_range(keyname, 0, 4))
+                file.write(" ], [], [ ")
+                file.write(generate_key_range(keyname, 4, 8))
                 file.write(" ] };\n")
         file.write("};\n")
     print "Generated!"
@@ -154,6 +148,33 @@ def generate():
     def reset_generate_button():
         generate_button.text = "Generate"
     utils.at(2, reset_generate_button)
+
+def generate_key_value(keyname, index):
+    """
+    Generates the XKB value of the specified component of the specified key.
+    For example, on a typical layout, generate_key_value("C-0", 0) would
+    return "U0061" (the unicode value for "a"). This function will return
+    "NoSymbol" if there's no such key in the configuration or if the specified
+    key does not have a component with the specified index.
+    """
+    if (config.has_section(keyname) and 
+            config.has_option(keyname, str(index)) and
+            config.get(keyname, str(index))):
+        return ("U" + hex(config.getint(keyname, str(index)))[2:]
+                .rjust(4, "0").upper())
+    else:
+        return "NoSymbol"
+
+def generate_key_range(keyname, start, end):
+    """
+    Generates a string containing the values returned by generate_key_value
+    for every component with an index between start, inclusive, and end,
+    exclusive, for the specified key, with each value separated by a comma.
+    """
+    keycodes = []
+    for i in range(start, end):
+        keycodes.append(generate_key_value(keyname, i))
+    return ", ".join([k.rjust(12) for k in keycodes])
 
 def get_output_key(row_name, index):
     index += 1

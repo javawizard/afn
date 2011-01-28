@@ -1,5 +1,5 @@
 
-import Tkinter as tkinter
+import Tix as tkinter
 import librtkclient
 from functools import partial
 from utils import filter_dict
@@ -15,13 +15,13 @@ application.
 The simplest way to start a viewer displaying an RTK application located at
 localhost port 6785 would be something like this:
 
-from librtk import ThreadedProtocol
-from librtkclient import Connection
-from librtkinter import TkinterDispatcher, default_features
+import librtkinter
+from librtk.protocols import ThreadedProtocol
 from socket import socket
 s = socket()
 s.connect(("localhost", 6785))
-Connection(ThreadedProtocol(socket), TkinterDispatcher(), default_features).start()
+connection, tk_master = librtkinter.start_connection(ThreadedProtocol(s))
+tk_master.mainloop()
 """
 
 #class TkinterDispatcher(Dispatcher):
