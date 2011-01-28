@@ -16,7 +16,7 @@ import time
 # add additional components with XKB groups, I'll likely add more entries.
 KEY_COMPONENTS = [[3, 0, "#ffffff"], [2, 0, "#ccccff"],
                   [3, 1, "#ffcccc"], [2, 1, "#ffccff"],
-                  [1, 0, "#ffffcc"], [0, 0, "#ccffcc"],
+                  [1, 0, "#ffffc5"], [0, 0, "#ccffcc"],
                   [1, 1, "#ffeacc"], [0, 1, "#eeeeee"]]
 # The names of each component. These contain representatiosn of what key
 # combinations cause that component to be used.
