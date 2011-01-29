@@ -1,4 +1,4 @@
-import code
+import code, readline
 import librtk
 import signal
 

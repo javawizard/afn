@@ -100,15 +100,19 @@ class AsyncDispatcher(asyncore.dispatcher):
         self.kwargs = kwargs
         
         self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.bind((bindhost, bindport))
+        self.bind((host, port))
         
         self.listen(5)
+    
+    def handle_error(self):
+    	raise
     
     def handle_accept(self):
         both = self.accept()
         if both is not None:
-            sock, addr = both
-            connection = AsyncConnection(AsyncSocket(sock, addr), self.connect_function)
+            sock, _ = both
+            protocol = AsyncProtocol(sock)
+            connection = librtk.Connection(protocol, self.connect_function)
             connection.start()
     
     def poll(self, timeout=0.0, map=None):
@@ -132,7 +136,7 @@ class AsyncDispatcher(asyncore.dispatcher):
                 continue
             try:
                 while True: # We'll raise Empty when we have nothing else to run.
-                    item = obj.connection.async_eventq.get_nowait()
+                    item = obj.async_eventq.get_nowait()
                     try:
                         item()
                     except:
@@ -157,6 +161,9 @@ class AsyncProtocol(asynchat.async_chat):
         self.set_terminator("\n")
         self.recvq = ""
     
+    def handle_error(self):
+    	raise
+    
     def collect_incoming_data(self, data):
         self.recvq += data
     
@@ -168,23 +175,21 @@ class AsyncProtocol(asynchat.async_chat):
         data = self.get_data()
         self.connection.protocol_receive(json.loads(data))
 
-    def protocol_init(self):
-        assert self.socket.__class__ is AsyncSocket
-        
-        self.socket.connection = self
+    def protocol_init(self, connection):
+    	self.connection = connection
         self.async_eventq = Queue()
     
     def protocol_start(self):
         pass
     
     def protocol_send(self, data):
-        self.socket.push(json.dumps(data))
+        self.push(json.dumps(data))
     
     def protocol_event_ready(self, function):
         self.async_eventq.put_nowait(function)
     
     def protocol_close(self):
-        self.socket.close_when_done()
+        self.close_when_done()
 
 class LinkedProtocol(object):
     def __init__(self, link=None):
