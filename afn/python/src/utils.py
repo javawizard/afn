@@ -2,6 +2,7 @@
 from traceback import print_exc as _print_exc
 import time
 from threading import Thread
+from functools import update_wrapper
 
 class BlankObject(object):
     """
@@ -65,6 +66,27 @@ def at(seconds, function):
         time.sleep(seconds)
         function()
     Thread(target=run).start()
+
+def print_on_fail(function):
+    """
+    A decorator that can be used thus:
+    
+    @print_on_fail
+    def example(...):
+        ...
+    
+    to call print_exc whenever an uncaught exception gets thrown out of the
+    function. The exception will continue to propagate after the stack trace
+    has been printed.
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except:
+            _print_exc()
+            raise
+    update_wrapper(wrapper, function)
+    return wrapper
 
 
 

@@ -2,6 +2,7 @@
 from concurrent import synchronized
 from threading import RLock
 from functools import partial
+from utils import print_on_fail
 
 global_lock = RLock()
 locked = synchronized(global_lock)
@@ -151,6 +152,7 @@ class Connection(object):
         self.protocol.protocol_close()
         self.schedule(partial(self.on_close))
     
+    @print_on_fail
     def on_create(self, id, parent_id, type, index, widget_properties,
             layout_properties):
         if type not in self.widget_constructors:
@@ -175,6 +177,7 @@ class Connection(object):
             parent_widget.children[index:index] = [widget]
         self.tri_call(widget, "setup")
     
+    @print_on_fail
     def on_destroy(self, id):
         widget = self.widget_map[id]
         for child in widget.children[:]:
@@ -187,21 +190,25 @@ class Connection(object):
         else:
             self.toplevels.remove(widget)
     
+    @print_on_fail
     def on_set_widget(self, id, properties):
         widget = self.widget_map[id]
         widget.widget_properties.update(properties)
         widget.update_widget(properties.copy())
     
+    @print_on_fail
     def on_set_layout(self, id, properties):
         widget = self.widget_map[id]
         widget.layout_properties.update(properties)
         if widget.parent:
             widget.parent.update_layout(widget, properties.copy())
     
+    @print_on_fail
     def on_call(self, id, name, args):
         widget = self.widget_map[id]
         widget.call(name, args)
     
+    @print_on_fail
     def on_close(self):
         for toplevel in self.toplevels[:]:
             self.on_destroy(toplevel.id)

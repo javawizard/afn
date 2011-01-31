@@ -25,10 +25,16 @@ class Window(Widget):
         self.widget = gtk.Window()
         if "title" in self.widget_properties:
             self.widget.set_title(self.widget_properties["title"])
+        self.widget.set_default_size(1, 1)
+        self.widget.connect("delete-event", self.window_close)
         self.widget.show()
     
-    def setup_child(self, child):
+    def post_setup(self, child):
         self.widget.add(child.widget)
+    
+    def window_close(self, *args):
+        self.send_event("close_request", True)
+        return True
 
 
 class VBox(Widget):
@@ -42,11 +48,29 @@ class VBox(Widget):
 
 class Label(Widget):
     def setup(self):
-        self.widget = gtk.Label(self.widget_properties["text"])
+        self.widget = gtk.Label(self.widget_properties.get("text", ""))
         self.widget.show()
+    
+    def update_widget(self, properties):
+        if "text" in properties:
+            self.widget.set_text(properties["text"])
 
 
-widget_list = [Window, Label, VBox]
+class Button(Widget):
+    def setup(self):
+        self.widget = gtk.Button(self.widget_properties.get("text", ""))
+        self.widget.connect("clicked", self.clicked)
+        self.widget.show()
+    
+    def update_widget(self, properties):
+        if "text" in properties:
+            self.widget.set_text(properties["text"])
+    
+    def clicked(self, *args):
+        self.send_event("clicked", True)
+
+
+widget_list = [Window, Label, VBox, Button]
 widget_set = dict([(w.__name__, w) for w in widget_list])
 feature_set = ["widget:" + w for w in widget_set.keys()]
 
@@ -84,12 +108,14 @@ def main():
             pass
         except:
             print_exc()
+        return True
     gtk.timeout_add(100, idle)
     try:
         gtk.main()
     except KeyboardInterrupt:
         print "Interrupted, shutting down"
     connection.close()
+    print "Terminated."
     
 
 
