@@ -1,11 +1,14 @@
 
-import Tix as tkinter
+try:
+    import Tix as tkinter
+    tix_support = True
+except ImportError:
+    tix_support = False
+    import Tkinter as tkinter
 import librtkclient
-from functools import partial
-from utils import filter_dict
 from Queue import Queue, Empty
 from traceback import print_exc
-from utils import print_exceptions, filter_dict
+from utils import filter_dict
 import tkFont
 
 """
@@ -195,12 +198,11 @@ class Widget(librtkclient.Widget):
                         # the field to the default value.
                         self.widget[tkinter_name] = field[2]
         if self.tk_use_font:
-            if "font_size" or "font_family" in properties:
+            if "font_size" in properties:
                 self.update_font()
     
     def update_font(self):
-        font_info = filter_dict(self.widget_properties,
-                {"font_size": "size", "font_family": "family"})
+        font_info = filter_dict(self.widget_properties, {"font_size": "size"})
         font_info = dict([(k, v) for k, v in font_info.items() if v])
         font = tkFont.Font(**font_info)
         self.widget["font"] = font
@@ -211,11 +213,6 @@ class Widget(librtkclient.Widget):
     @property
     def container(self):
         return self.widget
-    
-    @container.setter
-    def container(self, value):
-        # Override the property if the container is set
-        self.__dict__["container"] = value
 
 
 class Window(Widget):
@@ -376,12 +373,13 @@ def start_connection(protocol):
     def idle():
         try:
             event_queue.get(block=False)()
-            tk.after(0, idle)
         except Empty:
             tk.after(100, idle)
         except:
             tk.after(100, idle)
             print_exc()
+        else:
+            tk.after(0, idle)
     tk.after(100, idle)
     return connection, tk
 
