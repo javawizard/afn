@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:a="http://schemas.android.com/apk/res/android"
+	package="jw.zelden" a:versionCode="1" a:versionName="1.0">
+
+
+	<application a:icon="@drawable/icon" a:label="@string/app_name">
+		<activity a:name=".Zelden" a:label="@string/app_name">
+			<intent-filter>
+				<action a:name="android.intent.action.MAIN" />
+				<category a:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+		</activity>
+		<activity a:name=".ZeldenFirst" a:label="Zelden First">
+			<intent-filter>
+				<action a:name="jw.zelden.intent.ZELDENFIRST" />
+				<category a:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+		<activity a:name=".ZeldenSecond" a:label="Zelden Second">
+			<intent-filter>
+				<action a:name="jw.zelden.intent.ZELDENSECOND" />
+				<category a:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</activity>
+	</application>
+</manifest>
