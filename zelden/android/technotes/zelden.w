@@ -67,6 +67,13 @@ Notifications are also server-managed, meaning that notifications show up on all
 
 It should also be possible to remotely hide all conversation windows in a client or tell the client to just hide itself period except for the tray icon, in case someone leaves a computer unattended and doesn't want others reading through their conversations.
 
+==Revisiting settings and accounts==
+So now I'm trying to figure out if the setting schema should be runtime-changeable. My thought related to this is that it might be nice to configure accounts in the settings page, in which case it's essentially necessary for the settings schema to be runtime-changeable so that folders can be added as accounts are created.
+
+Of course, how should settings be stored on the server itself? If we use the same principles that marlen uses, then setting values never get deleted, which is less than optimal. But if we implement a scheme where settings not registered at startup and settings unregistered at runtime are deleted, then a plugin with a single revision that, for example, forgets to actually register settings would cause all of the plugin's settings to be deleted.
+
+Perhaps we should go with the marlen approach for now but store the setting's description etc as reported by the plugin. Then, if the user wants to clear out settings that have been previously unregistered by the plugin, they can do so using a special UI which would use this stored information to give the user some idea of the settings they're deleting. It would, of course, not let the user delete settings that are currently registered. Deleted settings are completely erased, and they appear to a plugin attempting to re-register them as if it had never registered that particular setting before.
+
 
 
 
