@@ -74,6 +74,35 @@ Of course, how should settings be stored on the server itself? If we use the sam
 
 Perhaps we should go with the marlen approach for now but store the setting's description etc as reported by the plugin. Then, if the user wants to clear out settings that have been previously unregistered by the plugin, they can do so using a special UI which would use this stored information to give the user some idea of the settings they're deleting. It would, of course, not let the user delete settings that are currently registered. Deleted settings are completely erased, and they appear to a plugin attempting to re-register them as if it had never registered that particular setting before.
 
+==Revisiting settings and accounts again==
+So now I'm starting to realize that since accounts, I think, need to be a toplevel part of Zelden for the client to be able to a lot of stuff it couldn't otherwise do, there's not really much of a point of having one huge settings store. I'm thinking instead, there should be some sort of mechanism for a protocol to register settings on various objects in Zelden, such as accounts, buddies, channels, etc. [TODO: how would conversations initiated by non-buddies be handled? Would it be possible to have settings on these? In that case, are these just volatile buddy settings or are conversations distinct objects from buddies?] Zelden Server automatically deletes these settings as the objects they follow are deleted. Settings could also be registered globally (on the singleton server object, essentially). The runtime schema would be changeable, which I think will be useful where some settings don't make sense in the context of the values of other settings; these could be enabled and disabled as needed.
+
+So, when an account is created, Zelden would actually create that account on the server but leave it disabled, and the user could then configure the account and hit the activate button which would set it to active.
+
+==Logs==
+Some thinking on logs. XML format.
+
+What information do we need to log? For that matter, what sort of information does the protocol provide us with?
+
+Hm... This also brings into account how we should render stuff when sending it to the client, and how we should show messages sent by us.
+
+On the message-sending thing... hmm... So, we have somewhat of a problem. That problem is that protocols tend to vary on how they deal with actually sending messages. In IRC, when you send a message, you don't see any sort of confirmation about the message being sent. If the message ends up getting dropped, the server might choose to notify you of that via some other mechanism, but that's entirely up to the server. In XMPP, however, sending the message off to the server is an action not really related to the content of the conversation; if the message doesn't get dropped for some reason or other, you'll get it sent back to you just as if someone else had sent it under your name.
+
+This makes it rather hard to identify which messages were sent by you in a particular chat.
+
+So, what if we had messages be of a particular source type? That could be one of ghost, self, or remote. On protocols such as IRC, sending a message results in a self message being logged. On protocols such as XMPP, sending a message results in a ghost message, and receiving that message back from the server results in a remote message. Messages sent by others are written down as remote messages, as are messages that the server spoofs as being sent by us. Such spoofed messages can be distinguished on IRC by being remote instead of self, and on XMPP by not being accompanied by a ghost message.
+
+By default, the log viewer would only show (and probably search) self and remote messages. There would be an option to show ghost messages as well, and there would probably be a way to show self messages in a different visual style than remote messages. This alternate visual style would likely be client-specific.
+
+===Log data===
+Ok so, now that we've got messages worked out, what data do we need to log? Or rather, what data do we have available for us to log? I think that the data provided by protocols should be in the form of a dictionary. I think that should work.
+
+Dictionaries of data should be provided for a particular account by the protocol, representative of significant settings for that protocol (which are independently stored and managed from this dictionary). For example, the list of commands sent on connect isn't really significant, but the default nickname is, as is the username and the gecos.
+
+(Incidentally, every reconnect of a particular account should cause a new log file to be started. Also, log files should be split over, say, 1000 messages to make log searching easier.)
+
+So, a particular account has an associated set of metadata. A particular connection should also have an associated set of metadata (for example, the server that we ended up connecting to, etc). A particular chat room may have some metadata, but this isn't required. A particular user in a particular chat room also has some metadata.
+
 
 
 

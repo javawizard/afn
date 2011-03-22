@@ -1,0 +1,29 @@
+<log xmlns="http://zelden.opengroove.org/logs" xmlns:irc="http://zelden.opengroove.org/plugins/irc"
+	date="20110319" index="0" protocol="irc" account="184732" accountname="OpenGroove"
+	irc:defaultnick="jcp" irc:username="alex" irc:server="opengroove.org"
+	room="#opengroove">
+
+	<contents>
+		<message timestamp="20110319160712" hashcolor="#DD0000" name="jcp"
+			self="true" irc:nick="jcp" irc:username="alex">
+			<text>Hello world!</text>
+		</message>
+
+
+
+
+
+
+
+		<message timestamp="20110319160719" hashcolor="#0000DD" name="dented42"
+			self="false" irc:nick="dented42" irc:username="dented42"
+			irc:hostname="c-1-2-3-4.hsd1.ut.comcast.net">
+			<text>Hi</text>
+		</message>
+		<action timestamp="20110319160731" hashcolor="#00DD00" name="Amelia"
+			self="false" irc:nick="Amelia" irc:username="jstoker" irc:hostname="the/cheese">
+			<text>kills the world</text>
+		</action>
+	</contents>
+
+</log>
