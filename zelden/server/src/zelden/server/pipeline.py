@@ -1,5 +1,7 @@
 
 """
+Zelden Pipeline Framework: Both fell silent, peering out through a pipeline.
+
 This module provides the Zelden Pipeline Framework. It's used throughout
 Zelden to allow various components to process information as it flows through
 Zelden. It could be considered a replacement for glib's signals as they're
