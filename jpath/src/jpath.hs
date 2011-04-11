@@ -1,5 +1,5 @@
 
-module Jpath1 where
+module JPath where
 
 import Text.ParserCombinators.Parsec
 
