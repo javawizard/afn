@@ -46,9 +46,9 @@ $x, $y, $z (in locations where commas don't otherwise have significance, the onl
 
 $x:$y is a pair with $x as the key and $y as the value. If $x and $y are collections with more than one item, then they must have the same number of items (or an exception will be thrown), and one pair is constructed for each pair of items in $x and $y. If $x and $y both contain no items, then the result is the empty collection.
 
-{$x} is a map containing the pairs in the collection $x. Since : has just higher precedence than the comma used for collection construction, we can recover the usual json notation for creating a map: {"first": 1, "second": 2, "third": 3} is a map containing three pairs as expected in json.   
+{$x} is a map containing the pairs in the collection $x. Since : has just higher precedence than the comma used for collection construction, we can recover the usual json notation for creating a map: {"first": 1, "second": 2, "third": 3} is a map containing three pairs as expected in json. If any of the items in $x are themselves maps, all of their pairs will be included into the map. {$x, $y} and {$x/@*, $y/@*} would therefore be equivalent if $x and $y are maps. ($x ++ $y would also be equivalent, but that operator is discussed later.
 
-false, true, and null are their respective json counterparts. These three strings must, as a result, be escaped when used as patterns, which # makes easy to do: they can be escaped as #"false", #"true", and #"null" respectively.
+false, true, and null are their respective json counterparts. These three strings must, as a result, be escaped when used as patterns, which # makes easy to do: they can be escaped as #"false", #"true", and #"null" respectively. This is one of JPath's few major deviations from XQuery philosophy: XQuery has no reserved keywords, while JPath has these three.
 
 $x + $y adds x and y together. They should be numbers.
 
