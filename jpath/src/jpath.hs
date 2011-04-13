@@ -2,7 +2,8 @@
 module JPath where
 
 import Text.ParserCombinators.Parsec
-
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 -- Expression definition. Since, right now, everything in a JPath query is an
 -- expression, we only need one datatype to hold all of this.
@@ -15,6 +16,7 @@ data Expr = LiteralNumber Double              -- 123, 123.45
           | LiteralString String              -- "hello world"
           | LiteralBoolean Bool               -- true, false
           | LiteralNull                       -- null
+          | ParenExpr Expr                    -- (x)
           | EmptyCollection                   -- ()                      ____
           | VarReference String               -- $x                      ____
           | NormalPattern String              -- x
@@ -38,7 +40,6 @@ data Expr = LiteralNumber Double              -- 123, 123.45
           | OrTest Expr Expr                  -- x or y                  ____
           | PairConstructor Expr Expr         -- x:y                     ____
           | CollectionConstructor Expr Expr   -- x, y                    ____
-          | ParenExpr Expr                    -- (x)
           | MapConstructor Expr               -- {x}
           | ListConstructor Expr              -- [x]                     ____
             deriving (Read, Show)
@@ -88,25 +89,10 @@ pLiteralString = do string "\""
                     string "\""
                     return $ LiteralString value
 
--- parses "true" or "false" into a LiteralBoolean
-pLiteralBoolean :: Parser Expr
-pLiteralBoolean = do value <- (string "true") <|> (string "false")
-                     return $ LiteralBoolean (value == "true")
-
--- parses "null" into LiteralNull
-pLiteralNull :: Parser Expr
-pLiteralNull = do string "null"
-                  return LiteralNull
-
 -- parses "()" into EmptyCollection
 pEmptyCollection :: Parser Expr
 pEmptyCollection = do string "()"
                       return EmptyCollection
-
--- parses a literal value
-ppLiteralValue :: Parser Expr
-ppLiteralValue = pLiteralBoolean <|> pLiteralNull <|> pEmptyCollection
-                    <|> pLiteralString <|> pLiteralNumber  
 
 pVarReference :: Parser Expr
 pVarReference = do string "$"
@@ -114,18 +100,34 @@ pVarReference = do string "$"
                    value2 <- many1 alphaNum
                    return $ VarReference (value1:value2)
 
-ppConcreteValue :: Parser Expr
-ppConcreteValue = pVarReference <|> ppLiteralValue
+pParenExpr :: Parser Expr
+pParenExpr = do string "("
+                expr <- pppExpr
+                string ")"
+                return $ ParenExpr expr
+
+ppSingleValue :: Parser Expr
+ppSingleValue = pVarReference <|> (try pEmptyCollection) <|> pParenExpr <|> 
+                  pLiteralString <|> pLiteralNumber
+
+------------------------------------------------------------------------------
+
+-- Parses normal patterns. This also parses "true", "false", and "null" since
+-- they're essentially just special patterns.
 
 pNormalPattern :: Parser Expr
 pNormalPattern = do value1 <- letter
-                    value2 <- many1 alphaNum
-                    return $ NormalPattern (value1:value2)
+                    value2 <- many alphaNum
+                    return $ case (value1:value2) of
+                                  "true"  -> LiteralBoolean True
+                                  "false" -> LiteralBoolean False
+                                  "null"  -> LiteralNull
+                                  x       -> NormalPattern x 
 
 pPairPattern :: Parser Expr
 pPairPattern = do string "@"
                   value1 <- letter
-                  value2 <- many1 alphaNum
+                  value2 <- many alphaNum
                   return $ PairPattern (value1:value2)
 
 pIndexer :: Parser Expr
@@ -137,19 +139,86 @@ pPairIndexer :: Parser Expr
 pPairIndexer = do string "@#"
                   value <- pppExpr
                   return $ PairIndexer value
--- TODO: fix a problem where a patterm starting with "true" is getting parsed only partially and treated as LiteralBoolean True
+
 ppMatchedValue :: Parser Expr
-ppMatchedValue = (try ppConcreteValue) <|> (try pNormalPattern) <|>
+ppMatchedValue = (try ppSingleValue) <|> (try pNormalPattern) <|>
                  (try pPairPattern) <|> (try pPairIndexer) <|> pIndexer
+
+------------------------------------------------------------------------------
+
+data PathComponentOrPredicate = PathComponent Expr | PredicateComponent Expr
+
+tPathComponent :: Parser PathComponentOrPredicate
+tPathComponent = do string "/"
+                    expr <- ppMatchedValue
+                    return $ PathComponent expr
+
+tPredicate :: Parser PathComponentOrPredicate
+tPredicate = do string "["
+                expr <- pppExpr
+                string "]"
+                return $ PredicateComponent expr
+
+tPathComponentOrPredicate :: Parser PathComponentOrPredicate
+tPathComponentOrPredicate = tPathComponent <|> tPredicate
+
+pPathSeries :: Parser Expr
+pPathSeries = do initial <- ppMatchedValue
+                 components <- many (tPredicate <|> tPathComponent)
+                 return $ foldl (\x y -> case y of
+                                              PathComponent e      -> Path x e
+                                              PredicateComponent e -> Predicate x e
+                                ) initial components 
+
+ppPathValue :: Parser Expr
+ppPathValue = pPathSeries
+
+------------------------------------------------------------------------------
 
 --- And finally, the result
 pppExpr :: Parser Expr
-pppExpr = ppMatchedValue
+pppExpr = ppPathValue
 
--- END GRAMMAR
+------------------------------------------------------------------------------
+--                              END GRAMMAR                                 --
+------------------------------------------------------------------------------
+
+-- Now the interpreter.
+
+-- context item, vars
+data Context = Context Item (Map String Item) deriving (Show)
+
+data Result = Result Collection deriving (Show)
+
+-- JSONObject: number of pairs, lookup pair by index, lookup pair by key
+-- JSONList: number of items, lookup item by index
+data Item = JSONObject   Int (Int -> Item) (String -> Item)
+          | JSONList     Int (Int -> Item)
+          | JSONString   String
+          | JSONNumber   Double
+          | JSONBoolean  Bool
+          | JSONNull
+          | Pair         String Item
+
+
+type Collection = [Item]
+
+parseQuery :: String -> Either ParseError Expr
+parseQuery text = parse pppExpr "" text
+
+evaluateQuery :: Context -> String -> Either ParseError Result
+evaluateQuery context text = case parseQuery text of
+                                  (Left  e) -> Left e
+                                  (Right v) -> Right evaluate context v
+
+evaluate :: Context -> Expr -> Result
 
 
 
+evaluate _ (LiteralNumber number) = Result [JSONNumber  number]
+evaluate _ (LiteralString string) = Result [JSONString  string]
+evaluate _ (LiteralBoolean bool)  = Result [JSONBoolean bool]
+evaluate _ LiteralNull            = Result [JSONNull]
 
 
 
