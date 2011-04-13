@@ -4,6 +4,7 @@ module JPath where
 import Text.ParserCombinators.Parsec
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.List
 
 -- Expression definition. Since, right now, everything in a JPath query is an
 -- expression, we only need one datatype to hold all of this.
@@ -186,9 +187,9 @@ pppExpr = ppPathValue
 -- Now the interpreter.
 
 -- context item, vars
-data Context = Context Item (Map String Item) deriving (Show)
+data Context = Context Item (Map String Collection)
 
-data Result = Result Collection deriving (Show)
+-- Not using this for now.    data Result = Result Collection
 
 -- JSONObject: number of pairs, lookup pair by index, lookup pair by key
 -- JSONList: number of items, lookup item by index
@@ -203,22 +204,51 @@ data Item = JSONObject   Int (Int -> Item) (String -> Item)
 
 type Collection = [Item]
 
+-- Gets all items in the specified list or object given the number of items
+-- and the indexer function
+getAllItems :: Int -> (Int -> Item) -> [Item]
+getAllItems total indexer = map indexer [0 .. (total - 1)]
+
+outputJSON :: Item -> String
+outputJSON (JSONObject total indexer _) = "{" ++ (intercalate ", " $ map outputJSON $ getAllItems total indexer) ++ "}"
+outputJSON (JSONList total indexer) = "[" ++ (intercalate ", " $ map outputJSON $ getAllItems total indexer) ++ "]"
+outputJSON (JSONString string) = show string
+outputJSON (JSONNumber number) = show number
+outputJSON (JSONBoolean boolean) = case boolean of {True -> "true"; False -> "false"}
+outputJSON JSONNull = "null"
+outputJSON (Pair k v) = k ++ ": " ++ (outputJSON v)
+
+outputResultData :: Collection -> String
+outputResultData items = intercalate "\n" $ map outputJSON items
+
+defaultContext :: Context
+defaultContext = Context JSONNull Map.empty
+
 parseQuery :: String -> Either ParseError Expr
 parseQuery text = parse pppExpr "" text
 
-evaluateQuery :: Context -> String -> Either ParseError Result
+evaluateQuery :: Context -> String -> Either ParseError Collection
 evaluateQuery context text = case parseQuery text of
                                   (Left  e) -> Left e
-                                  (Right v) -> Right evaluate context v
+                                  (Right v) -> Right $ evaluate context v
 
-evaluate :: Context -> Expr -> Result
+evaluateQueryWithResult :: Context -> String -> String
+evaluateQueryWithResult context text = case evaluateQuery context text of
+                                            (Left  e) -> error $ show e
+                                            (Right r) -> outputResultData r
+
+evaluate :: Context -> Expr -> Collection
 
 
 
-evaluate _ (LiteralNumber number) = Result [JSONNumber  number]
-evaluate _ (LiteralString string) = Result [JSONString  string]
-evaluate _ (LiteralBoolean bool)  = Result [JSONBoolean bool]
-evaluate _ LiteralNull            = Result [JSONNull]
+evaluate _ (LiteralNumber number) = [JSONNumber  number]
+evaluate _ (LiteralString string) = [JSONString  string]
+evaluate _ (LiteralBoolean bool)  = [JSONBoolean bool]
+evaluate _ LiteralNull            = [JSONNull]
+evaluate c (ParenExpr expr)       = evaluate c expr
+evaluate _ EmptyCollection        = []
+
+evaluate (Context _ vars) (VarReference name) = vars Map.! name
 
 
 
