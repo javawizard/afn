@@ -176,9 +176,43 @@ ppPathValue = pPathSeries
 
 ------------------------------------------------------------------------------
 
+sLastValue2 = ppPathValue
+
+tCollectionConstructorSuffix :: Parser Expr
+tCollectionConstructorSuffix = do string ","
+                                  value <- sLastValue2
+                                  return value
+
+pCollectionConstructor = do initial <- sLastValue2
+                            components <- many tCollectionConstructorSuffix
+                            return $ foldl CollectionConstructor initial components
+
+ppCollectionConstructor = pCollectionConstructor
+
+------------------------------------------------------------------------------
+
+sLastValue1 = pCollectionConstructor
+
+pMapConstructor :: Parser Expr
+pMapConstructor = do string "{"
+                     value <- sLastValue1
+                     string "}"
+                     return $ MapConstructor value
+
+pListConstructor :: Parser Expr
+pListConstructor = do string "["
+                      value <- sLastValue1
+                      string "]"
+                      return $ ListConstructor value
+
+pMapOrListOrOther :: Parser Expr
+pMapOrListOrOther = (try pMapConstructor) <|> (try pListConstructor) <|> sLastValue1
+
+------------------------------------------------------------------------------
+
 --- And finally, the result
 pppExpr :: Parser Expr
-pppExpr = ppPathValue
+pppExpr = pMapOrListOrOther
 
 ------------------------------------------------------------------------------
 --                              END GRAMMAR                                 --
@@ -191,9 +225,9 @@ data Context = Context Item (Map String Collection)
 
 -- Not using this for now.    data Result = Result Collection
 
--- JSONObject: number of pairs, lookup pair by index, lookup pair by key
+-- JSONObject: number of pairs, lookup pair by index, has pair by key, lookup pair by key
 -- JSONList: number of items, lookup item by index
-data Item = JSONObject   Int (Int -> Item) (String -> Item)
+data Item = JSONObject   Int (Int -> Item) (String -> Bool) (String -> Item)
           | JSONList     Int (Int -> Item)
           | JSONString   String
           | JSONNumber   Double
@@ -210,13 +244,13 @@ getAllItems :: Int -> (Int -> Item) -> [Item]
 getAllItems total indexer = map indexer [0 .. (total - 1)]
 
 outputJSON :: Item -> String
-outputJSON (JSONObject total indexer _) = "{" ++ (intercalate ", " $ map outputJSON $ getAllItems total indexer) ++ "}"
+outputJSON (JSONObject total indexer _ _) = "{" ++ (intercalate ", " $ map outputJSON $ getAllItems total indexer) ++ "}"
 outputJSON (JSONList total indexer) = "[" ++ (intercalate ", " $ map outputJSON $ getAllItems total indexer) ++ "]"
 outputJSON (JSONString string) = show string
 outputJSON (JSONNumber number) = show number
 outputJSON (JSONBoolean boolean) = case boolean of {True -> "true"; False -> "false"}
 outputJSON JSONNull = "null"
-outputJSON (Pair k v) = k ++ ": " ++ (outputJSON v)
+outputJSON (Pair k v) = (show k) ++ ": " ++ (outputJSON v)
 
 outputResultData :: Collection -> String
 outputResultData items = intercalate "\n" $ map outputJSON items
@@ -250,8 +284,50 @@ evaluate _ EmptyCollection        = []
 
 evaluate (Context _ vars) (VarReference name) = vars Map.! name
 
+evaluate (Context (JSONObject _ _ hasKey lookup) _) (NormalPattern p) = if hasKey p then [extractPairValue $ lookup p] else []
+evaluate (Context (Pair k v) _)                     (NormalPattern "key") = [JSONString k]
+evaluate (Context (Pair k v) _)                     (NormalPattern "value") = [v]
+evaluate (Context _ _)                              (NormalPattern _) = []
 
+evaluate (Context (JSONObject _ _ hasKey lookup) _) (PairPattern p) = if hasKey p then [lookup p] else []
+evaluate (Context _ _)                              (PairPattern _) = []
 
+evaluate c@(Context (JSONObject _ _ hasKey lookup) _) (Indexer v) = let p = (extractString $ evaluate c v !! 0) in if hasKey p then [extractPairValue $ lookup p] else []
+evaluate c@(Context (Pair key value) _)               (Indexer v) = case extractString $ evaluate c v !! 0 of {"key" -> [JSONString key]; "value" -> [value]}
+evaluate c@(Context (JSONList total indexer) _)       (Indexer v) = let p = (extractInt $ evaluate c v !! 0) - 1 in if p >= 0 && p < total then [indexer p] else []
+evaluate (Context _ _)                                (Indexer _) = []
+
+evaluate c@(Context i vars) (Path l r) = concat [evaluate (Context nci vars) r | nci <- evaluate c l]
+
+evaluate c (CollectionConstructor l r) = (evaluate c l) ++ (evaluate c r)
+
+evaluate c (ListConstructor e) = [buildListFromHaskellList $ evaluate c e]
+
+------------------------------------------------------------------------------
+
+extractPairKey :: Item -> String
+extractPairKey (Pair k v) = k
+
+extractPairValue :: Item -> Item
+extractPairValue (Pair k v) = v
+
+extractString :: Item -> String
+extractString (JSONString string) = string
+
+extractInt :: Item -> Int
+extractInt (JSONNumber number) = floor number 
+
+buildObjectFromList :: [(String, Item)] -> Item
+buildObjectFromList v = buildObjectFromMap $ Map.fromList v
+
+buildObjectFromMap :: Map String Item -> Item
+buildObjectFromMap m = JSONObject (Map.size m)
+                                  (\i -> case (Map.elemAt i m) of {(k,v) -> Pair k v})
+                                  (\k -> Map.member k m)
+                                  (\k -> Pair k (m Map.! k))
+
+buildListFromHaskellList :: [Item] -> Item
+buildListFromHaskellList l = JSONList (length l) ((!!) l) 
 
 
 
