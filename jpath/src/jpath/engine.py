@@ -2,6 +2,7 @@
 
 from pyparsing import Literal, OneOrMore, ZeroOrMore, Regex, MatchFirst
 from pyparsing import Forward, operatorPrecedence, opAssoc, Suppress, Keyword
+from pyparsing import Optional
 from string import ascii_lowercase, ascii_uppercase
 import pyparsing
 import itertools
@@ -13,6 +14,7 @@ keychars = ascii_lowercase + ascii_uppercase
 
 
 escape_map = {"\\": "\\", '"': '"', "n": "\n", "r": "\r"}
+varNameRegex = r"\$[a-zA-Z][a-zA-Z0-9]*"
 
 def trimTo(length, text):
     if len(text) < length:
@@ -72,6 +74,18 @@ def InfixSeries(initial, operators):
     parser.addParseAction(parse_action)
     return parser
 
+def SKeyword(text):
+    """
+    A suppressed keyword using keychars as the keyword end chars.
+    """
+    return Suppress(Keyword(text, keychars))
+
+def NKeyword(text):
+    """
+    A non-suppressed keyword using keychars as the keyword end chars.
+    """
+    return Keyword(text, keychars)
+
 def createPatternOrSpecial(pattern):
     if pattern == "true":
         return Boolean(True)
@@ -104,7 +118,9 @@ Pattern = datatype("Pattern", "value")
 PairPattern = datatype("PairPattern", "value")
 ParenExpr = datatype("ParenExpr", "expr")
 ListConstructor = datatype("ListConstructor", "expr")
+EmptyListConstructor = datatype("EmptyListConstructor")
 MapConstructor = datatype("MapConstructor", "expr")
+EmptyMapConstructor = datatype("EmptyMapConstructor")
 
 Indexer = datatype("Indexer", "expr")
 PairIndexer = datatype("PairIndexer", "expr")
@@ -132,6 +148,12 @@ PairConstructor = datatype("PairConstructor", "left", "right")
 
 CollectionConstructor = datatype("CollectionConstructor", "left", "right")
 
+Flwor = datatype("Flwor", "constructs")
+FlworFor = datatype("FlworFor", "name", "counter", "expr")
+FlworLet = datatype("FlworLet", "name", "expr")
+FlworWhere = datatype("FlworWhere", "expr")
+FlworReturn = datatype("FlworReturn", "expr")
+
 
 pExpr = Forward()
 
@@ -139,16 +161,19 @@ pNumber = Regex("[+-]?[0-9]+(\.[0-9]+)?").addParseAction(lambda t: Number("".joi
 pStringEscape = Regex(r"\\[a-zA-Z0-9]").addParseAction(lambda t: escape_map[t[0][1]])
 pStringChar = Regex(r'[^\"\\]')
 pString = stringify(Literal('"') + ZeroOrMore(pStringChar) + Literal('"')).addParseAction(lambda t: String(t[0][1:-1]))
-pVarReference = Regex(r"\$[a-zA-Z][a-zA-Z0-9]*").addParseAction(lambda t: VarReference(t[0][1:]))
+pVarReference = Regex(varNameRegex).addParseAction(lambda t: VarReference(t[0][1:]))
 pPattern = Regex("[a-zA-Z][a-zA-Z0-9]*").addParseAction(lambda t: createPatternOrSpecial(t[0]))
-pPairPattern = Regex("@[a-zA-Z][a-zA-Z0-9]").addParseAction(lambda t: PairPattern(t[0]))
+pPairPattern = Regex("@[a-zA-Z][a-zA-Z0-9]*").addParseAction(lambda t: PairPattern(t[0][1:])) # [1:] removes the leading "@"
 pContextItem = Literal(".").addParseAction(lambda t: ContextItem())
 pChildren = Literal("*").addParseAction(lambda t: Children())
 pPairChildren = Literal("@*").addParseAction(lambda t: PairChildren())
 pParenExpr = (Suppress("(") + pExpr + Suppress(")")).addParseAction(lambda t: ParenExpr(t[0]))
 pListConstructor = (Suppress("[") + pExpr + Suppress("]")).addParseAction(lambda t: ListConstructor(t[0]))
+pEmptyListConstructor = (Literal("[") + Literal("]")).addParseAction(lambda t: EmptyListConstructor())
 pMapConstructor = (Suppress("{") + pExpr + Suppress("}")).addParseAction(lambda t: MapConstructor(t[0]))
-pAtom = ( pParenExpr | pListConstructor | pMapConstructor | pNumber | pString
+pEmptyMapConstructor = (Literal("{") + Literal("}")).addParseAction(lambda t: EmptyMapConstructor())
+pAtom = ( pParenExpr | pEmptyListConstructor | pListConstructor
+        | pEmptyMapConstructor | pMapConstructor | pNumber | pString
         | pVarReference | pPattern | pPairPattern | pContextItem
         | pChildren | pPairChildren )
 
@@ -207,7 +232,16 @@ pInfix = InfixSeries(pInfix,
             ((Suppress(Literal(",")) + pInfix), CollectionConstructor)
         ])
 
-pExpr << (pInfix)
+pFlworFor = (SKeyword("for") + Regex(varNameRegex) + Optional(SKeyword("at") + Regex(varNameRegex), "") + SKeyword("in")
+            + pInfix).addParseAction(lambda t: FlworFor(t[0][1:], t[1][1:], t[2]))
+pFlworLet = (SKeyword("let") + Regex(varNameRegex) + Suppress(":=") + pInfix).addParseAction(lambda t: FlworLet(t[0][1:], t[1]))
+pFlworWhere = (SKeyword("where") + pInfix).addParseAction(lambda t: FlworWhere(t[0]))
+pFlworReturn = (Suppress(Keyword("return", keychars)) + pInfix).setParseAction(lambda t: FlworReturn(t[0]))
+pFlwor = (OneOrMore(pFlworFor | pFlworLet | pFlworWhere) + pFlworReturn).addParseAction(lambda t: Flwor(list(t)))
+
+pFlworOrInfix = pFlwor | pInfix
+
+pExpr << (pFlworOrInfix)
 
 
 def parse(text):
@@ -242,6 +276,9 @@ class Context(object):
     
     def new_with_item(self, item):
         return Context(item, self.vars)
+    
+    def __repr__(self):
+        return "Context(" + repr(self.item) + ", " + repr(self.vars) + ")"
 
 class Pair(object):
     def __init__(self, key, value):
@@ -250,6 +287,21 @@ class Pair(object):
     
     def __repr__(self):
         return "Pair(" + repr(self.key) + ", " + repr(self.value) + ")"
+
+def is_true_value(value):
+    return value is not None and value != False # TODO: decide on a definition
+    # of what values in JPath are true and what values are false
+
+def is_true_collection(collection):
+    if len(collection) == 0:
+        return False
+    return all(map(is_true_value, collection)) # A collection is true if it's
+    # not empty and every one of its values is also true
+
+def binary_comparison(context, left_expr, right_expr, function):
+    left_value = evaluate(context, left_expr)
+    right_value = evaluate(context, right_expr)
+    return any([function(x, y) for x in left_value for y in right_value])
 
 def evaluate(context, query):
     """
@@ -260,7 +312,12 @@ def evaluate(context, query):
     The query can be either a string representing the query to run or the
     return value of parse(query_text). If you're going to be running the same
     query over and over again, you should generally call parse and store the
-    result to avoid the delay of having to re-parse the query every time.
+    result to avoid the delay of having to re-parse the query every time. I
+    ran some benchmarks on a 1.66GHz Intel Core 2 Duo and storing the results
+    of a call to parse and just evaluating that stored value resulted in
+    queries running about 300 times faster (300 seconds, or 5 minutes, to run
+    the query {{"a": "b", "c": "d"}/@a} 30000 times from text as opposed to
+    1 second to run this query pre-parsed 30000 times). 
     
     This function returns a list of all of the items selected by the query.
     
@@ -274,6 +331,9 @@ def evaluate(context, query):
     
     >>> evaluate("*/foo", Context([{"foo": "bar"}, {"foo": "baz"}]))
     ["bar", "baz"]
+    
+    >>> evaluate('{{"a": "b", "c": "d"}/@a}', Context())
+    {"a": "b"}
     """
     if isinstance(query, basestring):
         query = parse(query)
@@ -283,7 +343,7 @@ def evaluate(context, query):
     if function is None:
         raise Exception("Evaluate not implemented for AST component type " + 
                 typename + " containing " + trimTo(200, repr(query)))
-    result = function(query, context)
+    result = function(context, query)
     if not isinstance(result, list):
         raise Exception("Result was not a list for AST component type " + 
                 typename + " containing " + trimTo(200, repr(query)))
@@ -348,6 +408,9 @@ def evaluate_ListConstructor(context, query):
     return [list(evaluate(context, query.expr))] # Create a list containing
     # the items present in the collection to be evaluated
 
+def evaluate_EmptyListConstructor(context, query):
+    return [[]]
+
 def evaluate_MapConstructor(context, query):
     collection = evaluate(context, query.expr)
     result = {}
@@ -356,14 +419,39 @@ def evaluate_MapConstructor(context, query):
             raise Exception("Maps (JSON objects) can only be constructed "
                     "from collections containing only pairs. The collection "
                     "being used to construct this map, however, contains an "
-                    "item of type " + type(pair) + ": " + repr(pair))
+                    "item of type " + str(type(pair)) + ": " + repr(pair))
         result[pair.key] = pair.value
     return [result]
 
+def evaluate_EmptyMapConstructor(context, query):
+    return [{}]
+
 def evaluate_Path(context, query):
     left_value = evaluate(context, query.left)
-    
+    result_collections = [evaluate(context.new_with_item(v), query.right) for v in left_value]
+    return list(itertools.chain(*result_collections))
 
+def evaluate_Predicate(context, query):
+    left_value = evaluate(context, query.left)
+    return [v for v in left_value if is_true_collection(evaluate(context.new_with_item(v), query.right))]
+
+def evaluate_Equality(context, query):
+    return [binary_comparison(context, query.left, query.right, lambda x, y: x == y)]
+
+def evaluate_PairConstructor(context, query):
+    left_value = evaluate(context, query.left)
+    right_value = evaluate(context, query.right)
+    if len(left_value) != len(right_value):
+        raise Exception("The length of the collections on either side of a "
+                "pair constructor must be the same. However, they were " +
+                str(len(left_value)) + " and " + str(len(right_value)) +
+                " for the key and the value, respectively.")
+    return [Pair(k, v) for k, v in zip(left_value, right_value)]
+
+def evaluate_CollectionConstructor(context, query):
+    left_value = evaluate(context, query.left)
+    right_value = evaluate(context, query.right)
+    return left_value + right_value
 
 
 
