@@ -152,6 +152,9 @@ Flwor = datatype("Flwor", "constructs")
 FlworFor = datatype("FlworFor", "name", "counter", "expr")
 FlworLet = datatype("FlworLet", "name", "expr")
 FlworWhere = datatype("FlworWhere", "expr")
+# Add order by, let the ordering thing potentially be any arbitrary expression
+# but note that ordering may slow down quite a bit if it's not a var, also
+# consider defining ordering to be stable
 FlworReturn = datatype("FlworReturn", "expr")
 
 
