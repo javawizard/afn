@@ -1,10 +1,23 @@
+# coding=UTF-8
 
 from pyparsing import Literal, OneOrMore, ZeroOrMore, Regex, MatchFirst
-from pyparsing import Forward, operatorPrecedence, opAssoc, Suppress
+from pyparsing import Forward, operatorPrecedence, opAssoc, Suppress, Keyword
+from string import ascii_lowercase, ascii_uppercase
 import pyparsing
+import itertools
+# Importing ourselves; we end up using this to look up which function to call
+# for each component of the AST
+import jpath.engine #@UnresolvedImport
+
+keychars = ascii_lowercase + ascii_uppercase
 
 
 escape_map = {"\\": "\\", '"': '"', "n": "\n", "r": "\r"}
+
+def trimTo(length, text):
+    if len(text) < length:
+        return text
+    return text[:length] + "..."
 
 def stringify(parser):
     """
@@ -20,7 +33,7 @@ class InfixSeriesSuffixAction(object):
     def __call__(self, tokens):
         return {"i": self.index, "t": tokens[0]}
 
-def InfixSeries(initial, *operators):
+def InfixSeries(initial, operators):
     """
     Returns a parser that parses infix expressions. All the operators are
     assumed to have the same precedence level. initial is the parser
@@ -68,41 +81,57 @@ def createPatternOrSpecial(pattern):
         return Null()
     return Pattern(pattern)
 
+class Datatype(object):
+    pass
+
 def datatype(name, *varnames, **transformations):
     def __init__(self, *args):
         for index, var in enumerate(varnames):
             setattr(self, var, transformations.get(var, lambda t: t)(args[index]))
     def __repr__(self):
         return "<" + name + " " + ", ".join([var + ": " + repr(getattr(self, var)) for var in varnames]) + ">"
-    return type(name, (object,), {"__init__": __init__, "__str__": __repr__, "__repr__": __repr__})
+    return type(name, (Datatype,), {"__init__": __init__, "__str__": __repr__, "__repr__": __repr__})
     
 Number = datatype("Number", "value", value=lambda t: float(t))
-
 String = datatype("String", "value")
-
 VarReference = datatype("VarReference", "name")
-
 Boolean = datatype("Boolean", "value")
-
-Null = datatype("Null") 
-
+Null = datatype("Null")
+ContextItem = datatype("ContextItem")
+Children = datatype("Children")
+PairChildren = datatype("PairChildren")
 Pattern = datatype("Pattern", "value")
-
 PairPattern = datatype("PairPattern", "value")
-
-Indexer = datatype("Indexer", "expr")
-
-PairIndexer = datatype("PairIndexer", "expr")
-
 ParenExpr = datatype("ParenExpr", "expr")
-
 ListConstructor = datatype("ListConstructor", "expr")
-
 MapConstructor = datatype("MapConstructor", "expr")
 
-Path = datatype("Path", "left", "right")
+Indexer = datatype("Indexer", "expr")
+PairIndexer = datatype("PairIndexer", "expr")
 
+Path = datatype("Path", "left", "right")
 Predicate = datatype("Predicate", "left", "right")
+
+Multiply = datatype("Multiply", "left", "right")
+Divide = datatype("Divide", "left", "right")
+Add = datatype("Add", "left", "right")
+Subtract = datatype("Subtract", "left", "right")
+Otherwise = datatype("Otherwise", "left", "right")
+
+Equality = datatype("Equality", "left", "right")
+Inequality = datatype("Inequality", "left", "right")
+GreaterThan = datatype("GreaterThan", "left", "right")
+LessThan = datatype("LessThan", "left", "right")
+GreaterOrEqual = datatype("GreaterOrEqual", "left", "right")
+LessOrEqual = datatype("LessOrEqual", "left", "right")
+
+And = datatype("And", "left", "right")
+Or = datatype("Or", "left", "right")
+
+PairConstructor = datatype("PairConstructor", "left", "right")
+
+CollectionConstructor = datatype("CollectionConstructor", "left", "right")
+
 
 pExpr = Forward()
 
@@ -113,29 +142,227 @@ pString = stringify(Literal('"') + ZeroOrMore(pStringChar) + Literal('"')).addPa
 pVarReference = Regex(r"\$[a-zA-Z][a-zA-Z0-9]*").addParseAction(lambda t: VarReference(t[0][1:]))
 pPattern = Regex("[a-zA-Z][a-zA-Z0-9]*").addParseAction(lambda t: createPatternOrSpecial(t[0]))
 pPairPattern = Regex("@[a-zA-Z][a-zA-Z0-9]").addParseAction(lambda t: PairPattern(t[0]))
+pContextItem = Literal(".").addParseAction(lambda t: ContextItem())
+pChildren = Literal("*").addParseAction(lambda t: Children())
+pPairChildren = Literal("@*").addParseAction(lambda t: PairChildren())
 pParenExpr = (Suppress("(") + pExpr + Suppress(")")).addParseAction(lambda t: ParenExpr(t[0]))
 pListConstructor = (Suppress("[") + pExpr + Suppress("]")).addParseAction(lambda t: ListConstructor(t[0]))
 pMapConstructor = (Suppress("{") + pExpr + Suppress("}")).addParseAction(lambda t: MapConstructor(t[0]))
 pAtom = ( pParenExpr | pListConstructor | pMapConstructor | pNumber | pString
-        | pVarReference | pPattern | pPairPattern)
+        | pVarReference | pPattern | pPairPattern | pContextItem
+        | pChildren | pPairChildren )
 
 pIndexer = (Suppress("#") + pAtom).addParseAction(lambda t: Indexer(t[0]))
 pPairIndexer = (Suppress("@#") + pAtom).addParseAction(lambda t: PairIndexer(t[0]))
 pIndividual = pIndexer | pPairIndexer | pAtom
 
-pPath = InfixSeries(pIndividual, 
-                                 ((Suppress("/") + pIndividual), Path), 
-                                 ((Suppress("[") + pExpr + Suppress("]")), Predicate))
+pInfix = pIndividual
 
-pExpr << (pPath)
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress("/") + pInfix), Path), 
+            ((Suppress("[") + pExpr + Suppress("]")), Predicate)
+        ])
+
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress(Literal(u"×") | Keyword("times", keychars) | Keyword("mul", keychars)) + pInfix), Multiply),
+            ((Suppress(Literal(u"÷") | Keyword("divided by", keychars) | Keyword("div", keychars)) + pInfix), Divide)
+        ])
+
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress(Literal(u"+") | Keyword("plus", keychars) | Keyword("add", keychars)) + pInfix), Add),
+            ((Suppress(Literal(u"-") | Keyword("minus", keychars) | Keyword("sub", keychars)) + pInfix), Subtract)
+        ])
+
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress(Keyword("otherwise", keychars)) + pInfix), Otherwise)
+        ])
+
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress(Literal(">=")) + pInfix), GreaterOrEqual),
+            ((Suppress(Literal("<=")) + pInfix), LessOrEqual),
+            ((Suppress(Literal(">")) + pInfix), GreaterThan),
+            ((Suppress(Literal("<")) + pInfix), LessThan),
+            ((Suppress(Literal("!=")) + pInfix), Inequality),
+            ((Suppress(Literal("=")) + pInfix), Equality)
+        ])
+
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress(Keyword("and", keychars)) + pInfix), And),
+            ((Suppress(Keyword("or", keychars)) + pInfix), Or)
+        ])
+
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress(Literal(":")) + pInfix), PairConstructor)
+        ])
+
+pInfix = InfixSeries(pInfix,
+        [
+            ((Suppress(Literal(",")) + pInfix), CollectionConstructor)
+        ])
+
+pExpr << (pInfix)
+
+
+def parse(text):
+    results = list(pExpr.parseString(text, parseAll=True))
+    if len(results) != 1:
+        raise Exception("Problem while parsing results: precisely one "
+                "result was expected, but " + str(len(results)) + " were "
+                "provided by the parser")
+    return results[0]
 
 
 
+class Context(object):
+    def __init__(self, item=None, vars=None):
+        self.item = item
+        self.vars = vars
+        if self.vars is None:
+            self.vars = {}
+    
+    def var(self, name):
+        return self.vars[name]
+    
+    def new_with_var(self, name, value):
+        if not isinstance(value, list):
+            raise Exception("Variable values have to be collections "
+                    "(represented in Python as lists). So, instead of, for "
+                    "example, c.new_with_var('foo', 1), do "
+                    "c.new_with_var('foo', [1]).")
+        vars = dict(self.vars)
+        vars.update({name: value})
+        return Context(self.item, vars)
+    
+    def new_with_item(self, item):
+        return Context(item, self.vars)
 
+class Pair(object):
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+    
+    def __repr__(self):
+        return "Pair(" + repr(self.key) + ", " + repr(self.value) + ")"
 
+def evaluate(context, query):
+    """
+    Runs the specified query in the specified context, which should be a
+    Context instance. The context can specify a context item and a set of
+    variables that will already be assigned values when the query runs.
+    
+    The query can be either a string representing the query to run or the
+    return value of parse(query_text). If you're going to be running the same
+    query over and over again, you should generally call parse and store the
+    result to avoid the delay of having to re-parse the query every time.
+    
+    This function returns a list of all of the items selected by the query.
+    
+    Some examples:
+    
+    >>> evaluate("foo", Context({"foo": "bar"}))
+    ["bar"]
+    
+    >>> evaluate("foo/bar", Context({"foo": {"bar": "baz"}})
+    ["baz"]
+    
+    >>> evaluate("*/foo", Context([{"foo": "bar"}, {"foo": "baz"}]))
+    ["bar", "baz"]
+    """
+    if isinstance(query, basestring):
+        query = parse(query)
+    # Figure out the method to dispatch to
+    typename = type(query).__name__
+    function = getattr(jpath.engine, "evaluate_" + typename, None)
+    if function is None:
+        raise Exception("Evaluate not implemented for AST component type " + 
+                typename + " containing " + trimTo(200, repr(query)))
+    result = function(query, context)
+    if not isinstance(result, list):
+        raise Exception("Result was not a list for AST component type " + 
+                typename + " containing " + trimTo(200, repr(query)))
+    return result
 
+def evaluate_Number(context, query):
+    return [query.value]
 
+def evaluate_String(context, query):
+    return [query.value]
 
+def evaluate_VarReference(context, query):
+    return context.var(query.name)
+
+def evaluate_Boolean(context, query):
+    return [query.value]
+
+def evaluate_Null(context, query):
+    return [None]
+    
+def evaluate_ContextItem(context, query):
+    # Context item is a single item, not a collection
+    return [context.item]
+
+def evaluate_Children(context, query):
+    if isinstance(context.item, dict):
+        return context.item.values()
+    elif isinstance(context.item, list):
+        return context.item
+    else:
+        return []
+
+def evaluate_PairChildren(context, query):
+    if isinstance(context.item, dict):
+        return [Pair(k, v) for k, v in context.item.items()]
+    else:
+        return []
+
+def evaluate_Pattern(context, query):
+    if isinstance(context.item, dict):
+        if query.value in context.item:
+            return [context.item[query.value]]
+        else:
+            return []
+    elif isinstance(context.item, Pair):
+        if query.value == "key":
+            return [context.item.key]
+        elif query.value == "value":
+            return [context.item.value]
+    return []
+
+def evaluate_PairPattern(context, query):
+    if isinstance(context.item, dict):
+        if query.value in context.item:
+            return [Pair(query.value, context.item[query.value])]
+    return []
+
+def evaluate_ParenExpr(context, query):
+    return evaluate(context, query.expr)
+
+def evaluate_ListConstructor(context, query):
+    return [list(evaluate(context, query.expr))] # Create a list containing
+    # the items present in the collection to be evaluated
+
+def evaluate_MapConstructor(context, query):
+    collection = evaluate(context, query.expr)
+    result = {}
+    for pair in collection:
+        if not isinstance(pair, Pair):
+            raise Exception("Maps (JSON objects) can only be constructed "
+                    "from collections containing only pairs. The collection "
+                    "being used to construct this map, however, contains an "
+                    "item of type " + type(pair) + ": " + repr(pair))
+        result[pair.key] = pair.value
+    return [result]
+
+def evaluate_Path(context, query):
+    left_value = evaluate(context, query.left)
+    
 
 
 
