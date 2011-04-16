@@ -5,7 +5,7 @@ I intend to make AFN open-source soon. All of the code is released under the LGP
 
 I'll get a detailed list of projects contained within the AFN repository up soon. Here's a brief summary of some of them:
 
- * '''Autobus''' is a message bus. It's similar to D-Bus, but with an emphasis on network connectivity. Bindings are available for Python and Java. Since Autobus's protocol is based on JSON, writing bindings for other languages is quite simple.
+* '''Autobus''' is a message bus. It's similar to D-Bus, but with an emphasis on network connectivity. Bindings are available for Python and Java. Since Autobus's protocol is based on JSON, writing bindings for other languages is quite simple.
  ** '''Autosend''' is a command-line client for Autobus. It connects as a normal Autobus client and allows the user to call functions registered by other clients, listen for event notifications, and watch Autobus objects for changes made by the client that publishes them.
  * '''Speak''' is a system for recording short audio files and playing lists of these files in a row. It connects as an Autobus client and publishes functions for instructing it what lists of files to play. I've recorded myself speaking several time-related phrases such as "o'clock", "30", etc, which I've included with Speak. In combination with Saytime, this allows Speak to function as a speaking clock.
  * '''record.py''' is a script for recording a user saying a set of spoken phrases, each of which will then be saved to an individual file. record.py takes a list of phrases to ask the user to say, takes care of automatically listening for when they start saying the phrase and when they stop saying the phrase, and saves each phrase to its own file automatically.
