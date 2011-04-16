@@ -1,0 +1,20 @@
+
+[
+	{
+		"name": "Sarah Weiler",
+		"nick": "pinkeysherbet",
+		"age": 19,
+		"flavors": ["phish food", "cookie dough", "cherry garcia"]
+	},
+	{
+		"name": "Alexander Boyd",
+		"nick": "jcp",
+		"age": 18,
+		"flavors": ["chocolate", "cookie dough", "vanilla", "cookies n cream"]
+	},
+	{
+		"name": "James Stoker",
+		"nick": "Amelia",
+		"age": 16
+	}
+]/*[age>17]/name

@@ -1,0 +1,36 @@
+
+let $data :=
+	[
+		{
+			"name": "Sarah Weiler",
+			"nick": "pinkeysherbet",
+			"age": 19,
+			"flavors": ["phish food", "cookie dough", "cherry garcia"]
+		},
+		{
+			"name": "Alexander Boyd",
+			"nick": "jcp",
+			"age": 18,
+			"flavors": ["chocolate", "cookie dough", "vanilla", "cookies n cream"]
+		},
+		{
+			"name": "James Stoker",
+			"nick": "Amelia",
+			"age": 16
+		}
+	]
+return
+	<html>
+		<body>
+			<ul>
+				{
+					for $person in $data/*
+					return
+						<li>
+							<b>{$person/name}: </b>
+							age {$person/age}, nickname: {$person/nick}
+						</li>
+				}
+			</ul>
+		</body>
+	</html>
