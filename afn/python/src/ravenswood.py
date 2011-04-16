@@ -64,13 +64,40 @@ class Button(Widget):
     
     def update_widget(self, properties):
         if "text" in properties:
-            self.widget.set_text(properties["text"])
+            self.widget.set_label(properties["text"])
     
     def clicked(self, *args):
         self.send_event("clicked", True)
 
 
-widget_list = [Window, Label, VBox, Button]
+class TextBox(Widget):
+    def setup(self):
+        self.widget = gtk.Entry()
+        self.widget.set_text(self.widget_properties.get("text", ""))
+        self.widget.set_width_chars(self.widget_properties.get("width", 20))
+        self.widget.connect("changed", self.text_changed)
+        self.widget.connect("activate", self.enter_pressed)
+        self.widget.show()
+    
+    def update_widget(self, properties):
+        if "width" in properties:
+            self.widget.set_width_chars(properties["width"])
+    
+    def text_changed(self, *args):
+        self.send_set_state(text=self.widget.get_text())
+    
+    def call(self, name, args):
+        if name == "set_text":
+            text, = args
+            self.widget.set_text(text)
+        else:
+            self.connection.fatal_error("Invalid call " + name + " on TextBox")
+    
+    def enter_pressed(self, *args):
+        pass
+
+
+widget_list = [Window, Label, VBox, Button, TextBox]
 widget_set = dict([(w.__name__, w) for w in widget_list])
 feature_set = ["widget:" + w for w in widget_set.keys()]
 

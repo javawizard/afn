@@ -88,6 +88,12 @@ def print_on_fail(function):
     update_wrapper(wrapper, function)
     return wrapper
 
+def rotations(sequence):
+    """
+    rotations("ABC") -> ["ABC", "BCA", "CAB"]
+    """
+    return [(sequence[i:] + sequence[:i]) for i in range(len(sequence))]
+
 
 
 

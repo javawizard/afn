@@ -198,6 +198,7 @@ class Connection(object):
         self.closed = False
         self.pre_start_messages = []
         self.close_functions = []
+        self.client_features = None
         protocol.protocol_init(self)
     
     @locked
@@ -275,6 +276,7 @@ class Connection(object):
                 self.fatal_error("First message must be a connect message")
                 return
             features = data["features"]
+            self.client_features = features
             application = data.get("application", None)
             self.application = application
             try:
