@@ -5,6 +5,8 @@ You can see a list of some of my favorite quotes [[/quotes.jsp|here]]. I also ru
 
 This website runs on phenoxydine, spiro, aster, and homeschool1, four servers in Alex's basement. There's a photo of phenoxydine [http://www.facebook.com/photo.php?pid=30702051&l=67fb0cd38f&id=1192582674 here]. Spiro, aster, and homeschool1 are located to the lower left of that picture, out of sight. I'll get pictures of them up soon.
 
+I have some projects I've created under the umbrella project [http://www.opengroove.org/static/afn AFN]. This is where most of the software I've written in the last few years is.
+
 This was formerly the home of the OpenGroove project, hence the website name. OpenGroove was created a couple of years back by Alex. OpenGroove has since been discontinued as a result of Google Wave coming out. The old OpenGroove website is still available [http://old.opengroove.org here].
 
 
