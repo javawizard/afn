@@ -127,6 +127,7 @@ ListConstructor = production("ListConstructor", "expr")
 EmptyListConstructor = production("EmptyListConstructor")
 MapConstructor = production("MapConstructor", "expr")
 EmptyMapConstructor = production("EmptyMapConstructor")
+EmptyCollectionConstructor = production("EmptyCollectionConstructor")
 
 Indexer = production("Indexer", "expr")
 PairIndexer = production("PairIndexer", "expr")
@@ -181,10 +182,11 @@ pListConstructor = (Suppress("[") + pExpr + Suppress("]")).addParseAction(lambda
 pEmptyListConstructor = (Literal("[") + Literal("]")).addParseAction(lambda t: EmptyListConstructor())
 pMapConstructor = (Suppress("{") + pExpr + Suppress("}")).addParseAction(lambda t: MapConstructor(t[0]))
 pEmptyMapConstructor = (Literal("{") + Literal("}")).addParseAction(lambda t: EmptyMapConstructor())
+pEmptyCollectionConstructor = (Literal("(") + Literal(")")).addParseAction(lambda t: EmptyCollectionConstructor())
 pAtom = (pParenExpr | pEmptyListConstructor | pListConstructor
-        | pEmptyMapConstructor | pMapConstructor | pNumber | pString
-        | pVarReference | pPattern | pPairPattern | pContextItem
-        | pChildren | pPairChildren)
+        | pEmptyMapConstructor | pMapConstructor | pEmptyCollectionConstructor
+        | pNumber | pString | pVarReference | pPattern | pPairPattern
+        | pContextItem | pChildren | pPairChildren)
 
 pIndexer = (Suppress("#") + pAtom).addParseAction(lambda t: Indexer(t[0]))
 pPairIndexer = (Suppress("@#") + pAtom).addParseAction(lambda t: PairIndexer(t[0]))
@@ -595,6 +597,22 @@ def is_true_collection(collection):
     return all(map(is_true_value, collection)) # A collection is true if it's
     # not empty and every one of its values is also true
 
+def extract_single(collection):
+    if len(collection) != 1:
+        raise Exception("Expected exactly one item but received a collection "
+                "of " + str(len(collection)) + " items")
+    return collection[0]
+
+def as_type(value, type):
+    """
+    Returns value if it's an instance of type. If it isn't, an exception will
+    be thrown.
+    """
+    if not isinstance(value, type):
+        raise Exception("Expected value of type " + str(type) + " but a "
+                "value of type " + str(type(value)) + " was received instead")
+    return value
+
 def binary_comparison(context, left_expr, right_expr, function):
     """
     Performs a binary comparison between the values of the two expressions.
@@ -609,6 +627,23 @@ def binary_comparison(context, left_expr, right_expr, function):
     left_value = evaluate(context, left_expr)
     right_value = evaluate(context, right_expr)
     return Boolean(any([function(x, y) for x in left_value for y in right_value]))
+
+def binary_operation(context, left_expr, right_expr, function):
+    """
+    Performs a binary operation. This evaluates left_expr and right_expr under
+    the specified context, then makes sure that both of them contain exactly
+    one item. If they contain more than one item, an exception is thrown. Then
+    function is called, passing in the single left value and the single right
+    value, and the result is returned.
+    """
+    left_value = evaluate(context, left_expr)
+    right_value = evaluate(context, right_expr)
+    return function(extract_single(left_value), extract_single(right_value))
+
+def arithmetic_operation(context, query, function):
+    def operation(x, y):
+        return Number(function(as_type(x, Number).get_float(), as_type(y, Number).get_float()))
+    return [binary_operation(context, query.left, query.right, operation)]
 
 def evaluate_input(context=Context(), loop=False):
     """
@@ -632,7 +667,7 @@ def evaluate_input(context=Context(), loop=False):
         else:
             print "-- " + str(len(results)) + " results:"
         for result in results:
-            print str(jpath_to_python(result))
+            print repr(jpath_to_python(result))
         if not loop:
             return
 
@@ -770,7 +805,7 @@ def evaluate_PairChildren(context, query):
 def evaluate_Pattern(context, query):
     # If this is a map, we get the value of the specified key if it exists.
     if isinstance(context.item, Map):
-        value = context.item.get_value(query.value)
+        value = context.item.get_value(String(query.value))
         if value:
             return [value]
         else: # No such value, so return the empty collection
@@ -789,7 +824,7 @@ def evaluate_Pattern(context, query):
 def evaluate_PairPattern(context, query):
     # These only work on maps.
     if isinstance(context.item, Map):
-        value = context.item.get_pair(query.value)
+        value = context.item.get_pair(String(query.value))
         if value: # We have a pair
             return [value]
     # Context item wasn't a map or didn't have an entry with the specified key
@@ -822,6 +857,9 @@ def evaluate_MapConstructor(context, query):
 
 def evaluate_EmptyMapConstructor(context, query):
     return [Map({})]
+
+def evaluate_EmptyCollectionConstructor(context, query):
+    return []
 
 def evaluate_Indexer(context, query):
     # Evaluate the indexer's expression
@@ -885,6 +923,29 @@ def evaluate_Predicate(context, query):
     # a true collection (a collection with at least one true value), then we
     # include the item in the list of values to return. 
     return [v for v in left_value if is_true_collection(evaluate(context.new_with_item(v), query.right))]
+#multiply,divide,add,subtract,otherwise
+def evaluate_Multiply(context, query):
+    return [arithmetic_operation(context, query, lambda x, y: x * y)]
+
+def evaluate_Divide(context, query):
+    return [arithmetic_operation(context, query, lambda x, y: float(x) / y)]
+
+def evaluate_Add(context, query):
+    return [arithmetic_operation(context, query, lambda x, y: x + y)]
+
+def evaluate_Subtract(context, query):
+    return [arithmetic_operation(context, query, lambda x, y: x - y)]
+
+def evaluate_Otherwise(context, query):
+    # The right-hand side should only be evaluated if the left-hand side is
+    # the empty sequence, so we can't use binary_operation for this
+    left_expr = query.left
+    right_expr = query.right
+    left_value = evaluate(context, left_expr)
+    if left_value == []:
+        return evaluate(context, right_expr)
+    else:
+        return left_value
 
 def evaluate_Equality(context, query):
     # Equality operator: returns true if any of the values in its left-hand
@@ -932,52 +993,67 @@ def evaluate_Flwor(context, query):
     # define the behavior of the XQuery Flwor, except that we actually
     # represent the so-called tuples as dictionaries since this is more what
     # Python uses.
-    # So, flwor evaluation is recursive for each statement in the flwor. What
-    # we basically do is start out with a var stream (as I'm going to call the
-    # tuple stream since it's really just a list of variable sets) containing
-    # one map with no variables defined in it. Each flwor construct evaluator
-    # is defined as a generator that accepts as input the context, the AST
-    # node for the construct, and the current var set. It generates a set of
-    # outputs, each one of which is a new var set.
-    # This function calls flwor_process with the empty var set. flwor_process
-    # takes the context, the var set, and the list of constructs left to be
-    # evaluated on this query. It looks up the appropriate generator for the
-    # topmost construct on that list and calls it. It then iterates over the
-    # results of that generator and, for each one, calls flwor_process to
-    # process the remaining constructs under this one. It stores the return
-    # values of all of these invocations in a list, which it then flattens out
-    # and returns.
-    # If the topmost construct is a return construct, then flwor_process just
-    # evaluates its value and returns it.
-    # The context passed into each flwor_* function call will contain all of
-    # the variables made available by constructs above the construct that the
-    # flwor_* function call is supposed to process.
-    pass
+    # So, flwor evaluation uses generator composition to tie all of the
+    # constructs together. For each construct, the corresonding flwor_*
+    # generator is invoked, passing in the generator created for the preceding
+    # flwor construct (or the result of invoking flwor_init, which yields one
+    # empty map representing an empty varset, for the first construct). After
+    # all of these generators are created, flwor_return, which is also a
+    # generator, is invoked. It's similar to the other generators but it
+    # yields collections, each of which corresponds to an invocation of the
+    # return clause under the varset generated by the generator passed into
+    # it.
+    constructs = query.constructs
+    last_generator = flwor_init()
+    for construct in constructs:
+        typename = type(construct).__name__
+        generator = getattr(jpath.engine, "flwor_" + typename, None)
+        if generator is None:
+            raise Exception("Flwor generator not implemented for construct " 
+                    + typename + " containing " + trimTo(200, repr(construct))
+                     + ". " + JPATH_INTERNAL_ERROR_MESSAGE)
+        last_generator = generator(context, construct, last_generator)
+    return [item for collection in last_generator for item in collection]
 
-def flwor_for(context, query, varset):
+def flwor_init():
+    yield {}
+
+def flwor_FlworFor(context, query, var_stream):
     name = query.name
     counter = query.counter
     expr = query.expr
-    expr_value = evaluate(context, expr)
-    # Iterate over all the items in the resulting collection
-    for index, item in enumerate(expr_value):
+    for varset in var_stream:
+        expr_value = evaluate(context.new_with_vars(varset), expr)
+        for index, item in enumerate(expr_value):
+            new_varset = dict(varset)
+            new_varset.update({name: [item]})
+            if counter:
+                new_varset.update({counter: [Number(index + 1)]})
+            yield new_varset
+
+def flwor_FlworLet(context, query, var_stream):
+    name = query.name
+    expr = query.expr
+    for varset in var_stream:
+        expr_value = evaluate(context.new_with_vars(varset), expr)
         new_varset = dict(varset)
-        new_varset.update({name: item})
-        if counter:
-            new_varset.update({counter: index + 1})
+        new_varset.update({name: expr_value})
         yield new_varset
 
-def flwor_let(context, query, varset):
-    new_varset = dict(varset)
-    new_varset.update({query.name: evaluate(context, query.expr)})
-    yield new_varset
+def flwor_FlworWhere(context, query, var_stream):
+    expr = query.expr
+    for varset in var_stream:
+        expr_value = evaluate(context.new_with_vars(varset), expr)
+        if is_true_collection(expr_value):
+            yield varset
 
-def flwor_where(context, query, varset):
-    if is_true_collection(evaluate(context, query.expr)):
-        yield varset
-    # Otherwise don't yield anything since the where clause failed to match
-TODO: I'm not sure how we're going to go about doing the order by under this paradigm. Perhaps this needs to be rethought.
+def flwor_FlworReturn(context, query, var_stream):
+    expr = query.expr
+    for varset in var_stream:
+        expr_value = evaluate(context.new_with_vars(varset), expr)
+        yield expr_value
 
+ 
 
 
 
