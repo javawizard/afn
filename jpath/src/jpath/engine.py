@@ -181,10 +181,10 @@ pListConstructor = (Suppress("[") + pExpr + Suppress("]")).addParseAction(lambda
 pEmptyListConstructor = (Literal("[") + Literal("]")).addParseAction(lambda t: EmptyListConstructor())
 pMapConstructor = (Suppress("{") + pExpr + Suppress("}")).addParseAction(lambda t: MapConstructor(t[0]))
 pEmptyMapConstructor = (Literal("{") + Literal("}")).addParseAction(lambda t: EmptyMapConstructor())
-pAtom = ( pParenExpr | pEmptyListConstructor | pListConstructor
+pAtom = (pParenExpr | pEmptyListConstructor | pListConstructor
         | pEmptyMapConstructor | pMapConstructor | pNumber | pString
         | pVarReference | pPattern | pPairPattern | pContextItem
-        | pChildren | pPairChildren )
+        | pChildren | pPairChildren)
 
 pIndexer = (Suppress("#") + pAtom).addParseAction(lambda t: Indexer(t[0]))
 pPairIndexer = (Suppress("@#") + pAtom).addParseAction(lambda t: PairIndexer(t[0]))
@@ -194,7 +194,7 @@ pInfix = pIndividual
 
 pInfix = InfixSeries(pInfix,
         [
-            ((Suppress("/") + pInfix), Path), 
+            ((Suppress("/") + pInfix), Path),
             ((Suppress("[") + pExpr + Suppress("]")), Predicate)
         ])
 
@@ -306,6 +306,15 @@ class Pair(Item):
         Returns the value of this pair.
         """
         return self._value
+    
+    def __hash__(self):
+        return hash((self._key, self._value))
+    
+    def __cmp__(self, other):
+        key_cmp = cmp(self._key, other._key)
+        if key_cmp != 0:
+            return key_cmp
+        return cmp(self._value, other._value)
 
 class Map(Item):
     def __init__(self, map):
@@ -358,6 +367,14 @@ class Map(Item):
             return Pair(key, self._map[key])
         else:
             return None
+    
+    def __hash__(self):
+        return hash(tuple(self._map.items()))
+    
+    def __cmp__(self, other):
+        if self._map == other._map: # Optimization for if the values are equal
+            return 0
+        return cmp(sorted(tuple(self._map.items())), sorted(tuple(other._map.items())))
 
 class List(Item):
     def __init__(self, data):
@@ -390,6 +407,12 @@ class List(Item):
         Returns the number of items contained within this list.
         """
         return len(self._data)
+    
+    def __hash__(self):
+        return hash(tuple(self._data))
+    
+    def __cmp__(self, other):
+        return cmp(self._data, other._data)
 
 class String(Item):
     def __init__(self, value):
@@ -404,6 +427,12 @@ class String(Item):
         Returns the value of this string as a string or a unicode.
         """
         return self._value
+    
+    def __hash__(self):
+        return hash(self._value)
+    
+    def __cmp__(self, other):
+        return cmp(self._value, other._value)
 
 class Number(Item):
     def __init__(self, value):
@@ -415,16 +444,28 @@ class Number(Item):
         """
         return self._value
     
+    def get_integer(self):
+        """
+        Returns the value of this number as a whole integer (or long).
+        """
+        return int(self._value)
+    
     def is_whole(self):
         """
         Returns true if this number is a whole number, or false if this number
         has a fractional part.
         """
         return math.floor(self._value) == self._value
+    
+    def __hash__(self):
+        return hash(self._value)
+    
+    def __cmp__(self, other):
+        return cmp(self._value, other._value)
 
 class Boolean(Item):
     def __init__(self, value):
-        if not isinstance(value, Boolean):
+        if not isinstance(value, bool):
             raise Exception("Value is not a boolean")
         self._value = value
     
@@ -433,9 +474,19 @@ class Boolean(Item):
         Returns the value of this boolean as a Python boolean.
         """
         return self._value
+    
+    def __hash__(self):
+        return hash(self._value)
+    
+    def __cmp__(self, other):
+        return cmp(self._value, other._value)
 
 class Null(Item):
-    pass
+    def __hash__(self):
+        return 0
+    
+    def __cmp__(self, other):
+        return 0 # Nulls are always equal to each other
 
 def python_to_jpath(data):
     """
@@ -447,27 +498,57 @@ def python_to_jpath(data):
     
     The return value will be a subclass of Item.
     """
-    pass
+    if isinstance(data, basestring):
+        return String(data)
+    elif isinstance(data, bool):
+        return Boolean(data)
+    elif isinstance(data, (int, long, float)):
+        return Number(float(data))
+    elif data is None:
+        return Null()
+    elif isinstance(data, dict):
+        return Map(dict([(python_to_jpath(k), python_to_jpath(v)) for k, v in data.items()]))
+    elif isinstance(data, (tuple, list)):
+        return List([python_to_jpath(v) for v in data])
+    else:
+        raise Exception("No python -> jpath encoding for " + str(type(data)))
 
 def jpath_to_python(data):
     """
     The opposite of python_to_jpath: converts a representation used internally
     into JSON data suitable for, as an example, passing to simplejson.dumps.
     """
-    pass
+    if isinstance(data, (String, Boolean)):
+        return data.get_value()
+    elif isinstance(data, Number):
+        if data.is_whole():
+            return data.get_integer()
+        else:
+            return data.get_float()
+    elif isinstance(data, Null):
+        return None
+    elif isinstance(data, List):
+        return [jpath_to_python(v) for v in data.get_items()]
+    elif isinstance(data, Map):
+        return dict([(jpath_to_python(p.get_key()), jpath_to_python(p.get_value())) for p in data.get_pairs()])
+    else:
+        raise Exception("No jpath -> python encoding for " + str(type(data)))
 
 def parse(text):
     results = list(pExpr.parseString(text, parseAll=True))
     if len(results) != 1:
         raise Exception("Problem while parsing results: precisely one "
                 "result was expected, but " + str(len(results)) + " were "
-                "provided by the parser")
+                "provided by the parser. " + JPATH_INTERNAL_ERROR_MESSAGE)
     return results[0]
 
 
 
 class Context(object):
     def __init__(self, item=Null(), vars=None):
+        if not isinstance(item, Item):
+            raise Exception("The context item must be an instance of a "
+                    "subclass of Item, not an instance of " + str(type(item)))
         self.item = item
         self.vars = vars
         if self.vars is None:
@@ -523,11 +604,11 @@ def binary_comparison(context, left_expr, right_expr, function):
     is a value resulting from the evaluation of left_expr and y is a value
     resulting from the evaluation of right_expr. function should return True
     or False. If it returns True for any pairs of items, this function will
-    return True. Otherwise, this function will return False.
+    return Boolean(True). Otherwise, this function will return Boolean(False).
     """
     left_value = evaluate(context, left_expr)
     right_value = evaluate(context, right_expr)
-    return any([function(x, y) for x in left_value for y in right_value])
+    return Boolean(any([function(x, y) for x in left_value for y in right_value]))
 
 def evaluate_input(context=Context(), loop=False):
     """
@@ -545,13 +626,13 @@ def evaluate_input(context=Context(), loop=False):
             return
         results = evaluate(context, text)
         if len(results) == 0:
-            print "No results."
+            print "-- No results."
         elif len(results) == 1:
-            print "1 result:"
+            print "-- 1 result:"
         else:
-            print str(len(results)) + " results:"
+            print "-- " + str(len(results)) + " results:"
         for result in results:
-            print str(result)
+            print str(jpath_to_python(result))
         if not loop:
             return
 
@@ -643,7 +724,7 @@ def evaluate(context, query):
     result = function(context, query)
     if not isinstance(result, list):
         raise Exception("Result was not a list (representing a collection) "
-                "for AST component type " + typename + " containing " +
+                "for AST component type " + typename + " containing " + 
                 trimTo(200, repr(query)) + ". " + JPATH_INTERNAL_ERROR_MESSAGE)
     return result
 
@@ -704,84 +785,204 @@ def evaluate_Pattern(context, query):
     # Not a map or a pair, or if it was a pair the pattern wasn't "key" or
     # "value", so we'll return the empty collection.
     return []
-TODO: pick up here converting existing stuff to use the new JSON objects that subclass Item
+
 def evaluate_PairPattern(context, query):
-    if isinstance(context.item, dict):
-        if query.value in context.item:
-            return [Pair(query.value, context.item[query.value])]
+    # These only work on maps.
+    if isinstance(context.item, Map):
+        value = context.item.get_pair(query.value)
+        if value: # We have a pair
+            return [value]
+    # Context item wasn't a map or didn't have an entry with the specified key
     return []
 
 def evaluate_ParenExpr(context, query):
+    # Just evaluate the expression inside parens and return the result
     return evaluate(context, query.expr)
 
 def evaluate_ListConstructor(context, query):
-    return [list(evaluate(context, query.expr))] # Create a list containing
-    # the items present in the collection to be evaluated
+    return [List(list(evaluate(context, query.expr)))] # Create a list
+    # containing the items in the collection resulting from evaluating
+    # the specified expression 
 
 def evaluate_EmptyListConstructor(context, query):
-    return [[]]
+    return [List([])] # Return a collection containing a single empty list
 
 def evaluate_MapConstructor(context, query):
-    collection = evaluate(context, query.expr)
-    result = {}
+    collection = evaluate(context, query.expr) # Evaluate the expression
+    # containing the pairs that should go into the new map
+    result = {} # Construct the dictionary to hold the map's entries
     for pair in collection:
         if not isinstance(pair, Pair):
             raise Exception("Maps (JSON objects) can only be constructed "
                     "from collections containing only pairs. The collection "
                     "being used to construct this map, however, contains an "
                     "item of type " + str(type(pair)) + ": " + repr(pair))
-        result[pair.key] = pair.value
-    return [result]
+        result[pair.get_key()] = pair.get_value()
+    return [Map(result)]
 
 def evaluate_EmptyMapConstructor(context, query):
-    return [{}]
+    return [Map({})]
 
 def evaluate_Indexer(context, query):
+    # Evaluate the indexer's expression
     value = evaluate(context, query.expr)
+    # If the indexer expression resulted in the empty collection, then return
+    # the empty collection
     if len(value) < 1:
         return []
+    # The expression passed to an indexer should only contain one item. TODO:
+    # change this to allow multiple items to select from multiple indexes, and
+    # have a x to y operator that returns a collection of numbers from x to y
     value = value[0]
-    if(isinstance(context.item, list)):
-        value = int(value)
-        if(value < 1 or value > len(context.item)):
-            return []
-        else:
-            return [context.item[value-1]]
+    # Now we actually do useful stuff. Let's see if we're querying a list...
+    if(isinstance(context.item, List)):
+        # Yup, we are. So, first things first: convert the value, which should
+        # be a Number, to an int.
+        if not isinstance(value, Number):
+            # TODO: consider allowing strings, booleans, etc, and converting
+            # them to int values (strings -> ints by parsing them, booleans ->
+            # ints by using 0 for false and 1 for true
+            raise Exception("The argument to an indexer has to be a number.")
+        # It's a number, so we get the int value from it.
+        value = value.get_integer()
+        # Now we get the items. The return value of get_item_range is a list
+        # of all the items requested, so we'll just return that list as the
+        # collection of items (which will only have one item in it).
+        return context.item.get_item_range(value - 1, value)
+    # Not a list. Is it a map?
     elif(isinstance(context.item, map)):
-        if(value in context.item):
-            return [context.item[value]]
-        else:
-            return []
+        # Yup, so let's see if it has an entry with the specified key.
+        result = context.item.get_value(value)
+        # Does this entry exist?
+        if result is not None:
+            # Yes it does, so we'll return a collection containing it.
+            return [result]
+        # It doesn't, so we'll return the empty collection.
+        return []
+    # Context item isn't a list or a map, so we return the empty collection.
+    # TODO: consider adding support for indexing strings, which should return
+    # a substring of the original string
+    return []
 
 def evaluate_Path(context, query):
+    # Evaluate the left-hand side
     left_value = evaluate(context, query.left)
+    # Then, for each value in the left-hand side's resulting collection,
+    # create a new context with that value as the context item, run the
+    # right-hand side under that context, and put the resulting collection
+    # into result_collections
     result_collections = [evaluate(context.new_with_item(v), query.right) for v in left_value]
+    # Now we flatten out the list of collections into one list (representing
+    # a collection) containing all the items, and return it.
     return list(itertools.chain(*result_collections))
 
 def evaluate_Predicate(context, query):
+    # We evaluate the left-hand side
     left_value = evaluate(context, query.left)
+    # Then we go through the list of items in the resulting left-hand
+    # collection. For each item, we evaluate the predicate with the specified
+    # item as the context item. If the result of evaluating the predicate is
+    # a true collection (a collection with at least one true value), then we
+    # include the item in the list of values to return. 
     return [v for v in left_value if is_true_collection(evaluate(context.new_with_item(v), query.right))]
 
 def evaluate_Equality(context, query):
+    # Equality operator: returns true if any of the values in its left-hand
+    # collection are equal to any of the values in its right-hand collection
     return [binary_comparison(context, query.left, query.right, lambda x, y: x == y)]
 
 def evaluate_GreaterThan(context, query):
+    # Greater-than operator: same thing as equality, but checks to see if the
+    # left-hand values are greater than the right-hand values instead of
+    # equal. TODO: consider automatic conversion of strings to numbers
+    # during comparisons if one side is already a number
     return [binary_comparison(context, query.left, query.right, lambda x, y: x > y)]
 
 def evaluate_PairConstructor(context, query):
+    # Evaluate the left and right-hand sides
     left_value = evaluate(context, query.left)
     right_value = evaluate(context, query.right)
+    # Now we check for length. A pair constructor's left-hand side and
+    # right-hand side have to be the same length, and that many newly-created
+    # pairs will be returned from the pair constructor.
     if len(left_value) != len(right_value):
+        # Left-hand side and right-hand side don't have the same number of
+        # items, so we throw an exception.
         raise Exception("The length of the collections on either side of a "
-                "pair constructor must be the same. However, they were " +
-                str(len(left_value)) + " and " + str(len(right_value)) +
+                "pair constructor must be the same. However, they were " + 
+                str(len(left_value)) + " and " + str(len(right_value)) + 
                 " for the key and the value, respectively.")
+    # Left-hand side and right-hand side do have the same number of pairs, so
+    # we construct one pair for each pair of items in the two sides.
     return [Pair(k, v) for k, v in zip(left_value, right_value)]
 
 def evaluate_CollectionConstructor(context, query):
+    # This one is fairly easy: we evaluate the left and right sides, then
+    # concatenate the resulting collections and return our newly-created
+    # collection. TODO: for efficiency, consider having collection
+    # construction represent a series of commas with just one AST token
+    # instead of an AST token for every comma.
     left_value = evaluate(context, query.left)
     right_value = evaluate(context, query.right)
     return left_value + right_value
+
+def evaluate_Flwor(context, query):
+    # Flwors are interesting constructs. The way I've done them here
+    # essentially follows XQuery's notion of a tuple stream that they use to
+    # define the behavior of the XQuery Flwor, except that we actually
+    # represent the so-called tuples as dictionaries since this is more what
+    # Python uses.
+    # So, flwor evaluation is recursive for each statement in the flwor. What
+    # we basically do is start out with a var stream (as I'm going to call the
+    # tuple stream since it's really just a list of variable sets) containing
+    # one map with no variables defined in it. Each flwor construct evaluator
+    # is defined as a generator that accepts as input the context, the AST
+    # node for the construct, and the current var set. It generates a set of
+    # outputs, each one of which is a new var set.
+    # This function calls flwor_process with the empty var set. flwor_process
+    # takes the context, the var set, and the list of constructs left to be
+    # evaluated on this query. It looks up the appropriate generator for the
+    # topmost construct on that list and calls it. It then iterates over the
+    # results of that generator and, for each one, calls flwor_process to
+    # process the remaining constructs under this one. It stores the return
+    # values of all of these invocations in a list, which it then flattens out
+    # and returns.
+    # If the topmost construct is a return construct, then flwor_process just
+    # evaluates its value and returns it.
+    # The context passed into each flwor_* function call will contain all of
+    # the variables made available by constructs above the construct that the
+    # flwor_* function call is supposed to process.
+    pass
+
+def flwor_for(context, query, varset):
+    name = query.name
+    counter = query.counter
+    expr = query.expr
+    expr_value = evaluate(context, expr)
+    # Iterate over all the items in the resulting collection
+    for index, item in enumerate(expr_value):
+        new_varset = dict(varset)
+        new_varset.update({name: item})
+        if counter:
+            new_varset.update({counter: index + 1})
+        yield new_varset
+
+def flwor_let(context, query, varset):
+    new_varset = dict(varset)
+    new_varset.update({query.name: evaluate(context, query.expr)})
+    yield new_varset
+
+def flwor_where(context, query, varset):
+    if is_true_collection(evaluate(context, query.expr)):
+        yield varset
+    # Otherwise don't yield anything since the where clause failed to match
+TODO: I'm not sure how we're going to go about doing the order by under this paradigm. Perhaps this needs to be rethought.
+
+
+
+
+
+
 
 
 
