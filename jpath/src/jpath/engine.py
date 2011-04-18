@@ -1,12 +1,11 @@
 # coding=UTF-8
 
-from pyparsing import Literal, OneOrMore, ZeroOrMore, Regex, MatchFirst
-from pyparsing import Forward, operatorPrecedence, opAssoc, Suppress, Keyword
-from pyparsing import Optional
-from string import ascii_lowercase, ascii_uppercase
+from pyparsing import ParseException
 import pyparsing
 import itertools
 import math
+import sys
+from traceback import print_exc
 # Importing ourselves; we end up using this to look up which function to call
 # for each component of the AST
 import jpath.engine #@UnresolvedImport
@@ -18,25 +17,22 @@ def trimTo(length, text):
         return text
     return text[:length] + "..."
 
+def check_same_type(first, second, message):
+    """
+    Checks to make sure that first and second have the same type. If they
+    don't, an exception with the specified message is thrown. The message
+    should have two %s fields in it, corresponding to the types of the first
+    and second values passed into this method.
+    """
+    if type(first) != type(second):
+        raise Exception(message % (type(first).__name__, type(second).__name__))
+
+COMPARE_TYPE_MESSAGE = "Can't compare value of type %s with value of type %s"
 JPATH_INTERNAL_ERROR_MESSAGE = ("This is a JPath internal error; report this "
         "to the JPath developers and they'll get it fixed as soon as "
         "possible. (one of them is alex@opengroove.org in case you don't "
         "have any other information about how to get in touch with them.)")
 
-
-class Result(object):
-    """
-    The return value of any evaluation. It has one attribute, value, whose
-    value is a list representing the collection of results. It may have
-    additional attributes in the future (for example, XQuery has an update
-    list as part of the XQuery update extensions; such a feature would be
-    added as an additional attribute here).
-    """
-    def __init__(self, value):
-        if not isinstance(value, list):
-            raise Exception("Result values must be lists representing the "
-                    "collection of results")
-        self.value = value
 
 class Item(object):
     """
@@ -56,6 +52,7 @@ class Item(object):
     consult indexes to retrieve the appropriate information. 
     """
     pass
+
 
 class Pair(Item):
     def __init__(self, key, value):
@@ -78,10 +75,12 @@ class Pair(Item):
         return hash((self._key, self._value))
     
     def __cmp__(self, other):
+        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
         key_cmp = cmp(self._key, other._key)
         if key_cmp != 0:
             return key_cmp
         return cmp(self._value, other._value)
+
 
 class Map(Item):
     def __init__(self, map):
@@ -139,9 +138,11 @@ class Map(Item):
         return hash(tuple(self._map.items()))
     
     def __cmp__(self, other):
+        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
         if self._map == other._map: # Optimization for if the values are equal
             return 0
         return cmp(sorted(tuple(self._map.items())), sorted(tuple(other._map.items())))
+
 
 class List(Item):
     def __init__(self, data):
@@ -179,7 +180,9 @@ class List(Item):
         return hash(tuple(self._data))
     
     def __cmp__(self, other):
+        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
         return cmp(self._data, other._data)
+
 
 class String(Item):
     def __init__(self, value):
@@ -199,7 +202,9 @@ class String(Item):
         return hash(self._value)
     
     def __cmp__(self, other):
+        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
         return cmp(self._value, other._value)
+
 
 class Number(Item):
     def __init__(self, value):
@@ -228,7 +233,9 @@ class Number(Item):
         return hash(self._value)
     
     def __cmp__(self, other):
+        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
         return cmp(self._value, other._value)
+
 
 class Boolean(Item):
     def __init__(self, value):
@@ -246,14 +253,119 @@ class Boolean(Item):
         return hash(self._value)
     
     def __cmp__(self, other):
+        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
         return cmp(self._value, other._value)
+
 
 class Null(Item):
     def __hash__(self):
         return 0
     
     def __cmp__(self, other):
+        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
         return 0 # Nulls are always equal to each other
+
+
+class Context(object):
+    def __init__(self, item=Null(), vars=None, options=None):
+        if not isinstance(item, Item):
+            raise Exception("The context item must be an instance of a "
+                    "subclass of Item, not an instance of " + str(type(item)))
+        self.item = item
+        self.vars = vars
+        self.options = options
+        if self.vars is None:
+            self.vars = {}
+        if self.options is None:
+            self.options = {}
+    
+    def var(self, name):
+        return self.vars[name]
+    
+    def get_option(self, name, default=None):
+        return self.options.get(name, default)
+    
+    def get_options(self):
+        return self.options
+    
+    def new_with_vars(self, vars):
+        for key, value in vars.items():
+            if not isinstance(value, list):
+                raise Exception("Variable values have to be collections "
+                        "(represented in Python as lists). So, instead of, for "
+                        "example, c.new_with_var('foo', Number(1)), do "
+                        "c.new_with_var('foo', [Number(1)]). Specifically, "
+                        "you just tried to assign a value of type " + 
+                        str(type(value)) + " to the var " + str(key) + ".")
+        new_vars = dict(self.vars)
+        new_vars.update(vars)
+        return Context(self.item, new_vars, self.options)
+    
+    def new_with_var(self, name, value):
+        return self.new_with_vars({name: value})
+    
+    def new_with_options(self, options):
+        new_options = dict(self.options)
+        new_options.update(options)
+        return Context(self.item, self.vars, new_options)
+    
+    def new_with_option(self, name, value):
+        return self.new_with_options(name, value)
+    
+    def new_with_item(self, item):
+        if not isinstance(item, Item):
+            raise Exception("The context item must be an instance of a "
+                    "subclass of Item, not an instance of " + str(type(item)))
+        return Context(item, self.vars, self.options)
+    
+    def __repr__(self):
+        return "Context(" + repr(self.item) + ", " + repr(self.vars) + ")"
+
+
+class Query(object):
+    def __init__(self, text, production):
+        self.text = text
+        self.production = production
+    
+    def evaluate(self, context=Context()):
+        """
+        Runs this query in the specified context and returns the result.
+        """
+        try:
+            return evaluate(context, self.production)
+        except EvaluationError as e:
+            e.set_query(self)
+            raise
+    
+    query = evaluate
+
+
+class EvaluationError(Exception):
+    """
+    Exception thrown when an error occurs while running a query.
+    """
+    def __init__(self, location, message, cause_info):
+        self.location = location
+        self.message = message
+        self.cause_info = cause_info
+        self.query = None
+    
+    def set_query(self, query):
+        self.query = query
+    
+    def generate_location(self):
+        if self.query:
+            return ("line " + str(pyparsing.lineno(self.location, self.query.text)) +
+                    ", col " + str(pyparsing.col(self.location, self.query.text)))
+        else:
+            return "position " + str(self.location)
+    
+    def __str__(self):
+        return "Error at " + self.generate_location() + ": " + self.message
+    
+    def __repr__(self):
+        return "<EvaluationError at " + self.generate_location() + ": " + self.message + ">"
+
 
 def python_to_jpath(data):
     """
@@ -280,6 +392,7 @@ def python_to_jpath(data):
     else:
         raise Exception("No python -> jpath encoding for " + str(type(data)))
 
+
 def jpath_to_python(data):
     """
     The opposite of python_to_jpath: converts a representation used internally
@@ -301,53 +414,16 @@ def jpath_to_python(data):
     else:
         raise Exception("No jpath -> python encoding for " + str(type(data)))
 
+
 def parse(text):
     results = list(jpath.syntax.pExpr.parseString(text, parseAll=True))
     if len(results) != 1:
         raise Exception("Problem while parsing results: precisely one "
                 "result was expected, but " + str(len(results)) + " were "
                 "provided by the parser. " + JPATH_INTERNAL_ERROR_MESSAGE)
-    return results[0]
+    return Query(text, results[0])
 
 
-
-class Context(object):
-    def __init__(self, item=Null(), vars=None):
-        if not isinstance(item, Item):
-            raise Exception("The context item must be an instance of a "
-                    "subclass of Item, not an instance of " + str(type(item)))
-        self.item = item
-        self.vars = vars
-        if self.vars is None:
-            self.vars = {}
-    
-    def var(self, name):
-        return self.vars[name]
-    
-    def new_with_vars(self, vars):
-        for key, value in vars.items():
-            if not isinstance(value, list):
-                raise Exception("Variable values have to be collections "
-                        "(represented in Python as lists). So, instead of, for "
-                        "example, c.new_with_var('foo', Number(1)), do "
-                        "c.new_with_var('foo', [Number(1)]). Specifically, "
-                        "you just tried to assign a value of type " + 
-                        str(type(value)) + " to the var " + str(key) + ".")
-        new_vars = dict(self.vars)
-        new_vars.update(vars)
-        return Context(self.item, new_vars)
-    
-    def new_with_var(self, name, value):
-        return self.new_with_vars({name: value})
-    
-    def new_with_item(self, item):
-        if not isinstance(item, Item):
-            raise Exception("The context item must be an instance of a "
-                    "subclass of Item, not an instance of " + str(type(item)))
-        return Context(item, self.vars)
-    
-    def __repr__(self):
-        return "Context(" + repr(self.item) + ", " + repr(self.vars) + ")"
 
 def is_true_value(value):
     if isinstance(value, Null):
@@ -356,17 +432,20 @@ def is_true_value(value):
         return value.get_value()
     return True;
 
+
 def is_true_collection(collection):
     if len(collection) == 0:
         return False
     return all(map(is_true_value, collection)) # A collection is true if it's
     # not empty and every one of its values is also true
 
+
 def extract_single(collection):
     if len(collection) != 1:
         raise Exception("Expected exactly one item but received a collection "
                 "of " + str(len(collection)) + " items")
     return collection[0]
+
 
 def as_type(value, type):
     """
@@ -377,6 +456,7 @@ def as_type(value, type):
         raise Exception("Expected value of type " + str(type) + " but a "
                 "value of type " + str(type(value)) + " was received instead")
     return value
+
 
 def binary_comparison(context, left_expr, right_expr, function):
     """
@@ -393,6 +473,7 @@ def binary_comparison(context, left_expr, right_expr, function):
     right_value = evaluate(context, right_expr)
     return Boolean(any([function(x, y) for x in left_value for y in right_value]))
 
+
 def binary_operation(context, left_expr, right_expr, function):
     """
     Performs a binary operation. This evaluates left_expr and right_expr under
@@ -405,18 +486,21 @@ def binary_operation(context, left_expr, right_expr, function):
     right_value = evaluate(context, right_expr)
     return function(extract_single(left_value), extract_single(right_value))
 
+
 def arithmetic_operation(context, query, function):
     def operation(x, y):
         return Number(function(as_type(x, Number).get_float(), as_type(y, Number).get_float()))
     return [binary_operation(context, query.left, query.right, operation)]
 
-def evaluate_input(context=Context(), loop=False):
+
+def run_input(context=Context(), loop=True):
     """
     Prompts for a line of text with raw_input(), then evaluates it as a query.
     The results will then be printed to stdout, along with a summary.
     
     If loop is true, the user will be prompted again for another query, and so
-    on until they hit enter without entering a query.
+    on until they hit enter without entering a query. Otherwise, this function
+    will return after processing one query.
     
     The queries will be run under the specified context.
     """
@@ -424,24 +508,32 @@ def evaluate_input(context=Context(), loop=False):
         text = raw_input("Q>> ")
         if text == "":
             return
-        results = evaluate(context, text)
-        if len(results) == 0:
-            print "-- No results."
-        elif len(results) == 1:
-            print "-- 1 result:"
-        else:
-            print "-- " + str(len(results)) + " results:"
-        for result in results:
-            print repr(jpath_to_python(result))
+        try:
+            results = parse(text).query(context)
+            if len(results) == 0:
+                print "-- No results."
+            elif len(results) == 1:
+                print "-- 1 result:"
+            else:
+                print "-- " + str(len(results)) + " results:"
+            for result in results:
+                print repr(jpath_to_python(result))
+        except ParseException as e:
+            print "Error while parsing: " + str(e)
+        except EvaluationError as e:
+            print "Error while evaluating: " + str(e)
         if not loop:
             return
 
-def evaluate_file(context, filename):
+
+def run_file(context, filename):
     """
     Runs the specified file in the specified context. This reads the file's
-    contents and calls evaluate on the resulting text.
+    contents, parses them into a query, and calls the resulting query's query
+    method.
     """
-    return evaluate(context, parse_file(filename))
+    return parse_file(filename).query(context)
+
 
 def parse_file(filename):
     """
@@ -451,7 +543,8 @@ def parse_file(filename):
     with open(filename) as file:
         return parse(file.read())
 
-def eval_against_python_item(query, item=None):
+
+def query_against_python_item(query, item=None):
     """
     Converts the specified item, if specified, to JPath's JSON representation
     by passing it into python_to_jpath, then constructs a Context from it and
@@ -465,16 +558,21 @@ def eval_against_python_item(query, item=None):
         context = Context()
     else:
         context = Context(python_to_jpath(item))
-    return jpath_to_python(evaluate(context), query)
+    return jpath_to_python(parse(query).query(context))
     """
     if item is None:
         context = Context()
     else:
         context = Context(python_to_jpath(item))
-    return jpath_to_python(evaluate(context), query)
+    return jpath_to_python(parse(query).query(context))
+
 
 def evaluate(context, query):
     """
+    TODO: This should not be used externally anymore. Instead, queries should
+    be constructed by parsing them with parse, and then calling query on the
+    resulting query object.
+    
     Runs the specified query in the specified context, which should be a
     Context instance. The context can specify a context item and a set of
     variables that will already be assigned values when the query runs.
@@ -509,24 +607,30 @@ def evaluate(context, query):
     >>> eval_against_python_item('{{"a": "b", "c": "d"}/@a}')
     {"a": "b"}
     """
-    if isinstance(query, basestring): # Query is a string, not an AST
-        # component, so we need to parse it before evaluating it
-        query = parse(query) # Now it's an AST component.
     # Figure out the method to dispatch to based on the type of AST node that
     # this is
     typename = type(query).__name__
     function = getattr(jpath.engine, "evaluate_" + typename, None) # Get the
     # function on this module that's supposed to process this AST component
-    if function is None:
-        raise Exception("Evaluate not implemented for AST component type " + 
-                typename + " containing " + trimTo(200, repr(query)) + ". "
-                + JPATH_INTERNAL_ERROR_MESSAGE)
-    result = function(context, query)
-    if not isinstance(result, list):
-        raise Exception("Result was not a list (representing a collection) "
-                "for AST component type " + typename + " containing " + 
-                trimTo(200, repr(query)) + ". " + JPATH_INTERNAL_ERROR_MESSAGE)
-    return result
+    try:
+        if function is None:
+            raise Exception("Evaluate not implemented for AST component type " + 
+                    typename + " containing " + trimTo(200, repr(query)) + ". "
+                    + JPATH_INTERNAL_ERROR_MESSAGE)
+        result = function(context, query)
+        if not isinstance(result, list):
+            raise Exception("Result was not a list (representing a collection) "
+                    "for AST component type " + typename + " containing " + 
+                    trimTo(200, repr(query)) + ". " + JPATH_INTERNAL_ERROR_MESSAGE)
+        return result
+    except EvaluationError as e:
+        # TODO: in the future, add additional information to this as we travel
+        # up the stack
+        raise
+    except Exception as e:
+        if context.get_option("jpath.python_traceback", False):
+            print_exc()
+        raise EvaluationError(query.parse_location, str(e), sys.exc_info())
 
 def evaluate_NumberLiteral(context, query):
     return [Number(query.value)]
