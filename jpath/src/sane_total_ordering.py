@@ -1,4 +1,6 @@
 
+import unittest
+
 def total_ordering(cls):
     """Class decorator that fills in missing ordering methods
     
@@ -104,3 +106,16 @@ def total_ordering(cls):
             op.__doc__ = getattr(int, op.__name__).__doc__
             setattr(cls, op.__name__, op)
     return cls
+
+
+
+# One class for each of the four operators that we actually define
+# One class for each of __eq__ and __ne__ being defined
+# One class for A, B, and C, where A and C compare only among themselves but
+#         B can compare itself with A as well
+# One test for each of the six operators: >, <, >=, <=, ==, !=
+# Test each operator with 6 op 2, 2 op 6, and 6 op 6
+# Test each of the above combinations with A op A, A op B, B op A, B op B, and
+#        C op C functioning as expected above, and A op C, B op C, C op A, and
+#        C op B having undefined results but not throwing any exceptions
+
