@@ -17,10 +17,6 @@ import jpath.syntax
 # somewhat lazy, it requires __lt__ to be present and bases all of its 
 # generated methods off of that and __eq__.
 def total_ordering(cls):
-    """
-    Class decorator that fills in missing ordering methods, as well as
-    __ne__ if __eq__ is defined but __ne__ is not
-    """
     def __ge__(self, other):
         lt = self.__lt__(other)
         if lt is NotImplemented:
@@ -45,7 +41,6 @@ def total_ordering(cls):
         raise ValueError("Must define __lt__")
     for opname, opfunc in ops:
         if opname not in predefined:
-            opfunc.__doc__ = getattr(int, opname).__doc__
             setattr(cls, opname, opfunc)
     if "__eq__" in predefined and "__ne__" not in predefined:
         setattr(cls, "__ne__", lambda self, other: not (self == other))
