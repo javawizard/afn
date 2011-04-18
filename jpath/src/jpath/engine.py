@@ -11,36 +11,40 @@ from traceback import print_exc
 import jpath.engine #@UnresolvedImport
 import jpath.syntax
 
-# This is copied almost verbatim from the Python 2.7 functools module to allow
-# JPath to work on Python 2.6. It has one additional difference: it generates
-# __ne__ from __eq__ if necessary.
+# This was originally copied from the Python 2.7 functools module until I
+# discovered a rather glaring infinite recursion bug in their implementation
+# of this function. So it's mostly written from scratch. Because of my being
+# somewhat lazy, it requires __lt__ to be present and bases all of its 
+# generated methods off of that and __eq__.
 def total_ordering(cls):
     """
     Class decorator that fills in missing ordering methods, as well as
     __ne__ if __eq__ is defined but __ne__ is not
     """
-    convert = {
-        '__lt__': [('__gt__', lambda self, other: other < self),
-                   ('__le__', lambda self, other: not other < self),
-                   ('__ge__', lambda self, other: not self < other)],
-        '__le__': [('__ge__', lambda self, other: other <= self),
-                   ('__lt__', lambda self, other: not other <= self),
-                   ('__gt__', lambda self, other: not self <= other)],
-        '__gt__': [('__lt__', lambda self, other: other > self),
-                   ('__ge__', lambda self, other: not other > self),
-                   ('__le__', lambda self, other: not self > other)],
-        '__ge__': [('__le__', lambda self, other: other >= self),
-                   ('__gt__', lambda self, other: not other >= self),
-                   ('__lt__', lambda self, other: not self >= other)]
-    }
+    def __ge__(self, other):
+        lt = self.__lt__(other)
+        if lt is NotImplemented:
+            return NotImplemented
+        return not lt
+    def __le__(self, other):
+        lt = self.__lt__(other)
+        if lt is NotImplemented:
+            return NotImplemented
+        eq = self.__eq__(other)
+        if eq is NotImplemented:
+            return NotImplemented
+        return lt or eq
+    def __gt__(self, other):
+        le = __le__(self, other) # NOTE we're using the __le__ defined above
+        if le is NotImplemented:
+            return NotImplemented
+        return not le
+    ops = [(f.__name__, f) for f in [__ge__, __le__, __gt__]]
     predefined = set(dir(cls))
-    roots = predefined & set(convert)
-    if not roots:
-        raise ValueError('must define at least one ordering operation: < > <= >=')
-    root = max(roots)       # prefer __lt__ to __le__ to __gt__ to __ge__
-    for opname, opfunc in convert[root]:
-        if opname not in roots:
-            opfunc.__name__ = opname
+    if "__lt__" not in predefined:
+        raise ValueError("Must define __lt__")
+    for opname, opfunc in ops:
+        if opname not in predefined:
             opfunc.__doc__ = getattr(int, opname).__doc__
             setattr(cls, opname, opfunc)
     if "__eq__" in predefined and "__ne__" not in predefined:
@@ -717,7 +721,7 @@ def evaluate(context, query):
     except Exception as e:
         if context.get_option("jpath.python_traceback", False):
             print_exc()
-        raise EvaluationError(query.parse_location, str(e), sys.exc_info())
+        raise EvaluationError(query.parse_location, type(e).__name__ + ": " + str(e), sys.exc_info())
 
 def evaluate_NumberLiteral(context, query):
     return [Number(query.value)]
