@@ -11,23 +11,49 @@ from traceback import print_exc
 import jpath.engine #@UnresolvedImport
 import jpath.syntax
 
+# This is copied almost verbatim from the Python 2.7 functools module to allow
+# JPath to work on Python 2.6. It has one additional difference: it generates
+# __ne__ from __eq__ if necessary.
+def total_ordering(cls):
+    """
+    Class decorator that fills in missing ordering methods, as well as
+    __ne__ if __eq__ is defined but __ne__ is not
+    """
+    convert = {
+        '__lt__': [('__gt__', lambda self, other: other < self),
+                   ('__le__', lambda self, other: not other < self),
+                   ('__ge__', lambda self, other: not self < other)],
+        '__le__': [('__ge__', lambda self, other: other <= self),
+                   ('__lt__', lambda self, other: not other <= self),
+                   ('__gt__', lambda self, other: not self <= other)],
+        '__gt__': [('__lt__', lambda self, other: other > self),
+                   ('__ge__', lambda self, other: not other > self),
+                   ('__le__', lambda self, other: not self > other)],
+        '__ge__': [('__le__', lambda self, other: other >= self),
+                   ('__gt__', lambda self, other: not other >= self),
+                   ('__lt__', lambda self, other: not self >= other)]
+    }
+    predefined = set(dir(cls))
+    roots = predefined & set(convert)
+    if not roots:
+        raise ValueError('must define at least one ordering operation: < > <= >=')
+    root = max(roots)       # prefer __lt__ to __le__ to __gt__ to __ge__
+    for opname, opfunc in convert[root]:
+        if opname not in roots:
+            opfunc.__name__ = opname
+            opfunc.__doc__ = getattr(int, opname).__doc__
+            setattr(cls, opname, opfunc)
+    if "__eq__" in predefined and "__ne__" not in predefined:
+        setattr(cls, "__ne__", lambda self, other: not (self == other))
+    return cls
+
 
 def trimTo(length, text):
     if len(text) < length:
         return text
     return text[:length] + "..."
 
-def check_same_type(first, second, message):
-    """
-    Checks to make sure that first and second have the same type. If they
-    don't, an exception with the specified message is thrown. The message
-    should have two %s fields in it, corresponding to the types of the first
-    and second values passed into this method.
-    """
-    if type(first) != type(second):
-        raise Exception(message % (type(first).__name__, type(second).__name__))
 
-COMPARE_TYPE_MESSAGE = "Can't compare value of type %s with value of type %s"
 JPATH_INTERNAL_ERROR_MESSAGE = ("This is a JPath internal error; report this "
         "to the JPath developers and they'll get it fixed as soon as "
         "possible. (one of them is alex@opengroove.org in case you don't "
@@ -54,6 +80,7 @@ class Item(object):
     pass
 
 
+@total_ordering
 class Pair(Item):
     def __init__(self, key, value):
         self._key = key
@@ -74,14 +101,23 @@ class Pair(Item):
     def __hash__(self):
         return hash((self._key, self._value))
     
-    def __cmp__(self, other):
-        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
-        key_cmp = cmp(self._key, other._key)
-        if key_cmp != 0:
-            return key_cmp
-        return cmp(self._value, other._value)
+    def __eq__(self, other):
+        if not isinstance(other, Pair):
+            return NotImplemented
+        return self.get_key() == other.get_key() and self.get_value() == other.get_value()
+    
+    def __lt__(self, other):
+        if not isinstance(other, Pair):
+            return NotImplemented
+        this_key = self.get_key()
+        other_key = other.get_key()
+        if this_key == other_key:
+            return self.get_value() < other.get_value()
+        else:
+            return this_key < other_key
 
 
+@total_ordering
 class Map(Item):
     def __init__(self, map):
         if not isinstance(map, dict):
@@ -137,13 +173,22 @@ class Map(Item):
     def __hash__(self):
         return hash(tuple(self._map.items()))
     
-    def __cmp__(self, other):
-        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
-        if self._map == other._map: # Optimization for if the values are equal
-            return 0
-        return cmp(sorted(tuple(self._map.items())), sorted(tuple(other._map.items())))
+    def __eq__(self, other):
+        if not isinstance(other, Map):
+            return NotImplemented
+        # Optimization if we're dealing with an actual instance of Map and not
+        # an instance of a subclass
+        if type(self) == Map and type(other) == Map:
+            return self._map == other._map
+        return set(self.get_pairs) == set(other.get_pairs())
+    
+    def __lt__(self, other):
+        if not isinstance(other, Map):
+            return NotImplemented
+        return sorted(self.get_pairs()) < sorted(other.get_pairs())
 
 
+@total_ordering
 class List(Item):
     def __init__(self, data):
         if not isinstance(data, list):
@@ -168,6 +213,8 @@ class List(Item):
         # function wouldn't modify the result, but just to be safe (and
         # especially for compatibility with code outside of the JPath engine
         # that might use JPath objects directly), we're copying it for now.
+        # TODO: check this out further, as this could slow stuff down a lot to
+        # leave this copy operation in place.
         return self._data[:]
     
     def get_item_count(self):
@@ -179,11 +226,24 @@ class List(Item):
     def __hash__(self):
         return hash(tuple(self._data))
     
-    def __cmp__(self, other):
-        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
-        return cmp(self._data, other._data)
+    def __eq__(self, other):
+        if not isinstance(other, List):
+            return NotImplemented
+        # Optimization for actual instances of List
+        if type(self) == List and type(other) == List:
+            return self._data == other._data
+        return self.get_items() == other.get_items()
+    
+    def __lt__(self, other):
+        if not isinstance(other, List):
+            return NotImplemented
+        # Optimization for actual instances of List
+        if type(self) == List and type(other) == List:
+            return self._data < other._data
+        return self.get_items() < other.get_items()
 
 
+@total_ordering
 class String(Item):
     def __init__(self, value):
         if not isinstance(value, basestring):
@@ -201,11 +261,18 @@ class String(Item):
     def __hash__(self):
         return hash(self._value)
     
-    def __cmp__(self, other):
-        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
-        return cmp(self._value, other._value)
+    def __eq__(self, other):
+        if not isinstance(other, String):
+            return NotImplemented
+        return self.get_value() == other.get_value()
+    
+    def __lt__(self, other):
+        if not isinstance(other, String):
+            return NotImplemented
+        return self.get_value() < other.get_value()
 
 
+@total_ordering
 class Number(Item):
     def __init__(self, value):
         self._value = float(value)
@@ -232,11 +299,18 @@ class Number(Item):
     def __hash__(self):
         return hash(self._value)
     
-    def __cmp__(self, other):
-        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
-        return cmp(self._value, other._value)
+    def __eq__(self, other):
+        if not isinstance(other, Number):
+            return NotImplemented
+        return self.get_float() == other.get_float()
+    
+    def __lt__(self, other):
+        if not isinstance(other, Number):
+            return NotImplemented
+        return self.get_float() < other.get_float()
 
 
+@total_ordering
 class Boolean(Item):
     def __init__(self, value):
         if not isinstance(value, bool):
@@ -252,18 +326,31 @@ class Boolean(Item):
     def __hash__(self):
         return hash(self._value)
     
-    def __cmp__(self, other):
-        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
-        return cmp(self._value, other._value)
+    def __eq__(self, other):
+        if not isinstance(other, Boolean):
+            return NotImplemented
+        return self.get_value() == other.get_value()
+    
+    def __lt__(self, other):
+        if not isinstance(other, Boolean):
+            return NotImplemented
+        return self.get_value() < other.get_value()
 
 
+@total_ordering
 class Null(Item):
     def __hash__(self):
         return 0
     
-    def __cmp__(self, other):
-        check_same_type(self, other, COMPARE_TYPE_MESSAGE)
-        return 0 # Nulls are always equal to each other
+    def __eq__(self, other):
+        if not isinstance(other, Null):
+            return NotImplemented
+        return True # All nulls are equal
+    
+    def __lt__(self, other):
+        if not isinstance(other, Null):
+            return NotImplemented
+        return False # All nulls are equal
 
 
 class Context(object):
@@ -871,55 +958,106 @@ def evaluate_Flwor(context, query):
     # generator, is invoked. It's similar to the other generators but it
     # yields collections, each of which corresponds to an invocation of the
     # return clause under the varset generated by the generator passed into
-    # it.
+    # it. We then merge these into a single collection and we have our result.
+    # So, first thing is to get the list of constructs in the flwor.
     constructs = query.constructs
+    # Now we create an initial generator containing a single, empty map.
     last_generator = flwor_init()
+    # Now we compose the constructs' generators together.
     for construct in constructs:
+        # Look up which generator function to use for this construct
         typename = type(construct).__name__
         generator = getattr(jpath.engine, "flwor_" + typename, None)
+        # Did we find a generator?
         if generator is None:
+            # Nope, we haven't implemented this construct yet
             raise Exception("Flwor generator not implemented for construct " 
                     + typename + " containing " + trimTo(200, repr(construct))
                      + ". " + JPATH_INTERNAL_ERROR_MESSAGE)
+        # Yep, we did. We'll create an instance of it, passing in the last
+        # generator we created as this generator's source of varsets.
         last_generator = generator(context, construct, last_generator)
+    # We've got the generators all tied together. Now we start iterating
+    # through the results, merge them into a collection, and return it.
     return [item for collection in last_generator for item in collection]
 
 def flwor_init():
+    """
+    A generator function that yields a single value, an empty map. This is
+    used as the initial generator for a flwor to represent a single empty
+    varset.
+    """
     yield {}
 
 def flwor_FlworFor(context, query, var_stream):
+    # Get the name of the variable to store the value in, the name of the
+    # variable to store the current index in, and the parsed expression to
+    # evaluate to generate the collection of values to iterate over
     name = query.name
     counter = query.counter
     expr = query.expr
+    # Now we iterate over all the existing varsets
     for varset in var_stream:
+        # We evaluate the expression in this varset to get the collection of
+        # items to iterate over
         expr_value = evaluate(context.new_with_vars(varset), expr)
+        # Then we iterate over each of those items
         for index, item in enumerate(expr_value):
+            # We create a new varset for this item, containing the variable
+            # holding the item itself and optionally the variable holding the
+            # index of this item in the collection
             new_varset = dict(varset)
             new_varset.update({name: [item]})
             if counter:
                 new_varset.update({counter: [Number(index + 1)]})
+            # Then we yield this varset, and we're good to go!
             yield new_varset
 
 def flwor_FlworLet(context, query, var_stream):
+    # This one's fairly easy. We start out by getting the name of the variable
+    # we're creating and the expression whose value we're going to store in
+    # this variable.
     name = query.name
     expr = query.expr
+    # Then we iterate over the existing varsets
     for varset in var_stream:
+        # For each existing varset, we evaluate the expression in this varset
         expr_value = evaluate(context.new_with_vars(varset), expr)
+        # We then create a new varset for it, containing the variable this let
+        # construct is declaring
         new_varset = dict(varset)
         new_varset.update({name: expr_value})
+        # Then we yield the new varset, and that's it!
         yield new_varset
 
 def flwor_FlworWhere(context, query, var_stream):
+    # This one's even easier. We get the expression to evaluat to check
+    # whether or not we want to allow each varset through
     expr = query.expr
+    # Then we iterate over the varsets
     for varset in var_stream:
+        # For each one, we evaluate the expression to see if we should let
+        # this varset on to further processing stages
         expr_value = evaluate(context.new_with_vars(varset), expr)
+        # Then we check to see if the result was a true value
         if is_true_collection(expr_value):
+            # It was, so we yield this varset.
             yield varset
+        # It wasn't, so we don't do anything with this varset, and we move on
+        # to the next one
 
 def flwor_FlworReturn(context, query, var_stream):
+    # This isn't the same as all the other flwor constructs; it yields
+    # collections instead of maps representing varsets. It actually does the
+    # running of the return construct under every varset and yields the
+    # collections generated by each evaluation. So, we first get the
+    # expression to evaluate
     expr = query.expr
+    # Then we iterate over all the varsets
     for varset in var_stream:
+        # For each one, we evaluate the return construct under that varset
         expr_value = evaluate(context.new_with_vars(varset), expr)
+        # And then we yield the resulting collection, and that's it!
         yield expr_value
 
  
