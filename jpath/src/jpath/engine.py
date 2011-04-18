@@ -10,41 +10,7 @@ from traceback import print_exc
 # for each component of the AST
 import jpath.engine #@UnresolvedImport
 import jpath.syntax
-
-# This was originally copied from the Python 2.7 functools module until I
-# discovered a rather glaring infinite recursion bug in their implementation
-# of this function. So it's mostly written from scratch. Because of my being
-# somewhat lazy, it requires __lt__ to be present and bases all of its 
-# generated methods off of that and __eq__.
-def total_ordering(cls):
-    def __ge__(self, other):
-        lt = self.__lt__(other)
-        if lt is NotImplemented:
-            return NotImplemented
-        return not lt
-    def __le__(self, other):
-        lt = self.__lt__(other)
-        if lt is NotImplemented:
-            return NotImplemented
-        eq = self.__eq__(other)
-        if eq is NotImplemented:
-            return NotImplemented
-        return lt or eq
-    def __gt__(self, other):
-        le = __le__(self, other) # NOTE we're using the __le__ defined above
-        if le is NotImplemented:
-            return NotImplemented
-        return not le
-    ops = [(f.__name__, f) for f in [__ge__, __le__, __gt__]]
-    predefined = set(dir(cls))
-    if "__lt__" not in predefined:
-        raise ValueError("Must define __lt__")
-    for opname, opfunc in ops:
-        if opname not in predefined:
-            setattr(cls, opname, opfunc)
-    if "__eq__" in predefined and "__ne__" not in predefined:
-        setattr(cls, "__ne__", lambda self, other: not (self == other))
-    return cls
+from sane_total_ordering import total_ordering
 
 
 def trimTo(length, text):

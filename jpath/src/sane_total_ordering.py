@@ -1,6 +1,9 @@
 
 import unittest
 
+# This is my reimplementation of functools.total_ordering that fixes the
+# NotImplemented bug present in the Python version.
+
 def total_ordering(cls):
     """Class decorator that fills in missing ordering methods
     
