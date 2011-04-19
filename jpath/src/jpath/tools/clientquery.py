@@ -1,6 +1,8 @@
 
-from jpath.engine import Context, parse, jpath_to_python, EvaluationError
-from jpath.engine import ParseException
+from jpath.engine import parse, jpath_to_python
+from jpath.context import Context
+from jpath.errors import EvaluationError
+from jpath.errors import ParseException
 import sys
 try:
     import readline

@@ -40,6 +40,7 @@ class Identity(object):
         """
         return self is other
 
+"""
 TODO: figure out ways to pass predicates to maps (and potentially lists) for
 optimization, make it so some sort of global optimizer can be passed in when
 running a query, perhaps add an Interpreter class to store information like
@@ -60,6 +61,7 @@ have statements for declaring options at the top of a query that are specific
 to what's interpreting it, sort of like options but ones where the query's
 exposing it to the public and not that the engine's passing it to the
 interpreter or some such thing
+"""
 
 @total_ordering
 class Pair(Item, Identity):
