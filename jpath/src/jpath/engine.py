@@ -3,14 +3,14 @@
 from pyparsing import ParseException
 import pyparsing
 import itertools
-import math
 import sys
+from copy import copy as shallow_copy
 from traceback import print_exc
 # Importing ourselves; we end up using this to look up which function to call
 # for each component of the AST
 import jpath.engine #@UnresolvedImport
 import jpath.syntax
-from sane_total_ordering import total_ordering
+from jpath.data import Boolean, Item, List, Map, Null, Number, Pair, String
 
 
 def trimTo(length, text):
@@ -25,311 +25,20 @@ JPATH_INTERNAL_ERROR_MESSAGE = ("This is a JPath internal error; report this "
         "have any other information about how to get in touch with them.)")
 
 
-class Item(object):
-    """
-    A JSON item. This represents a single value that can be passed around a
-    query and stored in a collection. This class might be considered the
-    JPath implementation equivalent of Python's object.
-    
-    All of the direct subclasses contain a set of functions that are used to
-    access the underlying data. The query engine should depend /only/ on these
-    functions, and not on any incidental data (and particularly not on any
-    functions whose names start with an underscore). This allows instances of
-    subclasses with optimized behavior to be passed into a query. For example,
-    a database might be represented as one huge list, and storing such a list
-    in memory would be impractical. Large documents stored in the database
-    would also be impractical to represent in memory. This allows custom
-    implementations to, for example, continue to store them on disk and
-    consult indexes to retrieve the appropriate information. 
-    """
-    pass
-
-
-@total_ordering
-class Pair(Item):
-    def __init__(self, key, value):
-        self._key = key
-        self._value = value
-    
-    def get_key(self):
-        """
-        Returns the key of this pair.
-        """
-        return self._key
-    
-    def get_value(self):
-        """
-        Returns the value of this pair.
-        """
-        return self._value
-    
-    def __hash__(self):
-        return hash((self._key, self._value))
-    
-    def __eq__(self, other):
-        if not isinstance(other, Pair):
-            return NotImplemented
-        return self.get_key() == other.get_key() and self.get_value() == other.get_value()
-    
-    def __lt__(self, other):
-        if not isinstance(other, Pair):
-            return NotImplemented
-        this_key = self.get_key()
-        other_key = other.get_key()
-        if this_key == other_key:
-            return self.get_value() < other.get_value()
-        else:
-            return this_key < other_key
-
-
-@total_ordering
-class Map(Item):
-    def __init__(self, map):
-        if not isinstance(map, dict):
-            raise Exception("Value is not a dictionary. If there becomes a "
-                    "use case for using non-dictionary mapping objects, "
-                    "I'll remove this restriction. (You can remove it "
-                    "yourself by monkey-patching jpath.engine.Map.__init__ "
-                    "to accept one argument and assign it to self._map "
-                    "without checking its type.)")
-        self._map = map
-    
-    def get_keys(self):
-        """
-        Returns a list of all keys present in this map.
-        """
-        return self._map.keys()
-    
-    def get_values(self):
-        """
-        Returns a list of all values present in this map.
-        """
-        return self._map.values()
-    
-    def get_pairs(self):
-        """
-        Returns a list of pairs, each one corresponding to an entry in this
-        map.
-        """
-        return [Pair(k, v) for k, v in self._map.iteritems()]
-    
-    def get_key_count(self):
-        """
-        Returns the number of keys present in this map.
-        """
-        return len(self._map)
-    
-    def get_value(self, key):
-        """
-        Returns the value corresponding to a particular key in this map. If
-        there is no entry for the specified key, this should return None.
-        """
-        return self._map.get(key, None)
-    
-    def get_pair(self, key):
-        """
-        Returns the pair corresponding to the specified key.
-        """
-        if key in self._map:
-            return Pair(key, self._map[key])
-        else:
-            return None
-    
-    def __hash__(self):
-        return hash(tuple(self._map.items()))
-    
-    def __eq__(self, other):
-        if not isinstance(other, Map):
-            return NotImplemented
-        # Optimization if we're dealing with an actual instance of Map and not
-        # an instance of a subclass
-        if type(self) == Map and type(other) == Map:
-            return self._map == other._map
-        return set(self.get_pairs) == set(other.get_pairs())
-    
-    def __lt__(self, other):
-        if not isinstance(other, Map):
-            return NotImplemented
-        return sorted(self.get_pairs()) < sorted(other.get_pairs())
-
-
-@total_ordering
-class List(Item):
-    def __init__(self, data):
-        if not isinstance(data, list):
-            raise Exception("Value is not a list")
-        self._data = data
-    
-    def get_item_range(self, start, end):
-        """
-        Returns a list of items from this list, starting at start, inclusive,
-        and ending with end, exclusive, both of which are zero-based. If
-        either of those indexes are out of range, they should be automatically
-        constrained to be in range. If no items are within the specified
-        range, the empty list should be returned.
-        """
-        return self._data[start:end]
-    
-    def get_items(self):
-        """
-        Returns a list of all items in this list.
-        """
-        # Is copying this really necessary? Ideally any code calling this
-        # function wouldn't modify the result, but just to be safe (and
-        # especially for compatibility with code outside of the JPath engine
-        # that might use JPath objects directly), we're copying it for now.
-        # TODO: check this out further, as this could slow stuff down a lot to
-        # leave this copy operation in place.
-        return self._data[:]
-    
-    def get_item_count(self):
-        """
-        Returns the number of items contained within this list.
-        """
-        return len(self._data)
-    
-    def __hash__(self):
-        return hash(tuple(self._data))
-    
-    def __eq__(self, other):
-        if not isinstance(other, List):
-            return NotImplemented
-        # Optimization for actual instances of List
-        if type(self) == List and type(other) == List:
-            return self._data == other._data
-        return self.get_items() == other.get_items()
-    
-    def __lt__(self, other):
-        if not isinstance(other, List):
-            return NotImplemented
-        # Optimization for actual instances of List
-        if type(self) == List and type(other) == List:
-            return self._data < other._data
-        return self.get_items() < other.get_items()
-
-
-@total_ordering
-class String(Item):
-    def __init__(self, value):
-        if not isinstance(value, basestring):
-            raise Exception("The value of a string has to be either a str or "
-                    "a unicode. If you want to supply your own custom "
-                    "string-like object, subclass String and do it that way. ")
-        self._value = value
-    
-    def get_value(self):
-        """
-        Returns the value of this string as a string or a unicode.
-        """
-        return self._value
-    
-    def __hash__(self):
-        return hash(self._value)
-    
-    def __eq__(self, other):
-        if not isinstance(other, String):
-            return NotImplemented
-        return self.get_value() == other.get_value()
-    
-    def __lt__(self, other):
-        if not isinstance(other, String):
-            return NotImplemented
-        return self.get_value() < other.get_value()
-
-
-@total_ordering
-class Number(Item):
-    def __init__(self, value):
-        self._value = float(value)
-    
-    def get_float(self):
-        """
-        Returns the value of this number as a double.
-        """
-        return self._value
-    
-    def get_integer(self):
-        """
-        Returns the value of this number as a whole integer (or long).
-        """
-        return int(self._value)
-    
-    def is_whole(self):
-        """
-        Returns true if this number is a whole number, or false if this number
-        has a fractional part.
-        """
-        return math.floor(self._value) == self._value
-    
-    def __hash__(self):
-        return hash(self._value)
-    
-    def __eq__(self, other):
-        if not isinstance(other, Number):
-            return NotImplemented
-        return self.get_float() == other.get_float()
-    
-    def __lt__(self, other):
-        if not isinstance(other, Number):
-            return NotImplemented
-        return self.get_float() < other.get_float()
-
-
-@total_ordering
-class Boolean(Item):
-    def __init__(self, value):
-        if not isinstance(value, bool):
-            raise Exception("Value is not a boolean")
-        self._value = value
-    
-    def get_value(self):
-        """
-        Returns the value of this boolean as a Python boolean.
-        """
-        return self._value
-    
-    def __hash__(self):
-        return hash(self._value)
-    
-    def __eq__(self, other):
-        if not isinstance(other, Boolean):
-            return NotImplemented
-        return self.get_value() == other.get_value()
-    
-    def __lt__(self, other):
-        if not isinstance(other, Boolean):
-            return NotImplemented
-        return self.get_value() < other.get_value()
-
-
-@total_ordering
-class Null(Item):
-    def __hash__(self):
-        return 0
-    
-    def __eq__(self, other):
-        if not isinstance(other, Null):
-            return NotImplemented
-        return True # All nulls are equal
-    
-    def __lt__(self, other):
-        if not isinstance(other, Null):
-            return NotImplemented
-        return False # All nulls are equal
-
-
 class Context(object):
-    def __init__(self, item=Null(), vars=None, options=None):
-        if not isinstance(item, Item):
-            raise Exception("The context item must be an instance of a "
-                    "subclass of Item, not an instance of " + str(type(item)))
-        self.item = item
-        self.vars = vars
-        self.options = options
-        if self.vars is None:
-            self.vars = {}
-        if self.options is None:
-            self.options = {}
+    def __init__(self):
+        self.item = None
+        self.vars = {}
+        self.options = {}
+    
+    def copy(self):
+        return shallow_copy(self)
+    
+    def get_var(self, name):
+        """
+        same as self.var(name)
+        """
+        return self.var(name)
     
     def var(self, name):
         return self.vars[name]
@@ -342,6 +51,9 @@ class Context(object):
     
     def new_with_vars(self, vars):
         for key, value in vars.items():
+            if not isinstance(key, basestring):
+                raise Exception("Variable names have to be strings, not "
+                        "values of type " + str(type(key)))
             if not isinstance(value, list):
                 raise Exception("Variable values have to be collections "
                         "(represented in Python as lists). So, instead of, for "
@@ -351,7 +63,9 @@ class Context(object):
                         str(type(value)) + " to the var " + str(key) + ".")
         new_vars = dict(self.vars)
         new_vars.update(vars)
-        return Context(self.item, new_vars, self.options)
+        context = self.copy()
+        context.vars = new_vars
+        return context
     
     def new_with_var(self, name, value):
         return self.new_with_vars({name: value})
@@ -359,16 +73,21 @@ class Context(object):
     def new_with_options(self, options):
         new_options = dict(self.options)
         new_options.update(options)
-        return Context(self.item, self.vars, new_options)
+        context = self.copy()
+        context.options = new_options
+        return context
     
     def new_with_option(self, name, value):
         return self.new_with_options(name, value)
     
-    def new_with_item(self, item):
-        if not isinstance(item, Item):
+    def new_with_item(self, new_item):
+        if not isinstance(new_item, Item):
             raise Exception("The context item must be an instance of a "
-                    "subclass of Item, not an instance of " + str(type(item)))
-        return Context(item, self.vars, self.options)
+                    "subclass of Item, not an instance of " + 
+                    str(type(new_item)))
+        context = self.copy()
+        context.item = new_item
+        return context
     
     def __repr__(self):
         return "Context(" + repr(self.item) + ", " + repr(self.vars) + ")"
@@ -378,6 +97,16 @@ class Query(object):
     def __init__(self, text, production):
         self.text = text
         self.production = production
+        self.set_production_query(self.production)
+    
+    def set_production_query(self, production):
+        if isinstance(production, jpath.syntax.Production):
+            production.p_query = self
+            for var in production.p_varnames:
+                self.set_production_query(getattr(production, var))
+        elif isinstance(production, (list, tuple)):
+            for item in production:
+                self.set_production_query(item)
     
     def evaluate(self, context=Context()):
         """
@@ -540,6 +269,17 @@ def binary_operation(context, left_expr, right_expr, function):
 
 
 def arithmetic_operation(context, query, function):
+    """
+    Performs an arithmetic operation. This evaluates query.left and
+    query.right, ensures that they contain only one item, extracts the float
+    values from the results, and passes them to function. The return value is
+    then wrapped in a Number, and the result placed in a list (representing a
+    collection) and returned.
+    
+    The result of this function is already packaged in a collection; you do
+    not need to wrap the result in a list before returning it from an
+    evaluate_* function.
+    """
     def operation(x, y):
         return Number(function(as_type(x, Number).get_float(), as_type(y, Number).get_float()))
     return [binary_operation(context, query.left, query.right, operation)]
@@ -809,7 +549,7 @@ def evaluate_Indexer(context, query):
         # collection of items (which will only have one item in it).
         return context.item.get_item_range(value - 1, value)
     # Not a list. Is it a map?
-    elif(isinstance(context.item, map)):
+    elif(isinstance(context.item, Map)):
         # Yup, so let's see if it has an entry with the specified key.
         result = context.item.get_value(value)
         # Does this entry exist?
@@ -821,6 +561,19 @@ def evaluate_Indexer(context, query):
     # Context item isn't a list or a map, so we return the empty collection.
     # TODO: consider adding support for indexing strings, which should return
     # a substring of the original string
+    return []
+
+def evaluate_PairIndexer(context, query):
+    # Same as evaluate_Indexer, but only works for maps, and gets the pair
+    # corresponding to the specified entry instead of the entry's value
+    value = evaluate(context, query.expr)
+    if len(value) < 1:
+        return []
+    value = value[0]
+    if(isinstance(context.item, Map)):
+        result = context.item.get_pair(value)
+        if result is not None:
+            return [result]
     return []
 
 def evaluate_Path(context, query):
@@ -844,18 +597,18 @@ def evaluate_Predicate(context, query):
     # a true collection (a collection with at least one true value), then we
     # include the item in the list of values to return. 
     return [v for v in left_value if is_true_collection(evaluate(context.new_with_item(v), query.right))]
-#multiply,divide,add,subtract,otherwise
+
 def evaluate_Multiply(context, query):
-    return [arithmetic_operation(context, query, lambda x, y: x * y)]
+    return arithmetic_operation(context, query, lambda x, y: x * y)
 
 def evaluate_Divide(context, query):
-    return [arithmetic_operation(context, query, lambda x, y: float(x) / y)]
+    return arithmetic_operation(context, query, lambda x, y: float(x) / y)
 
 def evaluate_Add(context, query):
-    return [arithmetic_operation(context, query, lambda x, y: x + y)]
+    return arithmetic_operation(context, query, lambda x, y: x + y)
 
 def evaluate_Subtract(context, query):
-    return [arithmetic_operation(context, query, lambda x, y: x - y)]
+    return arithmetic_operation(context, query, lambda x, y: x - y)
 
 def evaluate_Otherwise(context, query):
     # The right-hand side should only be evaluated if the left-hand side is
@@ -873,12 +626,38 @@ def evaluate_Equality(context, query):
     # collection are equal to any of the values in its right-hand collection
     return [binary_comparison(context, query.left, query.right, lambda x, y: x == y)]
 
+def evaluate_Inequality(context, query):
+    return [binary_comparison(context, query.left, query.right, lambda x, y: x == y)]
+
 def evaluate_GreaterThan(context, query):
     # Greater-than operator: same thing as equality, but checks to see if the
     # left-hand values are greater than the right-hand values instead of
     # equal. TODO: consider automatic conversion of strings to numbers
     # during comparisons if one side is already a number
     return [binary_comparison(context, query.left, query.right, lambda x, y: x > y)]
+
+def evaluate_LessThan(context, query):
+    return [binary_comparison(context, query.left, query.right, lambda x, y: x < y)]
+
+def evaluate_GreaterOrEqual(context, query):
+    return [binary_comparison(context, query.left, query.right, lambda x, y: x >= y)]
+
+def evaluate_LessOrEqual(context, query):
+    return [binary_comparison(context, query.left, query.right, lambda x, y: x <= y)]
+
+def evaluate_And(context, query):
+    left_value = evaluate(context, query.left)
+    if is_true_collection(left_value):
+        return [Boolean(is_true_collection(evaluate(context, query.right)))]
+    else:
+        return [Boolean(False)]
+
+def evaluate_Or(context, query):
+    left_value = evaluate(context, query.left)
+    if not is_true_collection(left_value):
+        return [Boolean(is_true_collection(evaluate(context, query.right)))]
+    else:
+        return [Boolean(True)]
 
 def evaluate_PairConstructor(context, query):
     # Evaluate the left and right-hand sides
@@ -907,6 +686,31 @@ def evaluate_CollectionConstructor(context, query):
     left_value = evaluate(context, query.left)
     right_value = evaluate(context, query.right)
     return left_value + right_value
+
+def evaluate_IfThenElse(context, query):
+    condition_value = evaluate(context, query.condition)
+    if is_true_collection(condition_value):
+        return evaluate(context, query.true)
+    else:
+        return evaluate(context, query.false)
+
+def evaluate_Satisfies(context, query):
+    name = query.name
+    expr_value = evaluate(context, query.expr)
+    some = query.type == "some"
+    for item in expr_value:
+        result = evaluate(context.new_with_var(name, [item]), query.condition)
+        truth = is_true_collection(result)
+        if some: # Checking for at least one to be true
+            if truth:
+                return [Boolean(True)]
+        else: # Checking for all to be true, so if one's false, we just quit
+            if not truth:
+                return [Boolean(False)]
+    if some: # Checking for some, but none of them were true
+        return [Boolean(False)]
+    else: # Checking for all, and none of them were false so we return true
+        return [Boolean(True)]
 
 def evaluate_Flwor(context, query):
     # Flwors are interesting constructs. The way I've done them here

@@ -1,10 +1,9 @@
 # coding=UTF-8
 
-from pyparsing import Literal, OneOrMore, ZeroOrMore, Regex, MatchFirst
-from pyparsing import Forward, operatorPrecedence, opAssoc, Suppress, Keyword
+from pyparsing import Literal, OneOrMore, ZeroOrMore, Regex
+from pyparsing import Forward, Suppress, Keyword
 from pyparsing import Optional
 from string import ascii_lowercase, ascii_uppercase
-import pyparsing
 
 keychars = ascii_lowercase + ascii_uppercase
 
@@ -79,6 +78,7 @@ def NKeyword(text):
     """
     return Keyword(text, keychars)
 
+
 def createPatternOrSpecial(location, pattern):
     if pattern == "true":
         return BooleanLiteral(location, True)
@@ -88,17 +88,36 @@ def createPatternOrSpecial(location, pattern):
         return NullLiteral(location)
     return Pattern(location, pattern)
 
+
 class Production(object):
-    pass
+    """
+    Superclass of all production classes created by the production function.
+    
+    self.p_varnames and self.p_transformations will be defined by the
+    production function when creating a new subclass. self.p_name is also
+    defined this way.
+    
+    self.p_query is set by the parse function.
+    """
+    def __init__(self, location, *args):
+        self.p_query = None
+        self.parse_location = location
+        for index, var in enumerate(self.p_varnames):
+            setattr(self, var, self.p_transformations.get(var, lambda t: t)(args[index]))
+    
+    def __repr__(self):
+        if not self.p_varnames: # Production with no variables
+            return "<" + self.p_name + ">"
+        # Production has some variables
+        return "<" + self.p_name + " " + ", ".join(
+                [var + ": " + repr(getattr(self, var)) for var in self.p_varnames]) + ">"
+    
 
 def production(name, *varnames, **transformations):
-    def __init__(self, location, *args):
-        self.parse_location = location
-        for index, var in enumerate(varnames):
-            setattr(self, var, transformations.get(var, lambda t: t)(args[index]))
-    def __repr__(self):
-        return "<" + name + " " + ", ".join([var + ": " + repr(getattr(self, var)) for var in varnames]) + ">"
-    return type(name, (Production,), {"__init__": __init__, "__str__": __repr__, "__repr__": __repr__})
+    return type(name, (Production,), 
+            {"p_name": name, 
+             "p_varnames": varnames, 
+             "p_transformations": transformations})
     
 NumberLiteral = production("NumberLiteral", "value", value=lambda t: float(t))
 StringLiteral = production("StringLiteral", "value")
@@ -142,6 +161,9 @@ Or = production("Or", "left", "right")
 PairConstructor = production("PairConstructor", "left", "right")
 
 CollectionConstructor = production("CollectionConstructor", "left", "right")
+
+IfThenElse = production("IfThenElse", "condition", "true", "false")
+Satisfies = production("Satisfies", "type", "name", "expr", "condition")
 
 Flwor = production("Flwor", "constructs")
 FlworFor = production("FlworFor", "name", "counter", "expr")
@@ -235,14 +257,21 @@ pInfix = InfixSeries(pInfix,
             ((Suppress(Literal(",")) + pInfix), CollectionConstructor)
         ])
 
+pIfThenElse = (SKeyword("if") + pExpr + SKeyword("then") + pExpr + SKeyword("else") + pExpr
+        ).addParseAction(lambda l, t: IfThenElse(l, t[0], t[1], t[2]))
+
+pSatisfies = ((NKeyword("some") | NKeyword("every")) + Regex(varNameRegex) + SKeyword("in") + pExpr + SKeyword("satisfies") + pExpr
+        ).addParseAction(lambda l, t: Satisfies(l, t[0], t[1][1:], t[2], t[3]))
+
 pFlworFor = (SKeyword("for") + Regex(varNameRegex) + Optional(SKeyword("at") + Regex(varNameRegex), "") + SKeyword("in")
-            + pInfix).addParseAction(lambda l, t: FlworFor(l, t[0][1:], t[1][1:], t[2]))
-pFlworLet = (SKeyword("let") + Regex(varNameRegex) + Suppress(":=") + pInfix).addParseAction(lambda l, t: FlworLet(l, t[0][1:], t[1]))
-pFlworWhere = (SKeyword("where") + pInfix).addParseAction(lambda l, t: FlworWhere(l, t[0]))
-pFlworReturn = (Suppress(Keyword("return", keychars)) + pInfix).setParseAction(lambda l, t: FlworReturn(l, t[0]))
+            + pExpr).addParseAction(lambda l, t: FlworFor(l, t[0][1:], t[1][1:], t[2]))
+pFlworLet = (SKeyword("let") + Regex(varNameRegex) + Suppress(":=") + pExpr).addParseAction(lambda l, t: FlworLet(l, t[0][1:], t[1]))
+pFlworWhere = (SKeyword("where") + pExpr).addParseAction(lambda l, t: FlworWhere(l, t[0]))
+pFlworReturn = (Suppress(Keyword("return", keychars)) + pExpr).setParseAction(lambda l, t: FlworReturn(l, t[0]))
 pFlwor = (OneOrMore(pFlworFor | pFlworLet | pFlworWhere) + pFlworReturn).addParseAction(lambda l, t: Flwor(l, list(t)))
 
-pFlworOrInfix = pFlwor | pInfix
 
-pExpr << (pFlworOrInfix)
+pExpr << (pIfThenElse | pSatisfies | pFlwor | pInfix)
+
+pQuery = pExpr
 

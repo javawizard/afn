@@ -1,17 +1,22 @@
 
-import unittest
-
 # This is my reimplementation of functools.total_ordering that fixes the
-# NotImplemented bug present in the Python version.
+# NotImplemented bug present in the Python version. It also defines __ne__
+# from __eq__ and vice versa if one of them is not defined.
 
 def total_ordering(cls):
     """Class decorator that fills in missing ordering methods
     
     It will also fill in __eq__ or __ne__ if the other one is present.
     """
-    predefined = set(dir(cls))
-    if not set(["__eq__", "__ne__"]) & predefined:
-        raise ValueError("Must define either __eq__ or __ne__")
+    # Get attributes defined on the class itself so that if this class's
+    # superclasses provide ordering operations, this class's ordering
+    # operations will be used instead. That avoids having some of the ordering
+    # operations be specific to this class and others be specific to the
+    # superclasses of this class.
+    try:
+        predefined = set(cls.__dict__.keys())
+    except AttributeError: # in case the class itself is slotted
+        predefined = set(dir(cls))
     if "__lt__" in predefined:
         def __ge__(self, other):
             lt = self.__lt__(other)
@@ -111,14 +116,4 @@ def total_ordering(cls):
     return cls
 
 
-
-# One class for each of the four operators that we actually define
-# One class for each of __eq__ and __ne__ being defined
-# One class for A, B, and C, where A and C compare only among themselves but
-#         B can compare itself with A as well
-# One test for each of the six operators: >, <, >=, <=, ==, !=
-# Test each operator with 6 op 2, 2 op 6, and 6 op 6
-# Test each of the above combinations with A op A, A op B, B op A, B op B, and
-#        C op C functioning as expected above, and A op C, B op C, C op A, and
-#        C op B having undefined results but not throwing any exceptions
 
