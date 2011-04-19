@@ -40,6 +40,26 @@ class Identity(object):
         """
         return self is other
 
+TODO: figure out ways to pass predicates to maps (and potentially lists) for
+optimization, make it so some sort of global optimizer can be passed in when
+running a query, perhaps add an Interpreter class to store information like
+this (and have a particular context point back to the interpreter it was
+created under, and require contexts to be created from an interpreter), allow
+any of the evaluate_* and flwor_* functions to be replaced in the interpreter
+for optimization, add update expressions that evaluate to special update
+values (and create subclasses of Item for these values), TAKE METAMUCIL,
+implement flwor order by (probably in terms of Python's sort function for now
+but potentially using a radix sort in the future to speed things up for large
+datasets), figure out the format in which to store data and how the query
+should access data, add function calls to queries, decide on how to add
+functions and support for modules to queries although allow module support in
+particular, and support for certain functions, to be disabled so that queries
+can be run sandboxed, TEST OUT the changes made to the Map class in terms of
+what you pass into it to construct an instance of it to make sure they work,
+have statements for declaring options at the top of a query that are specific
+to what's interpreting it, sort of like options but ones where the query's
+exposing it to the public and not that the engine's passing it to the
+interpreter or some such thing
 
 @total_ordering
 class Pair(Item, Identity):

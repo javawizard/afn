@@ -167,7 +167,7 @@ def python_to_jpath(data):
     elif data is None:
         return Null()
     elif isinstance(data, dict):
-        return Map(dict([(python_to_jpath(k), python_to_jpath(v)) for k, v in data.items()]))
+        return Map([Pair(python_to_jpath(k), python_to_jpath(v)) for k, v in data.items()])
     elif isinstance(data, (tuple, list)):
         return List([python_to_jpath(v) for v in data])
     else:
@@ -506,18 +506,10 @@ def evaluate_EmptyListConstructor(context, query):
 def evaluate_MapConstructor(context, query):
     collection = evaluate(context, query.expr) # Evaluate the expression
     # containing the pairs that should go into the new map
-    result = {} # Construct the dictionary to hold the map's entries
-    for pair in collection:
-        if not isinstance(pair, Pair):
-            raise Exception("Maps (JSON objects) can only be constructed "
-                    "from collections containing only pairs. The collection "
-                    "being used to construct this map, however, contains an "
-                    "item of type " + str(type(pair)) + ": " + repr(pair))
-        result[pair.get_key()] = pair.get_value()
-    return [Map(result)]
+    return [Map(collection)]
 
 def evaluate_EmptyMapConstructor(context, query):
-    return [Map({})]
+    return [Map([])]
 
 def evaluate_EmptyCollectionConstructor(context, query):
     return []
