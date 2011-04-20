@@ -22,7 +22,13 @@ class Item(object):
     in memory would be impractical. Large documents stored in the database
     would also be impractical to represent in memory. This allows custom
     implementations to, for example, continue to store them on disk and
-    consult indexes to retrieve the appropriate information. 
+    consult indexes to retrieve the appropriate information.
+    
+    Some functions on some subclasses have methods named query_*. These
+    methods are optimization methods, meaning that subclasses can override
+    them to provide optimized behavior in some circumstances. All of them can
+    return None to fall back to the default behavior provided by the JPath
+    engine.
     """
 
 class Identity(object):

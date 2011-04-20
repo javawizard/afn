@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sfood | sfood-graph | $1 -Gsize="17.5,9.7" -Gsplines=true -Nfontsize="24" -Tsvg | display
