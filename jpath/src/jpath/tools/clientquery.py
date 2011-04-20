@@ -1,8 +1,8 @@
 
-from jpath.engine import parse, jpath_to_python
-from jpath.context import Context
+from jpath.engine import Interpreter
 from jpath.errors import EvaluationError
 from jpath.errors import ParseException
+from jpath.utils.conversion import jpath_to_python
 import sys
 try:
     import readline
@@ -14,9 +14,10 @@ options = {}
 def main():
     print "JPath ClientQuery"
     print "Type :help for help, or :exit to exit."
-    parse("1")
+    interpreter = Interpreter()
+    interpreter.parse("1").evaluate(interpreter.new_state().context)
     while True:
-        context = Context()
+        context = interpreter.new_state().context
         context = context.new_with_options(options)
         try:
             input = raw_input("CQ> ")
@@ -27,7 +28,7 @@ def main():
             process_special(input)
             continue
         try:
-            results = parse(input).query(context)
+            results = interpreter.parse(input).query(context)
             if len(results) == 0:
                 print "-- No results."
             elif len(results) == 1:
@@ -56,7 +57,7 @@ def process_special(input):
         value = eval(value)
         options[name] = value
         print "Option " + name + " set to " + repr(value) + "."
-    elif command == "exit":
+    elif command in ["exit", "quit"]:
         sys.exit()
     else:
         print "Invalid command: " + command

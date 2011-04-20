@@ -14,11 +14,24 @@ from jpath.data import Boolean, Item, List, Map, Null, Number, Pair, String
 import jpath.errors as errors
 from jpath.utils.messages import JPATH_INTERNAL_ERROR_MESSAGE
 from jpath.utils.text import trimTo
+import jpath.evaluators
 
+
+# Interpreter manages lots of queries possibly running at the same time,
+# QueryState is for a single evaluation of a query, Context is for a
+# particular dynamic context in a query. So:
+# One Interpreter for several query evaluations
+# One QueryState for one query evaluation
+# Several Contexts for one query evaluation
+# Query instance created from asking an interpreter to parse a query
 
 
 class Query(object):
-    def __init__(self, text, production):
+    """
+    A representation of a single parsed query or module.
+    """
+    def __init__(self, interpreter, text, production):
+        self.interpreter = interpreter
         self.text = text
         self.production = production
         self.set_production_query(self.production)
@@ -37,7 +50,7 @@ class Query(object):
         Runs this query in the specified context and returns the result.
         """
         try:
-            return evaluate(context, self.production)
+            return context.evaluate(self.production)
         except errors.EvaluationError as e:
             e.set_query(self)
             raise
@@ -46,7 +59,9 @@ class Query(object):
 
 
 class Context(object):
-    def __init__(self):
+    def __init__(self, query_state):
+        self.query_state = query_state
+        self.interpreter = query_state.interpreter
         self.item = None
         self.vars = {}
         self.options = {}
@@ -110,22 +125,94 @@ class Context(object):
         return context
     
     def __repr__(self):
-        return "Context(" + repr(self.item) + ", " + repr(self.vars) + ")"
+        return "<Context ...>"
+    
+    def evaluate(self, production):
+        return self.interpreter._evaluate(self, production)
+    
+    def get_evaluator(self, production_class):
+        return self.interpreter.get_evaluator(production_class)
+
+
+class QueryState(object):
+    """
+    This class represents the state of a single evaluation of a particular
+    query. QueryState objects have a set of options that can be used for any
+    particular purpose. For example, JPath Database has a function for setting
+    a particular query that should be evaluated after the current query; this
+    function simply sets an option on the query state, which JPath Database
+    then reads to determine what to do after evaluating the query.
+    
+    When a QueryState is constructed, a Context instance is also constructed
+    for it. This instance is available via the context field of the QueryState
+    object. This context, or contexts derived from it, should be passed to
+    Query.evaluate when running a query under this QueryState.
+    """
+    def __init__(self, interpreter):
+        """
+        FOR INTERNAL USE ONLY. QueryState instances should be created by
+        external code ONLY by calling Interpreter.new_state.
+        """
+        self.interpreter = interpreter
+        self.context = Context(self)
+        self.options = {}
+    
+    def set_option(self, name, value):
+        """
+        Sets an option on this QueryState object. If the value is None, the
+        specified option will be removed.
+        """
+        if value is None:
+            del self.options[name]
+        else:
+            self.options[name] = value
+    
+    def get_option(self, name, value, default=None):
+        """
+        Gets the value of the option with the specified name. If there is no
+        such option, the specified default value will be returned instead.
+        """
+        return self.options.get(name, value, default)
 
 
 class Interpreter(object):
-    def __init__(self):
-        pass
+    """
+    This class is the main entry point to the JPath query engine.
+    """
+    def __init__(self, use_default_evaluators=True):
+        self.evaluators = {}
+        if use_default_evaluators:
+            self.install_default_evaluators()
+    
+    def set_evaluator(self, production_class, evaluator):
+        self.evaluators[production_class] = evaluator
+    
+    def get_evaluator(self, production_class):
+        try:
+            return self.evaluators[production_class]
+        except KeyError:
+            raise Exception("No evaluator could be found for production class " 
+                    + str(type(production_class)) + ", and specifically the instance "
+                    + trimTo(200, repr(production_class)) + ". This means that an "
+                    "evaluator for this production class wasn't installed "
+                    "using set_evaluator ")
+    
+    def install_default_evaluators(self):
+        for production_class, evaluator in jpath.evaluators.evaluators.items():
+            self.set_evaluator(production_class, evaluator)
     
     def parse(self, text):
-        results = list(jpath.syntax.pExpr.parseString(text, parseAll=True))
+        results = list(jpath.syntax.pQuery.parseString(text, parseAll=True))
         if len(results) != 1:
             raise Exception("Problem while parsing results: precisely one "
                     "result was expected, but " + str(len(results)) + " were "
                     "provided by the parser. " + JPATH_INTERNAL_ERROR_MESSAGE)
-        return Query(text, results[0])
+        return Query(self, text, results[0])
     
-    def evaluate(self, context, query):
+    def new_state(self):
+        return QueryState(self)
+    
+    def _evaluate(self, context, query):
         """
         DON'T USE THIS EXTERNALLY UNLESS YOU KNOW WHAT YOU'RE DOING. It's for
         JPath internal use. I'll get a tutorial up soon on how to properly run a
@@ -133,18 +220,16 @@ class Interpreter(object):
         """
         # Figure out the method to dispatch to based on the type of AST node that
         # this is
-        typename = type(query).__name__
-        function = getattr(jpath.engine, "evaluate_" + typename, None) # Get the
-        # function on this module that's supposed to process this AST component
+        function = self.get_evaluator(type(query))
         try:
             if function is None:
                 raise Exception("Evaluate not implemented for AST component type " + 
-                        typename + " containing " + trimTo(200, repr(query)) + ". "
+                        str(type(query)) + " containing " + trimTo(200, repr(query)) + ". "
                         + JPATH_INTERNAL_ERROR_MESSAGE)
             result = function(context, query)
             if not isinstance(result, list):
                 raise Exception("Result was not a list (representing a collection) "
-                        "for AST component type " + typename + " containing " + 
+                        "for AST component type " + str(type(query)) + " containing " + 
                         trimTo(200, repr(query)) + ". " + JPATH_INTERNAL_ERROR_MESSAGE)
             return result
         except errors.EvaluationError as e:

@@ -117,14 +117,15 @@ class Map(Item, Identity):
         Creates a new map from the specified Python dictionary, whose keys are
         the keys in the map and whose values are Pair instances.
         """
-        if not isinstance(map, (list, tuple)):
-            raise Exception("Value passed into Map is not a list of pairs")
+        if not isinstance(pairs, (list, tuple)):
+            raise Exception("Value passed into Map is not a list of pairs;"
+                    "it's " + str(type(pairs)))
         # TODO: add an option to disable this check for increased performance
         for pair in pairs:
             if not isinstance(pair, Pair):
                 raise Exception("Values passed into jpath.data.Map must be "
                         "Pair instances, not " + str(type(pair)))
-        self._map = dict((pair.key, pair) for pair in pairs)
+        self._map = dict((pair.get_key(), pair) for pair in pairs)
     
     def get_keys(self):
         """
@@ -138,7 +139,7 @@ class Map(Item, Identity):
         """
         # TODO: if this ends up being used a lot, consider caching a list of
         # values for a map alongside the map of keys to pairs
-        return [pair.value for pair in self._map.values()]
+        return [pair.get_value() for pair in self._map.values()]
     
     def get_pairs(self):
         """
@@ -160,7 +161,7 @@ class Map(Item, Identity):
         """
         pair = self._map.get(key, None)
         if pair:
-            return pair.value
+            return pair.get_value()
         return None
     
     def get_pair(self, key):

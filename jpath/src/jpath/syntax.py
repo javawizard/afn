@@ -5,11 +5,18 @@ from pyparsing import Forward, Suppress, Keyword
 from pyparsing import Optional
 from string import ascii_lowercase, ascii_uppercase
 
+"""
+This module provides the JPath parser used for query evaluation. It can be
+used separately from the JPath query engine to manipulate parsed queries
+similar to how Python's ast module can be used to manipulate parsed Python
+scripts.
+"""
+
 keychars = ascii_lowercase + ascii_uppercase
 
 
 escape_map = {"\\": "\\", '"': '"', "n": "\n", "r": "\r"}
-varNameRegex = r"\$[a-zA-Z][a-zA-Z0-9]*"
+varNameRegex = r"\$[a-zA-Z][a-zA-Z0-9\\-\\_]*"
 
 def stringify(parser):
     """
@@ -89,6 +96,14 @@ def createPatternOrSpecial(location, pattern):
     return Pattern(location, pattern)
 
 
+def aCreateFunctionCall(location, tokens):
+    name = tokens[0]
+    expr = tokens[1]
+    if isinstance(expr, CollectionConstructor): # Expand to function arguments
+        return FunctionCall(location, name, expr.exprs)
+    return FunctionCall(location, name, [expr])
+
+
 class Production(object):
     """
     Superclass of all production classes created by the production function.
@@ -127,6 +142,7 @@ NullLiteral = production("NullLiteral")
 ContextItem = production("ContextItem")
 Children = production("Children")
 PairChildren = production("PairChildren")
+FunctionCall = production("FunctionCall", "name", "exprs")
 Pattern = production("Pattern", "value")
 PairPattern = production("PairPattern", "value")
 ParenExpr = production("ParenExpr", "expr")
@@ -160,7 +176,13 @@ Or = production("Or", "left", "right")
 
 PairConstructor = production("PairConstructor", "left", "right")
 
-CollectionConstructor = production("CollectionConstructor", "left", "right")
+CollectionConstructor = production("CollectionConstructor", "exprs") # This is
+# defined differently because a function call is essentially defined to be
+# simply the function name, an open paren, an expr, and a close paren, and
+# the function call parser examines the expr to be passed to the function and
+# if it's a collection constructor, it expands it as the function's arguments.
+# Storing the values as a list instead of a bunch of composed collection
+# constructors makes this a lot easier.
 
 IfThenElse = production("IfThenElse", "condition", "true", "false")
 Satisfies = production("Satisfies", "type", "name", "expr", "condition")
@@ -174,6 +196,11 @@ FlworWhere = production("FlworWhere", "expr")
 # consider defining ordering to be stable
 FlworReturn = production("FlworReturn", "expr")
 
+DeclareVariable = production("DeclareVariable", "name", "expr")
+DeclareFunction = production("DeclareFunction", "name", "args", "expr")
+DeclareOption = production("DeclareOption", "name", "expr")
+ImportModule = production("ImportModule", "module", "name")
+
 
 pExpr = Forward()
 
@@ -182,7 +209,8 @@ pStringEscape = Regex(r"\\[a-zA-Z0-9]").addParseAction(lambda l, t: escape_map[t
 pStringChar = Regex(r'[^\"\\]').leaveWhitespace() | pStringEscape
 pString = stringify(Literal('"') + ZeroOrMore(pStringChar) + Literal('"')).addParseAction(lambda l, t: StringLiteral(l, t[0][1:-1]))
 pVarReference = Regex(varNameRegex).addParseAction(lambda l, t: VarReference(l, t[0][1:]))
-pPattern = Regex("[a-zA-Z][a-zA-Z0-9]*").addParseAction(lambda l, t: createPatternOrSpecial(l, t[0]))
+pFunctionCall = (Regex("[a-zA-Z][a-zA-Z0-9\\-\\_\\.]*") + Suppress("(") + pExpr + Suppress(")")).addParseAction(aCreateFunctionCall)
+pPattern = Regex("[a-zA-Z][a-zA-Z0-9\\-\\_]*").addParseAction(lambda l, t: createPatternOrSpecial(l, t[0]))
 pPairPattern = Regex("@[a-zA-Z][a-zA-Z0-9]*").addParseAction(lambda l, t: PairPattern(l, t[0][1:])) # [1:] removes the leading "@"
 pContextItem = Literal(".").addParseAction(lambda l, t: ContextItem(l))
 pChildren = Literal("*").addParseAction(lambda l, t: Children(l))
@@ -195,8 +223,8 @@ pEmptyMapConstructor = (Literal("{") + Literal("}")).addParseAction(lambda l, t:
 pEmptyCollectionConstructor = (Literal("(") + Literal(")")).addParseAction(lambda l, t: EmptyCollectionConstructor(l))
 pAtom = (pParenExpr | pEmptyListConstructor | pListConstructor
         | pEmptyMapConstructor | pMapConstructor | pEmptyCollectionConstructor
-        | pNumber | pString | pVarReference | pPattern | pPairPattern
-        | pContextItem | pChildren | pPairChildren)
+        | pNumber | pString | pVarReference | pFunctionCall | pPattern 
+        | pPairPattern | pContextItem | pChildren | pPairChildren)
 
 pIndexer = (Suppress("#") + pAtom).addParseAction(lambda l, t: Indexer(l, t[0]))
 pPairIndexer = (Suppress("@#") + pAtom).addParseAction(lambda l, t: PairIndexer(l, t[0]))
@@ -252,10 +280,11 @@ pInfix = InfixSeries(pInfix,
             ((Suppress(Literal(":")) + pInfix), PairConstructor)
         ])
 
-pInfix = InfixSeries(pInfix,
-        [
-            ((Suppress(Literal(",")) + pInfix), CollectionConstructor)
-        ])
+# NOTE: This doesn't always end up as a CollectionConstructor; if one of these
+# appears inside a FunctionCall, it gets expanded to be the function call's
+# arguments. See the definition of pFunctionCall for more information on what
+# ends up happening.
+pInfix = (pInfix + ZeroOrMore(Suppress(",") + pInfix)).addParseAction(lambda l, t: t[0] if len(t) == 1 else CollectionConstructor(l, list(t)))
 
 pIfThenElse = (SKeyword("if") + pExpr + SKeyword("then") + pExpr + SKeyword("else") + pExpr
         ).addParseAction(lambda l, t: IfThenElse(l, t[0], t[1], t[2]))
