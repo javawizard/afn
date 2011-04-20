@@ -1,7 +1,12 @@
 
 import jpath.syntax as syntax
 from jpath.data import Boolean, Item, List, Map, Null, Number, Pair, String
-import jpath.engine as engine
+import itertools
+from jpath.utils.evaluation import (arithmetic_operation, binary_comparison,
+        is_true_collection)
+from jpath.utils.messages import JPATH_INTERNAL_ERROR_MESSAGE
+from jpath.utils.text import trimTo
+
 
 def evaluate_NumberLiteral(context, query):
     return [Number(query.value)]
@@ -72,10 +77,10 @@ def evaluate_PairPattern(context, query):
 
 def evaluate_ParenExpr(context, query):
     # Just evaluate the expression inside parens and return the result
-    return evaluate(context, query.expr)
+    return context.evaluate(query.expr)
 
 def evaluate_ListConstructor(context, query):
-    return [List(list(evaluate(context, query.expr)))] # Create a list
+    return [List(list(context.evaluate(query.expr)))] # Create a list
     # containing the items in the collection resulting from evaluating
     # the specified expression 
 
@@ -83,7 +88,7 @@ def evaluate_EmptyListConstructor(context, query):
     return [List([])] # Return a collection containing a single empty list
 
 def evaluate_MapConstructor(context, query):
-    collection = evaluate(context, query.expr) # Evaluate the expression
+    collection = context.evaluate(query.expr) # Evaluate the expression
     # containing the pairs that should go into the new map
     return [Map(collection)]
 
@@ -95,7 +100,7 @@ def evaluate_EmptyCollectionConstructor(context, query):
 
 def evaluate_Indexer(context, query):
     # Evaluate the indexer's expression
-    value = evaluate(context, query.expr)
+    value = context.evaluate(query.expr)
     # If the indexer expression resulted in the empty collection, then return
     # the empty collection
     if len(value) < 1:
@@ -137,7 +142,7 @@ def evaluate_Indexer(context, query):
 def evaluate_PairIndexer(context, query):
     # Same as evaluate_Indexer, but only works for maps, and gets the pair
     # corresponding to the specified entry instead of the entry's value
-    value = evaluate(context, query.expr)
+    value = context.evaluate(query.expr)
     if len(value) < 1:
         return []
     value = value[0]
@@ -149,25 +154,25 @@ def evaluate_PairIndexer(context, query):
 
 def evaluate_Path(context, query):
     # Evaluate the left-hand side
-    left_value = evaluate(context, query.left)
+    left_value = context.evaluate(query.left)
     # Then, for each value in the left-hand side's resulting collection,
     # create a new context with that value as the context item, run the
     # right-hand side under that context, and put the resulting collection
     # into result_collections
-    result_collections = [evaluate(context.new_with_item(v), query.right) for v in left_value]
+    result_collections = [context.new_with_item(v).evaluate(query.right) for v in left_value]
     # Now we flatten out the list of collections into one list (representing
     # a collection) containing all the items, and return it.
     return list(itertools.chain(*result_collections))
 
 def evaluate_Predicate(context, query):
     # We evaluate the left-hand side
-    left_value = evaluate(context, query.left)
+    left_value = context.evaluate(query.left)
     # Then we go through the list of items in the resulting left-hand
     # collection. For each item, we evaluate the predicate with the specified
     # item as the context item. If the result of evaluating the predicate is
     # a true collection (a collection with at least one true value), then we
     # include the item in the list of values to return. 
-    return [v for v in left_value if is_true_collection(evaluate(context.new_with_item(v), query.right))]
+    return [v for v in left_value if is_true_collection(context.new_with_item(v).evaluate(query.right))]
 
 def evaluate_Multiply(context, query):
     return arithmetic_operation(context, query, lambda x, y: x * y)
@@ -186,9 +191,9 @@ def evaluate_Otherwise(context, query):
     # the empty sequence, so we can't use binary_operation for this
     left_expr = query.left
     right_expr = query.right
-    left_value = evaluate(context, left_expr)
+    left_value = context.evaluate(left_expr)
     if left_value == []:
-        return evaluate(context, right_expr)
+        return context.evaluate(right_expr)
     else:
         return left_value
 
@@ -217,23 +222,23 @@ def evaluate_LessOrEqual(context, query):
     return [binary_comparison(context, query.left, query.right, lambda x, y: x <= y)]
 
 def evaluate_And(context, query):
-    left_value = evaluate(context, query.left)
+    left_value = context.evaluate(query.left)
     if is_true_collection(left_value):
-        return [Boolean(is_true_collection(evaluate(context, query.right)))]
+        return [Boolean(is_true_collection(context.evaluate(query.right)))]
     else:
         return [Boolean(False)]
 
 def evaluate_Or(context, query):
-    left_value = evaluate(context, query.left)
+    left_value = context.evaluate(query.left)
     if not is_true_collection(left_value):
-        return [Boolean(is_true_collection(evaluate(context, query.right)))]
+        return [Boolean(is_true_collection(context.evaluate(query.right)))]
     else:
         return [Boolean(True)]
 
 def evaluate_PairConstructor(context, query):
     # Evaluate the left and right-hand sides
-    left_value = evaluate(context, query.left)
-    right_value = evaluate(context, query.right)
+    left_value = context.evaluate(query.left)
+    right_value = context.evaluate(query.right)
     # Now we check for length. A pair constructor's left-hand side and
     # right-hand side have to be the same length, and that many newly-created
     # pairs will be returned from the pair constructor.
@@ -254,23 +259,23 @@ def evaluate_CollectionConstructor(context, query):
     # collection. TODO: for efficiency, consider having collection
     # construction represent a series of commas with just one AST token
     # instead of an AST token for every comma.
-    left_value = evaluate(context, query.left)
-    right_value = evaluate(context, query.right)
+    left_value = context.evaluate(query.left)
+    right_value = context.evaluate(query.right)
     return left_value + right_value
 
 def evaluate_IfThenElse(context, query):
-    condition_value = evaluate(context, query.condition)
+    condition_value = context.evaluate(query.condition)
     if is_true_collection(condition_value):
-        return evaluate(context, query.true)
+        return context.evaluate(query.true)
     else:
-        return evaluate(context, query.false)
+        return context.evaluate(query.false)
 
 def evaluate_Satisfies(context, query):
     name = query.name
-    expr_value = evaluate(context, query.expr)
+    expr_value = context.evaluate(query.expr)
     some = query.type == "some"
     for item in expr_value:
-        result = evaluate(context.new_with_var(name, [item]), query.condition)
+        result = context.new_with_var(name, [item]).evaluate(query.condition)
         truth = is_true_collection(result)
         if some: # Checking for at least one to be true
             if truth:
@@ -307,7 +312,7 @@ def evaluate_Flwor(context, query):
     for construct in constructs:
         # Look up which generator function to use for this construct
         typename = type(construct).__name__
-        generator = getattr(jpath.engine, "flwor_" + typename, None)
+        generator = getattr(None, "flwor_" + typename, None) # TODO: fix
         # Did we find a generator?
         if generator is None:
             # Nope, we haven't implemented this construct yet
@@ -340,7 +345,7 @@ def flwor_FlworFor(context, query, var_stream):
     for varset in var_stream:
         # We evaluate the expression in this varset to get the collection of
         # items to iterate over
-        expr_value = evaluate(context.new_with_vars(varset), expr)
+        expr_value = context.new_with_vars(varset).evaluate(expr)
         # Then we iterate over each of those items
         for index, item in enumerate(expr_value):
             # We create a new varset for this item, containing the variable
@@ -362,7 +367,7 @@ def flwor_FlworLet(context, query, var_stream):
     # Then we iterate over the existing varsets
     for varset in var_stream:
         # For each existing varset, we evaluate the expression in this varset
-        expr_value = evaluate(context.new_with_vars(varset), expr)
+        expr_value = context.new_with_vars(varset).evaluate(expr)
         # We then create a new varset for it, containing the variable this let
         # construct is declaring
         new_varset = dict(varset)
@@ -378,7 +383,7 @@ def flwor_FlworWhere(context, query, var_stream):
     for varset in var_stream:
         # For each one, we evaluate the expression to see if we should let
         # this varset on to further processing stages
-        expr_value = evaluate(context.new_with_vars(varset), expr)
+        expr_value = context.new_with_vars(varset).evaluate(expr)
         # Then we check to see if the result was a true value
         if is_true_collection(expr_value):
             # It was, so we yield this varset.
@@ -396,7 +401,7 @@ def flwor_FlworReturn(context, query, var_stream):
     # Then we iterate over all the varsets
     for varset in var_stream:
         # For each one, we evaluate the return construct under that varset
-        expr_value = evaluate(context.new_with_vars(varset), expr)
+        expr_value = context.new_with_vars(varset).evaluate(expr)
         # And then we yield the resulting collection, and that's it!
         yield expr_value
 
