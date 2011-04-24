@@ -268,7 +268,7 @@ def evaluate_Equality(context, query):
 
 @_evaluator
 def evaluate_Inequality(context, query):
-    return [binary_comparison(context, query.left, query.right, lambda x, y: x == y)]
+    return [Boolean(not binary_comparison(context, query.left, query.right, lambda x, y: x == y).get_value())]
 
 
 @_evaluator

@@ -24,6 +24,46 @@ import jpath.evaluators
 # One QueryState for one query evaluation
 # Several Contexts for one query evaluation
 # Query instance created from asking an interpreter to parse a query
+# Contexts and QueryStates must NOT be tied to a query since they can jump
+# queries if one query calls into a function defined by another. Predicate
+# instances are, however, tied to a query since they represent how that
+# query's code is stored in memory.
+# All of these, however, are tied to a particular interpreter.
+"""
+Hmm... How do we want to go about doing modules? I'm thinking an import would
+look something like this:
+
+import module "/some/file.jq" as something;
+
+Functions in the specified module could then be called like this:
+
+something.some-function(arg1, arg2, ...)
+
+Shouldn't be too hard. And, of course, whatever's using the engine would be
+able to define behavior for importing modules and, in particular, resolving
+variables and functions (the engine can tell if a variable or function is
+external by the presence of a "." in its name).
+
+Since the behavior of the string after "import module" is defined by
+whatever's using the JPath query engine, it can provide custom modules such as
+"/cool-database-system/builtins" or something. I would expect (and I may
+define this to be standard behavior for systems running from a folder of
+modules on disk) the string to take the form of a typical directory path, with
+a certain database-defined folder functioning as the root. The database would
+then be responsible for making sure that imports can't escape from that root.
+
+The engine, then, is responsible for loading queries. I'm thinking there
+should be two new classes: Module and Function. Module is a class that has
+methods for getting the value (as a data.Item) of a particular variable
+defined in the module and for getting a Function object representing a
+particular function defined within the module. Variable values must not change
+during evaluation. Functions provide a way to invoke the function with a
+certain set of arguments.
+
+TODO: figure out how the current state of global variables factors into
+evaluating the query. Where should this be stored etc? Perhaps have the
+context represent what file we're running or something.
+"""
 
 
 class Query(object):
