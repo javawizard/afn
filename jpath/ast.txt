@@ -1,0 +1,8 @@
+
+StringLiteral: string value
+Flwor: [ast] value
+FlworFor: string name, string counter, ast expr
+FlworLet: string name, ast expr
+FlworWhere: ast expr
+FlworOrderBy: ast
+
