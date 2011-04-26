@@ -54,7 +54,7 @@ We then perform the fourth, and last, iteration. On this iteration, we create an
 
 Then we iterate over this list of non-referenced objects twice. On the first iteration of this list, we call the finalize methods of all objects in it. On the second iteration, we delete each item, and then the corresponding linked list node, and we're done with garbage collection!
 
-So I think I'm going to take a crack at implementing this to see if it actually works. I'll come back to design of the rest of the system in a bit, since I think I've got most of the rest of the system worked out. 
+So I think I'm going to take a crack at implementing this to see if it actually works. I'll come back to design of the rest of the system in a bit, since I think I've got most of the rest of the system worked out.
 
 
 
