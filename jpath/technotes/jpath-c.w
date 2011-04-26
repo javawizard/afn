@@ -24,22 +24,37 @@ That's it for the AST representation. Now for the representation of JSON datatyp
 ==GC==
 Quick intermediate note on memory management.
 
-I'm thinking that for now, JPath will only use reference counting. It will track a list of objects created during the process of running a query so that any objects that somehow manage to get involved in a reference cycle will be removed at the end of the query.
+JPath will use a combination of two garbage collecting algorithms: reference counting and mark-and-sweep.
 
-Each invocation of a query will have some associated context that lives the entire life of the query. This context will be used to track all objects that get created during the life of the query invocation.
+Because of JPath's design, reference cycles are extremely rare (and using JPath with just JSON datatypes and nothing else, reference cycles are impossible to create), but objects will be created and destroyed quite frequently. This is why I'm planning on using both collection approaches.
 
-When an object (all objects tracked by the garbage collector must be instance of item or one of its subclasses) is created, its reference count is set to 1 and the object is added to the context's object list.
+So, there will be some sort of garbage collection context. Inside the JPath interpreter, I expect that to be tied to the context representing a single invocation of a query, but it'll be separate to allow for objects to potentially live beyond that.
 
-The object's reference count can then be modified as needed with UPREF(item) and DOWNREF(item).
+I'm also thinking I may add some macros to allow JPath to be combined with multi-thread support. This would likely slow down performance, but it would potentially speed up performance if lots of processors are available, and even if it doesn't, I like letting people do what they want as long as they know what they're doing. Multi-thread support would only be included if JPath were compiled with JPATH_GC_THREADSAFE defined, and it would function by including a lock in the GC context that upref, downref, and the mark-and-sweep collector all acquire during their operation. (Actually, upref may not need to be locked; I need to think this through and make sure.)
 
-When the object's reference count hits zero, the object is removed from the context's object list, all of the objects that it references (as per a function it provides that makes available a list of such objects) have their reference counts decremented, and the object is then destroyed.
+So, the context must last as long as the objects it constitutes, or whatever deletes the context must be responsible for deleting the objects as well.
 
-The context's object list will be implemented using a std::set. The value type will be Item*, with the result that the set will sort itself based on the memory location at which the item is stored.
+Garbage collection context objects store a linked list of objects under control of that context. The linked list is structured as an instance of the class ListNode, which is a doubly-linked list node. The list is stored in the GC context as a ListNode whose item is NULL, and which points to the first and last items in the list. Each ListNode has three fields: next, which is a pointer to the next ListNode in the list, previous, which is a pointer to the previous ListNode in the list, and item, which is a pointer to the item that it references.
 
-After a query has finished running, the result of the query is treated as a root set and a mark-and-sweep collection is performed on the object list.
+The ListNode corresponding to a particular item is stored in the item. When downref is called on an item and it results in the item's reference count going to zero, the item's finalize function is called (which tells the item to perform any cleanup it needs to do before collection happens), the item's unlink function is called (which tells the item to downref any other items it references so that they will eventually be garbage collected), the item's ListNode is removed from the GC context's object list, and the item and its corresponding ListNode are deleted.
 
-TODO: figure out what order to destroy objects in there in etc and let objects not register themselves on the list if they don't want
+Each item has two fields in addition to its ref_count field that are relevant to garbage collection: internal_ref and referenced, which are integers and booleans, respectively.
 
+When a full collection is to be performed, four iterations are performed over the object set. I hope to optimize this a bit at some point, but since currently mark-and-sweep collections are rare, I haven't worried about this much yet. The iterations are:
+
+On the first iteration, every object's internal_ref and referenced fields are set to 0 and false, respectively.
+
+On the second iteration, objects are asked to increment the internal_ref fields of all objects that they reference (by calling the item's flag_internal_ref method). Those objects whose internal_ref fields are now less than their ref_count fields constitute the root set.
+
+A linked list, one that uses ListNode objects, is then constructed. The third iteration then commences. It consists of adding all objects whose internal_ref fields are less than their ref_count fields (the root set, as described in the previous paragraph) to this newly-constructed linked list.
+
+We then take a break from iterations and focus on this linked list that represents the root set. We have a loop that runs on the first item in the list until the list is empty. This loop marks the current item as referenced and asks the item to add all of the items it references to the list after the node representing this item (it passes in the node representing the current item to allow the item to do this). It then deletes the node representing the current item, and moves on. Once this has finished, all items referenceable, directly or indirectly, from the root set have been marked as referenced.
+
+We then perform the fourth, and last, iteration. On this iteration, we create another linked list and copy all objects not marked as referenced into this list, and we remove all objects not marked as referenced from the main list.
+
+Then we iterate over this list of non-referenced objects twice. On the first iteration of this list, we call the finalize methods of all objects in it. On the second iteration, we delete each item, and then the corresponding linked list node, and we're done with garbage collection!
+
+So I think I'm going to take a crack at implementing this to see if it actually works. I'll come back to design of the rest of the system in a bit, since I think I've got most of the rest of the system worked out.
 
 
 
