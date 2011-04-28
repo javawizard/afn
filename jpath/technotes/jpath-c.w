@@ -56,8 +56,29 @@ Then we iterate over this list of non-referenced objects twice. On the first ite
 
 So I think I'm going to take a crack at implementing this to see if it actually works. I'll come back to design of the rest of the system in a bit, since I think I've got most of the rest of the system worked out.
 
+------------------
 
+Got it done! Now, onto data representation.
 
+Collections are going to have their own abstract class, Collection. There will be a few implementations provided:
+
+	SingletonCollection: A collection containing exactly one item.
+	
+	EmptyCollection: A collection containing no items.
+	
+	MemoryCollection: A collection containing an arbitrary number of items, provided as an array of items.
+	
+	NestedCollection: A collection created from an array of other collections that appears to contain all of the items in those collections in order. I'm not yet sure if I'm going to use this or just flatten everything into a MemoryCollection yet.
+	
+	RangeCollection: A collection containing the numbers from one integer value to another integer value. This is used to implement the "to" operator (used like "1 to 1000000000") without having to store all of the numbers in memory.
+
+Collections have several functions:
+	
+	size(): Returns the number of items in this collection.
+	get(long index): Returns the item at the specified index.
+	TODO: functions for evaluating when this is the left-hand side of a path etc
+
+So, what sort of context information do we need to store? And should the context be garbage-collected too so that JPath-internal things could potentially keep it around? These things and more will be answered on the next episode of JPath Development by Alex. Good night!
 
 
 
