@@ -18,6 +18,9 @@ namespace jpath
 
             void insert_before(Node<T>* node);
             void insert_after(Node<T>* node);
+            void remove();
+            bool has_items();
+            bool is_head();
     };
     
     class Object
@@ -29,10 +32,12 @@ namespace jpath
             Node<Object>* gc_node;
     };
     
+    typedef Node<Object> GCNode;
+    
     class GCContext
     {
         public:
-            Node<Object>* list;
+            GCNode* list;
 
             GCContext();
             ~GCContext();

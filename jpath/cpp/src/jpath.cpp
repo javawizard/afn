@@ -36,8 +36,44 @@ void Node<T>::remove()
 }
 
 template <class T>
+bool Node<T>::has_items()
+{
+    return this->next != this;
+}
+
+template <class T>
+bool Node<T>::is_head()
+{
+    return this->value == NULL;
+}
+
+template <class T>
 Node<T>::~Node()
 {
-    this->remove();
+    if (!this->is_head())
+        this->remove();
+}
+
+jpath::GCContext::GCContext()
+{
+    this->list = new Node<Object> ();
+}
+
+jpath::GCContext::~GCContext()
+{
+    while (this->list->has_items())
+    {
+        GCNode* node = this->list->next;
+        node->value->gc_node = NULL;
+        delete node;
+    }
+    delete this->list;
+}
+
+void jpath::GCContext::track(Object *object)
+{
+    GCNode* node = new GCNode(object);
+    this->list->insert_after(node);
+    object->gc_node = node;
 }
 
