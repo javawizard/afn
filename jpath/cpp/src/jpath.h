@@ -1,16 +1,43 @@
 namespace jpath
 {
-	class Object;
+    class Object;
+    
+    void downref(Object* object);
+    void upref(Object* object);
+    
+    template <class T>
+    class Node
+    {
+        public:
+            Node<T>* next;
+            Node<T>* previous;
+            T* value;
 
-	class Node
-	{
-		public:
-			Node* next;
-			Node* previous;
-			Object* value;
-			Node(Object* value);
-			~Node();
-			void insert_before(Node* node);
-			void insert_after(Node* node);
-	};
+            Node(T* value);
+            ~Node();
+
+            void insert_before(Node<T>* node);
+            void insert_after(Node<T>* node);
+    };
+    
+    class Object
+    {
+        public:
+            long long ref_count;
+            long long internal_ref;
+            bool referenced;
+            Node<Object>* gc_node;
+    };
+    
+    class GCContext
+    {
+        public:
+            Node<Object>* list;
+
+            GCContext();
+            ~GCContext();
+            
+            void track(Object* object);
+    };
 }
+

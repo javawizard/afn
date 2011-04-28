@@ -41,5 +41,3 @@ Node<T>::~Node()
     this->remove();
 }
 
-
-
