@@ -26,13 +26,17 @@ namespace jpath
     class Object
     {
         public:
-            long long ref_count;
-            long long internal_ref;
-            bool referenced;
+            long long gc_ref_count;
+            long long gc_internal_ref;
+            bool gc_referenced;
             Node<Object>* gc_node;
             
-            virtual void finalize() = 0;
-            virtual void unlink() = 0;
+            Object();
+            
+            virtual void gc_flag_refs() = 0;
+            virtual void gc_add_refs(GCNode* node) = 0; // Make sure to add ref'd nodes AFTER the one specified
+            virtual void gc_finalize();
+            virtual void gc_unlink() = 0;
     };
     
     typedef Node<Object> GCNode;
@@ -46,6 +50,7 @@ namespace jpath
             ~GCContext();
             
             void track(Object* object);
+            long long collect();
     };
 }
 

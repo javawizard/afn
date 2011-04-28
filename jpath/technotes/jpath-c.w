@@ -44,11 +44,11 @@ When a full collection is to be performed, four iterations are performed over th
 
 On the first iteration, every object's internal_ref and referenced fields are set to 0 and false, respectively.
 
-On the second iteration, objects are asked to increment the internal_ref fields of all objects that they reference (by calling the item's flag_internal_ref method). Those objects whose internal_ref fields are now less than their ref_count fields constitute the root set.
+On the second iteration, objects are asked to increment the internal_ref fields of all objects that they reference (by calling the item's gc_flag_ref method). Those objects whose internal_ref fields are now less than their ref_count fields constitute the root set.
 
 A linked list, one that uses ListNode objects, is then constructed. The third iteration then commences. It consists of adding all objects whose internal_ref fields are less than their ref_count fields (the root set, as described in the previous paragraph) to this newly-constructed linked list.
 
-We then take a break from iterations and focus on this linked list that represents the root set. We have a loop that runs on the first item in the list until the list is empty. This loop marks the current item as referenced and asks the item to add all of the items it references to the list after the node representing this item (it passes in the node representing the current item to allow the item to do this). It then deletes the node representing the current item, and moves on. Once this has finished, all items referenceable, directly or indirectly, from the root set have been marked as referenced.
+We then take a break from iterations and focus on this linked list that represents the root set. We have a loop that runs on the first item in the list until the list is empty. This loop marks the current item as referenced and asks the item to add all of the items it references to the list after the node representing this item (it passes in the node representing the current item to allow the item to do this; the method is gc_add_refs). It then deletes the node representing the current item, and moves on. Once this has finished, all items referenceable, directly or indirectly, from the root set have been marked as referenced.
 
 We then perform the fourth, and last, iteration. On this iteration, we create another linked list and copy all objects not marked as referenced into this list, and we remove all objects not marked as referenced from the main list.
 
