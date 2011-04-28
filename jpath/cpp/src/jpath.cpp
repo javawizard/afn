@@ -79,11 +79,18 @@ void jpath::GCContext::track(Object *object)
 
 void jpath::upref(Object* object)
 {
-    
+    object->ref_count += 1;
 }
 
 void jpath::downref(Object* object)
 {
-    
+    object->ref_count -= 1;
+    if (object->ref_count <= 0)//Time to garbage collect the object
+    {
+        object->finalize();
+        object->unlink();
+        delete object->gc_node;
+        delete object;
+    }
 }
 

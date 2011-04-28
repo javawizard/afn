@@ -30,6 +30,9 @@ namespace jpath
             long long internal_ref;
             bool referenced;
             Node<Object>* gc_node;
+            
+            virtual void finalize() = 0;
+            virtual void unlink() = 0;
     };
     
     typedef Node<Object> GCNode;
