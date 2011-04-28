@@ -77,3 +77,13 @@ void jpath::GCContext::track(Object *object)
     object->gc_node = node;
 }
 
+void jpath::upref(Object* object)
+{
+    
+}
+
+void jpath::downref(Object* object)
+{
+    
+}
+
