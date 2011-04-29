@@ -8,7 +8,7 @@ Each AST class has a destructor that frees all of the AST nodes it references.
 
 The syntax of ast.txt, the file that classes are generated from, is a bunch of lines starting with "AstNodeName:", where AstNodeName is the name of the class and node that will be generated.
 
-If there aren't any values that the production needs (EmptyCollectionConstructor, for example, doesn't need any), then the line should consist only of the string "AstNodeName". Otherwise, after "AstNodeName:" comes a comma-separated list of values for the production.
+If there aren't any values that the production needs (EmptySequenceConstructor, for example, doesn't need any), then the line should consist only of the string "AstNodeName". Otherwise, after "AstNodeName:" comes a comma-separated list of values for the production.
 
 Each value is of the form "type name", where type is the type of the production, optionally surrounded by brackets to indicate a list of that particular type, and name is the name of the field that will hold that production. Valid types are:
 
@@ -60,25 +60,31 @@ So I think I'm going to take a crack at implementing this to see if it actually 
 
 Got it done! Now, onto data representation.
 
-Collections are going to have their own abstract class, Collection. There will be a few implementations provided:
+==Sequences==
+Sequences are going to have their own abstract class, Sequence. There will be a few implementations provided:
 
-	SingletonCollection: A collection containing exactly one item.
+	SingletonSequence: A sequence containing exactly one item.
 	
-	EmptyCollection: A collection containing no items.
+	EmptySequence: A sequence containing no items.
 	
-	MemoryCollection: A collection containing an arbitrary number of items, provided as an array of items.
+	MemorySequence: A sequence containing an arbitrary number of items, provided as an array of items.
 	
-	NestedCollection: A collection created from an array of other collections that appears to contain all of the items in those collections in order. I'm not yet sure if I'm going to use this or just flatten everything into a MemoryCollection yet.
+	NestedSequence: A sequence created from an array of other sequences that appears to contain all of the items in those sequences in order. I'm not yet sure if I'm going to use this or just flatten everything into a MemorySequence yet.
 	
-	RangeCollection: A collection containing the numbers from one integer value to another integer value. This is used to implement the "to" operator (used like "1 to 1000000000") without having to store all of the numbers in memory.
+	RangeSequence: A sequence containing the numbers from one integer value to another integer value. This is used to implement the "to" operator (used like "1 to 1000000000") without having to store all of the numbers in memory.
 
-Collections have several functions:
+Sequences have several functions:
 	
-	size(): Returns the number of items in this collection.
+	size(): Returns the number of items in this sequence.
 	get(long index): Returns the item at the specified index.
-	TODO: functions for evaluating when this is the left-hand side of a path etc
 
 So, what sort of context information do we need to store? And should the context be garbage-collected too so that JPath-internal things could potentially keep it around? These things and more will be answered on the next episode of JPath Development by Alex. Good night!
+
+--------------------
+
+And we're back, with JPath development. So, let's see... I'm thinking the context should be garbage collected for now.
+
+I'm also thinking I'm going to create a class called pointer that represents a pointer to an Object. When a pointer is created, it automatically uprefs the object it points to. When a pointer is deleted, it automatically downrefs the object it points to. The * and -> operators of a pointer are properly overloaded to make it behave like a regular pointer. pointer, in essence, is a smart pointer that integrates with the JPath garbage collection system.
 
 
 
