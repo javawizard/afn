@@ -1,4 +1,20 @@
-#include "jpath.h"
+#include <cstddef>
+#include "GCNode.h"
+
+namespace jpath
+{
+    class GCContext
+    {
+        public:
+            GCNode* list;
+
+            GCContext();
+            ~GCContext();
+
+            void track(Object* object);
+            long long collect();
+    };
+}
 
 using namespace jpath;
 
@@ -23,32 +39,6 @@ void jpath::GCContext::track(Object *object)
     GCNode* node = new GCNode(object);
     this->list->insert_after(node);
     object->gc_node = node;
-}
-
-void jpath::upref(Object* object)
-{
-    object->gc_ref_count += 1;
-}
-
-void jpath::downref(Object* object)
-{
-    object->gc_ref_count -= 1;
-    if (object->gc_ref_count <= 0)//Time to garbage collect the object
-    {
-        object->gc_finalize();
-        object->gc_unlink();
-        delete object->gc_node;
-        delete object;
-    }
-}
-
-jpath::Object::Object()
-{
-    this->gc_ref_count = 1;
-}
-
-void jpath::Object::gc_finalize()
-{
 }
 
 long long jpath::GCContext::collect()

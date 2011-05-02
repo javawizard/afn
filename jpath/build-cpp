@@ -4,3 +4,4 @@ mkdir bin
 g++ -shared -Icpp/src -fPIC -o bin/libjpath.so cpp/src/jpath.cpp
 
 g++ -Icpp/src -o bin/test1 cpp/test-src/test1.cpp
+# g++ -Icpp/src -o bin/test2 cpp/test-src/test2.cpp

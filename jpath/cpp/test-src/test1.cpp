@@ -6,7 +6,7 @@ using namespace jpath;
 int main()
 {
     Node<const char*>* list = new Node<const char*>(NULL);
-    list->insert_before(new Node<const char*>((const char*)"First item"));
+    list->insert_before(new Node<const char*>("First item"));
     list->insert_before(new Node<const char*>("Second item"));
     list->insert_before(new Node<const char*>("Third item"));
     list->insert_before(new Node<const char*>("Fourth item"));
@@ -21,4 +21,11 @@ int main()
     {
         printf("%s\n", node->value);
     }
+    printf("Removing all items\n");
+    list->clear();
+    for(node = list->next; node != list; node = node->next)
+    {
+        printf("%s\n", node->value);
+    }
+    delete node;
 }
