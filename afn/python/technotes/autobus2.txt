@@ -1,0 +1,70 @@
+So Autobus 1 worked great. I designed it, implemented it, and wrote support for it into a lot of applications that I wrote. And all-in-all, it was awesome.
+
+In fact, as of my writing this (2011.09.11, which also happens to be the tenth anniversary of the World Trade Center attacks), Autobus powers nearly all of the automation stuff in my house.
+
+So what's Autobus 2 all about?
+
+Well...
+
+There were a few things that I realized I did wrong in the original Autobus, and a few things that were still missing.
+
+Probably the main thing I did wrong, and the main reason for my starting Autobus 2, is that Autobus has a server that everything connects to, and this server presents a single point of failure.
+
+The use of a server also means that each Autobus client has to be configured with the server that it's supposed to connect to, so it's generally impossible for an Autobus client to just appear on a network and not have to have any configuration in order for other things on the network to work with it.
+
+It also means that all traffic is duplicated even when there exists a direct path between the client providing an interface and the client using said interface.
+
+(Oh, and I'm going to start referring to interfaces as services from now on, since that more accurately describes what they do. They'll be referred to as services in the Autobus 2 code as well.)
+
+So, service discovery without knowing a server in advance is missing.
+
+Also missing from Autobus 1 are some additional methods of communication. I've found that functions, events, and objects are all very good at what they need to do, but that there are some other things that would be useful. The two I'm thinking of right now are channels and streams.
+
+Channels would be this thing where a service provides a named channel, and then a client decides that it wants to open a session with said channel. It can do this, at which point there's an established link between the service and the client. If either one dies, the other gets notified that the channel has been closed; the same happens if either end explicitly closes the channel. This is useful for allowing clients to communicate where one side (or both) needs to know when the other side disappears.
+
+Channels exchange JSON objects. Either side can send objects to the other side.
+
+I'm thinking I'll visit streams later. My idea is that they're simply streams of bytes, but these can be emulated using channels whose objects are binary blobs of data for now, so I'm probably going to skip over this for now.
+
+So... Autobus 2 will be distributed.
+
+There won't be a central server. Like at all.
+
+There can be, if services from two different networks need to be bridged. In that case, the central server would simply act as a client to other Autobus-providing things.
+
+So I need to think more about how to do this.
+
+So we want a way to be able to get a list of Autobus services currently available to the network. This could be done by just watching for broadcasts advertizing services and tracking the list based on that, and then removin services when a broadcast stating that the service is about to disappear is received or when it's been more than a few minutes since anything was received from the service.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
