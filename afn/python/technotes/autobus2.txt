@@ -34,7 +34,25 @@ There can be, if services from two different networks need to be bridged. In tha
 
 So I need to think more about how to do this.
 
-So we want a way to be able to get a list of Autobus services currently available to the network. This could be done by just watching for broadcasts advertizing services and tracking the list based on that, and then removin services when a broadcast stating that the service is about to disappear is received or when it's been more than a few minutes since anything was received from the service.
+So we want a way to be able to get a list of Autobus services currently available to the network. This could be done by just watching for broadcasts advertizing services and tracking the list based on that, and then removing services when a broadcast stating that the service is about to disappear is received or when it's been more than a few minutes since anything was received from the service.
+
+So now it's becoming more complicated. I need to think things through.
+
+So I'm thinking, what if we only have a socket opened to a particular service when we actually need to do stuff with that service?
+
+Services would broadcast their JSON info objects (which have keys like "name" and a few other fixed things, plus any service-specific stuff such as, for example, "monitor.host" for monitord) every few minutes. They would also make three or four (or some other configurable number) of broadcasts when they're going down so that other clients on the network can remove the services immediately. If a client doesn't receive a broadcast for a service for a certain number of minutes, it removes the service from its list of currently-available services. Established connections to the service are still maintained until they, too, time out.
+
+Services can't change their JSON objects while they're live. They have to die and then come back to change their JSON objects. If an Autobus client receives a broadcast for a service with a changed JSON object, it should remove the service and then recreate it with the new JSON object. It should not destroy any already-existing connections to the service, however, as if the service has really vanished, those connections will time out on their own. (This should never happen anyway, so I'm not particularly worried about the adverse impacts.)
+
+Ok so, that's pretty good for the service discovery protocol. And a particular client only broadcasts when it actually has services that it's providing, and it partially randomizes the time between broadcasts so as to reduce the chance of a conflict between two clients broadcasting at the same time.
+
+So... We have something in a Bus instance that lets clients register functions to be called whenever a service appears or disappears. We have something to obtain a connection to a particular service and then do things with that connection. Services are identified uniquely by a triple consisting of the host to connect to, the port to connect to, and a string identifying the service. Connections, therefore, can be established either to a service discovered via normal UDP broadcast or to a service whose identity-triple is known beforehand; libautobus would provide functions to establish connections to either one.
+
+(I'm thinking that hosts would provide a service named "autobus" that provides functions for asking them what other services they're providing to make it easier for things to connect to something when they only know a host and a port, but I'll add that later.)
+
+So, we can establish connections to a particular host/port/service combination. When that happens, libautobus connects to that host/port/service and sends it the id of the service that we're connecting to. And thus begins a session with the specified service.
+
+
 
 
 
