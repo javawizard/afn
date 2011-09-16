@@ -8,7 +8,15 @@ Well...
 
 There were a few things that I realized I did wrong in the original Autobus, and a few things that were still missing.
 
-Probably the main thing I did wrong, and the main reason for my starting Autobus 2, is that Autobus has a server that everything connects to, and this server presents a single point of failure.
+Probably the main thing I did wrong, and the main reason for my starting Autobus 2, is that Autobus has a server that everything connects to, and this server presents a single point of failure.... hm, I just realized a problem with this. If a bus broadcasts when it starts up to figure out what other services are available, and a service is registered locally right after that, chances are that the broadcast indicating that a new local service is available is going to collide with the responses from other devices telling what services they have.
+
+And the responses from said other devices could end up colliding with one another.
+
+Hm, this is an interesting problem.
+
+So I'm thinking, why don't we have all broadcasts indicating that a service is available delayed by a second (or some delay configurable when constructing the Bus that would default to a second) so that it doesn't collide with responses to the "What services are available?" query.
+
+
 
 The use of a server also means that each Autobus client has to be configured with the server that it's supposed to connect to, so it's generally impossible for an Autobus client to just appear on a network and not have to have any configuration in order for other things on the network to work with it.
 
@@ -51,6 +59,34 @@ So... We have something in a Bus instance that lets clients register functions t
 (I'm thinking that hosts would provide a service named "autobus" that provides functions for asking them what other services they're providing to make it easier for things to connect to something when they only know a host and a port, but I'll add that later.)
 
 So, we can establish connections to a particular host/port/service combination. When that happens, libautobus connects to that host/port/service and sends it the id of the service that we're connecting to. And thus begins a session with the specified service.
+
+So let's see... I'm thinking that the user has to create a Bus instance to do anything, even if they don't want to use service discovery. They could disable the whole service discovery thing if the wanted when they create the Bus instance.
+
+But the reason that I'm thinking a Bus instance should be created no matter what is that each Bus would start a thread which would take care of all of the networking related to the Bus itself; this thread would be the one that runs the select (or epoll) loop. All connections created from a specific bus would use its select loop.
+
+(Autobus 2 is thread-safe just like Autobus is, if you can't tell.)
+
+And service discovery can be disabled when a Bus is created, in which case it won't watch for service broadcasts and it won't send any broadcasts for any services locally registered with it.
+
+But anyways... So let's see...
+
+So, when services appear, they broadcast that they just appeared. They broadcast this a few times.
+
+When services disappear (and they know about it, so this doesn't include when a machine just gets yanked from the network), they also broadcast a few times.
+
+When a bus appears, it sends out a broadcast, querying the network for any services that are available on it. When it receives a response for such a query, it adds that service to its list of available services if said service is not already in the list. It also listens for broadcasts by other services indicating that they are available, and when it receives one, it adds it to the list of things.
+
+It also listens for broadcasts indicating that a service is going away. When it receives such a broadcast, it immediately removes the service from the list of available services.
+
+When it's been some time (this time TBD) since a broadcast was received for a particular service, Autobus tries to connect to it via a TCP socket. If it can't establish such a connection after a certain amount of time (by setting a TCP timeout of, say, 30 seconds), it removes the service from the list of available services.
+
+The program using autobus can register listeners to be notified when services become available or go away. When registering such a listener, it can specify that the listener should also be called for every currently-available service as well, so that if, for example, the listener were used to update a UI list, the UI list would get correctly initially populated. Programs can also register both a service-is-available and a service-is-no-longer-available listener at the same time so that, in the aforementioned UI list scenario, there isn't a time gap between the add listener and the remove listener being registered during which extra, unexpected events might be received. (I'm thinking that there will just be one listener that you pass into such a dual-listener setup, which takes a boolean indicating which of the two things happened, but I can figure that out then.)
+
+When a program decides that it wants to connect to a particular service, it can do so by calling the connect() method on a Service object; this connects to the service and returns an instance of Connection.
+
+
+
+
 
 
 
