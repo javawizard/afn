@@ -82,7 +82,21 @@ When it's been some time (this time TBD) since a broadcast was received for a pa
 
 The program using autobus can register listeners to be notified when services become available or go away. When registering such a listener, it can specify that the listener should also be called for every currently-available service as well, so that if, for example, the listener were used to update a UI list, the UI list would get correctly initially populated. Programs can also register both a service-is-available and a service-is-no-longer-available listener at the same time so that, in the aforementioned UI list scenario, there isn't a time gap between the add listener and the remove listener being registered during which extra, unexpected events might be received. (I'm thinking that there will just be one listener that you pass into such a dual-listener setup, which takes a boolean indicating which of the two things happened, but I can figure that out then.)
 
-When a program decides that it wants to connect to a particular service, it can do so by calling the connect() method on a Service object; this connects to the service and returns an instance of Connection.
+When a program decides that it wants to connect to a particular service, it can do so by calling the connect() method on a Service object; this establishes a socket connection to the specified service, throwing an exception if such a connection cannot be established, and returning a Connection instance otherwise.
+
+Connection instances track an individual connection's state. They do not automatically reconnect, but they can be watched to see when they die. (Adding a "listen-for-dying" listener will cause the listener to be fired if the connection is already dead, if a certain parameter is specified when registering the listener.)
+
+A particular connection instance can have functions called on it (synchronously, asynchronously without waiting for a response, and asynchronously where the response causes a particular function to be called with it or another function to be called if an exception is thrown or something else happens), events listened to, objects watched (the listeners for these objects will be called with the object's initial value, and the object's value will appear to be set to None when the connection disconnects), and such.
+
+A connection can, of course, be manually closed.
+
+So that takes care of that bit. Now, what about the stuff that allows connections to be reestablished?
+
+Well, Autobus 2 allows things to move locations, obviously, so we can't have a Connection reestablish itself. Instead, there are proxies that bind to services specified by certain search criteria automatically and act as if they were those services, which provides the reconnecting behavior of Autobus 1. This also allows for proxies to be created that bind to multiple services (instead of just the first one that matches) and expose all of them; functions called on such proxies must be asynchronous (since there's not a single thing on which to call a function; it would also be specifiable what happens if the proxy isn't currently bound to any services, and I'm still debating on whether such a proxy should allow for receiving responses asynchronously or whether it should force responses not to be received), event listening is different in that the listener is notified in some way whenever any of the events on the services fire (along with which service fired the event), and object watching somehow provides a list of objects of all of the bound services and informs when a service is bound or unbound and when objects on each service update.
+
+I haven't yet decided whether functions, events, and objects are in their own namespaces or if they share a namespace.
+
+Oh, and single service proxies are interface-compatible with connections; it's only multiple-service proxies that aren't.
 
 
 
