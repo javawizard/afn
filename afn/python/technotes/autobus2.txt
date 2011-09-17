@@ -96,9 +96,29 @@ Well, Autobus 2 allows things to move locations, obviously, so we can't have a C
 
 I haven't yet decided whether functions, events, and objects are in their own namespaces or if they share a namespace.
 
-Oh, and single service proxies are interface-compatible with connections; it's only multiple-service proxies that aren't.
+Single service proxies are interface-compatible with connections; it's only multiple-service proxies that aren't.
 
+Multiple service proxies will provide functions for listening for when the proxy binds to and unbinds from a service. A multiple service proxy's facilities for watching objects will also provide essentially three different things that can be listened for: a new service having that object being made available (which will include the object's value), a service previously having been available's object disappearing due to the service being unbound, and an object provided by one of the bound service's values changing (which will provide the value).
 
+Multiple-service proxies would also allow for events to be listened for. Each firing of an event would report for which bound service the firing was for.
+
+I'll most likely implement multiple-service proxies first since the functionality of single-service proxies can be emulated using them.
+
+Oh, and a single Bus instance will correspond to a single server socket opened for serving services. Each service registered to the bus will be provided using a service id created by combining the date the bus was created with a sequential number.
+
+So I'm thinking that there should be a notion of service discoverers and service publishers. A service discoverer is a thing created for a particular bus. It tells the bus when it sees services become available to it and when it sees services disappear. A bus would, by default, create a single service discoverer that uses the above-described UDP broadcasting protocol to discover services on the local network. (The bus keeps track of which discoverers report which services as available so that the user can tell which discoverer(s) discovered a service, and it also properly handles a service being discovered twice by different discoverers since that could feasibly happen.)
+
+Service publishers are the other end of the scale: they're attached to a bus and get notified when a new service is created for the bus. They can then publish that service as they wish. A default service publisher would be provided that issues UDP broadcasts every minute or two describing the services that it knows about, and also when the bus notifies it that a new service is available or that a service is no longer available.
+
+Publishers and discoverers are installed onto a bus by passing them to the add_discoverer and add_publisher methods. They can be removed using remove_discoverer and remove_publisher. Most publishers and discoverers can only be used once. (add_discoverer and add_publisher call a discoverer or publisher's init function, and remove_publisher and remove_discoverer call a discoverer or publisher's destroy function.)
+
+So, there would be a default discoverer created when constructing a bus that uses the above-described UDP broadcasting thing, watching for UDP broadcasts advertizing services and sending out an initial query for services when it's created. If a service didn't broadcast that it was there for a few minutes, this discoverer would try to use the bus itself to obtain a connection to the service (asynchronously, of course; connecting to a service can be done by passing a callback function when asking the bus to do this), and if it wasn't able to, then it would remove the service from the list of services that are available.
+
+Then there would be a publisher that would send out a broadcast whenever a new service became available and send out another broadcast whenever a service was no longer available. It would also watch for queries asking what services are available and respond with its list of currently-available services, and it would re-broadcast the list of available services every minute or two (but it would randomly delay the broadcast so that multiple services on the same network will have a reduced chance of collision).
+
+So, that covers using services. How about providing them?
+
+Let's see... What if we have a 
 
 
 
