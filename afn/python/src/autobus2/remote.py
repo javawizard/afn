@@ -9,7 +9,6 @@ from utils import Suppress
 from threading import RLock
 import json
 import autobus2
-from socket import SHUT_RDWR
 
 
 class Connection(object):
@@ -39,8 +38,7 @@ class Connection(object):
 
     def close(self):
         self.queue.put(None)
-        self.socket.shutdown(SHUT_RDWR)
-        self.socket.close()
+        net.shutdown(self.socket)
     
     def cleanup(self):
         with self.query_lock:
@@ -123,6 +121,14 @@ class Connection(object):
     
     def __getitem__(self, name):
         return Function(self, name)
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, *args):
+        # Might want to make __enter__ and __exit__ reentrant by using a
+        # counter to track how many nested times we're checking the connection
+        self.close()
 
 
 class Function(object):

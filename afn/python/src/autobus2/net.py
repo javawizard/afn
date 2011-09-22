@@ -6,6 +6,7 @@ from socket import socket as Socket, SHUT_RDWR, error as SocketError
 from threading import Thread
 from traceback import print_exc
 import json
+from utils import no_exceptions
 
 
 class _InProgressSocketManager(object):
@@ -171,6 +172,12 @@ class OutputThread(Thread):
             self.socket.close()
         except:
             pass
+
+
+def shutdown(socket):
+    with no_exceptions:
+        socket.shutdown(SHUT_RDWR)
+        socket.close()
 
 
 

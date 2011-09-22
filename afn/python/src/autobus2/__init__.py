@@ -1,11 +1,11 @@
 
 from autobus2 import net, discovery, local, remote, exceptions, singleton, messaging
 from threading import Thread, RLock
-from socket import socket as Socket, SHUT_RDWR, error as SocketError, timeout as SocketTimeout
+from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
 from Queue import Queue
 from concurrent import synchronized
 import time
-import weakref
+from utils import no_exceptions
 
 SYNC = singleton.Singleton("autobus2.SYNC")
 THREAD = singleton.Singleton("autobus2.THREAD")
@@ -27,9 +27,6 @@ class Bus(object):
         self.port = self.server.getsockname()[1]
         self.lock = RLock()
         self.local_services = {}
-        # Set of weak references to remote.Connection objects
-        self.connection_refs = set()
-        # Set of local.RemoteConnection objects
         self.bound_connections = set()
         Thread(target=self.accept_loop).start()
     
@@ -55,7 +52,7 @@ class Bus(object):
     def setup_inbound_socket(self, socket):
         with self.lock:
             connection = local.RemoteConnection(self, socket)
-            self.connection_refs.add(connection)
+            self.bound_connections.add(connection)
     
     def connect(self, host, port, service_id, timeout=10):
         """
@@ -71,18 +68,21 @@ class Bus(object):
             s.connect((host, port))
         except SocketTimeout:
             raise exceptions.TimeoutException
-        connection = remote.Connection(self, s, service_id)
-        def close(ref):
-            with self.lock:
-                s.shutdown(SHUT_RDWR)
-                s.close()
-                self.connection_refs.remove(ref)
-        with self.lock:
-            self.connection_refs.add(weakref.ref(connection, close))
+        return remote.Connection(self, s, service_id)
     
     def close(self):
-        self.server.shutdown(SHUT_RDWR)
-        self.server.close()
+        with self.lock:
+            net.shutdown(self.server)
+            for c in self.bound_connections:
+                with no_exceptions:
+                    c.close()
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, *args):
+        # Might want to make this reentrant like remote.Connection
+        self.close()
 
 
 def wait_for_interrupt():
