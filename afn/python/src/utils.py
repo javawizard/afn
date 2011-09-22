@@ -30,6 +30,18 @@ class NoExceptions(object):
 
 no_exceptions = NoExceptions()
 
+
+class Suppress(object):
+    def __init__(self, suppress_type):
+        self.suppress_type = suppress_type
+    
+    def __enter__(self):
+        pass
+    
+    def __exit__(self, exception_type, *args):
+        return issubclass(exception_type, self.suppress_type)
+
+
 class PrintExceptions(object):
     def __enter__(self):
         pass

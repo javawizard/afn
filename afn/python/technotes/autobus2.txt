@@ -118,7 +118,119 @@ Then there would be a publisher that would send out a broadcast whenever a new s
 
 So, that covers using services. How about providing them?
 
-Let's see... What if we have a 
+Let's see... What if we have a function on a bus called create_service... we pass it an info object for the service, which shouldn't change. We also can optionally pass it a docstring for the service, which can be modified while the service is running via the returned LocalService object's doc attribute (which is actually a Python property). A given service's documentation could be obtained by watching its autobus.doc object.
+
+So, the returned value from create_service is a LocalService object, which contains information about the service's id (which is a string that can't be changed), the bus that created it (which is a reference cycle, yes), the service's info object (which can't be modified), the doc property, a set (Python set) of connections currently connected to the service, and, of course, dictionaries of the service's functions, events, and objects. It also contains two dictionaries, event_listeners and object_watches, each of which map event names and object names to sets of the connection objects that are listening for those events or watching those objects. The reason that these maps are stored on the service instead of on the event or object itself is that listeners and watches can be placed for events and objects when they don't even exist yet; with events, the listeners simply will not receive any firings until the event is created, and with objects, the client will be told when they place the watch whether or not the object currently exists, and when it's created or removed, they will be notified about that (and in the case of it being created, they will be sent its initial value).
+
+So, those original dictionaries, the ones that hold the service's functions, events, and objects... these dictionaries map function, event, and object names to LocalFunction, LocalEvent, and LocalObject objects. These are created by calling their respective create_something function on a LocalService, passing in a name for the function/event/object, an optional (and later-modifiable) docstring for the function/event/object, and some thing-specific values. For objects, a parameter containing the initial value for the object is present. For functions, a parameter containing a Python function or other callable object is passed in, along with a function invocation mode. It can be either SYNC, to cause the function to be invoked synchronously on the I/O thread, THREAD, to cause the function to be invoked in its own thread but the response not sent until the function actually returns, or ASYNC, to cause the function to be run in its own thread but a return value of None to be sent immediately after said thread is started. (If this is None, or not specified, the mode attribute on the underlying function object will be used instead; if such an attribute is not present, THREAD will be used.) Events have no extra values that need to be passed in.
+
+Local functions, events, and objects can be looked up by calling get_something on the LocalService object for those three types.
+
+Those three classes also have remove functions (and so does LocalService) that remove the corresponding function, event, or object (or service) from its containing service (or bus).
+
+All three of those have a name parameter, a doc property which can be modified to change the function's doc, a service attribute corresponding to the service that created the thing, and some thing-specific attributes. Functions have a function attribute which can be modified to change the underlying function that will be called, and a mode attribute representing the function's current mode. (This has exactly the same value as the value passed in when creating the function, and can be reset to null to look up the mode from the underlying function.) Events have a fire function that can be called to trigger the event. Objects have a value property that can be modified to change the value of the object, and they also have a set method that's essentially equivalent to self.value = new_vaue, where new_value is the only parameter to the set function.
+
+When a LocalService is created, it is added to the bus's map of service ids to service objects, and all of the bus's publishers are notified that the service has been added. An object named autobus.objects is created from scratch, then objects autobus.functions, autobus.events, and autobus.doc are created the normal way (as pointed out later on, adding an object the normal way requires autobus.objects to already exist, hence autobus.objects being created manually). These objects are dictionaries mapping function, event, and object names to JSON objects providing more information about them; I'll decide what these contain later on, but at the very least they'll contain a doc attribute which is the documentation for that function, event, or object.
+
+When a LocalService is removed, it is removed from the bus's map of service ids, and all of the bus's publishers are notified that the service has been removed. All current connections to the service (these are stored in a set on the LocalService object) are sent a message indicating that the service is disconnecting, and then they are terminated.
+
+When a LocalFunction, LocalEvent, or LocalObject are created, they're added to their corresponding LocalService dictionary, and then added to their corresponding autobus.something object. In the case of objects, just before being added to the autobus.objects object, a message is sent to all clients watching the object telling them that the object now exists and providing its initial value.
+
+When a LocalFunction is removed, it's removed from the autobus.functions object, and then removed from the LocalService dictionary.
+
+When a LocalEvent is removed, essentially the same thing happens as when a LocalFunction is removed.
+
+When a LocalObject is removed, the same thing happens as with functions and events, except that just after being removed from autobus.objects, all watchers of the object are sent a message indicating that the object no longer exists.
+
+One other thing. ClientConnection objects, which are used to represent inbound connections tied to a particular service, 
+
+Ok, that's the details of providing services. Now I need to go a bit lower-level with actually using services.
+
+The bus can be asked to connect to a particular service, which it does given the service's host, port, and id. It tries to create a socket connection to it, and then returns (or passes to an async handler) one of the above-described Connection objects. This connection is tracked weakly by the bus with a reference to the socket maintained separately (so that it's still strongly-referenceable); when the connection is no longer reachable and gets collected as reported by the weakref pointing to it, the socket will be closed automatically if it has not already been closed.
+
+A particular function can be retrieved from a connection by doing connection["function_name"]. This returns a Function object, which is a callable object. For now, the connection won't track its Function objects; a new one will be returned every time a client requests it. When the function is called, it takes all of the positional arguments that were passed to it and verifies that they can be correctly JSON-encoded, throwing an exception if they can't. Then it creates a function-call message, with its unique id and such. Then what it does is dependent on the type of call.
+
+If the call is a synchronous call, it sends the message as a query (using the specified timeout, or a default if one was not specified). If the result is that the queue is empty, a timeout exception is thrown. If the result is that the connection was lost, a connection lost exception is thrown. If the result was that the remote function threw an exception, then some suitable exception type is thrown. Otherwise, the result is returned.
+
+If the call is an asynchronous call with a callback, the message is sent as an asynchronous query. Asynchronous queries have a function that will be called with the response message when it arrives, or with an instance of TimeoutException if the query timed out, or DisconnectedException if the connection disconnects before the query finishes. The function passed into this query will pass these exceptions through to the function to be called when a response is received (and note that since asynchronous query callbacks are called on the event thread, this will be called on the event thread as well). If it's not an exception that was received, the message is checked to see if the remote side failed with an exception. If it did, an instance of this exception is passed into the callback. Otherwise, the return value is passed into the callback. 
+
+If the call is an asynchronous call without a callback, the message is just sent, not queried. Like Autobus 1, Autobus 2 messages contain a flag indicating, if they're a command, whether a response should be sent; this will be set not to send a response, and the recipient will detect that and call the function accordingly.
+
+Events can be retrieved from a connection by doing connection.events["event_name"]. This will return an Event object. Events, like functions, are one-time things that are created on access.
+
+Events have a listen method and an unlisten method.
+
+When listen is called, passing in a function, the function in question is added to a dictionary stored on the connection that maps event names to sets of functions listening for the event. If such an entry did not already exist in that dictionary, then this must be the first time that the event has been listened for on this connection, so a message is sent to the server telling it that we're interested in listening to this event. Note that the event is added to the newly-created set /before/ the message is sent to the server.
+
+When unlisten is called passing in a function, the function is removed from the dictionary. If it's the last function in the dictionary, then nothing else is listening for the event, so a message is sent to the server telling it that we're no longer interested in the event, and the set is removed from the dictionary.
+
+When a message arrives telling us that the event was triggered, the list of functions is looked up, and each one of them is called. They can have modes set on them just like server-side functions can, although SYNC and ASYNC function the same; THREAD is, of course, the default.
+
+Objects can be retrieved from a connection by doing connection.events["object_name"]. This will return an Object object. Objects, like functions, are one-time things that are created on access.
+
+Objects have three methods: watch, unwatch, and get.
+
+When watch is called, passing in a function, the function is stored in a dictionary just the same as when an event is listened for. If the set had to be newly-created, then a message is sent to the server telling it to watch the specified object. If the set did not have to be newly-created, then the watch function is immediately called, passing in the current value known to the client, or a special value if the client knows that the object does not currently exist.
+
+When unwatch is called, the function is removed from the set in the dictionary. If the set is now empty, a message is sent to the server telling it to stop watching the object, and we remove the now-empty set from the dictionary.
+
+When a new message for the object arrives, the functions for the object are called, passing in the new value of the object, or a special value if the object no longer exists.
+
+When an object's get function is called, a message is sent to the server, asking it for the object's current value. The response value from the server is then returned, or a special value if the server reports that the object does not exist. Like all methods that require blocking for the event thread, get can be called with a callback, in which case the callback is invoked when the response arrives.
+
+
+
+So, now I need to figure out how to do reactors, the things that handle select loop things...
+
+So, what do reactors need to do?
+
+Well... what do we need to do in Autobus?
+
+We need to be able to open sockets to specific hosts and ports, and get told when the connection goes through successfully. We need to be able to find out once a line of text has been read from a socket. We need to be able to write lines of text to sockets, without blocking while said lines are written. We need to be able to find out when a particular socket has closed. We need to be able to listen on a particular port for connections and accept those connections and have them registered as their own sockets. We need to be able to schedule tasks that should happen at regular intervals. We need to be able to run things on the select loop thread on request.
+
+So I'm just using threads for now.
+
+So, what messages should the protocol have?
+
+Well...
+
+The protocol is line-oriented; lines, each containing a JSON object, are used as messages.
+
+The message id is stored as a key named _id. Responses to commands always use the same id as the command that caused the response.
+
+The message type is stored as a key named _type, which is 1 for a command, 2 for a response, or 3 for a notice (a command for which the response should be discarded).
+
+The command itself is stored in _command, which is the name of the command. This only exists for commands and notices, not for responses since the client that sent the command should know what command the response is in response to.
+
+In responses, if the command failed, there is a key named _error which contains a JSON object providing more information about the error. Right now, this object contains two keys, type and text; type contains a command-specific machine-readable reason for the error, while text contains a human-readable description of the error. type is optional; text is required.
+
+So what commands are there?
+
+Well...
+
+bind: This command is sent as the first message from a client to a server. It tells it to bind to a particular service. It has one key, service, which is the id of the service to bind to. If the service does not exist, an error of type "no_such_service" is sent, and the connection is closed.
+
+call: This command is sent to call a particular function. It has two keys, name and args; name is the name of the function to call, and args is a list of the arguments to supply to the function. The response is a normal response even if the underlying remote function throws an exception; in that case, it will contain a key, exception, which contains a JSON object which must at least contain a key named text whose value is a human-readable form of the exception; other keys can be present to pass details of the exception specific to the autobus implementation running on the server, and compatible clients and servers can use this to seamlessly translate exceptions. If an exception was not thrown, then the response contains a single key, result, which is the return value of the function. If some other error occurs (such as the function returning a non-json value), then an autobus error response can be sent.
+
+watch: This command is sent to watch a particular object. It has one key, name, which is the name of the object to watch. The response contains either zero keys if the object does not exist on the server at the moment, or one key, value, which contains the current value of the object.
+
+changed: This notice (it must be sent as a notice) is sent from the server to the client when an object that the client is watching has its value change. One or two keys are present: name, which is the name of the object, and value, which is the new value of the object; if this command is being sent because the object was just deleted, then value is not present, so name is the only key.
+
+unwatch: This command has the same syntax as the watch command, but the response is empty. It stops watching an object previously watched with the watch command.
+
+listen: This command is sent to listen to a particular event. It has one key, name, which is the name of the event to listen for. The response is empty.
+
+fired: This notice (it must be sent as a notice) is sent from the server t the client when an event that the client is listening for has fired. One key is present, args, which is a list of the event's arguments.
+
+unlisten: This command is sent to stop listening to a particular event. It has the same syntax as the listen command, and its response is empty.
+
+
+
+BIG NOTE HERE: watch and listen are /not/ reentrant. The results are undefined if a watch is issued for an object that is being watched (and, of course, has not been unwatched yet; watching, unwatching, and then watching again is prefectly fine).
+
+So I just decided something else: I'm going to have service ids be unique. And I'll do that by having them contain the date at which they were created, the hostname of the computer publishing them, and a bunch of random data. The point in that is that then services accessible via multiple routes (say, for example, a service available on the loopback adapter, on an ethernet network, on a wi-fi network, and from a bridge, all at the same time) can be properly detected as being the same service instead of four separate services.
+
+
 
 
 

@@ -65,7 +65,9 @@ def getdoc(function):
 class AtomicInteger(object):
     """
     An integer or long (it switches between the two as needed) that provides
-    a guarantee of atomicity across all operations it supports. For example:
+    a guarantee of atomicity across all operations it supports, and in
+    particular, it guarantees that inline operations (such as += and *=) will
+    be atomic. For example:
     
     number = AtomicInteger()
     number.set(1)
@@ -73,14 +75,20 @@ class AtomicInteger(object):
     number == 2
     """
 
-    def __init__ (self):
-        self.integer = 0
+    def __init__ (self, value=0):
+        self.integer = value
         self.lock = RLock()
         return
     
     def get(self):
         with self.lock:
             return self.integer
+    
+    def get_and_add(self, value_to_add=1):
+        with self.lock:
+            value = self.integer
+            self.integer += value_to_add
+            return value
     
     def set(self, integer):
         with self.lock:
