@@ -9,6 +9,7 @@ from utils import Suppress
 from threading import RLock
 import json
 import autobus2
+from socket import SHUT_RDWR
 
 
 class Connection(object):
@@ -38,14 +39,13 @@ class Connection(object):
 
     def close(self):
         self.queue.put(None)
-    
-    def shutdown(self):
-        self.queue.put(None)
+        self.socket.shutdown(SHUT_RDWR)
         self.socket.close()
     
     def cleanup(self):
         with self.query_lock:
             self.socket.close()
+            self.queue.put(None)
             self.is_connected = False
             for f in self.query_map.copy().itervalues():
                 f(None)

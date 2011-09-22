@@ -10,6 +10,7 @@ from utils import no_exceptions
 from traceback import print_exc
 from threading import Thread
 import functools
+from socket import SHUT_RDWR
 
 class RemoteConnection(object):
     """
@@ -62,12 +63,11 @@ class RemoteConnection(object):
 
     def close(self):
         self.queue.put(None)
-    
-    def shutdown(self):
+        self.socket.shutdown(SHUT_RDWR)
         self.socket.close()
-        self.queue.put(None)
     
     def cleanup(self):
+        self.queue.put(None)
         self.socket.close()
     
     def process_call(self, message):
