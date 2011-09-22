@@ -8,7 +8,31 @@ class TimeoutException(AutobusException):
     pass
 
 
-class ConnectionLostException(AutobusException):
+class ConnectionException(AutobusException):
+    pass
+
+
+class ConnectionLostException(ConnectionException):
+    pass
+
+
+class NotConnectedException(ConnectionException):
+    pass
+
+
+class InvalidValueException(AutobusException):
+    pass
+
+
+class RemoteUserException(AutobusException):
+    pass
+
+
+class CommandErrorException(AutobusException):
+    pass
+
+
+class NullMessageException(AutobusException):
     pass
 
 

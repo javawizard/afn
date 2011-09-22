@@ -39,7 +39,7 @@ class Suppress(object):
         pass
     
     def __exit__(self, exception_type, *args):
-        return issubclass(exception_type, self.suppress_type)
+        return issubclass(type(exception_type), self.suppress_type)
 
 
 class PrintExceptions(object):
