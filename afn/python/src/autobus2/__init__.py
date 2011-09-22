@@ -5,6 +5,7 @@ from socket import socket as Socket, SHUT_RDWR, error as SocketError, timeout as
 from Queue import Queue
 from concurrent import synchronized
 import time
+import weakref
 
 SYNC = singleton.Singleton("autobus2.SYNC")
 THREAD = singleton.Singleton("autobus2.THREAD")
@@ -26,6 +27,10 @@ class Bus(object):
         self.port = self.server.getsockname()[1]
         self.lock = RLock()
         self.local_services = {}
+        # Set of weak references to remote.Connection objects
+        self.connection_refs = set()
+        # Set of local.RemoteConnection objects
+        self.bound_connections = set()
         Thread(target=self.accept_loop).start()
     
     def accept_loop(self):
@@ -41,13 +46,16 @@ class Bus(object):
                 return
     
     def create_service(self, info):
-        service_id = messaging.create_service_id()
-        service = local.LocalService(self, service_id, info)
-        self.local_services[service_id] = service
-        return service
+        with self.lock:
+            service_id = messaging.create_service_id()
+            service = local.LocalService(self, service_id, info)
+            self.local_services[service_id] = service
+            return service
     
     def setup_inbound_socket(self, socket):
-        connection = local.RemoteConnection(self, socket)
+        with self.lock:
+            connection = local.RemoteConnection(self, socket)
+            self.connection_refs.add(connection)
     
     def connect(self, host, port, service_id, timeout=10):
         """
@@ -63,7 +71,14 @@ class Bus(object):
             s.connect((host, port))
         except SocketTimeout:
             raise exceptions.TimeoutException
-        return remote.Connection(self, s, service_id)
+        connection = remote.Connection(self, s, service_id)
+        def close(ref):
+            with self.lock:
+                s.shutdown(SHUT_RDWR)
+                s.close()
+                self.connection_refs.remove(ref)
+        with self.lock:
+            self.connection_refs.add(weakref.ref(connection, close))
     
     def close(self):
         self.server.shutdown(SHUT_RDWR)

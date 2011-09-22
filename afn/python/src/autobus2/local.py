@@ -68,6 +68,8 @@ class RemoteConnection(object):
     
     def cleanup(self):
         self.queue.put(None)
+        with self.bus.lock:
+            self.bus.bound_connections.remove(self)
         self.socket.close()
     
     def process_call(self, message):
