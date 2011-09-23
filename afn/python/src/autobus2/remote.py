@@ -36,7 +36,7 @@ class Connection(object):
         net.InputThread(socket, self.received, self.cleanup).start()
         # We query here so that an invalid service id will cause an exception
         # to be raised while constructing the service
-        self.query(messaging.create_command("bind", False, service=service_id))
+        self.query(messaging.create_command("bind", False, service=service_id), timeout=10)
 
     def close(self):
         self.queue.put(None)

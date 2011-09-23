@@ -31,6 +31,8 @@ class Bus(object):
         self.bound_connections = set()
         self.discoverers = set()
         self.publishers = set()
+        if default_discoverers:
+            self.install_discoverer(discovery.BroadcastDiscoverer())
         if default_publishers:
             self.install_publisher(discovery.BroadcastPublisher())
         Thread(target=self.accept_loop).start()
@@ -83,6 +85,8 @@ class Bus(object):
                 for service in self.local_services.values():
                     publisher.remove(service)
                 publisher.shutdown()
+            for discoverer in self.discoverers:
+                discoverer.shutdown()
             net.shutdown(self.server)
             for c in self.bound_connections:
                 with no_exceptions:
@@ -110,6 +114,25 @@ class Bus(object):
             for service in self.local_services.values():
                 publisher.remove(service)
             publisher.shutdown()
+    
+    def install_discoverer(self, discoverer):
+        with self.lock:
+            self.discoverers.add(discoverer)
+            discoverer.startup(self)
+            # TODO: finish this up
+    
+    def remove_discoverer(self, discoverer):
+        with self.lock:
+            if discoverer not in self.discoverers:
+                raise __builtin__.ValueError("The specified discoverer is not currently installed on this bus.")
+            self.discoverers.remove(discoverer)
+            discoverer.shutdown()
+    
+    def discover(self, host, port, service_id, info):
+        print "Discovered:", (host, port, service_id, info)
+    
+    def undiscover(self, host, port, service_id):
+        print "Undiscovered:", (host, port, service_id)
 
 
 def wait_for_interrupt():

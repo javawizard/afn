@@ -5,6 +5,7 @@ from threading import Thread
 import json
 from traceback import print_exc
 import time
+import random
 
 
 class Discoverer(object):
@@ -48,7 +49,21 @@ remove it from our list.
 So then we check every few seconds to see when the last time we received a
 "I'm alive" message from any individual service was, every few seconds. If it's
 been more than, say, a minute, we ask the bus to connect to that service. If
-it's unable to do so after, say, ten seconds, then we remove the service.
+it's unable to do so after, say, ten seconds, then we remove the service, but
+we remove it in a try/catch in case a "delete this service" was received later
+on that caused it to be removed.
+
+So we can do this using a single thread, like BroadcastPublisher: we have a
+thread that receives broadcast packets, but times out every second or so. On
+timeout, it checks to see if there are any services that we haven't received a
+broadcast for in the last minute or so. If there are, it spawns a thread that
+tries to connect by using the bus itself. This thread tries to connect; if it
+succeeds, it resets the timeout. If it doesn't, it removes the service from the
+discoverer. There is a potential for ten separate connect threads to get
+started since every second that the loop times out, it'll start another one,
+but once the first one times out and removes the service, the other nine will
+time out shortly thereafter and all will be well. And once I up that timeout to
+something more sane like fifteen seconds, then this won't be a problem at all.
 """
 
 
@@ -57,16 +72,79 @@ class BroadcastDiscoverer(object):
     An implementation of Discoverer that listens for UDP broadcasts sent by
     other BroadcastPublisher instances on the network.
     """
+    def __init__(self):
+        self.running = True
+        # Maps (host, port, service_id) to [info_object, last_alive_time]
+        self.services = {}
+    
     def startup(self, bus):
+        if not self.running:
+            raise Exception("BroadcastDiscoverers can only be used once")
         self.bus = bus
         self.sender, self.receiver = create_broadcast_sockets()
-        Thread(target=self.receive_loop).start()
+        Thread(name="broadcast-discoverer-loop", target=self.receive_loop).start()
+        Thread(name="broadcast-discoverer-initial", target=self.send_initial_requests).start()
     
     def shutdown(self):
-        pass
+        self.running = False
+        net.shutdown(self.receiver)
     
     def receive_loop(self):
-        
+        while True:
+            message = None
+            try:
+                message, (host, port) = self.receiver.recvfrom(16384)
+            except SocketError:
+                pass
+            if not self.running:
+                net.shutdown(self.sender)
+                return
+            self.run_recurring()
+            if not message:
+                continue
+            try:
+                message = json.loads(message)
+                if message["command"] == "add":
+                    self.process_add(host, message["port"], message["service"], message["info"])
+                elif message["command"] == "remove":
+                    self.process_remove(host, message["port"], message["service"])
+            except:
+                print "Couldn't read message"
+                print_exc()
+                continue
+    
+    def send_initial_requests(self):
+        for delay in constants.query_initial_intervals:
+            time.sleep(delay)
+            if not self.running:
+                return
+            self.sender.sendto(json.dumps({"command": "query"}),
+                    ("127.255.255.255", constants.broadcast_port))
+            self.sender.sendto(json.dumps({"command": "query"}),
+                    ("255.255.255.255", constants.broadcast_port))
+    
+    def run_recurring(self):
+        pass
+    
+    def process_add(self, host, port, service_id, info):
+        spec = (host, port, service_id)
+        with self.bus.lock:
+            if spec in self.services: # Spec is already there, so all we need
+                # to do is check and make sure that the info object hasn't
+                # changed
+                if self.services[spec][0] != info: # Info object changed
+                    self.services[spec][0] = info
+                    self.bus.discover(host, port, service_id, info)
+            else: # Spec isn't there, so we need to add it
+                self.services[spec] = [info, time.time()]
+                self.bus.discover(host, port, service_id, info)
+    
+    def process_remove(self, host, port, service_id):
+        spec = (host, port, service_id)
+        with self.bus.lock:
+            if spec in self.services:
+                del self.services[spec]
+                self.bus.undiscover(host, port, service_id)
 
 
 class Publisher(object):
@@ -121,7 +199,7 @@ class BroadcastPublisher(Publisher):
             raise Exception("BroadcastPublishers can't be re-used.")
         self.bus = bus
         self.sender, self.receiver = create_broadcast_sockets()
-        Thread(target=self.receive_loop).start()
+        Thread(name="broadcast-publisher-loop", target=self.receive_loop).start()
     
     def shutdown(self):
         print "Shutting down"
@@ -129,7 +207,8 @@ class BroadcastPublisher(Publisher):
         net.shutdown(self.receiver)
     
     def run_recurring(self):
-        if self.last_time + constants.broadcast_interval < time.time():
+        if self.last_time + (constants.broadcast_interval
+                + random.randint(0, constants.broadcast_random)) < time.time():
             self.last_time = time.time()
             self.broadcast_services()
             
@@ -151,7 +230,7 @@ class BroadcastPublisher(Publisher):
                 if message["command"] == "query":
                     self.broadcast_services()
             except:
-                print "Couldn't read message"
+                print "Couldn't read message in BroadcastPublisher"
                 print_exc()
                 continue
     
