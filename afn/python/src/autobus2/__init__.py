@@ -6,6 +6,7 @@ from Queue import Queue
 from concurrent import synchronized
 import time
 from utils import no_exceptions
+import __builtin__
 
 SYNC = singleton.Singleton("autobus2.SYNC")
 THREAD = singleton.Singleton("autobus2.THREAD")
@@ -28,6 +29,10 @@ class Bus(object):
         self.lock = RLock()
         self.local_services = {}
         self.bound_connections = set()
+        self.discoverers = set()
+        self.publishers = set()
+        if default_publishers:
+            self.install_publisher(discovery.BroadcastPublisher())
         Thread(target=self.accept_loop).start()
     
     def accept_loop(self):
@@ -47,6 +52,8 @@ class Bus(object):
             service_id = messaging.create_service_id()
             service = local.LocalService(self, service_id, info)
             self.local_services[service_id] = service
+            for publisher in self.publishers:
+                publisher.add(service)
             return service
     
     def setup_inbound_socket(self, socket):
@@ -72,6 +79,10 @@ class Bus(object):
     
     def close(self):
         with self.lock:
+            for publisher in self.publishers:
+                for service in self.local_services.values():
+                    publisher.remove(service)
+                publisher.shutdown()
             net.shutdown(self.server)
             for c in self.bound_connections:
                 with no_exceptions:
@@ -83,6 +94,22 @@ class Bus(object):
     def __exit__(self, *args):
         # Might want to make this reentrant like remote.Connection
         self.close()
+    
+    def install_publisher(self, publisher):
+        with self.lock:
+            self.publishers.add(publisher)
+            publisher.startup(self)
+            for service in self.local_services.values():
+                publisher.add(service)
+    
+    def remove_publisher(self, publisher):
+        with self.lock:
+            if publisher not in self.publishers:
+                raise __builtin__.ValueError("The specified publisher is not currently installed on this bus.")
+            self.publishers.remove(publisher)
+            for service in self.local_services.values():
+                publisher.remove(service)
+            publisher.shutdown()
 
 
 def wait_for_interrupt():
