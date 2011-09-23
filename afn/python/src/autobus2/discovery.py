@@ -115,9 +115,12 @@ class BroadcastDiscoverer(object):
     
     def send_initial_requests(self):
         for delay in constants.query_initial_intervals:
-            time.sleep(delay)
-            if not self.running:
-                return
+            for i in range(int(delay*10.0)): # Sleep in 100ms blocks so that if the
+                # discoverer is shut down in the middle, we'll terminate fairly
+                # quickly
+                time.sleep(0.1)
+                if not self.running:
+                    return
             self.sender.sendto(json.dumps({"command": "query"}),
                     ("127.255.255.255", constants.broadcast_port))
             self.sender.sendto(json.dumps({"command": "query"}),
