@@ -134,7 +134,8 @@ class BroadcastDiscoverer(object):
         with self.bus.lock:
             if spec in self.services: # Spec is already there, so all we need
                 # to do is check and make sure that the info object hasn't
-                # changed
+                # changed, and then update the time that we last received
+                # something from this service
                 if self.services[spec][0] != info: # Info object changed
                     self.services[spec][0] = info
                     self.bus.discover(host, port, service_id, info)

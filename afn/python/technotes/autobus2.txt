@@ -232,6 +232,40 @@ So I just decided something else: I'm going to have service ids be unique. And I
 
 
 
+So yeah, this is turning out well. Going to think out the stuff inside Bus that deals with discovery...
+
+So, each call to discover and undiscover should specify the discoverer that made the discovery. That allows three things: 1, autobus can ignore things from discoverers that aren't registered to the bus (or ones that have already been removed), 2, multiple discoveries of a single host/port/service combination by several different discoverers can be tracked separately as expected, and 3, multiple discoveries of a host/port/service combination by a single discoverer can be properly ignored (or the info object changed, as necessary).
+
+So, there are two things that users are going to want to access: a list of all host/port/service combinations, and a list of all service ids with one of the host/port combinations at which that particular service can be accessed, with preference going to hosts that are 127.0.0.1.
+
+So, the question is: how should this sort of data be presented to users?
+
+Well... we're going to also want some ability to filter information based on certain criteria relating to the info object.
+
+I'm thinking we need to have a function somewhere (probably a global in autobus2) where you pass it an info object and a search object and it returns whether they match. The idea would be that keys in the filter correspond to keys in the info object and their values are either JSON values (including strings) to require that key in the info object to have that value, autobus2.ANY (which would be a singleton) to indicate that the key simply has to be present, autobus2.NOT_PRESENT to indicate that the key must not be present, and a regex returned from re.compile to require that key to be a string that matches that regex. In the future, I might allow values to be functions which match as long as the function, when called on the actual value, returns True, or for the whole search criteria to be a function, which would be passed the info object and which would return true if it matches.
+
+So we have some mechanism to filter out services based on their info objects. That's good.
+
+Now... I'm thinking that, for now, a service's info object shouldn't change, and if a discoverer reports that it has changed, th... hm, I just realized a problem with things being made aware of only a particular instance of a service: what if the info object for a service is different between two discoverers that reported the info object? This could feasibly happen due to network delays.
+
+Well... Let me think... What sort of things are we going to want to do with this whole system?
+
+Well...
+
+I want to be able to have a program that shows every service available on a network. It should show every route to those services as well, grouped under the service's id.
+
+Then I want to have a program that watches for all services with the key "monitor.host" in their info object and uses a MultipleServiceProxy to watch all of the objects on them that provide CPU information and such. It should only show each service once no matter how many hosts the service is actually available from.
+
+So let's see... For listeners that want to filter services based on info objects but are fine with getting one entry for every route to a service...
+
+So, the idea is that for these, we'd do something like call listen_for_services, passing in a filter and a function. The function would be then called for every service that matches the filter.
+
+When a service becomes available, every function where its info matches the filter is informed that the service is available.
+
+When a service disappears, every function where the service's info object matches the filter is informed that the service disappeared.
+
+
+
 
 
 
