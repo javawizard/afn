@@ -1,11 +1,12 @@
 
-from autobus2 import net, discovery, local, remote, exceptions, singleton, messaging
+from autobus2 import net, discovery, local, remote, exceptions, messaging
 from threading import Thread, RLock
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
 from Queue import Queue
 from concurrent import synchronized
 import time
 from utils import no_exceptions
+from afn.utils import singleton
 import __builtin__
 
 SYNC = singleton.Singleton("autobus2.SYNC")
