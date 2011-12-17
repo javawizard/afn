@@ -1,0 +1,29 @@
+So I'm thinking it would be cool if Nextgen included a Software Transactional Memory implementation for Python. If done correctly, such a thing would constitute the first true Python STM library for Python objects.
+
+(There's another one whose name starts with a D, but from what I can tell, it's just a transactional database and you have to store objects in the database to get transactions. So it's not really STM.)
+
+So, I've been thinking of some ideas. I'm thinking that one could atomically run a particular thing by doing something like:
+
+@atomic
+def atomic():
+    ...some code that should be run atomically...
+
+Some might ask: why not use a with statement?
+
+The reason is that STM needs to be able to re-run a particular transaction in case it aborts. So it has to be declared like that so that it can be run. I've been thinking about submitting a PEP allowing for the context manager of a with statement to re-run it as needed, which would fix this prolem.
+
+So, the idea is that all objects extending from STMObject can be used in STM. When a transaction is started, a log of changes local to that thread is made.
+
+There's also a central map called the access map that maps object-attribute pairs to the transactions that accessed them and vice versa. Or something.
+
+The idea is that there's some sort of central thing that stores all of the things that have been accessed by any transaction currently in progress, and then for each transaction, there's a log of what changes have happened so far so that they can be reverted as needed.
+
+So then two transactions start. Each gets a newly-created revert log.
+
+Whenever one accesses a particular object's attribute, STM checks to see if that attribute is in the global access map, registered by a different transaction. If so, it aborts the current transaction immediately (transactions are aborted by the relevant code throwing AbortTransaction, which is an exception defined by STM. Code must not catch this or it will screw things up, although STM will do its best to ensure that if code does catch it, it will re-throw it at every possible location that it can until the code finally exits back up to where the transaction started.). If not, it adds the object-attribute pair to the global access map under the current transaction.
+
+Whenever one writes a particular object's attribute, the object, the attribute, and the old value are written to the revert log.
+
+When a transaction aborts, the revert log is replayed in reverse order. Then STM looks at what the other transaction was that caused this transaction to abort. It then blocks until that transaction finishes, then attempts to re-run the current transaction.
+
+When a transaction commits, the revert log is discarded and everything's good.

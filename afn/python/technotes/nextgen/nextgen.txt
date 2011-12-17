@@ -1,0 +1,13 @@
+Nextgen is a collection of modules that will do a lot of useful things.
+
+A lot of things in Nextgen are inspired by Apple's Cocoa API.
+
+Nextgen is intended to be cross-language, meaning it will include components for multiple languages. Python and Java are the two main ones planned at the moment. And things like Nextgen Designer, which will be a GUI designer, will generate files that both Nextgen Python and Nextgen Java will be able to load.
+
+I may merge Autobus into Nextgen at some point.
+
+So first I'm going to create the object system.
+
+And actually, I just found out that key-value observing and KVO are /not/ trademarks of Apple, which is perfect for what I'm doing. So I think I'm going to name the whole object system Nextgen KVO.
+
+Actually no, I'm going to name the system Nextgen Keys.

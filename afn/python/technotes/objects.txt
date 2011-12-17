@@ -1,0 +1,5 @@
+So I'm getting this idea similar to Objective-C's KVO that I'm thinking of adding: observable objects. And lists.
+
+So let's see... Objects that can be observed as dictionaries... TODO
+
+So, there's some sort of standardized observing protocol. Observers themselves are simply functions accepting four arguments: target, path, change, context. Target is the object which had something about it change. Chane is the change that happened; this will be an object specific to the type of change. For example, inserting into a list results in an ItemInserted instance being passed as the change, while updating an entry in a dictionary results in a KeyUpdated instance being passed as the change. Context is the context object passed to the observe method.

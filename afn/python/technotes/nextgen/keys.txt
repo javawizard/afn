@@ -1,0 +1,79 @@
+So, the Keys system.
+
+So this is basically going to be like Apple's KVO, but with some differences.
+
+Probably the most notable one is going to be that objects and lists and sets are all observed separately. With KVO, you observe objects, and that's it. You can observe to-many relationships in objects, but you can't observe a collection aside from the object that contains it. Keys will change this whole idea so that collections are independently observable.
+
+Hm... I can already see how this is making things more difficult, though it has so many advantages...
+
+Let's see...
+
+So I'm running into problems already, and I don't have any sort of Objective-C compiler/interpreter handy so I can't see what they do. One of the problems I'm running into is what should happen if an observer for y/z is registered on x, and y is then set to None. My thought for now is that y/z should also appear to become None, but does that work for other things?
+
+And how does list observing work into that?
+
+Well...
+
+What if we have each part of a path be specific to the thing handling it?
+
+Actually, let's just worry about single keys for now, and we'll worry about paths later on.
+
+And for now, let's just worry about dictionaries and objects, and we'll worry about lists and such later on.
+
+And we'll allow observing for * right now, but we won't allow getting it as a key.
+
+So let's see...
+
+Compatible things will provide an observe method. And I'm thinking list observing things should work the same way. This accepts the function to register, the key to observe, a context object, and any additional requested options as keyword arguments. I'll decide what these options are later.
+
+So the specified listener is then registered.
+
+I should probably go to bed and think about this more tomorrow.
+
+
+
+So let's imagine that for now we didn't... Oh, I'm thinking of integrating Autobus into this. Autobus's object publishing thing would subscribe to any observable object passed to it so that when the object's value itself changes, notifications are immediately sent out.
+
+And I'm also thinking that it might be nice if changes can be grouped together, meaning that obsevers accept a list of changes instead of just a single change when something happens. That way, changes can be grouped together where it makes sense; some_dict.update(x=1, y=2, z=3), for example, would be dispatched as one notification presenting three changes in the list.
+
+
+
+So I'm also thinking that I'm going to screw keys for now and just get something to work with one level deep. I'm going to make it so that you can just observe things and when you observe them it recursively observes any of their children. I'm also going to have a separate observe_list and observe_map for now and then worry about combining them together later.
+
+So let's see... We have two classes, MapObservable and ListObservable. MapObservable has observe_map and ListObservable has observe_list.
+
+For now, actually, I'm going to just implement MapObservable.
+
+So let me think... The idea is that the default observable thing is ObservableMap. This would have a method like observe_map(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
