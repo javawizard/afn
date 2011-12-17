@@ -44,7 +44,11 @@ So let's see... We have two classes, MapObservable and ListObservable. MapObserv
 
 For now, actually, I'm going to just implement MapObservable.
 
-So let me think... The idea is that the default observable thing is ObservableMap. This would have a method like observe_map(
+So let me think... The idea is that the default observable thing is ObservableMap. This would have a method like observe_map(listener, context=NO_CONTEXT, recursive=False) (where NO_CONTEXT is a singleton). recursive means that all things that are themselves observable that are added to the map will be observed by that listener.
+
+Of course, that poses a problem that I just realized. Obviously any ObservableList put into an ObservableMap should be observed as well...
+
+So maybe we just have an Event class that manages a bunch of things registered for a particular event, and then an Observable class that manages an Event instance and provides an observe method. Or something like that. Then a concrete implementation of Observable would have to provide methods for looking up what values currently exist and such so that they can be recursively observed; ListObservable and MapObservable would ostensibly provide these (and their implementations should call the superclass implementation in correct MRO order so that a class extending both ListObservable and MapObservable will still function correctly). So this needs more thought... and I'm going to bed for now...
 
 
 
