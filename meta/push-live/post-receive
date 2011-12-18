@@ -1,0 +1,5 @@
+#!/bin/bash
+
+unset GIT_DIR
+cd ../git-live
+git pull ../git master
