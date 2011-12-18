@@ -1,7 +1,7 @@
 #!/bin/bash
 
 unset GIT_DIR
-AFN_PR_SRC = `pwd`
+AFN_PR_SRC=`pwd`
 cd ../git-live
 echo Pulling from $AFN_PR_SRC to `pwd`
 git pull ../git master
