@@ -256,10 +256,11 @@ class BroadcastPublisher(Publisher):
         broadcast = {"command": "remove", "port": self.bus.port,
                     "service": service.id}
         broadcast = json.dumps(broadcast)
-        self.sender.sendto(broadcast, 
-                ("127.255.255.255", constants.broadcast_port))
+        # Send remove messages in the opposite order of discover messages
         self.sender.sendto(broadcast, 
                 ("255.255.255.255", constants.broadcast_port))
+        self.sender.sendto(broadcast, 
+                ("127.255.255.255", constants.broadcast_port))
 
     def add(self, service):
         with self.bus.lock:

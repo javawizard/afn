@@ -50,6 +50,48 @@ Of course, that poses a problem that I just realized. Obviously any ObservableLi
 
 So maybe we just have an Event class that manages a bunch of things registered for a particular event, and then an Observable class that manages an Event instance and provides an observe method. Or something like that. Then a concrete implementation of Observable would have to provide methods for looking up what values currently exist and such so that they can be recursively observed; ListObservable and MapObservable would ostensibly provide these (and their implementations should call the superclass implementation in correct MRO order so that a class extending both ListObservable and MapObservable will still function correctly). So this needs more thought... and I'm going to bed for now...
 
+Ok, back awake. So I checked up on super() and it correctly honors the class's MRO, meaning that if you have an inheritance diamond with class A, class B(A), class C(A), and class D(B, C), and each has a method that calls super(...).the_method(), then when that method is called on an instance of D, D's implementation will be run, then B's, then C's, then A's. So thiat works out perfectly for what I'm thinking of doing; the methods provided by MapObservable and ListObservable just call the superclass's implementation. Observable will provide an implementation that just silently doesn't call the superclass implementation; assuming both MapObservable and ListObservable extend Observable (which they will), Python's subclassing semantics will guarantee that Observable appears in the MRO after MapObservable and ListObservable, thereby making this work.
+
+So let's see... We have the observe method be, for now, something like this:
+
+observe(listener, handle=None, recursive=False initial=False)
+
+listener is a function (whose signature I'll describe later) to call when things happen. It can be a weakref to a function if need be; when the weakref is dereferenced, the listener will be automatically removed. handle is the context to add the listener under; this serves as a sort of handle that can be used to get at the listener in the absence of the listener itself. recursive is True to recursively listen to all objects listenable by this object, false not to; for MapObservables, all key values will be automatically observed, themselves recursively, and for ListObservables, all list items will be automatically recursively observed. initial is True to call the listener immediately for all items already preset, False not to.
+
+Then there's a method:
+
+unobserve(listener=None, handle=None)
+
+Either listener or handle must be specified. If listener is specified, that particular listener will be removed. If handle is specified, all listeners registered with that handle will be removed.
+
+When something happens, the specified listener is called as listener(source, change_list, initial). source is the thing that the listener was originally registered on. change_list is a list of the changes that happened; these are specific to the type of change. For example, when a new key is added to a MapObservable, an instance of KeyAdded will be in this list. initial is True if this is an initial calling and false if this is because a change actually happened.
+
+So let's see... We need to have three layers to this whole thing: the Observable layer, which is the bit that handles observing in general; the specific types of observation such as MapObservable and ListObservable that provide a particular type of observation but don't specify further how... hm, what if we just had two layers?
+
+For recursive observing, all Observable needs to know is what the current list of child things is and then it needs to have methods that are called when other child things are added or removed. And in that case, we might just be able to have two layers for now, Observable and things that are observable.
+
+So Observable tracks a map of listeners. The keys are the listeners themselves. The values are Registration instances. A Registration instance right now only tracks whether the listener is recursive.
+
+When a listener is added, the map is checked to make sure that the listener is not already present. (Reentrant registrations will be allowed at some point in the future, but not yet.) Then it adds it to the map of listeners. If the listener is recursive, it then asks self to get a list of all things currently present (by calling self._get_current_values), and it adds listeners to those things; those recursively-added listeners simply call the passed-in listener.
+
+When a listener is removed, the map is checked and the corresponding registration removed. If the registration was recursive, the listener that was initially added to all objects currently present is removed.
+
+When an event occurs that adds an object, ...hm.
+
+Ok, I think I'm going to standardize something here. I'm going to standardize that there are only two observable types, MapObservable and ListObservable, and Observable itself will depend on those two being the only types in existence.
+
+So when a change happens, self._notify_change is called, passing in the list of changes. For each of these that adds a new value, Observable checks to find all of its recursive registrations, ...hm, that's pointless because multiple listeners will be registered...
+
+So what if we have it so that when the first recursive listener is added, it causes self._recursive_changed to be registered to all current values, and when the last recursive listener is removed, self._recursive_changed is removed. That will make things simpler.
+
+So when a change happens, self._notify_change is called, passing in the list of changes, For each of these that adds a new value, Observable checks to see if we have any recursive registrations, and if we do, it adds self._notify_change to them if they're also observable. For each of these that updates a value, Observable removes _notify_change from the old value and adds it to the new. For each of these that removes a value, Observable removes _notify_change from it. (I just changed all of the change classes so that values being added are stored in fields named "new" and values being removed are stored in fields named "old", so the changes can just be checked to see if those two fields are present.) Then Observable calls all of the listeners.
+
+Ok, I think that's about it.
+
+Oh, and, of course, when a listener is added or removed, it checks the recursive stuff, and adds or removes the recursive listener as needed.
+
+Ok, I'm going to see if I can implement that for now.
+
 
 
 
