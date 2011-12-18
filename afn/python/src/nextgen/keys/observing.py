@@ -7,25 +7,30 @@ class Observable(object):
     def _get_current_values(self, value_list):
         pass
     
-    def _recursive_listener(self, source, changes):
-        for observer, registration in self._observers.items():
-            if registration["recursive"]:
-                observer(self, changes)
-    
     def _init_observable(self):
         try:
             self._observers
         except AttributeError:
             self._observers = {}
             self._recursive_observer_count = 0
+            # We're defining this here instead of as a normal class method
+            # because bound methods (i.e. some_instance.some_method) can change
+            # ids, but functions defined like this can't, and we need the same
+            # id so that things we observe know when we're removing ourselves
+            # as an observer
+            def _recursive_listener_function(source, changes):
+                for registration in self._observers.values():
+                    if registration["recursive"]:
+                        registration["observer"](self, changes)
+            self._recursive_listener = _recursive_listener_function
     
     def observe(self, observer, recursive=False):
         self._init_observable()
-        if observer in self._observers:
+        if id(observer) in self._observers:
             raise ValueError("The specified observer has already been added to "
                              "this object.")
-        registration = {"recursive": recursive}
-        self._observers[observer] = registration
+        registration = {"observer": observer, "recursive": recursive}
+        self._observers[id(observer)] = registration
         if recursive:
             self._recursive_observer_count += 1
             if self._recursive_observer_count == 1: # This was the first
@@ -38,11 +43,11 @@ class Observable(object):
     
     def unobserve(self, observer):
         self._init_observable()
-        if observer not in self._observers:
+        if id(observer) not in self._observers:
             raise ValueError("The specified observer has not been added as to "
                              "this object.")
-        registration = self._observers[observer]
-        del self._observers[observer]
+        registration = self._observers[id(observer)]
+        del self._observers[id(observer)]
         if registration["recursive"]:
             self._recursive_observer_count -= 1
             if self._recursive_observer_count == 0: # Last recursive observer
@@ -56,6 +61,7 @@ class Observable(object):
     def _notify_changed(self, changes):
         if len(changes) == 0:
             return
+        self._init_observable()
         if self._recursive_observer_count > 0:
             for change in changes:
                 if hasattr(change, "old"):
@@ -64,8 +70,8 @@ class Observable(object):
                 if hasattr(change, "new"):
                     if isinstance(change.new, Observable):
                         change.new.observe(self._recursive_listener, True)
-        for observer in self._observers:
-            observer(self, changes)
+        for registration in self._observers.itervalues():
+            registration["observer"](self, changes)
 
 
 

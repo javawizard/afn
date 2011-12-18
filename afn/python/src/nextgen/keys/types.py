@@ -20,7 +20,7 @@ class ObservableDict(Observable, dict):
         exists = key in self
         if exists:
             old = self[key]
-        self[key] = value
+        super(ObservableDict, self).__setitem__(key, value)
         if exists:
             self._notify_changed([cc.KeyUpdated(self, key, old, value)])
         else:
@@ -82,6 +82,12 @@ class ObservableDict(Observable, dict):
                 changes.append(cc.KeyAdded(self, key, value))
             super(ObservableDict, self).__setitem__(key, value)
         self._notify_changed(changes)
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    def __repr__(self):
+        return "<ObservableDict: %s>" % super(ObservableDict, self).__repr__()
 
 
 
