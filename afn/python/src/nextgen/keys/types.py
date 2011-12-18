@@ -90,6 +90,10 @@ class ObservableDict(Observable, dict):
         return "<ObservableDict: %s>" % super(ObservableDict, self).__repr__()
 
 
+class ObservableList(Observable, list):
+    pass
+
+
 
 
 
