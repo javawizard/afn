@@ -91,7 +91,9 @@ class ObservableDict(Observable, dict):
 
 
 class ObservableList(Observable, list):
-    pass # TODO 
+    def _get_current_values(self, value_list):
+        value_list += self.itervalues()
+        super(ObservableDict, self)._get_current_values(value_list)
 
 
 
