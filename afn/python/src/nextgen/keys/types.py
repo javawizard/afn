@@ -144,6 +144,10 @@ class ObservableList(Observable, list):
         self += iterable
     
     def insert(self, index, item):
+        if index > len(self):
+            index = len(self)
+        while index < 0:
+            index += len(self) or 1 # Increment by 1 if this list is empty
         super(ObservableList, self).insert(index, item)
         self._notify_changed([cc.ItemInserted(self, index, item)])
     
@@ -163,6 +167,27 @@ class ObservableList(Observable, list):
         highest = length - 1
         changes = [cc.ItemsSwapped(self, highest - i, i, self[i], self[highest - i]) for i in range(length / 2)]
         self._notify_changed(changes)
+    
+    def relocate(self, source, target):
+        """
+        Moves the item at the specified source index to the specified target
+        index. This is essentially equivalent to:
+        
+        item = self[source]
+        del self[source]
+        self.insert(target, item)
+        
+        but it causes an ItemRelocated notification to be posted instead of an
+        ItemRemoved followed by an ItemAdded.
+        """
+        if source > len(self) - 1 or source < 0:
+            raise ValueError("Out of bounds relocation source: " + str(source))
+        item = self[source]
+        if target > len(self) - 1 or target < 0:
+            raise ValueError("Out of bounds relocation target: " + str(target))
+        super(ObservableList, self).__delitem__(source)
+        super(ObservableList, self).insert(target, item)
+        self._notify_changed([cc.ItemRelocated(self, source, target, item)])
     
     def sort(self, *args):
         raise NotImplementedError("Sorting an OrderedList is not currently "
