@@ -25,6 +25,7 @@ class Connection(object):
         This constructor sets up everything and then sends an initial message
         to the remote socket indicating what service is to be connected to.
         """
+        self.context_enters = 0
         self.bus = bus
         self.socket = socket
         self.service_id = service_id
@@ -125,12 +126,13 @@ class Connection(object):
         return Function(self, name)
     
     def __enter__(self):
+        self.context_enters += 1
         return self
     
     def __exit__(self, *args):
-        # Might want to make __enter__ and __exit__ reentrant by using a
-        # counter to track how many nested times we're checking the connection
-        self.close()
+        self.context_enters -= 1
+        if self.context_enters == 0:
+            self.close()
 
 
 class Function(object):

@@ -266,6 +266,22 @@ When a service disappears, every function where the service's info object matche
 
 
 
+Ok, so, I'm going to revisit some of the above stuff later. I got it working so that service discovery works on a basic extent (it doesn't remove the service if it can't find it for a period of time yet, which still needs to be added). And functions can be called. But there's still other stuff to do.
+
+But I just decided that streams, as I mentioned them near the top of the file, are actually going to be different. Or something...
+
+So I'm thinking that channels will be things that exchange JSON objects. I might get rid of this later by adding some sort of session management to Autobus itself, so that servers can tell when clients disconnect, although I might not. Streams, however, would be different.
+
+Streams would be established just like channels and would function like channels, except for two things: the data sent would be binary blobs of data, and more importantly, the data would be sent over UDP.
+
+So other than exchanging JSON objects, the only real difference between channels and streams would be that one uses TCP and the other uses UDP. So maybe I should just make them be the same thing, and the person establishing the channel (or the person receiving the channel; I need to decide which makes more sense) decides whether the channel communicates over TCP or UDP. And if it communicates over TCP, whether the channel runs over its own out-of-band socket, which would allow large amounts of data to be transferred over it without freezing up the main communications socket.
+
+But anyways... Before I implement that, I need to do objects.
+
+Actually, before I do objects, I need to fix up service discovery so that it removes services that haven't broadcasted their existence in a while.
+
+
+
 
 
 

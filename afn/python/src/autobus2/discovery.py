@@ -1,6 +1,6 @@
 from abc import ABCMeta as ABC, abstractmethod as abstract
 from socket import socket as Socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR, SO_BROADCAST, timeout as SocketTimeout, error as SocketError
-from autobus2 import constants, net
+from autobus2 import constants, net, exceptions
 from threading import Thread
 import json
 from traceback import print_exc
@@ -76,6 +76,7 @@ class BroadcastDiscoverer(object):
         self.running = True
         # Maps (host, port, service_id) to [info_object, last_alive_time]
         self.services = {}
+        self.last_check_time = 0
     
     def startup(self, bus):
         if not self.running:
@@ -127,8 +128,37 @@ class BroadcastDiscoverer(object):
                     ("255.255.255.255", constants.broadcast_port))
     
     def run_recurring(self):
-        pass
+        check_interval = 12 # TODO: change this to more like 30, but make sure
+        # it's greater than the Autobus connect timeout so that we don't get
+        # two separate attempts to connect to the same service going on at the
+        # same time
+        expire_interval = 30 # TD: change this to more like 60
+        current_time = time.time()
+        if self.last_check_time + check_interval > current_time:
+            return
+        self.last_check_time = current_time
+        print "Checking discovered services..."
+        with self.bus.lock:
+            for k, v in self.services.iteritems():
+                if v[1] + expire_interval < current_time: # Haven't received a
+                    # message from this server in a while, so check to see if
+                    # we can connect to it
+                    Thread(target=self.try_to_connect, args=(k, v)).start()
     
+    def try_to_connect(self, k, v):
+        failed = False
+        try:
+            with self.bus.connect(*k):
+                pass
+        except (exceptions.ConnectionException, exceptions.TimeoutException) as e:
+            print "Service could not be connected to, removing..."
+            failed = True
+        except:
+            print_exc()
+            failed = True
+        if failed:
+            self.process_remove(*k)
+                       
     def process_add(self, host, port, service_id, info):
         spec = (host, port, service_id)
         with self.bus.lock:
@@ -139,6 +169,8 @@ class BroadcastDiscoverer(object):
                 if self.services[spec][0] != info: # Info object changed
                     self.services[spec][0] = info
                     self.bus.discover(host, port, service_id, info)
+                # Update timestamp
+                self.service[spec][1] = time.time()
             else: # Spec isn't there, so we need to add it
                 self.services[spec] = [info, time.time()]
                 self.bus.discover(host, port, service_id, info)

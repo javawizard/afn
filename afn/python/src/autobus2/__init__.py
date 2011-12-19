@@ -21,6 +21,7 @@ class Bus(object):
         is specified (which is the usual case), a port will be chosen from the
         ports not currently in use on this computer.
         """
+        self.context_enters = 0
         if port is None:
             port = 0
         self.server = Socket()
@@ -78,6 +79,8 @@ class Bus(object):
             s.connect((host, port))
         except SocketTimeout:
             raise exceptions.TimeoutException
+        except SocketError as s:
+            raise exceptions.ConnectionException(s)
         return remote.Connection(self, s, service_id)
     
     def close(self):
@@ -94,11 +97,13 @@ class Bus(object):
                     c.close()
     
     def __enter__(self):
+        self.context_enters += 1
         return self
     
     def __exit__(self, *args):
-        # Might want to make this reentrant like remote.Connection
-        self.close()
+        self.context_enters -= 1
+        if self.context_enters == 0:
+            self.close()
     
     def install_publisher(self, publisher):
         with self.lock:
