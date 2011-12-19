@@ -3,6 +3,7 @@ from nextgen.keys.observing import Observable
 from nextgen.keys import changes as cc
 from collections import OrderedDict
 from afn.utils.singleton import Singleton as _Singleton
+from afn.utils import slicer
 
 _NONE = _Singleton("nextgen.keys.types._NONE")
 
@@ -94,7 +95,9 @@ class ObservableList(Observable, list):
     def _get_current_values(self, value_list):
         value_list += self.itervalues()
         super(ObservableDict, self)._get_current_values(value_list)
-
+    
+    # TODO: finish this up, and use afn.utils.slicer to implement slicing, and
+    # see if Py3 has that and submit it as a patch if it doesn't
 
 
 
