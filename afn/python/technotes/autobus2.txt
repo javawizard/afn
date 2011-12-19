@@ -280,6 +280,8 @@ But anyways... Before I implement that, I need to do objects.
 
 Actually, before I do objects, I need to fix up service discovery so that it removes services that haven't broadcasted their existence in a while.
 
+Ok so that's done.
+
 
 
 

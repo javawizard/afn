@@ -180,6 +180,20 @@ def shutdown(socket):
         socket.close()
 
 
+def sendto(socket, data, address):
+    """
+    Sends the specified data, which should be a str, to the specified address,
+    which is typically a (host, port) tuple, using the specified socket (which
+    generally should be a UDP datagram socket). This basically just invokes
+    socket.sendto(data, address), except that it catches and ignores any
+    exceptions thrown while sending, which is useful because sending to
+    255.255.255.255 when the network interface is down will cause an exception
+    to be thrown.
+    """
+    with no_exceptions:
+        socket.sendto(data, address)
+
+
 
 
 

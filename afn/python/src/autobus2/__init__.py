@@ -134,10 +134,10 @@ class Bus(object):
             self.discoverers.remove(discoverer)
             discoverer.shutdown()
     
-    def discover(self, host, port, service_id, info):
+    def discover(self, discoverer, host, port, service_id, info):
         print "Discovered:", (host, port, service_id, info)
     
-    def undiscover(self, host, port, service_id):
+    def undiscover(self, discoverer, host, port, service_id):
         print "Undiscovered:", (host, port, service_id)
 
 

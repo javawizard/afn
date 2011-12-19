@@ -87,6 +87,10 @@ class BroadcastDiscoverer(object):
         Thread(name="broadcast-discoverer-initial", target=self.send_initial_requests).start()
     
     def shutdown(self):
+        with self.bus.lock:
+            for k in self.services:
+                self.bus.undiscover(self, *k)
+            self.services.clear()
         self.running = False
         net.shutdown(self.receiver)
     
@@ -122,9 +126,9 @@ class BroadcastDiscoverer(object):
                 time.sleep(0.1)
                 if not self.running:
                     return
-            self.sender.sendto(json.dumps({"command": "query"}),
+            net.sendto(self.sender, json.dumps({"command": "query"}),
                     ("127.255.255.255", constants.broadcast_port))
-            self.sender.sendto(json.dumps({"command": "query"}),
+            net.sendto(self.sender, json.dumps({"command": "query"}),
                     ("255.255.255.255", constants.broadcast_port))
     
     def run_recurring(self):
@@ -146,6 +150,7 @@ class BroadcastDiscoverer(object):
                     Thread(target=self.try_to_connect, args=(k, v)).start()
     
     def try_to_connect(self, k, v):
+        print "Discovery timeout, attempting to connect to " + str(k)
         failed = False
         try:
             with self.bus.connect(*k):
@@ -154,6 +159,7 @@ class BroadcastDiscoverer(object):
             print "Service could not be connected to, removing..."
             failed = True
         except:
+            print "Unexpected failure while attempting to connect to service"
             print_exc()
             failed = True
         if failed:
@@ -168,19 +174,19 @@ class BroadcastDiscoverer(object):
                 # something from this service
                 if self.services[spec][0] != info: # Info object changed
                     self.services[spec][0] = info
-                    self.bus.discover(host, port, service_id, info)
+                    self.bus.discover(self, host, port, service_id, info)
                 # Update timestamp
-                self.service[spec][1] = time.time()
+                self.services[spec][1] = time.time()
             else: # Spec isn't there, so we need to add it
                 self.services[spec] = [info, time.time()]
-                self.bus.discover(host, port, service_id, info)
+                self.bus.discover(self, host, port, service_id, info)
     
     def process_remove(self, host, port, service_id):
         spec = (host, port, service_id)
         with self.bus.lock:
             if spec in self.services:
                 del self.services[spec]
-                self.bus.undiscover(host, port, service_id)
+                self.bus.undiscover(self, host, port, service_id)
 
 
 class Publisher(object):
@@ -279,9 +285,9 @@ class BroadcastPublisher(Publisher):
         broadcast = {"command": "add", "port": self.bus.port,
                     "service": service.id, "info": service.info}
         broadcast = json.dumps(broadcast)
-        self.sender.sendto(broadcast, 
+        net.sendto(self.sender, broadcast, 
                 ("127.255.255.255", constants.broadcast_port))
-        self.sender.sendto(broadcast, 
+        net.sendto(self.sender, broadcast, 
                 ("255.255.255.255", constants.broadcast_port))
     
     def send_remove(self, service):
@@ -289,9 +295,9 @@ class BroadcastPublisher(Publisher):
                     "service": service.id}
         broadcast = json.dumps(broadcast)
         # Send remove messages in the opposite order of discover messages
-        self.sender.sendto(broadcast, 
+        net.sendto(self.sender, broadcast, 
                 ("255.255.255.255", constants.broadcast_port))
-        self.sender.sendto(broadcast, 
+        net.sendto(self.sender, broadcast, 
                 ("127.255.255.255", constants.broadcast_port))
 
     def add(self, service):
