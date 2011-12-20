@@ -280,7 +280,11 @@ But anyways... Before I implement that, I need to do objects.
 
 Actually, before I do objects, I need to fix up service discovery so that it removes services that haven't broadcasted their existence in a while.
 
-Ok so that's done.
+Ok so that's done. Now, what's next?
+
+So it looks like I sort of forgot to add the code into the Bus class that actually tracks which services have been discovered thus far. So I should probably go add that.
+
+So let's see... There can be multiple discoveries for a particular service id, even from the same discoverer (BroadcastDiscoverer will discover the same service twice if it's running on the local computer; once through the loopback adapter and once through the normal network adapter).
 
 
 
