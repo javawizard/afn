@@ -294,6 +294,26 @@ It's also possible to specify when a listener is registered that it should be ca
 
 So I'm going to go implement that and see how it goes.
 
+Well... Let's see how I would implement that...
+
+So we have a map stored inside the bus that maps services ids that have been discovered to... what, exactly?
+
+Well, we need to be able to track all the discoveries for a particular service.
+
+So what if we have the value be a set of (host, port) tuples?
+
+That should work.
+
+So when a discovery comes in, we check to see if the service is present in the map and if the discovery is present in the resulting set. If it is, we don't do anything.
+
+If the service is present in the map but the discovery isn't present in the service's set, the discovery is added, and all listeners listening for new discoveries are notified.
+
+If there's no entry in the map for that service, a new entry is created, the discovery added to the newly-created set, all discovery listeners are notified, and all service listeners are notified that a new service is available.
+
+When an undiscovery comes in, we check to see if the service is present in the map. If it's not, we print a warning to stderr that the discoverer in question tried to undiscover a service that hadn't yet been discovered...oh shoot, we need to track discoveries based on the discoverer that discovered them too, so that two discoverers can safely make the exact same discovery and undiscovery without messing things up...
+
+
+
 
 
 
