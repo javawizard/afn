@@ -284,7 +284,15 @@ Ok so that's done. Now, what's next?
 
 So it looks like I sort of forgot to add the code into the Bus class that actually tracks which services have been discovered thus far. So I should probably go add that.
 
-So let's see... There can be multiple discoveries for a particular service id, even from the same discoverer (BroadcastDiscoverer will discover the same service twice if it's running on the local computer; once through the loopback adapter and once through the normal network adapter).
+So let's see... There can be multiple discoveries for a particular service id, even from the same discoverer (BroadcastDiscoverer will discover the same service twice if it's running on the local computer; once through the loopback adapter and once through the normal network adapter). So we need to account for that. And one (or more) of the discoveries for a particular service can disappear at any time; the normal network adapter one might disappear, for example, if the network interface goes down, leaving only the loopback discovery of the service available.
+
+So we need to account for that. So it seems like there should be two types of listeners that we can register: listeners that are notified whenever a discovery or an undiscovery are made, and listeners that are notified whenever a new service becomes available, a service disappears, and a service changes to using a different host and port. The former listeners would be called in exactly the same circumstances that the discoverers themselves call bus.discover and bus.undiscover; the latter listeners would be called when a service that had not already been discovered is discovered, the last discovery of a particular service is undiscovered, and whatever is stored as the current discovery to use (Autobus will use the first discovery made for a particular service for now) is undiscovered and as such a different discovery of the service must be used, respectively.
+
+It's also possible to specify info object filters when registering either of the above types of listeners. Those listeners will then only be called for events relating to services whose info objects match the specified criteria. Service info objects are not allowed to change over the lifetime of the service; when the first discovery is made for a particular service, Autobus stores the info object, and uses it for all other discoveries of the service until the service is undiscovered regardless of the info object reported by the discoverer in case someone on the network is trying to mess things up by broadcasting different info objects for the same service.
+
+It's also possible to specify when a listener is registered that it should be called at the time of registration for all services/discoveries currently available. Single service and multiple service proxies would do something like that so that they can bind themselves immediately to any services that are currently available.
+
+So I'm going to go implement that and see how it goes.
 
 
 

@@ -52,6 +52,15 @@ class Bus(object):
                 return
     
     def create_service(self, info, active=True):
+        """
+        Creates a new service on this bus. info is the info object to use for
+        this service. active is True to publish this service immediately, False
+        to wait until the returned service's activate() method is called.
+        
+        The return value is an instance of local.LocalService. It has methods
+        such as create_function that allow functions, events, objects, and such
+        to be created on the service.
+        """
         with self.lock:
             service_id = messaging.create_service_id()
             service = local.LocalService(self, service_id, info)

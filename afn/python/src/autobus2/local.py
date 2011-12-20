@@ -32,8 +32,10 @@ class RemoteConnection(object):
     def received(self, message):
         try:
             if self.service is None:
-                if message["_command"] != "bind":
-                    raise Exception("First message must be bind")
+                if message["_command"] not in ["bind", "introspect_service"]:
+                    raise Exception("First message must be bind or introspect_service")
+                if message["_command"] == "introspect_service":
+                    raise Exception("TODO: Implement the introspect_service command")
                 name = message["service"]
                 with self.bus.lock:
                     service = self.bus.local_services.get(name)
