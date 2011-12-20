@@ -92,16 +92,31 @@ class LocalService(object):
     
     The various create_* functions can be called on LocalService instances to
     create functions, events, and objects that are published remotely.
+    
+    The fuction activate() can be called for services created by
+    bus.create_service(..., active=False). This causes the service to become
+    active. Inactive services are hidden from the outside world; this allows
+    all of the functions needed for a particular service to be set up before
+    it's published to the network.
     """
     def __init__(self, bus, id, info):
         self.id = id
         self.info = info
         self.bus = bus
+        self.active = False
         self.functions = {}
         self.events = {}
         self.objects = {}
         # TODO: manually create autobus.objects, then create autobus.events and
         # autobus.functions the normal way
+    
+    def activate(self):
+        with self.bus.lock:
+            if self.active: # Already active
+                return
+            self.active = True
+            for publisher in self.bus.publishers:
+                publisher.add(self)
     
     def create_function(self, name, function, mode=None):
         if mode is None:

@@ -51,13 +51,13 @@ class Bus(object):
                 print "Bus server died"
                 return
     
-    def create_service(self, info):
+    def create_service(self, info, active=True):
         with self.lock:
             service_id = messaging.create_service_id()
             service = local.LocalService(self, service_id, info)
             self.local_services[service_id] = service
-            for publisher in self.publishers:
-                publisher.add(service)
+            if active:
+                service.activate()
             return service
     
     def setup_inbound_socket(self, socket):
@@ -87,7 +87,8 @@ class Bus(object):
         with self.lock:
             for publisher in self.publishers:
                 for service in self.local_services.values():
-                    publisher.remove(service)
+                    if service.active:
+                        publisher.remove(service)
                 publisher.shutdown()
             for discoverer in self.discoverers:
                 discoverer.shutdown()
@@ -110,7 +111,8 @@ class Bus(object):
             self.publishers.add(publisher)
             publisher.startup(self)
             for service in self.local_services.values():
-                publisher.add(service)
+                if service.active:
+                    publisher.add(service)
     
     def remove_publisher(self, publisher):
         with self.lock:
@@ -118,7 +120,8 @@ class Bus(object):
                 raise __builtin__.ValueError("The specified publisher is not currently installed on this bus.")
             self.publishers.remove(publisher)
             for service in self.local_services.values():
-                publisher.remove(service)
+                if service.active:
+                    publisher.remove(service)
             publisher.shutdown()
     
     def install_discoverer(self, discoverer):
