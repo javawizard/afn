@@ -172,10 +172,6 @@ class Function(object):
         will stop immediately and throw a TimeoutException. The default, if
         timeout is not specified, is 30.
         
-        If callback is set to a function and the connection is disconnected
-        before the response is received, the callback will be called with None
-        as its argument.
-        
         If a callback is used and an exception happens while processing (or if
         the remote function throws an exception), the exception object itself
         is passed into the callback. If a callback is not used, the exception
