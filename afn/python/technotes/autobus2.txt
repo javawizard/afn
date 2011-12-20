@@ -304,13 +304,19 @@ So what if we have the value be a set of (host, port) tuples?
 
 That should work.
 
-So when a discovery comes in, we check to see if the service is present in the map and if the discovery is present in the resulting set. If it is, we don't do anything.
+Hm... We need a way to keep track of the discoverer that issued a particular discovery...
 
-If the service is present in the map but the discovery isn't present in the service's set, the discovery is added, and all listeners listening for new discoveries are notified.
+Ok, what if we have the map be a map of service ids to maps that map (host, port) tuples to lists of discoverers that discovered that service id, host, port combination?
 
-If there's no entry in the map for that service, a new entry is created, the discovery added to the newly-created set, all discovery listeners are notified, and all service listeners are notified that a new service is available.
+Except that they should be ordered maps because then discoveries of services will be used in... no, that doesn't work, because we need to be able to specify a default discovery for a particular service...
 
-When an undiscovery comes in, we check to see if the service is present in the map. If it's not, we print a warning to stderr that the discoverer in question tried to undiscover a service that hadn't yet been discovered...oh shoot, we need to track discoveries based on the discoverer that discovered them too, so that two discoverers can safely make the exact same discovery and undiscovery without messing things up...
+Ok, what if the map maps service ids to DiscoveredService instances?
+
+DiscoveredService would contain an attribute called default that holds a (host, port) tuple. This is the default discovery that is to be used for this service. Then DiscoveredService holds a map of (host, port) tuples to lists of discoverers that have discovered this (host, port) combination.
+
+So now we can get to the logic of the whole system.
+
+When a discovery is made, we check to see if 
 
 
 
