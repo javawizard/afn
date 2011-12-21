@@ -94,6 +94,36 @@ Ok, I'm going to see if I can implement that for now.
 
 
 
+So this all worked brilliantly. I've now got a working ObservableMap and ObservableList.
+
+Well, sort of. They work just fine, and listeners can be made recursive. But there's one main thing that they don't support right now: key paths.
+
+And I'm realizing more and more that this needs to be added.
+
+One major reason why key paths are so needed is that they make it considerably easier to listen to events happening at a particular level of recursion.
+
+So key paths need to be added. But because I'm supporting keys other than just strings, and because I'm letting lists be their own observable things instead of having them just be a piece of an object, so to speak (as to-many relationships more or less are), I'm going to have key paths actually be lists. They'll be lists of the components of the key path, and each level of recursion would consume one component from this list.
+
+For lists, components should just be None for now; I might allow indexes in the future. For maps, components can be None to mean all components or a particular key to mean that key's value. The last component in the list is the one that changes are watched for in; for example, using [None] as the path while observing a list or a map yields the behavior of the current system when a path isn't passed in.
+
+A path can also be specified as a string. This is a sort of shorthand; paths are converted from strings to lists before anything else is done with them. Paths are split into components by splitting around "/" characters; for each of these components, if it's the character "*", None is used for that component; otherwise, that component as a string is used. For example, hello/*/world/bye would be translated into ["hello", None, "world", "bye"].
+
+Listeners can still be specified to be recursive. This acts recursively starting at the end of the path.
+
+When a listener is called, it's passed the path that it was originally registered under, a path that can be used to reach the object that the change actually happened at (each component will be specific to the observable thing that it comes from; maps insert the key as the component while lists insert the index; this is intended to allow one to traverse the originally-observed thing and get down to the thing that changed by using this path list), and the list of changes.
+
+So that pretty much sorts the public API side of it. Now how do we actually go about implementing it?
+
+Well, we currently have a function called _get_current_values for asking an observable for all of its values, which allows us to recursively access things. I'm thinking that we need to change this to get_values_for_key, which, given a particular path component, hands us back the values represented by that component.
+
+Actually no, what if we just have get_value_for_key, and we specify that each path component must denote either zero or one values, except that the path component None denotes all values. And we specify that passing None to get_value_for_key returns a list of all values.
+
+Hm... So how does that work with lists? Lists aren't going to have keys for now...
+
+
+
+
+
 
 
 
