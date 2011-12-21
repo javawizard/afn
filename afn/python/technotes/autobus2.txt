@@ -316,7 +316,7 @@ DiscoveredService would contain an attribute called default that holds a (host, 
 
 So now we can get to the logic of the whole system.
 
-When a discovery is made, we check to see if 
+When a discovery is made, we check to see if there's an 
 
 
 
