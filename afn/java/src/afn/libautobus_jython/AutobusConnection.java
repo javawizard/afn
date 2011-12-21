@@ -63,6 +63,8 @@ public class AutobusConnection
             Options.includeJavaStackInExceptions = true;
             pythonInterpreter.exec("import sys");
             pythonInterpreter.exec("sys.path += ['../afn-python/src']");
+            pythonInterpreter.exec("sys.path += ['../python/src']");
+            pythonInterpreter.exec("sys.path += ['classes']");
             pythonInterpreter.exec("import libautobus");
             libautobus = (PyModule) pythonNamespace.get("libautobus");
         }
