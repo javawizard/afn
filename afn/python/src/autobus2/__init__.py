@@ -252,11 +252,33 @@ class Bus(object):
     
     def discover(self, discoverer, host, port, service_id, info):
         print "Discovered:", (host, port, service_id, info)
-        # Check to see if the specified sevice has been discovered yet, and if
-        # it hasn't, create a 
+        # Check to see if the specified service has been discovered yet, and if
+        # it hasn't, create an entry for it
+        if service_id not in self.discovered_services:
+            self.discovered_services[service_id] = collections.OrderedDict()
+        service_map = self.discovered_services[service_id]
+        # Check to see if the specified host/port combination is already
+        # present, and if it isn't, add it.
+        if (host, port) not in service_map:
+            service_map[(host, port)] = []
+        discoverer_list = service_map[(host, port)]
+        # Check to see if this discoverer has already discovered that host/port
+        if discoverer in discoverer_list:
+            print "Warning: discoverer " + str(discoverer) 
     
     def undiscover(self, discoverer, host, port, service_id):
         print "Undiscovered:", (host, port, service_id)
+    
+    def add_discovery_listener(self, listener, info_filter=None, initial=False):
+        pass
+    
+    def remove_discovery_listener(self, listener):
+        pass
+    
+    def add_service_listener(self, listener, info_filter=None, initial=False):
+        pass
+    
+    def remove_service_listener(self, listener):
 
 
 def wait_for_interrupt():
