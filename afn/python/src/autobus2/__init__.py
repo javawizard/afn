@@ -14,78 +14,11 @@ SYNC = singleton.Singleton("autobus2.SYNC")
 THREAD = singleton.Singleton("autobus2.THREAD")
 ASYNC = singleton.Singleton("autobus2.ASYNC")
 
+
 class DiscoveredService(object):
-    def __init__(self, service_id):
-        self.service_id = service_id
+    def __init__(self, info):
         self.locations = collections.OrderedDict()
-        self.default = None
-    
-    def add_discovery(self, host, port, discoverer):
-        """
-        Adds the specified discovery to this DiscoveredService. True is then
-        returned if the discovery did not already exist; False if it already
-        existed.
-        """
-        # If there's no default, then this is the first discovery for this
-        # service, so we'll set the default to it.
-        if not self.default:
-            self.default = (host, port)
-        # If there isn't a list of discoverers already for the specified
-        # host/port, then we need to create an empty one.
-        if (host, port) not in self.locations:
-            self.locations[(host, port)] = []
-        # Then we check to see if the discoverer is already present. If it
-        # isn't, we add it and return True.
-        if not discoverer in self.locations[(host, port)]:
-            self.locations[(host, port)].append(discoverer)
-            return True
-        # Is the discoverer is already present, we return False.
-        return False
-    
-    def remove_discovery(self, host, port, discoverer):
-        """
-        Removes the specified discovery from this service. True is returned if
-        the discovery was present and was removed, False if it wasn't.
-        """
-        # First we check to see if we even have the specified host/port
-        # combination in our list of locations.
-        if (host, port) in self.locations:
-            # Then we check to see if the specified discoverer is one that
-            # discovered the specified host/port.
-            if discoverer in self.locations[(host, port)]:
-                # If it is, we remove the discoverer.
-                self.locations[(host, port)].remove(discoverer)
-                # Then we check to see if it was the last discoverer for that
-                # particular host/port.
-                if not self.locations[(host, port)]:
-                    # Looks like it was, so we remove the host/port itself.
-                    del self.locations[(host, port)]
-                    # Then we check to see if that host/port was the default
-                    # location so that we can set it to something else if it
-                    # was.
-                    if self.default == (host, port):
-                        # Yep, it was the default. So now we check to see if we
-                        # have any other locations.
-                        if self.locations:
-                            # We do have another location, so we set the
-                            # default to that one.
-                            self.default = self.locations.keys()[0]
-                        else:
-                            # We don't have any other locations, so we set the
-                            # default to None.
-                            self.default = None
-                # Since we removed the discoverer from the list of discoverers
-                # for that host/port at the very least, we return True. 
-                return True
-        # No changes were made, so we return False.
-        return False
-    
-    def has_location(self, host, port):
-        """
-        Returns True if the specified location is present in this
-        DiscoveredService, false if it is not.
-        """
-        return (host, port) in self.locations
+        self.info = info
 
 
 class Bus(object):
@@ -255,19 +188,47 @@ class Bus(object):
         # Check to see if the specified service has been discovered yet, and if
         # it hasn't, create an entry for it
         if service_id not in self.discovered_services:
-            self.discovered_services[service_id] = collections.OrderedDict()
-        service_map = self.discovered_services[service_id]
+            self.discovered_services[service_id] = DiscoveredService(info)
+        discovered_service = self.discovered_services[service_id]
         # Check to see if the specified host/port combination is already
         # present, and if it isn't, add it.
-        if (host, port) not in service_map:
-            service_map[(host, port)] = []
-        discoverer_list = service_map[(host, port)]
+        if (host, port) not in discovered_service.locations:
+            discovered_service.locations[(host, port)] = []
+        discoverer_list = discovered_service.locations[(host, port)]
         # Check to see if this discoverer has already discovered that host/port
         if discoverer in discoverer_list:
-            print "Warning: discoverer " + str(discoverer) 
+            print ("Warning: discoverer " + str(discoverer) + 
+                   " tried to rediscover " + str((host, port, service_id)) +
+                   " with info " + str(info))
+            return
+        # It hasn't, so add it.
+        discoverer_list.append(discoverer) 
     
     def undiscover(self, discoverer, host, port, service_id):
         print "Undiscovered:", (host, port, service_id)
+        # Check to see if the specified service has been discovered.
+        if service_id not in self.discovered_services:
+            print ("Warning: discoverer " + str(discoverer) + " tried to "
+                   "undiscover " + str((host, port, service_id)) + " when "
+                   "such a service does not exist.")
+            return
+        discovered_service = self.discovered_services[service_id]
+        if (host, port) not in discovered_service.locations:
+            print ("Warning: discoverer " + str(discoverer) + " tried to "
+                   "undiscover " + str((host, port, service_id)) + " when "
+                   "that host/port has not yet been discovered.")
+            return
+        discoverer_list = discovered_service.locations[(host, port)]
+        if discoverer not in discoverer_list:
+            print ("Warning: discoverer " + str(discoverer) + " tried to "
+                   "undiscover " + str((host, port, service_id)) + " when "
+                   "this discoverer hasn't discovered that host/port yet.")
+            return
+        discoverer_list.remove(discoverer)
+        if not discoverer_list:
+            del discovered_service.locations[(host, port)]
+            if not discovered_service.locations:
+                del self.discovered_services[service_id]
     
     def add_discovery_listener(self, listener, info_filter=None, initial=False):
         pass
@@ -279,6 +240,7 @@ class Bus(object):
         pass
     
     def remove_service_listener(self, listener):
+        pass
 
 
 def wait_for_interrupt():
