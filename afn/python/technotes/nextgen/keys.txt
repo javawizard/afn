@@ -120,7 +120,25 @@ Actually no, what if we just have get_value_for_key, and we specify that each pa
 
 Hm... So how does that work with lists? Lists aren't going to have keys for now...
 
+Well... Let me think about what's involved in registering listeners...
 
+So when we register a listener, we pass in a listener, a path, and whether or not the listener is to be recursive. If there's only one path component, we add the listener to a multimap the maps path components to listeners listening for them. If we're recursive, we then ask ourselves for a list of things already existing for that path component and register some sort of listener on them which I'll get to in a bit.
+
+Hm...
+
+I'm wondering now if the object th... hm.
+
+Now I'm sort of confused...
+
+Ok, what if we say for now that individual changes don't include the I'm really tempted to object on which the change happened, and the batches of changes can be submitted only for a single source object. That way we can get rid of the source object stored on each individual change and instead have a path to get down to the object and a list of the object and its parents passed in.
+
+So then our listener looks like:
+
+something_happened(path, hierarchy, changes)
+
+path is the path to get down to the specified object; each component will be a key if that component is a dictionary or an index if the component is a list. hierarchy is the values actually corresponding to each of those components; this will be the map value or the list item for each item. hierarchy, therefore, has one more item than path does. For example, if a listener is registered on some_object and a change happens on some_object itself, path will be empty and hierarchy will be [some_object]. If some_object is a map {"x": {}} and a new key is inserted into some_object["x"] with the key "y" and the value "z" (such that the new some_object will be {"x": {"y": "z"}}), and a recursive listener is present on some_object, then the path will be ["x"] and the hierarchy will be [some_object, some_object["x"]].
+
+So I'm going to implement that for now without supporting keys just yet. We can rewrite all code that needs keys to just check the hierarchy and see if it's what we're interested in; it's not optimal, performance-wise, but I can fix it up later.
 
 
 
