@@ -141,7 +141,7 @@ class BroadcastDiscoverer(object):
         if self.last_check_time + check_interval > current_time:
             return
         self.last_check_time = current_time
-        print "Checking discovered services..."
+        # print "Checking discovered services..."
         with self.bus.lock:
             for k, v in self.services.iteritems():
                 if v[1] + expire_interval < current_time: # Haven't received a

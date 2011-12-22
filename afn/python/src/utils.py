@@ -46,8 +46,9 @@ class PrintExceptions(object):
     def __enter__(self):
         pass
     
-    def __exit__(self, *args):
-        _print_exc()
+    def __exit__(self, t, v, tb):
+        if tb:
+            _print_exc()
         return True
 
 print_exceptions = PrintExceptions()
