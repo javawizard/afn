@@ -48,6 +48,7 @@ class PrintExceptions(object):
     
     def __exit__(self, *args):
         _print_exc()
+        return True
 
 print_exceptions = PrintExceptions()
 

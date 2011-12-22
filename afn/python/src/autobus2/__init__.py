@@ -5,7 +5,7 @@ from socket import socket as Socket, error as SocketError, timeout as SocketTime
 from Queue import Queue
 from concurrent import synchronized
 import time
-from utils import no_exceptions
+from utils import no_exceptions, print_exceptions
 from afn.utils import singleton
 import __builtin__
 import collections
@@ -206,7 +206,7 @@ class Bus(object):
             discoverer.shutdown()
     
     def discover(self, discoverer, host, port, service_id, info):
-        print "Discovered:", (host, port, service_id, info)
+        # print "Discovered:", (host, port, service_id, info)
         # Check to see if the specified service has been discovered yet, and if
         # it hasn't, create an entry for it
         is_new_service = False
@@ -233,7 +233,7 @@ class Bus(object):
             self.notify_service_listeners(service_id, host, port, info, DISCOVERED) 
     
     def undiscover(self, discoverer, host, port, service_id):
-        print "Undiscovered:", (host, port, service_id)
+        # print "Undiscovered:", (host, port, service_id)
         # Check to see if the specified service has been discovered.
         if service_id not in self.discovered_services:
             print ("Warning: discoverer " + str(discoverer) + " tried to "
@@ -276,7 +276,8 @@ class Bus(object):
                 for service_id, discovered_service in self.discovered_services.items():
                     if filter_matches(discovered_service.info, info_filter):
                         host, port = discovered_service.locations.keys()[0]
-                        listener(service_id, host, port, discovered_service.info, DISCOVERED)
+                        with print_exceptions:
+                            listener(service_id, host, port, discovered_service.info, DISCOVERED)
     
     def remove_service_listener(self, listener, initial=False):
         with self.lock:
@@ -286,13 +287,15 @@ class Bus(object):
                     if initial:
                         for service_id, discovered_service in self.discovered_services.items():
                             if filter_matches(discovered_service.info, info_filter):
-                                listener(service_id, None, None, None, UNDISCOVERED)
+                                with print_exceptions:
+                                    listener(service_id, None, None, None, UNDISCOVERED)
                     return
     
     def notify_service_listeners(self, service_id, host, port, info, event):
         for filter, listener in self.service_listeners:
             if filter_matches(info, filter):
-                listener(service_id, host, port, info, event)
+                with print_exceptions:
+                    listener(service_id, host, port, info, event)
 
 
 def wait_for_interrupt():
