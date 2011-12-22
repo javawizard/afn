@@ -297,6 +297,10 @@ class BroadcastPublisher(Publisher):
         # Send remove messages in the opposite order of discover messages
         net.sendto(self.sender, broadcast, 
                 ("255.255.255.255", constants.broadcast_port))
+        # Sleep to (hopefully) delay the loopback removal until the other
+        # message has arrived. Hopefully I can think of a better solution than
+        # this in the future.
+        time.sleep(0.5)
         net.sendto(self.sender, broadcast, 
                 ("127.255.255.255", constants.broadcast_port))
 
