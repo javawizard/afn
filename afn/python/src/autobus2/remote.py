@@ -6,9 +6,11 @@ remote services.
 from Queue import Queue, Empty
 from autobus2 import net, messaging, exceptions
 from utils import Suppress
-from threading import RLock
+from threading import Thread, RLock
 import json
 import autobus2
+from utils import print_exceptions
+from traceback import print_exc
 
 
 class Connection(object):
@@ -19,7 +21,7 @@ class Connection(object):
     Instances of this class should not be created directly; instead, a new Bus
     object should be created, and its connect function called.
     """
-    def __init__(self, bus, socket, service_id):
+    def __init__(self, bus, socket, service_id, close_listener=None):
         """
         Creates a new connection, given the specified parent bus and socket.
         This constructor sets up everything and then sends an initial message
@@ -32,6 +34,7 @@ class Connection(object):
         self.queue = Queue()
         self.query_map = {}
         self.query_lock = RLock()
+        self.close_listener = close_listener
         self.is_connected = True
         net.OutputThread(socket, self.queue.get).start()
         net.InputThread(socket, self.received, self.cleanup).start()
@@ -49,7 +52,11 @@ class Connection(object):
             self.queue.put(None)
             self.is_connected = False
             for f in self.query_map.copy().itervalues():
-                f(None)
+                with print_exceptions:
+                    f(None)
+        with print_exceptions:
+            if self.close_listener:
+                self.close_listener()
     
     def send(self, message):
         if message:
@@ -133,6 +140,34 @@ class Connection(object):
         self.context_enters -= 1
         if self.context_enters == 0:
             self.close()
+
+
+class ConnectionManager(object):
+    def __init__(self, bus, connect_listener=None, disconnect_listener=None):
+        self.bus = bus
+    
+    def connect_to(self, host, port, service_id):
+        Thread(target=self._connect_to, args=(host, port, service_id)).start()
+    
+    def _connect_to(self, host, port, service_id):
+        while True:
+            try:
+                connection = self.bus.connect(host, port, service_id)
+            except (exceptions.ConnectionException, exceptions.TimeoutException):
+                pass
+            except:
+                print_exc()
+    
+    def disconnect_from(self, host, port, service_id):
+        pass
+    
+    @property
+    def connections(self):
+        """
+        A list of connections that this ConnectionManager is currently
+        connected to.
+        """
+        pass
 
 
 class Function(object):

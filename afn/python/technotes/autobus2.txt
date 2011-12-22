@@ -324,6 +324,46 @@ And then we have service_listener(service_id, host, port, event), and event woul
 
 
 
+Ok so I got that all implemented, and added an additional parameter after port, info, which is the service's info object. So no there are two things that need to be done: events and objects, and service proxies. Which one do I want to do first?
+
+Hm...
+
+I'm thinking service proxies since they're the thing that I need most right now.
+
+So let's do some thinking...
+
+So I just added a thing to connections that allows a listener to be added to them that is called when the connection is closed. That's going to be really useful.
+
+So let's see...
+
+I'm thinking that I don't want to duplicate the proxy code for single service proxies and multiple service proxies, so I'm thinking that I'm going to implement them as the same class and have it be in different modes.
+
+So... The code to keep a connection established... And the other code...
+
+I'm starting to think that maybe what I should do is write a ConnectionManager thing where you tell it the host/port/service combinations to connect to and it keeps connections open to them, reestablishing them when needed.
+
+Hm... Man, this is getting difficult...
+
+The main issue is how to keep connections open to all of the services that the proxy is supposed to be keeping connections open to and how to automatically re-watch things and such when things need to be watched and such.
+
+Ok, let me see if there's any way I can make this whole thing simpler...
+
+So what if I wrote a class called ConnectionManager that works as I mentioned above?
+
+It would let you know when it's opened a new connection, and it would let you know when it's lost a connection.
+
+It would let you ask it for a list of all opened connections.
+
+It would let you tell it the host/port/server combinations to create or remove connections for.
+
+It would take care of closing connections that you no longer want it to connect to.
+
+(Oh, and connection closure, I'm thinking, will be synchronized on a particular lock on connections, and the various startup actions performed by things using ConnectionManagers would likewise synchronize on this lock so as to not throw exceptions until after if the connection closes itself prematurely. Or something...)
+
+So let me go try writing that and see how far I get and what roadblocks I run into.
+
+
+
 
 
 

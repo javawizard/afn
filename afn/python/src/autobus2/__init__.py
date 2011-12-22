@@ -116,7 +116,7 @@ class Bus(object):
             connection = local.RemoteConnection(self, socket)
             self.bound_connections.add(connection)
     
-    def connect(self, host, port, service_id, timeout=10):
+    def connect(self, host, port, service_id, timeout=10, close_listener=None):
         """
         Connects to the specified service on the specified host and port.
         
@@ -132,7 +132,7 @@ class Bus(object):
             raise exceptions.TimeoutException
         except SocketError as s:
             raise exceptions.ConnectionException(s)
-        return remote.Connection(self, s, service_id)
+        return remote.Connection(self, s, service_id, close_listener)
     
     def close(self):
         with self.lock:
