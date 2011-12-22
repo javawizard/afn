@@ -302,14 +302,14 @@ class BroadcastPublisher(Publisher):
 
     def add(self, service):
         with self.bus.lock:
-            print "Service added: " + service.id
+            # print "Service added: " + service.id
             self.services[service.id] = service
             self.send_add(service)
         
     
     def remove(self, service):
         with self.bus.lock:
-            print "Service removed: " + service.id
+            # print "Service removed: " + service.id
             del self.services[service.id]
             self.send_remove(service)
 
