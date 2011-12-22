@@ -20,6 +20,8 @@ UNDISCOVERED = singleton.Singleton("autobus2.UNDISCOVERED")
 CHANGED = singleton.Singleton("autobus2.CHANGED")
 
 def filter_matches(info, filter):
+    if filter is None:
+        return True
     for k, v in filter.items():
         if v is ANY:
             if k not in info:
@@ -207,8 +209,10 @@ class Bus(object):
         print "Discovered:", (host, port, service_id, info)
         # Check to see if the specified service has been discovered yet, and if
         # it hasn't, create an entry for it
+        is_new_service = False
         if service_id not in self.discovered_services:
             self.discovered_services[service_id] = DiscoveredService(info)
+            is_new_service = True
         discovered_service = self.discovered_services[service_id]
         # Check to see if the specified host/port combination is already
         # present, and if it isn't, add it.
@@ -222,7 +226,11 @@ class Bus(object):
                    " with info " + str(info))
             return
         # It hasn't, so add it.
-        discoverer_list.append(discoverer) 
+        discoverer_list.append(discoverer)
+        # The check to see if we need to notify listeners, and do so if we
+        # need to
+        if is_new_service:
+            self.notify_service_listeners(service_id, host, port, info, DISCOVERED) 
     
     def undiscover(self, discoverer, host, port, service_id):
         print "Undiscovered:", (host, port, service_id)
@@ -246,27 +254,45 @@ class Bus(object):
             return
         discoverer_list.remove(discoverer)
         if not discoverer_list:
+            if discovered_service.locations.keys()[0] == (host, port): # We're
+                # removing the first (and therefore default) location, so if
+                # there's another location, we need to let the service
+                # listeners know that there's a new default location
+                if len(discovered_service.locations) > 1: # There will be
+                    # another location even after we delete this one
+                    new_host, new_port = discovered_service.locations.keys()[1]
+                    self.notify_service_listeners(service_id, new_host, new_port, discovered_service.info, CHANGED)
             del discovered_service.locations[(host, port)]
-            if not discovered_service.locations:
+            if not discovered_service.locations: # That was the last location
+                # available for this service, so we delete the service itself,
+                # and notify listeners that it was deleted
                 del self.discovered_services[service_id]
-    
-    def add_discovery_listener(self, listener, info_filter=None, initial=False):
-        self.discovery_listeners.append((info_filter, listener))
-    
-    def remove_discovery_listener(self, listener, initial=False):
-        for index, (info_filter, l) in enumerate(self.discovery_listeners[:]):
-            if l == listener:
-                del self.discovery_listeners[index]
-                return
+                self.notify_service_listeners(service_id, host, port, discovered_service.info, UNDISCOVERED)
     
     def add_service_listener(self, listener, info_filter=None, initial=False):
-        self.service_listeners.append((info_filter, listener))
+        with self.lock:
+            self.service_listeners.append((info_filter, listener))
+            if initial:
+                for service_id, discovered_service in self.discovered_services.items():
+                    if filter_matches(discovered_service.info, info_filter):
+                        host, port = discovered_service.locations.keys()[0]
+                        listener(service_id, host, port, discovered_service.info, DISCOVERED)
     
-    def remove_service_listener(self, listener):
-        for index, (info_filter, l) in enumerate(self.service_listeners[:]):
-            if l == listener:
-                del self.service_listeners[index]
-                return
+    def remove_service_listener(self, listener, initial=False):
+        with self.lock:
+            for index, (info_filter, l) in enumerate(self.service_listeners[:]):
+                if l == listener:
+                    del self.service_listeners[index]
+                    if initial:
+                        for service_id, discovered_service in self.discovered_services.items():
+                            if filter_matches(discovered_service.info, info_filter):
+                                listener(service_id, None, None, None, UNDISCOVERED)
+                    return
+    
+    def notify_service_listeners(self, service_id, host, port, info, event):
+        for filter, listener in self.service_listeners:
+            if filter_matches(info, filter):
+                listener(service_id, host, port, info, event)
 
 
 def wait_for_interrupt():
