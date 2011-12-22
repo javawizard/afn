@@ -13,6 +13,24 @@ import collections
 SYNC = singleton.Singleton("autobus2.SYNC")
 THREAD = singleton.Singleton("autobus2.THREAD")
 ASYNC = singleton.Singleton("autobus2.ASYNC")
+ANY = singleton.Singleton("autobus2.ANY")
+NOT_PRESENT = singleton.Singleton("autobus2.NOT_PRESENT")
+DISCOVERED = singleton.Singleton("autobus2.DISCOVERED")
+UNDISCOVERED = singleton.Singleton("autobus2.UNDISCOVERED")
+CHANGED = singleton.Singleton("autobus2.CHANGED")
+
+def filter_matches(info, filter):
+    for k, v in filter.items():
+        if v is ANY:
+            if k not in info:
+                return False
+        elif v is NOT_PRESENT:
+            if k in info:
+                return False
+        else:
+            if info[k] != v:
+                return False
+    return True
 
 
 class DiscoveredService(object):
@@ -39,6 +57,8 @@ class Bus(object):
         self.lock = RLock()
         self.local_services = {}
         self.discovered_services = {}
+        self.discovery_listeners = []
+        self.service_listeners = []
         self.bound_connections = set()
         self.discoverers = set()
         self.publishers = set()
@@ -231,16 +251,22 @@ class Bus(object):
                 del self.discovered_services[service_id]
     
     def add_discovery_listener(self, listener, info_filter=None, initial=False):
-        pass
+        self.discovery_listeners.append((info_filter, listener))
     
-    def remove_discovery_listener(self, listener):
-        pass
+    def remove_discovery_listener(self, listener, initial=False):
+        for index, (info_filter, l) in enumerate(self.discovery_listeners[:]):
+            if l == listener:
+                del self.discovery_listeners[index]
+                return
     
     def add_service_listener(self, listener, info_filter=None, initial=False):
-        pass
+        self.service_listeners.append((info_filter, listener))
     
     def remove_service_listener(self, listener):
-        pass
+        for index, (info_filter, l) in enumerate(self.service_listeners[:]):
+            if l == listener:
+                del self.service_listeners[index]
+                return
 
 
 def wait_for_interrupt():

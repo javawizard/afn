@@ -316,7 +316,11 @@ DiscoveredService would contain an attribute called default that holds a (host, 
 
 So now we can get to the logic of the whole system.
 
-When a discovery is made, we check to see if there's an 
+Hm... Let me think how discovery listeners and service listeners are going to work...
+
+What if we have discovery_listener(service_id, host, port, event)...  event could then be one of DISCOVERED or UNDISCOVERED.
+
+And then we have service_listener(service_id, host, port, event), and event would be DISCOVERED, CHANGED, or UNDISCOVERED. host and port wouldn't be specified for UNDISCOVERED.
 
 
 
