@@ -8,7 +8,10 @@ import time
 from utils import no_exceptions, print_exceptions
 from afn.utils import singleton
 import __builtin__
-from afn.backports import ordered_dict
+try:
+    from collections import OrderedDict as _OrderedDict
+except ImportError:
+    from afn.backports.ordered_dict import OrderedDict as _OrderedDict
 
 SYNC = singleton.Singleton("autobus2.SYNC")
 THREAD = singleton.Singleton("autobus2.THREAD")
@@ -37,7 +40,7 @@ def filter_matches(info, filter):
 
 class DiscoveredService(object):
     def __init__(self, info):
-        self.locations = ordered_dict.OrderedDict()
+        self.locations = _OrderedDict()
         self.info = info
 
 
