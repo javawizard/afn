@@ -52,6 +52,7 @@ class Bus(object):
         self.context_enters = 0
         if port is None:
             port = 0
+        self.closed = False
         self.server = Socket()
         self.server.bind(("", port))
         self.server.listen(100)
@@ -132,16 +133,17 @@ class Bus(object):
     
     def close(self):
         with self.lock:
-            # First we need to unpublish all of our services and shut down all
+            self.closed = True
+            # First we shut down all of our discoverers
+            for discoverer in self.discoverers:
+                discoverer.shutdown()
+            # Then we need to unpublish all of our services and shut down all
             # of our publishers
             for publisher in self.publishers:
                 for service in self.local_services.values():
                     if service.active:
                         publisher.remove(service)
                 publisher.shutdown()
-            # Then we shut down all of our discoverers
-            for discoverer in self.discoverers:
-                discoverer.shutdown()
             # Then we shut down the server socket
             net.shutdown(self.server)
             # Then we close all of the connections currently connected to us
@@ -261,7 +263,8 @@ class Bus(object):
                 if len(discovered_service.locations) > 1: # There will be
                     # another location even after we delete this one
                     new_host, new_port = discovered_service.locations.keys()[1]
-                    self.notify_service_listeners(service_id, new_host, new_port, discovered_service.info, CHANGED)
+                    if not self.closed: # Don't issue changes if we're shutting down
+                        self.notify_service_listeners(service_id, new_host, new_port, discovered_service.info, CHANGED)
             del discovered_service.locations[(host, port)]
             if not discovered_service.locations: # That was the last location
                 # available for this service, so we delete the service itself,
