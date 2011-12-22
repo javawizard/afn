@@ -364,6 +364,14 @@ So let me go try writing that and see how far I get and what roadblocks I run in
 
 
 
+So, having started that, I'm sort of thinking that I should rewrite connections to automatically reconnect themselves. I think that will work better.
+
+Then the ConnectionManager simply creates and removes connections as needed but doesn't have to reconnect them.
+
+That would also allow the single service proxy to not even need a connection manager.
+
+
+
 
 
 
