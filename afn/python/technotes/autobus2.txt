@@ -372,6 +372,23 @@ That would also allow the single service proxy to not even need a connection man
 
 
 
+Hm... So should I use three fields, alive, connected, and ready?
+
+I dunno, this is getting super super complicated...
+
+Ok, there has to be a better way to do this...
+
+So I'm wondering if using Erlang-style message passing in the core of everything would help any...
+
+Let's think... So yeah, I think I'm going to try to convert the internals of connections to be based on message passing.
+
+So let's see... How would that work?
+
+Well... I would still have an input thread and an output thread. Those already use message passing of a sort, so they can work into this architecture already without needing any changes.
+
+
+
+
 
 
 

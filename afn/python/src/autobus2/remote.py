@@ -11,6 +11,8 @@ import json
 import autobus2
 from utils import print_exceptions
 from traceback import print_exc
+import time
+from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
 
 
 class Connection(object):
@@ -21,7 +23,7 @@ class Connection(object):
     Instances of this class should not be created directly; instead, a new Bus
     object should be created, and its connect function called.
     """
-    def __init__(self, bus, socket, service_id, close_listener=None):
+    def __init__(self, bus, host, port, service_id, timeout, open_listener, close_listener):
         """
         Creates a new connection, given the specified parent bus and socket.
         This constructor sets up everything and then sends an initial message
@@ -29,18 +31,42 @@ class Connection(object):
         """
         self.context_enters = 0
         self.bus = bus
-        self.socket = socket
+        self.socket = None
+        self.host = host
+        self.port = port
         self.service_id = service_id
         self.queue = Queue()
         self.query_map = {}
-        self.query_lock = RLock()
+        self.lock = RLock()
+        self.open_listener = open_listener
         self.close_listener = close_listener
-        self.is_connected = True
-        net.OutputThread(socket, self.queue.get).start()
-        net.InputThread(socket, self.received, self.cleanup).start()
+        self.is_connected = False
+        self.is_alive = True
+#        net.OutputThread(socket, self.queue.get).start()
+#        net.InputThread(socket, self.received, self.cleanup).start()
         # We query here so that an invalid service id will cause an exception
         # to be raised while constructing the service
-        self.query(messaging.create_command("bind", False, service=service_id), timeout=10)
+        # self.query(messaging.create_command("bind", False, service=service_id), timeout=10)
+        Thread(target=self._connect).start()
+    
+    def _connect(self):
+        delay = 0.1
+        delay_increment = 1.5
+        delay_max = 20
+        while True:
+            delay *= delay_increment
+            if delay > delay_max:
+                delay = delay_max
+            s = Socket()
+            try:
+                s.connect((self.host, self.port))
+            except SocketError:
+                time.sleep(delay)
+                continue
+            self.socket = s
+            self.is_connected = True
+            # TODO: finish this up
+            return
 
     def close(self):
         self.queue.put(None)

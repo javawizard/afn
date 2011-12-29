@@ -116,23 +116,34 @@ class Bus(object):
             connection = local.RemoteConnection(self, socket)
             self.bound_connections.add(connection)
     
-    def connect(self, host, port, service_id, timeout=10, close_listener=None):
+    def connect(self, host, port, service_id, timeout=10, open_listener=None, close_listener=None):
         """
-        Connects to the specified service on the specified host and port.
+        Opens a connection to the specified service on the specified host/port.
         
-        The specified timeout will be used while establishing a TCP connection.
-        If a connection could not be established in the specified amount of
-        time, a TimeoutException will be thrown.
+        The connection will be returned immediately. The actual connection to
+        the server will be made as soon as possible in the future. If you need
+        to block until the connection actually connects, call wait_for_connect
+        on the returned Connection object.
+        
+        The connection will attempt to reconnect indefinitely whenever it is
+        disconnected. If you don't want this behavior, specify a close_listener
+        that calls the connection's close method.
+        
+        Timeout is the TCP timeout to use when connecting. The default is 10;
+        this is usually a suitable default. You'll probably only want to
+        increase this if you're working on a particularly latent network.
+        
+        open_listener and close_listener are functions accepting one argument.
+        They will be called when the connection successfully connects and when
+        the connection disconnects, respectively, and the connection itself
+        will be passed in. They are both run synchronously on the connection's
+        input thread, so it's guaranteed that, for example, the connection will
+        not attempt to reconnect until close_listener has returned. Thus
+        close_listener could be set to a function that just closes the
+        specified connection in order to effectively disable the auto-reconnect
+        feature of connections.
         """
-        s = Socket()
-        s.settimeout(timeout)
-        try:
-            s.connect((host, port))
-        except SocketTimeout:
-            raise exceptions.TimeoutException
-        except SocketError as s:
-            raise exceptions.ConnectionException(s)
-        return remote.Connection(self, s, service_id, close_listener)
+        return remote.Connection(self, host, port, service_id, timeout, open_listener, close_listener)
     
     def close(self):
         with self.lock:
