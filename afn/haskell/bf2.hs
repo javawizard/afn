@@ -24,10 +24,5 @@ parse_ ('[':xs) = (Sequence (Loop loopcode) subprogram, remainder) where
     (loopcode, loopremainder) = parse_ xs
     (subprogram, remainder) = parse_ loopremainder
 parse_ ('>':xs) = (Sequence Forward subprogram, remainder) where (subprogram, remainder) = parse_ xs
-parse_ ('<':xs) = (Sequence Back subprogram, remainder) where (subprogram, remainder) = parse_ xs
-parse_ ('+':xs) = (Sequence Up subprogram, remainder) where (subprogram, remainder) = parse_ xs
-parse_ ('-':xs) = (Sequence Down subprogram, remainder) where (subprogram, remainder) = parse_ xs
-parse_ ('.':xs) = (Sequence Write subprogram, remainder) where (subprogram, remainder) = parse_ xs
-parse_ (',':xs) = (Sequence Read subprogram, remainder) where (subprogram, remainder) = parse_ xs
 parse_ x = error $ "Invalid char: " ++ x
 
