@@ -386,6 +386,22 @@ So let's see... How would that work?
 
 Well... I would still have an input thread and an output thread. Those already use message passing of a sort, so they can work into this architecture already without needing any changes.
 
+So let me think... We'd have a central thread started up for every Connection object. It would have a queue that listens for messages being sent to the thread, and that thread's sole purpose in life would be to read off messages and do things with them.
+
+Messages would be sent to this thread by any of a number of things happening: a new piece of input data arriving from the remote end of the connection, the connection being lost, a local thread calling a function (which would cause a "call this function" sort of message to be sent off to the remote end, and a passed-in queue to be notified when the response arrives via another message to the connection thread), a local thread adding an observer to or removing an observer from an object or an event, a function whose calling policy is THREAD returning (this would cause a message to be delivered to the connection, which would, in turn, forward the message to the remote end if a disconnect/reconnect had not happened in the mean time), and so on.
+
+I think this would work.
+
+So then messages are tuples (name, ...) where name is the name of the message, which for now would just be a string although I might change it to be an instance of Singleton in the future.
+
+Hm... How does this work in with attempting to connect to the server?
+
+Maybe we spawn a thread to connect to the server, and when it succeeds, fails, or times out, it sends a message back to us.
+
+Ok, this is getting really complicated really fast.
+
+Let me go look at how connections are implemented right now and see why all this complication was necessary...
+
 
 
 
