@@ -402,6 +402,8 @@ Ok, this is getting really complicated really fast.
 
 Let me go look at how connections are implemented right now and see why all this complication was necessary...
 
+Ok, I think we can accomplish this all using locks. So when we're attempting to connect, we don't lock on the connection's lock until after we've managed to successfully connect. Then we start the input thread and the output thread but don't actually store them in the connection's fields yet. Then we sen
+
 
 
 

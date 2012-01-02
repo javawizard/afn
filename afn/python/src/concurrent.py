@@ -51,6 +51,29 @@ def synchronized(lock=None, function=None):
     wrapper.__doc__ = format_argspec(function) + "\n\n" + getdoc(function)
     return wrapper
 
+def synchronized_on(attribute=None):
+    """
+    Similar to the synchronized function, but must be used as a decorator thus:
+    
+    @synchronized_on("some_attribute")
+    def some_method(self, ...):
+        ...
+    
+    Namely, the method being decorated must be just that: a method inside of a
+    class. This will cause the method to be synchronized on the lock (or any
+    other sort of context manager) located at self.some_attribute, which allows
+    for methods to be synchronized on per-instance locks.
+    """
+    def decorator(function):
+        def wrapper(self, *args, **kwargs):
+            with getattr(self, attribute):
+                return function(self, *args, **kwargs)
+        update_wrapper(wrapper, function)
+        wrapper.wrapped = function
+        wrapper.__doc__ = format_argspec(function) + "\n\n" + getdoc(function)
+        return wrapper
+    return decorator
+
 def format_argspec(function):
     argspec = inspect.getargspec(function)
     args = inspect.formatargspec(*argspec)

@@ -221,8 +221,16 @@ class Bus(object):
             self.discoverers.remove(discoverer)
             discoverer.shutdown()
     
+    def set_info_builtins(self, host, port, service_id, info):
+        new_info = info.copy()
+        new_info["host"] = host
+        new_info["port"] = port
+        new_info["service"] = service_id
+        return new_info
+    
     def discover(self, discoverer, host, port, service_id, info):
         # print "Discovered:", (host, port, service_id, info)
+        info = self.set_info_builtins(host, port, service_id, info)
         # Check to see if the specified service has been discovered yet, and if
         # it hasn't, create an entry for it
         is_new_service = False
@@ -287,25 +295,58 @@ class Bus(object):
                 self.notify_service_listeners(service_id, host, port, discovered_service.info, UNDISCOVERED)
     
     def add_service_listener(self, listener, info_filter=None, initial=False):
+        """
+        Listens for changes in services that are available. listener is a
+        function listener(service_id, host, port, info, event) which will be
+        called whenever a service becomes available, a service disappears, or
+        the host/port that should be used to access a particular service
+        changes. service_id is the id of the service; host/port is the host/port
+        at which the service can be found, info is the service's info object,
+        and event is one of DISCOVERED, UNDISCOVERED, or CHANGED.
+        
+        If info_filter is a dictionary, only services with info objects matching
+        that particular filter (as per the filter_matches function) will cause
+        the listener to be called. If info_filter is None (the default), or the
+        empty dictionary (since all info objects match the empty dictionary),
+        the listener will be called for all services.
+        
+        If initial is True, the listener will be immediately (and synchronously)
+        called once for each service that already exists, passing in DISCOVERED
+        as the event. Otherwise, the listener will only be called once the next
+        
+        """
         with self.lock:
+            # Add the listener to our list of listeners
             self.service_listeners.append((info_filter, listener))
+            # Check to see if we're supposed to notify the listener about all
+            # matching services that already exist
             if initial:
+                # Scan all of the services
                 for service_id, discovered_service in self.discovered_services.items():
                     if filter_matches(discovered_service.info, info_filter):
+                        # If this service matches, notify the listener about it
                         host, port = discovered_service.locations.keys()[0]
                         with print_exceptions:
                             listener(service_id, host, port, discovered_service.info, DISCOVERED)
     
     def remove_service_listener(self, listener, initial=False):
         with self.lock:
+            # Scan the list of listeners and remove this one. Inefficient, it's
+            # true, and I hope to make it more efficient later on.
             for index, (info_filter, l) in enumerate(self.service_listeners[:]):
+                # See if we've hit the right listener
                 if l == listener:
+                    # If we have, remove the listener
                     del self.service_listeners[index]
                     if initial:
+                        # Scan through the list of services
                         for service_id, discovered_service in self.discovered_services.items():
                             if filter_matches(discovered_service.info, info_filter):
+                                # This service matched, so we notify this
+                                # listener that the service was removed
                                 with print_exceptions:
                                     listener(service_id, None, None, None, UNDISCOVERED)
+                    # We've found our listener and deleted it, so we return now
                     return
     
     def notify_service_listeners(self, service_id, host, port, info, event):
