@@ -27,15 +27,16 @@ class RemoteConnection(object):
         self.queue = Queue()
         self.service = None
         net.OutputThread(socket, self.queue.get).start()
-        net.InputThread(socket, self.received, self.cleanup).start()
+        net.InputThread(socket, self.received).start()
     
     def received(self, message):
+        if message is None: # Connection lost
+            self.cleanup()
+            return
         try:
             if self.service is None:
-                if message["_command"] not in ["bind", "introspect_service"]:
-                    raise Exception("First message must be bind or introspect_service")
-                if message["_command"] == "introspect_service":
-                    raise Exception("TODO: Implement the introspect_service command")
+                if message["_command"] != "bind":
+                    raise Exception("First message must be bind")
                 name = message["service"]
                 with self.bus.lock:
                     service = self.bus.local_services.get(name)
@@ -44,7 +45,11 @@ class RemoteConnection(object):
                         self.close()
                         return
                     self.service = service
-                    self.send(messaging.create_response(message))
+                    # The response includes the service since specifying None
+                    # as the service causes the introspection service to be
+                    # bound to, and this lets the client know what the
+                    # introspection service's service id currently is
+                    self.send(messaging.create_response(message, service=name))
                     return
             processor = getattr(self, "process_" + message["_command"], None)
             if not processor:

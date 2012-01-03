@@ -3,7 +3,7 @@ from select import select
 from Queue import Queue, Empty
 from autobus2 import exceptions
 from socket import socket as Socket, SHUT_RDWR, error as SocketError
-from threading import Thread
+from threading import Thread, RLock, Condition
 from traceback import print_exc
 import json
 from utils import no_exceptions
@@ -79,14 +79,31 @@ class InputThread(Thread):
     """
     A thread that reads messages from a socket and calls a user-defined
     function with the received messages. When the connection dies, it closes
-    the socket and calls another user-defined function.
+    the socket and calls the function with None as its argument.
+    
+    The user-defined message function can be changed at any time by assigning
+    to the function property of any given input thread. If None is assigned to
+    it (or specified when constructing the input thread), the input thread will
+    block after it receives a message until a non-None function is assigned to
+    the function property.
     """
-    def __init__(self, socket, message_function, close_function=None):
+    def __init__(self, socket, function):
         Thread.__init__(self)
         self.socket = socket
         self.generator = linesplit(socket)
-        self.message_function = message_function
-        self.close_function = close_function
+        self.lock = RLock()
+        self.condition = Condition(self.lock)
+        self.function = function
+    
+    @property
+    def function(self):
+        return self._function
+    
+    @function.setter
+    def function(self, new_function):
+        with self.lock:
+            self._function = new_function
+            self.condition.notify_all()
     
     def run(self):
         try:
@@ -95,7 +112,8 @@ class InputThread(Thread):
 #                print "Message received, decoding..."
                 message = json.loads(message_data)
 #                print "Dispatching received message..."
-                self.message_function(message)
+                f = self.get_function_or_wait()
+                f(message)
         except EOFError:
             pass
         except StopIteration:
@@ -106,10 +124,16 @@ class InputThread(Thread):
             print_exc()
 #        print "Input thread finished, closing socket..."
         self.socket.close()
-        if self.close_function:
-#            print "Invoking close_function..."
-            self.close_function()
-#        print "Input thread has shut down."
+        f = self.get_function_or_wait()
+        f(None)
+    
+    def get_function_or_wait(self):
+        with self.lock:
+            f = self.function
+            while f is None:
+                self.condition.wait()
+                f = self.function
+        return f
 
 
 class OutputThread(Thread):

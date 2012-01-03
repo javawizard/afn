@@ -402,7 +402,19 @@ Ok, this is getting really complicated really fast.
 
 Let me go look at how connections are implemented right now and see why all this complication was necessary...
 
-Ok, I think we can accomplish this all using locks. So when we're attempting to connect, we don't lock on the connection's lock until after we've managed to successfully connect. Then we start the input thread and the output thread but don't actually store them in the connection's fields yet. Then we sen
+Ok, I think we can accomplish this all using locks. So when we're attempting to connect, we don't lock on the connection's lock until after we've managed to successfully connect. Then we start the input thread and the output thread but don't actually store them in the connection's fields yet. Then we send a thing to the output thread to send to the server telling it the service we want to bind to. We've stuck a... hm
+
+This is going to require the ability to swap out the function that an input thread calls when it has data available, so that we can set it to a function that goes and stuffs the first thing received back into a queue, since that'll be the response to our request to bind to the service... And then that function would set it to None which would cause the input thread to block up until the other code finishes initializing and sets the normal receive function into it...
+
+So let's imagine the input thread has a lock and a condition associated with said lock. The input thread reads a packet, then acquires the lock and checks to see if there's a function available. If there's not, it waits on the condition, then checks again to see if the function's available, and so on until a function is available. Then it unlocks the lock, calls that function with the received packet, then receives another packet from the network and starts over again.
+
+Then, in the thing where we set the function to be called, we lock on the lock, then set the function to the function passed in, then notify the condition, then unlock.
+
+So under normal conditions, we go through, lock, see that the function's avilable, get our local copy of it, unlock, and call it.
+
+Now let's say in the process of calling the function, or while we're waiting for a new packet to arrive, the function gets set to None. The condition is notified, which does nothing since the input thread isn't waiting on it. Then the input thread receives another packet, acquires the lock, and checks to see if a function is available. It isn't, so it waits on the condition. While it's waiting, something else goes and sets the function to have an actual value, which notifies the condition. The input thread wakes up, sees that there's a value, and uses it.
+
+I've gone through this over and over in my head and I can't see any race conditions, so this looks like it'll work.
 
 
 

@@ -8,6 +8,7 @@ import time
 from utils import no_exceptions, print_exceptions
 from afn.utils import singleton
 import __builtin__
+from concurrent import synchronized_on
 try:
     from collections import OrderedDict as _OrderedDict
 except ImportError:
@@ -87,6 +88,7 @@ class Bus(object):
                 print "Bus server died"
                 return
     
+    @synchronized_on("lock")
     def create_service(self, info, active=True):
         """
         Creates a new service on this bus. info is the info object to use for
@@ -97,24 +99,23 @@ class Bus(object):
         such as create_function that allow functions, events, objects, and such
         to be created on the service.
         """
-        with self.lock:
-            # Create a new id for the service
-            service_id = messaging.create_service_id()
-            # Create the actual service object
-            service = local.LocalService(self, service_id, info)
-            # Then store the service in our services map
-            self.local_services[service_id] = service
-            # If the service is to be immediately activated it, then we should
-            # do so
-            if active:
-                service.activate()
-            return service
+        # Create a new id for the service
+        service_id = messaging.create_service_id()
+        # Create the actual service object
+        service = local.LocalService(self, service_id, info)
+        # Then store the service in our services map
+        self.local_services[service_id] = service
+        # If the service is to be immediately activated it, then we should
+        # do so
+        if active:
+            service.activate()
+        return service
     
+    @synchronized_on("lock")
     def setup_inbound_socket(self, socket):
-        with self.lock:
-            # Create a connection and then add it to our list of connections
-            connection = local.RemoteConnection(self, socket)
-            self.bound_connections.add(connection)
+        # Create a connection and then add it to our list of connections
+        connection = local.RemoteConnection(self, socket)
+        self.bound_connections.add(connection)
     
     def connect(self, host, port, service_id, timeout=10, open_listener=None, close_listener=None):
         """
@@ -145,29 +146,29 @@ class Bus(object):
         """
         return remote.Connection(self, host, port, service_id, timeout, open_listener, close_listener)
     
+    @synchronized_on("lock")
     def close(self):
-        with self.lock:
-            self.closed = True
-            # First we shut down all of our discoverers
-            for discoverer in self.discoverers:
-                discoverer.shutdown()
-            # Then we need to unpublish all of our services and shut down all
-            # of our publishers
-            for publisher in self.publishers:
-                for service in self.local_services.values():
-                    if service.active:
-                        publisher.remove(service)
-                publisher.shutdown()
-            # Then we shut down the server socket
-            net.shutdown(self.server)
-            # Then we close all of the connections currently connected to us
-            for c in self.bound_connections:
-                with no_exceptions:
-                    c.close()
-            # And that's it!
-            # TODO: In the future, store some sort of closed field so that if
-            # someone tries to double-close us, we can tell and just ignore it
-            # the second time
+        self.closed = True
+        # First we shut down all of our discoverers
+        for discoverer in self.discoverers:
+            discoverer.shutdown()
+        # Then we need to unpublish all of our services and shut down all
+        # of our publishers
+        for publisher in self.publishers:
+            for service in self.local_services.values():
+                if service.active:
+                    publisher.remove(service)
+            publisher.shutdown()
+        # Then we shut down the server socket
+        net.shutdown(self.server)
+        # Then we close all of the connections currently connected to us
+        for c in self.bound_connections:
+            with no_exceptions:
+                c.close()
+        # And that's it!
+        # TODO: In the future, store some sort of closed field so that if
+        # someone tries to double-close us, we can tell and just ignore it
+        # the second time
     
     def __enter__(self):
         # Increment the number of context entrances
@@ -181,45 +182,45 @@ class Bus(object):
         if self.context_enters == 0:
             self.close()
     
+    @synchronized_on("lock")
     def install_publisher(self, publisher):
-        with self.lock:
-            # Add the publisher to our list and start it up
-            self.publishers.add(publisher)
-            publisher.startup(self)
-            # Then register all of our local services with the publisher
-            for service in self.local_services.values():
-                if service.active:
-                    publisher.add(service)
+        # Add the publisher to our list and start it up
+        self.publishers.add(publisher)
+        publisher.startup(self)
+        # Then register all of our local services with the publisher
+        for service in self.local_services.values():
+            if service.active:
+                publisher.add(service)
     
+    @synchronized_on("lock")
     def remove_publisher(self, publisher):
-        with self.lock:
-            # Check to make sure that the publisher is already installed
-            if publisher not in self.publishers:
-                raise __builtin__.ValueError("The specified publisher is not currently installed on this bus.")
-            # Remove the publisher from our list of publishers
-            self.publishers.remove(publisher)
-            # Unpublish all of our services from the publisher
-            for service in self.local_services.values():
-                if service.active:
-                    publisher.remove(service)
-            # Then we shut down the publisher
-            publisher.shutdown()
+        # Check to make sure that the publisher is already installed
+        if publisher not in self.publishers:
+            raise __builtin__.ValueError("The specified publisher is not currently installed on this bus.")
+        # Remove the publisher from our list of publishers
+        self.publishers.remove(publisher)
+        # Unpublish all of our services from the publisher
+        for service in self.local_services.values():
+            if service.active:
+                publisher.remove(service)
+        # Then we shut down the publisher
+        publisher.shutdown()
     
+    @synchronized_on("lock")
     def install_discoverer(self, discoverer):
-        with self.lock:
-            # Add the discoverer to our list of discoverers, then start it up
-            self.discoverers.add(discoverer)
-            discoverer.startup(self)
+        # Add the discoverer to our list of discoverers, then start it up
+        self.discoverers.add(discoverer)
+        discoverer.startup(self)
     
+    @synchronized_on("lock")
     def remove_discoverer(self, discoverer):
-        with self.lock:
-            # Check to make sure that the discoverer has already been installed
-            if discoverer not in self.discoverers:
-                raise __builtin__.ValueError("The specified discoverer is not currently installed on this bus.")
-            # Remove the discoverer from our list of discoverers, then shut it
-            # down
-            self.discoverers.remove(discoverer)
-            discoverer.shutdown()
+        # Check to make sure that the discoverer has already been installed
+        if discoverer not in self.discoverers:
+            raise __builtin__.ValueError("The specified discoverer is not currently installed on this bus.")
+        # Remove the discoverer from our list of discoverers, then shut it
+        # down
+        self.discoverers.remove(discoverer)
+        discoverer.shutdown()
     
     def set_info_builtins(self, host, port, service_id, info):
         new_info = info.copy()
@@ -228,6 +229,7 @@ class Bus(object):
         new_info["service"] = service_id
         return new_info
     
+    @synchronized_on("lock")
     def discover(self, discoverer, host, port, service_id, info):
         # print "Discovered:", (host, port, service_id, info)
         info = self.set_info_builtins(host, port, service_id, info)
@@ -256,6 +258,7 @@ class Bus(object):
         if is_new_service:
             self.notify_service_listeners(service_id, host, port, info, DISCOVERED) 
     
+    @synchronized_on("lock")
     def undiscover(self, discoverer, host, port, service_id):
         # print "Undiscovered:", (host, port, service_id)
         # Check to see if the specified service has been discovered.
@@ -294,6 +297,7 @@ class Bus(object):
                 del self.discovered_services[service_id]
                 self.notify_service_listeners(service_id, host, port, discovered_service.info, UNDISCOVERED)
     
+    @synchronized_on("lock")
     def add_service_listener(self, listener, info_filter=None, initial=False):
         """
         Listens for changes in services that are available. listener is a
@@ -315,39 +319,38 @@ class Bus(object):
         as the event. Otherwise, the listener will only be called once the next
         
         """
-        with self.lock:
-            # Add the listener to our list of listeners
-            self.service_listeners.append((info_filter, listener))
-            # Check to see if we're supposed to notify the listener about all
-            # matching services that already exist
-            if initial:
-                # Scan all of the services
-                for service_id, discovered_service in self.discovered_services.items():
-                    if filter_matches(discovered_service.info, info_filter):
-                        # If this service matches, notify the listener about it
-                        host, port = discovered_service.locations.keys()[0]
-                        with print_exceptions:
-                            listener(service_id, host, port, discovered_service.info, DISCOVERED)
+        # Add the listener to our list of listeners
+        self.service_listeners.append((info_filter, listener))
+        # Check to see if we're supposed to notify the listener about all
+        # matching services that already exist
+        if initial:
+            # Scan all of the services
+            for service_id, discovered_service in self.discovered_services.items():
+                if filter_matches(discovered_service.info, info_filter):
+                    # If this service matches, notify the listener about it
+                    host, port = discovered_service.locations.keys()[0]
+                    with print_exceptions:
+                        listener(service_id, host, port, discovered_service.info, DISCOVERED)
     
+    @synchronized_on("lock")
     def remove_service_listener(self, listener, initial=False):
-        with self.lock:
-            # Scan the list of listeners and remove this one. Inefficient, it's
-            # true, and I hope to make it more efficient later on.
-            for index, (info_filter, l) in enumerate(self.service_listeners[:]):
-                # See if we've hit the right listener
-                if l == listener:
-                    # If we have, remove the listener
-                    del self.service_listeners[index]
-                    if initial:
-                        # Scan through the list of services
-                        for service_id, discovered_service in self.discovered_services.items():
-                            if filter_matches(discovered_service.info, info_filter):
-                                # This service matched, so we notify this
-                                # listener that the service was removed
-                                with print_exceptions:
-                                    listener(service_id, None, None, None, UNDISCOVERED)
-                    # We've found our listener and deleted it, so we return now
-                    return
+        # Scan the list of listeners and remove this one. Inefficient, it's
+        # true, and I hope to make it more efficient later on.
+        for index, (info_filter, l) in enumerate(self.service_listeners[:]):
+            # See if we've hit the right listener
+            if l == listener:
+                # If we have, remove the listener
+                del self.service_listeners[index]
+                if initial:
+                    # Scan through the list of services
+                    for service_id, discovered_service in self.discovered_services.items():
+                        if filter_matches(discovered_service.info, info_filter):
+                            # This service matched, so we notify this
+                            # listener that the service was removed
+                            with print_exceptions:
+                                listener(service_id, None, None, None, UNDISCOVERED)
+                # We've found our listener and deleted it, so we return now
+                return
     
     def notify_service_listeners(self, service_id, host, port, info, event):
         for filter, listener in self.service_listeners:
