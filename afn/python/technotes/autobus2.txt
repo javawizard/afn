@@ -418,6 +418,16 @@ I've gone through this over and over in my head and I can't see any race conditi
 
 
 
+Ok so I've done that. Now let's get back to connections...
+
+So once we've been able to make a socket connection, we start up an input thread and an output thread. Then we send a bind message to the output thread, then set the input thread's function to a function that stuffs the result in a queue and sets the input thread's function to None so that only one received packet will be stuffed into the queue. Then we go wait with a timeout of, say, 10 seconds on the queue for the response. If the response was a failure (or None, which would happen if the connection was lost before the response arrived, or if the query on the queue timed out), we go set the input thread's function to a function that discards everything so that the input thread will eventually terminate, close the socket (and the output thread), and act as if the connection attempt completely failed (because it did) and increase the amount of time we wait for the next connection attempt.
+
+If, on the other hand, the bind succeeds, the connection thread then locks on the connection, sends all of the initial messages (object and event watches and such), and sets the output thread and the socket and stuff into the connection object, and then sets the input thread's function to be whatever Connection's function for dealing with inbound messages is. The connection thread then unlocks the connection's lock and dies.
+
+Ok, I think that'll work. Now to implement it...
+
+
+
 
 
 
