@@ -31,3 +31,7 @@ def create_response(command_or_id, **kwargs):
               else command_or_id["_id"], "_type": 2}
     result.update(kwargs)
     return result
+
+
+def create_error(command_or_id, reason):
+    return create_response(command_or_id, _error={"text": reason})
