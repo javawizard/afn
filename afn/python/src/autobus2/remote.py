@@ -125,8 +125,9 @@ class Connection(object):
         with self.lock:
             if not self.is_alive: # Already closed
                 return
-            self.queue.put(None)
-            net.shutdown(self.socket)
+            if self.socket:
+                self.queue.put(None)
+                net.shutdown(self.socket)
             self.is_connected = False
             self.is_alive = False
     
