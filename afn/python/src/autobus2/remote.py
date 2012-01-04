@@ -21,7 +21,8 @@ class Connection(object):
     on the remote service, listening for events, and watching objects.
     
     Instances of this class should not be created directly; instead, a new Bus
-    object should be created, and its connect function called.
+    object should be created, and its connect function called. The connect
+    function will then return an instance of this class.
     """
     def __init__(self, bus, host, port, service_id, timeout, open_listener, close_listener):
         """
@@ -63,8 +64,24 @@ class Connection(object):
             except SocketError:
                 time.sleep(delay)
                 continue
-            self.socket = s
-            self.is_connected = True
+            queue = Queue()
+            input_thread = net.InputThread(s, None)
+            input_thread.start()
+            output_thread = net.OutputThread(s, queue.get)
+            output_thread.start()
+            input_queue = Queue()
+            queue.put(messaging.create_command("bind", service=self.service_id))
+            def received(message):
+                input_thread.function = None
+                input_queue.put(message)
+            input_thread.function = received
+            try:
+                bind_response = input_queue.get(timeout=10) # TODO: make timeout configurable
+            except Empty:
+                bind_response = None
+            if bind_response is None 
+            # self.socket = s
+            # self.is_connected = True
             # TODO: finish this up
             return
 
