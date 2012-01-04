@@ -226,6 +226,13 @@ def sendto(socket, data, address):
         socket.sendto(data, address)
 
 
+def ensure_jsonable(value):
+    try:
+        json.dumps(value)
+    except:
+        raise exceptions.InvalidValueException()
+
+
 
 
 

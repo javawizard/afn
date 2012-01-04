@@ -314,11 +314,7 @@ class Function(object):
         will be raised instead.
         """
         # Make sure all the arguments can be converted into JSON correctly
-        for a in args:
-            try:
-                json.dumps(a)
-            except:
-                raise exceptions.InvalidValueException
+        net.ensure_jsonable(args)
         callback = kwargs.get("callback", autobus2.SYNC)
         timeout = kwargs.get("timeout", 30)
         # Create the command to call the function
