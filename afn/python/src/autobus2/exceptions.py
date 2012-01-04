@@ -36,3 +36,7 @@ class NullMessageException(AutobusException):
     pass
 
 
+class QueryCanceledException(AutobusException):
+    pass
+
+

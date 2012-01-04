@@ -139,7 +139,7 @@ class Connection(object):
             self.is_connected = False
             for f in self.query_map.copy().itervalues():
                 with print_exceptions:
-                    f(None)
+                    f(exceptions.ConnectionLostException())
             self.query_map.clear()
             with print_exceptions:
                 if self.close_listener:
@@ -171,6 +171,10 @@ class Connection(object):
         The specified function will be called on the input thread for this
         connection, so it must not block for a significant amount of time; if
         it does, it will freeze up receiving of messages for this connection.
+        
+        This function (send_async) returns message["_id"]. You can later on
+        pass this to cancel_query to cancel this asynchronous command if you
+        want.
         """
         if not message:
             raise exceptions.NullMessageException
@@ -178,39 +182,31 @@ class Connection(object):
             if not self.is_connected:
                 raise exceptions.NotConnectedException
             def wrapper(response):
-                if not response:
-                    callback(exceptions.ConnectionLostException())
-                if response.get("_error", None):
-                    callback(exceptions.CommandErrorException(response["_error"]["text"]))
-                else:
-                    callback(response)
+                self.cancel_query(message["_id"], False)
+                callback(response)
             self.query_map[message["_id"]] = wrapper
             self.send(message)
     
     def query(self, message, timeout=30):
-        if message is None:
-            raise exceptions.NullMessageException
         q = Queue()
-        with self.lock:
-            if not self.is_connected:
-                raise exceptions.NotConnectedException
-            self.query_map[message["_id"]] = q.put
-            self.send(message)
+        self.send_async(message, q.put)
         try:
             response = q.get(timeout=timeout)
-            with Suppress(KeyError):
-                with self.lock:
-                    del self.query_map[message["_id"]]
-            if response is None: # Connection lost while waiting for a response
-                raise exceptions.ConnectionLostException()
-            if response.get("_error", None):
-                raise exceptions.CommandErrorException(response["_error"]["text"])
-            return response
         except Empty: # Timeout while waiting for response
-            with Suppress(KeyError):
-                with self.lock:
-                    del self.query_map[message["_id"]]
+            self.cancel_query(message["_id"], False)
             raise exceptions.TimeoutException()
+        if isinstance(response, Exception):
+            raise response
+        else:
+            return response
+    
+    def cancel_query(self, id, call=True):
+        with self.lock:
+            with Suppress(KeyError): # In case the query has already finished
+                function = self.query_map[id]
+                if call:
+                    function(exceptions.QueryCanceledException())
+                del self.query_map[id]
     
     def received(self, message):
         if message is None:
@@ -219,7 +215,10 @@ class Connection(object):
         if message["_type"] == 2: # response
             f = self.query_map.get(message["_id"], None)
             if f:
-                f(message)
+                if message.get("_error"):
+                    f(exceptions.CommandErrorException(message["_error"]["text"]))
+                else:
+                    f(message)
         if message["_type"] in [1, 3]:
             command = message["_command"]
             # TODO: add things for processing change and fire commands

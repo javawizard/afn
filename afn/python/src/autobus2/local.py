@@ -65,7 +65,7 @@ class RemoteConnection(object):
             self.queue.put(message)
     
     def send_error(self, command_or_id, reason):
-        self.send(messaging.create_response(command_or_id), _error={"text": reason})
+        self.send(messaging.create_error(command_or_id, reason))
 
     def close(self):
         self.queue.put(None)
@@ -154,8 +154,7 @@ class LocalFunction(object):
             result = self.function(*args)
             return messaging.create_response(message, result=result)
         except Exception as e:
-            return messaging.create_response(message, exception={"text":
-                                    "%s: %s" % (type(e).__name__, str(e))})
+            return messaging.create_error(message, "Remote function threw an exception: %s: %s" % (type(e), e))
 
 
 class LocalEvent(object):
