@@ -6,7 +6,7 @@ remote services.
 from Queue import Queue, Empty
 from autobus2 import net, messaging, exceptions
 from utils import Suppress
-from threading import Thread, RLock
+from threading import Thread, RLock, Condition
 import json
 import autobus2
 from utils import print_exceptions
@@ -36,9 +36,10 @@ class Connection(object):
         self.host = host
         self.port = port
         self.service_id = service_id
-        self.queue = Queue()
+        self.queue = None
         self.query_map = {}
         self.lock = RLock()
+        self.connect_condition = Condition(self.lock)
         self.open_listener = open_listener
         self.close_listener = close_listener
         self.is_connected = False
@@ -58,52 +59,100 @@ class Connection(object):
             delay *= delay_increment
             if delay > delay_max:
                 delay = delay_max
+            with self.lock:
+                if not self.is_alive:
+                    return
+            # Try to connect to the remote end
             s = Socket()
             try:
                 s.connect((self.host, self.port))
             except SocketError:
+                # Connection failed; wait the specified delay, then start over
                 time.sleep(delay)
                 continue
+            # Create the queue holding messages to be sent to the remote end
             queue = Queue()
-            input_thread = net.InputThread(s, None)
-            input_thread.start()
-            output_thread = net.OutputThread(s, queue.get)
-            output_thread.start()
+            input_thread, output_thread = net.start_io_threads(s, None, queue.get)
+            # Create the queue that will be used to hold the response to the
+            # initial bind command that we're going to send
             input_queue = Queue()
+            # Send the initial bind command
             queue.put(messaging.create_command("bind", service=self.service_id))
+            # Then register a function waiting to receive the response
             def received(message):
+                # Remove ourselves so that we only receive one message, namely
+                # the bind response
                 input_thread.function = None
+                # Then go stuff the response in the queue
                 input_queue.put(message)
             input_thread.function = received
             try:
                 bind_response = input_queue.get(timeout=10) # TODO: make timeout configurable
             except Empty:
                 bind_response = None
-            if bind_response is None 
-            # self.socket = s
-            # self.is_connected = True
-            # TODO: finish this up
-            return
+            if bind_response is None or bind_response.get("_error") is not None:
+                # An error happened while getting the response, so close the
+                # output thread, then forcibly close the socket, then put an
+                # empty function into the input thread so that it wil die if
+                # any other messages were received, then sleep the amount of
+                # time we're supposed to and continue
+                queue.put(None)
+                net.shutdown(s)
+                input_thread.function = lambda *args: None
+                time.sleep(delay)
+                continue
+            # The connection succeeded and we've bound to the remote service
+            # successfully, so we lock on ourselves and stick everything into
+            # the relevant fields, and send any initial messages (initial
+            # object listeners, event listeners, etc) that we need to.
+            with self.lock:
+                if not self.is_alive:
+                    queue.put(None)
+                    net.shutdown(s)
+                    input_thread.function = lambda *args: None
+                    return
+                self.socket = s
+                self.is_connected = True
+                self.queue = queue
+                input_thread.function = self.received
+                with print_exceptions:
+                    if self.open_listener:
+                        self.open_listener(self)
+                self.connect_condition.notify_all()
+                # FIXME: send initial messages here, once we have any to send
 
     def close(self):
-        self.queue.put(None)
-        net.shutdown(self.socket)
+        with self.lock:
+            if not self.is_alive: # Already closed
+                return
+            self.queue.put(None)
+            net.shutdown(self.socket)
+            self.is_connected = False
+            self.is_alive = False
     
     def cleanup(self):
-        with self.query_lock:
-            self.socket.close()
-            self.queue.put(None)
+        with self.lock:
+            if self.socket:
+                net.shutdown(self.socket)
+                self.queue.put(None)
             self.is_connected = False
             for f in self.query_map.copy().itervalues():
                 with print_exceptions:
                     f(None)
-        with print_exceptions:
-            if self.close_listener:
-                self.close_listener()
+            self.query_map.clear()
+            with print_exceptions:
+                if self.close_listener:
+                    self.close_listener(self)
+            if self.is_alive:
+                Thread(target=self._connect).start()
     
     def send(self, message):
-        if message:
-            self.queue.put(message)
+        with self.lock:
+            if message:
+                if self.is_connected:
+                    self.queue.put(message)
+                else:
+                    raise exceptions.NotConnectedException
     
     def send_async(self, message, callback):
         """
@@ -124,7 +173,7 @@ class Connection(object):
         """
         if not message:
             raise exceptions.NullMessageException
-        with self.query_lock:
+        with self.lock:
             if not self.is_connected:
                 raise exceptions.NotConnectedException
             def wrapper(response):
@@ -135,21 +184,21 @@ class Connection(object):
                 else:
                     callback(response)
             self.query_map[message["_id"]] = wrapper
-        self.send(message)
+            self.send(message)
     
     def query(self, message, timeout=30):
         if message is None:
             raise exceptions.NullMessageException
         q = Queue()
-        with self.query_lock:
+        with self.lock:
             if not self.is_connected:
                 raise exceptions.NotConnectedException
             self.query_map[message["_id"]] = q.put
-        self.send(message)
+            self.send(message)
         try:
             response = q.get(timeout=timeout)
             with Suppress(KeyError):
-                with self.query_lock:
+                with self.lock:
                     del self.query_map[message["_id"]]
             if response is None: # Connection lost while waiting for a response
                 raise exceptions.ConnectionLostException()
@@ -158,11 +207,14 @@ class Connection(object):
             return response
         except Empty: # Timeout while waiting for response
             with Suppress(KeyError):
-                with self.query_lock:
+                with self.lock:
                     del self.query_map[message["_id"]]
             raise exceptions.TimeoutException()
     
     def received(self, message):
+        if message is None:
+            self.cleanup()
+            return
         if message["_type"] == 2: # response
             f = self.query_map.get(message["_id"], None)
             if f:
@@ -183,6 +235,12 @@ class Connection(object):
         self.context_enters -= 1
         if self.context_enters == 0:
             self.close()
+    
+    def wait_for_connect(self, timeout=None):
+        with self.lock:
+            if self.is_connected:
+                return
+            self.connect_condition.wait(timeout)
 
 
 class ConnectionManager(object):
@@ -255,6 +313,7 @@ class Function(object):
         is passed into the callback. If a callback is not used, the exception
         will be raised instead.
         """
+        # Make sure all the arguments can be converted into JSON correctly
         for a in args:
             try:
                 json.dumps(a)
@@ -262,16 +321,20 @@ class Function(object):
                 raise exceptions.InvalidValueException
         callback = kwargs.get("callback", autobus2.SYNC)
         timeout = kwargs.get("timeout", 30)
+        # Create the command to call the function
         command = messaging.create_command("call", name=self.name, args=list(args))
         if callback is autobus2.SYNC:
+            # Synchronous call, so we query for the command
             result = self.connection.query(command, timeout)
             if result.get("exception"):
                 raise exceptions.RemoteUserException(result["exception"]["text"])
             return result["result"]
         elif callback is None:
-            command["_type"] = 3 # Change to a notice
+            # Asynchronous call; send the command as a notice and then return
+            command["_type"] = 3
             self.connection.send(command)
         else:
+            # Call with a callback, so we write a wrapper to handle everything
             def wrapper(response):
                 if isinstance(response, dict): # Normal response
                     if response.get("exception"): # Remote function threw an exception

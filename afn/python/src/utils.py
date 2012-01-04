@@ -32,6 +32,11 @@ no_exceptions = NoExceptions()
 
 
 class Suppress(object):
+    """
+    A context manager that suppresses exceptions of a particular type. Such
+    exceptions, when thrown from within the block using this context manager,
+    will be silently discarded.
+    """
     def __init__(self, suppress_type):
         self.suppress_type = suppress_type
     
@@ -39,7 +44,8 @@ class Suppress(object):
         pass
     
     def __exit__(self, exception_type, *args):
-        return issubclass(type(exception_type), self.suppress_type)
+        if exception_type:
+            return issubclass(type(exception_type), self.suppress_type)
 
 
 class PrintExceptions(object):

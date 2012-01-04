@@ -100,7 +100,7 @@ class LocalService(object):
     The various create_* functions can be called on LocalService instances to
     create functions, events, and objects that are published remotely.
     
-    The fuction activate() can be called for services created by
+    The function activate() can be called for services created by
     bus.create_service(..., active=False). This causes the service to become
     active. Inactive services are hidden from the outside world; this allows
     all of the functions needed for a particular service to be set up before

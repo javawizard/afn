@@ -198,6 +198,14 @@ class OutputThread(Thread):
             pass
 
 
+def start_io_threads(socket, input_function, output_function):
+    input_thread = InputThread(socket, input_function)
+    output_thread = OutputThread(socket, output_function)
+    input_thread.start()
+    output_thread.start()
+    return input_thread, output_thread
+
+
 def shutdown(socket):
     with no_exceptions:
         socket.shutdown(SHUT_RDWR)
