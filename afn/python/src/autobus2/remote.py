@@ -12,6 +12,7 @@ import autobus2
 from utils import print_exceptions
 from traceback import print_exc
 import time
+from concurrent import synchronized_on
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
 
 
@@ -24,7 +25,7 @@ class Connection(object):
     object should be created, and its connect function called. The connect
     function will then return an instance of this class.
     """
-    def __init__(self, bus, host, port, service_id, timeout, open_listener, close_listener):
+    def __init__(self, bus, host, port, service_id, timeout, open_listener, close_listener, lock=None):
         """
         Creates a new connection, given the specified parent bus and socket.
         This constructor sets up everything and then sends an initial message
@@ -38,7 +39,9 @@ class Connection(object):
         self.service_id = service_id
         self.queue = None
         self.query_map = {}
-        self.lock = RLock()
+        if lock is None:
+            lock = RLock()
+        self.lock = lock
         self.connect_condition = Condition(self.lock)
         self.open_listener = open_listener
         self.close_listener = close_listener
@@ -119,6 +122,9 @@ class Connection(object):
                     if self.open_listener:
                         self.open_listener(self)
                 self.connect_condition.notify_all()
+                if self.open_listener:
+                    with print_exceptions:
+                        self.open_listener(self)
                 # FIXME: send initial messages here, once we have any to send
 
     def close(self):
@@ -128,6 +134,7 @@ class Connection(object):
             if self.socket:
                 self.queue.put(None)
                 net.shutdown(self.socket)
+                self.socket = None
             self.is_connected = False
             self.is_alive = False
     
@@ -181,10 +188,7 @@ class Connection(object):
         with self.lock:
             if not self.is_connected:
                 raise exceptions.NotConnectedException
-            def wrapper(response):
-                self.cancel_query(message["_id"], False)
-                callback(response)
-            self.query_map[message["_id"]] = wrapper
+            self.query_map[message["_id"]] = callback
             self.send(message)
     
     def query(self, message, timeout=30):
@@ -205,20 +209,25 @@ class Connection(object):
             with Suppress(KeyError): # In case the query has already finished
                 function = self.query_map[id]
                 if call:
-                    function(exceptions.QueryCanceledException())
+                    with print_exceptions:
+                        function(exceptions.QueryCanceledException())
                 del self.query_map[id]
     
+    @synchronized_on("lock")
     def received(self, message):
-        if message is None:
+        if message is None: # The input thread calls this function with None as
+            # the argument when the socket closes
             self.cleanup()
             return
         if message["_type"] == 2: # response
             f = self.query_map.get(message["_id"], None)
             if f:
-                if message.get("_error"):
-                    f(exceptions.CommandErrorException(message["_error"]["text"]))
-                else:
-                    f(message)
+                del self.query_map[f]
+                with print_exceptions:
+                    if message.get("_error"):
+                        f(exceptions.CommandErrorException(message["_error"]["text"]))
+                    else:
+                        f(message)
         if message["_type"] in [1, 3]:
             command = message["_command"]
             # TODO: add things for processing change and fire commands
