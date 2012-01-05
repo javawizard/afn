@@ -1,0 +1,5 @@
+#!/bin/bash
+
+git push phenoxydine master
+git push spiro master
+git push aster master
