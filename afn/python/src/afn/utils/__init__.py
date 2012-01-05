@@ -11,6 +11,11 @@ from threading import Thread
 from functools import update_wrapper
 
 def slicer(length, start=None, stop=None, step=None):
+    """
+    A generator that yields the indexes (in the correct order) that the
+    specified Python list slice, evaluated over a sequence of the specified
+    length, would produce.
+    """
     start, stop, step = slice(start, stop, step).indices(length)
     if(step > 0):
         while start < stop:
@@ -59,6 +64,11 @@ def cast(instance, *types):
 
 
 class NoExceptions(object):
+    """
+    A with-statement context manager that suppresses and silently discards all
+    exceptions thrown from within it. You'll usually want to use the single
+    instance of this class, afn.utils.no_exceptions.
+    """
     def __enter__(self):
         pass
     
@@ -86,6 +96,10 @@ class Suppress(object):
 
 
 class PrintExceptions(object):
+    """
+    Similar to NoExceptions and no_exceptions, but prints (with
+    traceback.print_exc) any exceptions that it suppresses.
+    """
     def __enter__(self):
         pass
     
