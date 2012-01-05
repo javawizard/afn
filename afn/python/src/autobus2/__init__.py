@@ -1,3 +1,62 @@
+"""
+Autobus is a decentralized RPC system and service discovery system. You might
+think of it as a mix of Bonjour and D-Bus, with a bit of JSON-RPC thrown in for
+good measure.
+
+With Autobus, various programs on a single computer or spread out over a
+network can create, publish, and find each other's services. Services are
+simply collections of functions that can be called, events that can be listened
+for, and objects whose values can be watched. (Other types of things in
+addition to those three are planned for the future.)
+
+You're probably still a bit confused by what Autobus exactly does, so let's get
+into some examples. Let's start off with the venerable Hello, World example:
+
+# server.py
+from autobus2 import Bus, wait_for_interrupt
+with Bus() as bus:
+    service = bus.create_service({"type": "autobus.examples.hello_world"})
+    def hi(name):
+        print "Saying hi to " + name
+        return "Hello, " + name + "! How are you?"
+    service.create_function("hi", hi)
+    service.activate()
+    wait_for_interrupt() # Keep running until someone hits Ctrl+C
+
+# client.py
+from autobus2 import Bus
+with Bus() as bus:
+    with bus.get_proxy({"type": "autobus.examples.hello_world"}) as proxy:
+        proxy.wait_for_bind() # Wait until it connects to the remote service
+        print proxy.functions.hi("world")
+
+Run server.py first, then run client.py. You'll see the server print out
+"Saying hi to world" and the client print "Hello, world! How are you?". Try
+running client.py first; it'll sit there waiting until you start up server.py,
+at which point it will happily print out its greetings. Now try running
+server.py on a completely different machine on the same local network; both
+machines (one running server.py and the other running client.py) happily print
+out their salutations, even though you didn't instruct, for example, client.py
+which host on your network was running server.py.
+
+So how did the client find out about the server? That's the beauty of Autobus;
+it includes service discovery built in. Notice in the client, when we call
+bus.get_proxy (which, by the way, asks Autobus to get us an object that knows
+how to find other services on the network; we'll call these service-finding
+things proxies from now on), we pass it a dictionary. Notice also that when we
+call bus.create_service in the server, we pass it the same dictionary.
+
+That's how the client's finding the server; it searches the network for another
+Autobus service whose dictionary (we call this the info dictionary, or the
+info object, by the way) contains the keys specified in the call to get_proxy
+with the values specified. (Any service containing /at least/ those keys will
+match, so, for example, passing {} to bus.get_proxy would cause it to choose
+any old Autobus service on the network at random)
+
+TODO: finish this up, and go into more detail about other things like events
+and objects and multiple service proxies and individual connections and
+discoverers and publishers and such. 
+"""
 
 from autobus2 import net, discovery, local, remote, exceptions, messaging
 from threading import Thread, RLock
@@ -105,7 +164,7 @@ class Bus(object):
                 return
     
     @synchronized_on("lock")
-    def create_service(self, info, active=True):
+    def create_service(self, info, active=False):
         """
         Creates a new service on this bus. info is the info object to use for
         this service. active is True to publish this service immediately, False
