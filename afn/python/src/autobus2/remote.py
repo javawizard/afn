@@ -321,10 +321,7 @@ class Function(object):
         command = messaging.create_command("call", name=self.name, args=list(args))
         if callback is autobus2.SYNC:
             # Synchronous call, so we query for the command
-            result = self.connection.query(command, timeout)
-            if result.get("exception"):
-                raise exceptions.RemoteUserException(result["exception"]["text"])
-            return result["result"]
+            return self.connection.query(command, timeout)["result"]
         elif callback is None:
             # Asynchronous call; send the command as a notice and then return
             command["_type"] = 3
@@ -333,10 +330,7 @@ class Function(object):
             # Call with a callback, so we write a wrapper to handle everything
             def wrapper(response):
                 if isinstance(response, dict): # Normal response
-                    if response.get("exception"): # Remote function threw an exception
-                        callback(exceptions.RemoteUserException(result["exception"]["text"]))
-                    else: # Remote function returned normally
-                        callback(response["result"])
+                    callback(response["result"])
                 else: # Some other exception while processing
                     callback(response)
             self.connection.send_async(command, wrapper)
