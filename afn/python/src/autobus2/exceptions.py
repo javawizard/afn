@@ -40,3 +40,7 @@ class QueryCanceledException(AutobusException):
     pass
 
 
+class NoMatchingServiceException(AutobusException):
+    pass
+
+

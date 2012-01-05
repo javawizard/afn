@@ -9,6 +9,7 @@ from utils import no_exceptions, print_exceptions
 from afn.utils import singleton
 import __builtin__
 from concurrent import synchronized_on
+from afn.utils import field
 try:
     from collections import OrderedDict as _OrderedDict
 except ImportError:
@@ -40,6 +41,21 @@ def filter_matches(info, filter):
 
 
 class DiscoveredService(object):
+    @field
+    def locations(self):
+        """
+        An ordered dictionary containing the locations at which this service
+        is available. The keys are (host, port) tuples representing the
+        locations and the values are lists of the Discoverer instances that
+        discovered those particular locations.
+        """
+    
+    @field
+    def info(self):
+        """
+        The info object for this service.
+        """
+    
     def __init__(self, info):
         self.locations = _OrderedDict()
         self.info = info
@@ -117,7 +133,7 @@ class Bus(object):
         connection = local.RemoteConnection(self, socket)
         self.bound_connections.add(connection)
     
-    def connect(self, host, port, service_id, timeout=10, open_listener=None, close_listener=None):
+    def connect(self, host, port, service_id, timeout=10, open_listener=None, close_listener=None, lock=None):
         """
         Opens a connection to the specified service on the specified host/port.
         
@@ -144,7 +160,15 @@ class Bus(object):
         specified connection in order to effectively disable the auto-reconnect
         feature of connections.
         """
-        return remote.Connection(self, host, port, service_id, timeout, open_listener, close_listener)
+        return remote.Connection(self, host, port, service_id, timeout, open_listener, close_listener, lock)
+    
+    def connect_to(self, info_filter, timeout=10, open_listener=None, close_listener=None, lock=None):
+        with self.lock:
+            for service_id, d in self.discovered_services.items():
+                if filter_matches(d.info, info_filter):
+                    host, port = d.locations.keys()[0]
+                    return self.connect(host, port, service_id, timeout, open_listener, close_listener, lock)
+            raise exceptions.NoMatchingServiceException()
     
     @synchronized_on("lock")
     def close(self):

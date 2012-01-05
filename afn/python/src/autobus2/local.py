@@ -90,6 +90,9 @@ class RemoteConnection(object):
         else:
             self.send(messaging.create_response(message, result=None))
             Thread(target=functools.partial(function.call, message, args)).start()
+    
+    def process_ping(self, message):
+        self.send(messaging.create_response(message))
 
 
 class LocalService(object):

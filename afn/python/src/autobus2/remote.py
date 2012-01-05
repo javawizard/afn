@@ -5,15 +5,15 @@ remote services.
 
 from Queue import Queue, Empty
 from autobus2 import net, messaging, exceptions
-from utils import Suppress
+from utils import Suppress, print_exceptions
 from threading import Thread, RLock, Condition
 import json
 import autobus2
-from utils import print_exceptions
 from traceback import print_exc
 import time
 from concurrent import synchronized_on
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
+from afn.utils import full_name
 
 
 class Connection(object):
@@ -52,7 +52,7 @@ class Connection(object):
         # We query here so that an invalid service id will cause an exception
         # to be raised while constructing the service
         # self.query(messaging.create_command("bind", False, service=service_id), timeout=10)
-        Thread(target=self._connect).start()
+        Thread(name="autobus-initial-connect-thread", target=self._connect).start()
     
     def _connect(self):
         delay = 0.1
@@ -126,6 +126,7 @@ class Connection(object):
                     with print_exceptions:
                         self.open_listener(self)
                 # FIXME: send initial messages here, once we have any to send
+            return
 
     def close(self):
         with self.lock:
@@ -152,7 +153,7 @@ class Connection(object):
                 if self.close_listener:
                     self.close_listener(self)
             if self.is_alive:
-                Thread(target=self._connect).start()
+                Thread(name="autobus-reconnect-thread", target=self._connect).start()
     
     def send(self, message):
         with self.lock:
@@ -222,7 +223,7 @@ class Connection(object):
         if message["_type"] == 2: # response
             f = self.query_map.get(message["_id"], None)
             if f:
-                del self.query_map[f]
+                del self.query_map[message["_id"]]
                 with print_exceptions:
                     if message.get("_error"):
                         f(exceptions.CommandErrorException(message["_error"]["text"]))
@@ -244,6 +245,13 @@ class Connection(object):
         self.context_enters -= 1
         if self.context_enters == 0:
             self.close()
+    
+    def __str__(self):
+        return "<%s to %s:%s service_id=%s is_connected=%s is_alive=%s>" % (
+                full_name(self), self.host, self.port, self.service_id,
+                self.is_connected, self.is_alive)
+    
+    __repr__ = __str__
 
 
 class ConnectionManager(object):
@@ -334,7 +342,11 @@ class Function(object):
                 else: # Exception while processing
                     callback(response)
             self.connection.send_async(command, wrapper)
-            
+    
+    def __str__(self):
+        return "<%s %s from %s>" % (full_name(self), self.name, self.connection)
+    
+    __repr__ = __str__
 
 
 
