@@ -318,23 +318,20 @@ class Function(object):
         """
         # Make sure all the arguments can be converted into JSON correctly
         net.ensure_jsonable(args)
-        callback = kwargs.get("callback", autobus2.SYNC)
-        timeout = kwargs.get("timeout", 30)
+        callback, timeout = kwargs.get("callback", autobus2.SYNC), kwargs.get("timeout", 30)
         # Create the command to call the function
         command = messaging.create_command("call", name=self.name, args=list(args))
-        if callback is autobus2.SYNC:
-            # Synchronous call, so we query for the command
+        if callback is autobus2.SYNC: # Synchronous call, so we query for the
+            # command
             return self.connection.query(command, timeout)["result"]
-        elif callback is None:
-            # Asynchronous call; send the command as a notice and then return
-            command["_type"] = 3
-            self.connection.send(command)
-        else:
-            # Call with a callback, so we write a wrapper to handle everything
+        elif callback is None:  # Asynchronous call; send the command as a
+            # notice and then return
+            self.connection.send(messaging.convert_to_notice(command))
+        else: # Call with a callback, so we write a wrapper to handle everything
             def wrapper(response):
                 if isinstance(response, dict): # Normal response
                     callback(response["result"])
-                else: # Some other exception while processing
+                else: # Exception while processing
                     callback(response)
             self.connection.send_async(command, wrapper)
             

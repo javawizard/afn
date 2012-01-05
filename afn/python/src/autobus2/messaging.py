@@ -35,3 +35,15 @@ def create_response(command_or_id, **kwargs):
 
 def create_error(command_or_id, reason):
     return create_response(command_or_id, _error={"text": reason})
+
+
+def convert_to_notice(command):
+    command["_type"] = 3
+    return command
+
+
+
+
+
+
+
