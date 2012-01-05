@@ -5,7 +5,7 @@ remote services.
 
 from Queue import Queue, Empty
 from autobus2 import net, messaging, exceptions
-from utils import Suppress, print_exceptions
+from utils import Suppress, print_exceptions, Consume
 from threading import Thread, RLock, Condition
 import json
 import autobus2
@@ -163,7 +163,7 @@ class Connection(object):
                 else:
                     raise exceptions.NotConnectedException
     
-    def send_async(self, message, callback):
+    def send_async(self, message, callback, safe=False):
         """
         Sends the specified message. The specified callback will be called with
         the response.
@@ -183,14 +183,20 @@ class Connection(object):
         This function (send_async) returns message["_id"]. You can later on
         pass this to cancel_query to cancel this asynchronous command if you
         want.
+        
+        If safe is True, send_async won't throw any exceptions, not even
+        NotConnectedException or NullMessageException; these will instead
+        result in the callback being synchronously called with the exception
+        as its only argument.
         """
-        if not message:
-            raise exceptions.NullMessageException
-        with self.lock:
-            if not self.is_connected:
-                raise exceptions.NotConnectedException
-            self.query_map[message["_id"]] = callback
-            self.send(message)
+        with Consume(exceptions.AutobusException, callback, safe):
+            if not message:
+                raise exceptions.NullMessageException
+            with self.lock:
+                if not self.is_connected:
+                    raise exceptions.NotConnectedException
+                self.query_map[message["_id"]] = callback
+                self.send(message)
     
     def query(self, message, timeout=30):
         q = Queue()
@@ -301,7 +307,7 @@ class Function(object):
         be JSON-encodable values; an InvalidValueException will be thrown if
         one of them is not.
         
-        Two keyword arguments can be passed when calling a function:
+        Three keyword arguments can be passed when calling a function:
         
         callback: This is autobus2.SYNC to call the function synchronously
         (which is what most people expect; the call will block until the remote
@@ -319,29 +325,40 @@ class Function(object):
         will stop immediately and throw a TimeoutException. The default, if
         timeout is not specified, is 30.
         
+        safe: This only has any effect if a function is used as the callback.
+        When safe is True, no exceptions whatsoever will be thrown; instead,
+        they will be synchronously passed into the callback. If safe is False
+        (the default), some exceptions (such as a function argument that can't
+        be converted to JSON being passed in or the connection being currently
+        disconnected) will result in an exception being immediately thrown,
+        while others (such as the remote function throwing an exception, or the
+        connection going down before the remote function has returned) will
+        result in the callback being called with the exception as its argument.
+        
         If a callback is used and an exception happens while processing (or if
         the remote function throws an exception), the exception object itself
         is passed into the callback. If a callback is not used, the exception
         will be raised instead.
         """
-        # Make sure all the arguments can be converted into JSON correctly
-        net.ensure_jsonable(args)
-        callback, timeout = kwargs.get("callback", autobus2.SYNC), kwargs.get("timeout", 30)
-        # Create the command to call the function
-        command = messaging.create_command("call", name=self.name, args=list(args))
-        if callback is autobus2.SYNC: # Synchronous call, so we query for the
-            # command
-            return self.connection.query(command, timeout)["result"]
-        elif callback is None:  # Asynchronous call; send the command as a
-            # notice and then return
-            self.connection.send(messaging.convert_to_notice(command))
-        else: # Call with a callback, so we write a wrapper to handle everything
-            def wrapper(response):
-                if isinstance(response, dict): # Normal response
-                    callback(response["result"])
-                else: # Exception while processing
-                    callback(response)
-            self.connection.send_async(command, wrapper)
+        callback, timeout, safe = kwargs.get("callback", autobus2.SYNC), kwargs.get("timeout", 30), kwargs.get("safe", False)
+        with Consume(exceptions.AutobusException, callback, safe):
+            # Make sure all the arguments can be converted into JSON correctly
+            net.ensure_jsonable(args)
+            # Create the command to call the function
+            command = messaging.create_command("call", name=self.name, args=list(args))
+            if callback is autobus2.SYNC: # Synchronous call, so we query for the
+                # command
+                return self.connection.query(command, timeout)["result"]
+            elif callback is None:  # Asynchronous call; send the command as a
+                # notice and then return
+                self.connection.send(messaging.convert_to_notice(command))
+            else: # Call with a callback, so we write a wrapper to handle everything
+                def wrapper(response):
+                    if isinstance(response, dict): # Normal response
+                        callback(response["result"])
+                    else: # Exception while processing
+                        callback(response)
+                self.connection.send_async(command, wrapper)
     
     def __str__(self):
         return "<%s %s from %s>" % (full_name(self), self.name, self.connection)

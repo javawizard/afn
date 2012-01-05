@@ -426,6 +426,18 @@ If, on the other hand, the bind succeeds, the connection thread then locks on th
 
 Ok, I think that'll work. Now to implement it...
 
+Yep, that worked spectacularly. And in the process, I condensed a bunch of code in the Connection class so that it's now something like two thirds of how long it originally was, and works just as well. So basically, a lot more maintainable. Some of the semantics have changed, but that's all been accounted for, and ended up lending itself to further condensation.
+
+So with that done, I can now start work on service proxies.
+
+So let's see... I think I'm going to try to merge single service proxies and multiple service proxies together, into a class called ServiceProxy. It'll have a constructor parameter indicating whether it should be in single mode or multiple mode. (I would dearly love to call this promiscuous mode, but I'm fairly certain I'll end up confusing a lot of network administrators trying to understand Autobus since NICs already use the term for something completely different... Ah well...)
+
+So what exactly does ServiceProxy do?
+
+Well... Not really that much, thankfully. Having connections be persistent and having the bus deal with the logic of discovering services makes ServiceProxy's task a lot simpler.
+
+Oh, I'm thinking that each service proxy will have a mutex that it locks on when it's doing what it's doing, and it passes that mutex to every connection it creates so that all the connections are using the same mutex. That way it could lock on that mutex when, for example, a function's called, and then scan through the list of connections that are currently open and call the function on those connections. That would prevent situations where a connection disconnects in the middle of all that, so the actual function call on the connection ends up throwing a NotConnectedException.
+
 
 
 

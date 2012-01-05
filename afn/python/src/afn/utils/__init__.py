@@ -92,7 +92,44 @@ class Suppress(object):
     
     def __exit__(self, exception_type, *args):
         if exception_type:
-            return issubclass(type(exception_type), self.suppress_type)
+            return issubclass(exception_type, self.suppress_type)
+
+
+class Consume(object):
+    """
+    A context manager that accepts an exception type and a function as
+    constructor arguments. If an exception is thrown from within a with
+    statement using this context manager, and the specified function is
+    actually a function (or some other type of callable), then the function
+    is called, passing in the exception, and the exception is suppressed. If
+    the function is not callable, the exception is propagated upward as normal.
+    
+    If the consume parameter is False, this context manager does nothing. This
+    is used in a few cases in Autobus where whether or not a particular piece
+    of code should be run under a Consume context manager is dependent on a
+    particular argument to the function running the code; most of the functions
+    in Autobus that accept a parameter named "safe" are implemented this way,
+    with the value of this safe parameter being passed as the consume parameter.
+    """
+    def __init__(self, exception_type, function, consume):
+        self.exception_type = exception_type
+        self.function = function
+        self.consume = consume
+    
+    def __enter__(self):
+        pass
+    
+    def __exit__(self, t, v, tb):
+        if not self.consume: # We're not supposed to do anything
+            return
+        if not t: # No exception was thrown
+            return
+        if not issubclass(t, self.exception_type): # Not the type of exception
+            # we're looking for
+            return
+        if callable(self.function):
+            self.function(v)
+            return True
 
 
 class PrintExceptions(object):
