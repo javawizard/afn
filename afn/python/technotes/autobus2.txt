@@ -446,6 +446,12 @@ When a service is removed, the corresponding connection in the proxy's map of se
 
 Wait a sec, I'm describing a multiple service proxy, not a proxy that can work as either one...
 
+Maybe they should be different...
+
+They just share a lot in common, particularly in terms of how they work... And I'd thought of implementing single service proxies on top of multiple service proxies, but then there's all those wasted connections to all of the services when only one needs to be maintained...
+
+Ok, I'm still going to write them together, but I need to put a bit more thought into how it's done.
+
 
 
 
