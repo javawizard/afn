@@ -244,12 +244,6 @@ class Connection(object):
         self.context_enters -= 1
         if self.context_enters == 0:
             self.close()
-    
-    def wait_for_connect(self, timeout=None):
-        with self.lock:
-            if self.is_connected:
-                return
-            self.connect_condition.wait(timeout)
 
 
 class ConnectionManager(object):
