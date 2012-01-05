@@ -438,6 +438,13 @@ Well... Not really that much, thankfully. Having connections be persistent and h
 
 Oh, I'm thinking that each service proxy will have a mutex that it locks on when it's doing what it's doing, and it passes that mutex to every connection it creates so that all the connections are using the same mutex. That way it could lock on that mutex when, for example, a function's called, and then scan through the list of connections that are currently open and call the function on those connections. That would prevent situations where a connection disconnects in the middle of all that, so the actual function call on the connection ends up throwing a NotConnectedException.
 
+So let's see... A service proxy registers a listener on the bus, listening for when services are discovered, changed, or removed. It treats changed notices the same as undiscovers followed by discovers.
+
+So when a new discovery is made, a connection is created and put into the proxy's map of service ids to connections, and all event listeners and object watches currently present on the proxy are added to it.
+
+When a service is removed, the corresponding connection in the proxy's map of service ids to connections is closed.
+
+Wait a sec, I'm describing a multiple service proxy, not a proxy that can work as either one...
 
 
 
