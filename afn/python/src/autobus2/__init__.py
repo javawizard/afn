@@ -148,22 +148,31 @@ class Bus(common.AutoClose):
                 return
     
     @synchronized_on("lock")
-    def create_service(self, info, active=False):
+    def create_service(self, info, active=None, from_py_object=None):
         """
         Creates a new service on this bus. info is the info object to use for
         this service. active is True to publish this service immediately, False
-        to wait until the returned service's activate() method is called.
+        to wait until the returned service's activate() method is called. If
+        active isn't specified, it defaults to False if from_object is None and
+        True if from_object is not None.
         
         The return value is an instance of local.LocalService. It has methods
         such as create_function that allow functions, events, objects, and such
         to be created on the service.
         """
+        if active is None:
+            if from_py_object is not None:
+                active = True
+            else:
+                active = False
         # Create a new id for the service
         service_id = messaging.create_service_id()
         # Create the actual service object
         service = local.LocalService(self, service_id, info)
         # Then store the service in our services map
         self.local_services[service_id] = service
+        if from_py_object is not None:
+            service.use_py_object(from_py_object)
         # If the service is to be immediately activated it, then we should
         # do so
         if active:

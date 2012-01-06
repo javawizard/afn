@@ -139,6 +139,15 @@ class LocalService(object):
     
     def create_object(self):
         pass
+    
+    def use_py_object(self, py_object):
+        for name in dir(py_object):
+            if name.startswith("_"):
+                continue
+            value = getattr(py_object, name)
+            if not callable(value):
+                continue
+            self.create_function(name, value)
 
 
 class LocalFunction(object):

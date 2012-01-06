@@ -482,6 +482,8 @@ This also makes me think that lots of things are going to want to be able to act
 
 So I'm going to go write the automatic close thingie first...
 
+That also worked wonderfully well. And I've converted Bus, Connection, and SingleServiceProxy over to use it.
+
 
 
 
