@@ -10,5 +10,4 @@ class HelloService(object):
 def main():
     with Bus() as bus:
         bus.create_service({"autobus.example": "hello_server"}, from_py_object=HelloService())
-        
         wait_for_interrupt()
