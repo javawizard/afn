@@ -480,6 +480,8 @@ Ok, that worked wonderfully well.
 
 This also makes me think that lots of things are going to want to be able to act as service-like thingies, where you can ask the for functions, events, and objects, and so on, and maybe I should create a common superclass that implements a lot of that automatically... Connection, SingleServiceProxy, and MultipleServiceProxy could all extend it... (And I'm also thinking of creating a common superclass for those things that have reentrant __enter__ and __exit__ functions that simply call close() on the last exit...)
 
+So I'm going to go write the automatic close thingie first...
+
 
 
 
