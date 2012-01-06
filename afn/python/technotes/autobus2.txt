@@ -452,7 +452,15 @@ They just share a lot in common, particularly in terms of how they work... And I
 
 Ok, I'm still going to write them together, but I need to put a bit more thought into how it's done.
 
+Actually no...
 
+I'm really tempted to just go write them separately and then see what code they have in common, and merge the pieces of them that I can together and see how it goes.
+
+Yeah, I'm going to do that.
+
+So first I'll write SingleServiceProxy since I think that will be the easiest, and then I'll go from there.
+
+So... When a single service proxy is created, it adds listeners to the bus listening for 
 
 
 

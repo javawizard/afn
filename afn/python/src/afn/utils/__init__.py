@@ -207,6 +207,23 @@ def rotations(sequence):
     return [(sequence[i:] + sequence[:i]) for i in range(len(sequence))]
 
 
+def wrap(function):
+    """
+    Returns a newly-created function that simply calls the specified one with
+    the specified arguments. The returned function behaves, when called, as if
+    it was the function originally passed into the wrap function.
+    
+    The reason that this is useful is that accessing a bound method of a
+    particular object actually returns a different bound method object each
+    time, so tracking these in a list of, say, listeners doesn't work. The wrap
+    function can be used to wrap a bound method in a function that won't
+    change (and that, furthermore, is always hashable, whereas bound methods
+    are only hashable if their underlying objects are also hashable), and the
+    wrapper can then be used as the listener.
+    """
+    return lambda *args, **kwargs: function(*args, **kwargs)
+
+
 
 
 
