@@ -59,6 +59,7 @@ discoverers and publishers and such.
 """
 
 from autobus2 import net, discovery, local, remote, exceptions, messaging
+from autobus2.filter import filter_matches, ANY, NOT_PRESENT
 from threading import Thread, RLock
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
 from Queue import Queue
@@ -77,26 +78,9 @@ except ImportError:
 SYNC = singleton.Singleton("autobus2.SYNC")
 THREAD = singleton.Singleton("autobus2.THREAD")
 ASYNC = singleton.Singleton("autobus2.ASYNC")
-ANY = singleton.Singleton("autobus2.ANY")
-NOT_PRESENT = singleton.Singleton("autobus2.NOT_PRESENT")
 DISCOVERED = singleton.Singleton("autobus2.DISCOVERED")
 UNDISCOVERED = singleton.Singleton("autobus2.UNDISCOVERED")
 CHANGED = singleton.Singleton("autobus2.CHANGED")
-
-def filter_matches(info, filter):
-    if filter is None:
-        return True
-    for k, v in filter.items():
-        if v is ANY:
-            if k not in info:
-                return False
-        elif v is NOT_PRESENT:
-            if k in info:
-                return False
-        else:
-            if info[k] != v:
-                return False
-    return True
 
 
 class DiscoveredService(object):
