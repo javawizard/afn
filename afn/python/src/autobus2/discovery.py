@@ -152,13 +152,13 @@ class BroadcastDiscoverer(object):
     
     def try_to_connect(self, k, v):
         host, port, service_id = k
-        print "Discovery timeout, attempting to connect to " + str(k)
+        # print "Discovery timeout, attempting to connect to " + str(k)
         failed = False
         try:
             with self.bus.connect(*k) as connection:
                 connection.wait_for_connect(10)
         except (exceptions.ConnectionException, exceptions.TimeoutException) as e:
-            print "Service could not be connected to, removing..."
+            # print "Service could not be connected to, removing..."
             failed = True
         except:
             print "Unexpected failure while attempting to connect to service"
@@ -246,7 +246,7 @@ class BroadcastPublisher(Publisher):
         Thread(name="broadcast-publisher-loop", target=self.receive_loop).start()
     
     def shutdown(self):
-        print "Shutting down"
+        # print "Shutting down"
         self.running = False
         net.shutdown(self.receiver)
     

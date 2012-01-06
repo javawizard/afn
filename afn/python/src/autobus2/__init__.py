@@ -144,7 +144,7 @@ class Bus(common.AutoClose):
                 if socket:
                     socket.close() # Make sure it's /really/ closed on the
                     # off chance that something else caused the exception
-                print "Bus server died"
+                # print "Bus server died"
                 return
     
     @synchronized_on("lock")
@@ -420,7 +420,8 @@ def wait_for_interrupt():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print "Interrupted"
+        # print "Interrupted"
+        pass
         
 
 
