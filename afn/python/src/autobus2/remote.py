@@ -130,6 +130,7 @@ class Connection(object):
                 # FIXME: send initial messages here, once we have any to send
             return
     
+    @synchronized_on("lock")
     def _on_connection_failed(self):
         self.connect_attempts += 1
         self.connect_condition.notify_all()
@@ -137,6 +138,7 @@ class Connection(object):
             if self.fail_listener:
                 self.fail_listener(self)
     
+    @synchronized_on("lock")
     def _on_connection_succeeded(self):
         self.connect_attempts += 1
         self.connect_condition.notify_all()
