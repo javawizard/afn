@@ -1,0 +1,7 @@
+So I've got this cool idea that it'd be neat to be able to compile programs from things like Python into BF.
+
+And I'm thinking that what I should have is an intermediate bytecode that's a bit more functional than BF itself is, maybe containing call and return instructions, but that doesn't have /that/ much more, and then build on top of that.
+
+So let's say I wanted to just have the ability to group things into subroutines, and then be able to call and return.
+
+Actually... What if I built a stack machine on top of this whole thing? That would allow the compiler to automatically track where things are going and what cell we're currently at. (There needs to be some space reserved for the call stack, and the call and return instructions need to know how many cells to move to be at the call stack.)
