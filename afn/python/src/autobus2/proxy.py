@@ -23,7 +23,7 @@ class SingleServiceProxy(object):
     def service_discovered(self, service_id, host, port, info):
         self.service_map[service_id] = (host, port)
         if self.connection is None:
-            self.connection = self.connect_to(service_id)
+            self.connect_to(service_id)
     
     def service_changed(self, service_id, host, port, info):
         self.service_map[service_id] = (host, port)
