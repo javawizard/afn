@@ -460,7 +460,21 @@ Yeah, I'm going to do that.
 
 So first I'll write SingleServiceProxy since I think that will be the easiest, and then I'll go from there.
 
-So... When a single service proxy is created, it adds listeners to the bus listening for 
+So... When a single service proxy is created, it adds listeners to the bus listening for service changes and such.
+
+So... It keeps track of a map of service ids to the hosts and ports that they're currently available on. It updates this whenever the bus tells it that discovery info has changed.
+
+It also keeps track of a single connection.
+
+When a discovery happens, it adds it to the map, then checks to see if the connection is null. If it is, it opens a connection to the service just discovered and sets that as the connection.
+
+When a change happens, it updates the map, then checks to see if the connection is for the service that changed. If it is, the connection is closed and a connection to the service's new location opened.
+
+When a removal happens, the corresponding service is removed from the map. Then, if the connection is to that service, the connection is closed, and a connection to one of the other services in the map opened. (This new service is essentially picked at random.)
+
+When a function is asked for, a SingleServiceFunction is returned. When such a function is called, it checks to see if there's currently a connection (while locked on the single service proxy's lock), and if there's not, it throws an exception, and if there is, it stores it in a local variable and unlocks. It then calls the function and returns whatever the function returns.
+
+I think that's it to start with. Let's see if it works.
 
 
 
