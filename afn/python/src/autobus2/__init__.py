@@ -192,7 +192,8 @@ class Bus(object):
         connection = local.RemoteConnection(self, socket)
         self.bound_connections.add(connection)
     
-    def connect(self, host, port, service_id, timeout=10, open_listener=None, close_listener=None, lock=None):
+    def connect(self, host, port, service_id, timeout=10, open_listener=None,
+                close_listener=None, fail_listener=None, lock=None):
         """
         Opens a connection to the specified service on the specified host/port.
         
@@ -219,14 +220,14 @@ class Bus(object):
         specified connection in order to effectively disable the auto-reconnect
         feature of connections.
         """
-        return remote.Connection(self, host, port, service_id, timeout, open_listener, close_listener, lock)
+        return remote.Connection(self, host, port, service_id, timeout, open_listener, close_listener, fail_listener, lock)
     
-    def connect_to(self, info_filter, timeout=10, open_listener=None, close_listener=None, lock=None):
+    def connect_to(self, info_filter, timeout=10, open_listener=None, close_listener=None, fail_listener=None, lock=None):
         with self.lock:
             for service_id, d in self.discovered_services.items():
                 if filter_matches(d.info, info_filter):
                     host, port = d.locations.keys()[0]
-                    return self.connect(host, port, service_id, timeout, open_listener, close_listener, lock)
+                    return self.connect(host, port, service_id, timeout, open_listener, close_listener, fail_listener, lock)
             raise exceptions.NoMatchingServiceException()
     
     @synchronized_on("lock")

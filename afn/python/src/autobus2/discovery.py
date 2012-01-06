@@ -6,6 +6,7 @@ import json
 from traceback import print_exc
 import time
 import random
+from Queue import Queue
 
 
 class Discoverer(object):
@@ -150,11 +151,12 @@ class BroadcastDiscoverer(object):
                     Thread(target=self.try_to_connect, args=(k, v)).start()
     
     def try_to_connect(self, k, v):
+        host, port, service_id = k
         print "Discovery timeout, attempting to connect to " + str(k)
         failed = False
         try:
-            with self.bus.connect(*k):
-                pass
+            with self.bus.connect(*k) as connection:
+                connection.wait_for_connect(10)
         except (exceptions.ConnectionException, exceptions.TimeoutException) as e:
             print "Service could not be connected to, removing..."
             failed = True

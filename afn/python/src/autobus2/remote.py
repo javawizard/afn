@@ -25,7 +25,7 @@ class Connection(object):
     object should be created, and its connect function called. The connect
     function will then return an instance of this class.
     """
-    def __init__(self, bus, host, port, service_id, timeout, open_listener, close_listener, lock=None):
+    def __init__(self, bus, host, port, service_id, timeout, open_listener, close_listener, fail_listener, lock=None):
         """
         Creates a new connection, given the specified parent bus and socket.
         This constructor sets up everything and then sends an initial message
@@ -43,8 +43,10 @@ class Connection(object):
             lock = RLock()
         self.lock = lock
         self.connect_condition = Condition(self.lock)
+        self.connect_attempts = 0
         self.open_listener = open_listener
         self.close_listener = close_listener
+        self.fail_listener = fail_listener
         self.is_connected = False
         self.is_alive = True
 #        net.OutputThread(socket, self.queue.get).start()
@@ -71,6 +73,7 @@ class Connection(object):
                 s.connect((self.host, self.port))
             except SocketError:
                 # Connection failed; wait the specified delay, then start over
+                self._on_connection_failed()
                 time.sleep(delay)
                 continue
             # Create the queue holding messages to be sent to the remote end
@@ -102,6 +105,7 @@ class Connection(object):
                 queue.put(None)
                 net.shutdown(s)
                 input_thread.function = lambda *args: None
+                self._on_connection_failed()
                 time.sleep(delay)
                 continue
             # The connection succeeded and we've bound to the remote service
@@ -109,7 +113,8 @@ class Connection(object):
             # the relevant fields, and send any initial messages (initial
             # object listeners, event listeners, etc) that we need to.
             with self.lock:
-                if not self.is_alive:
+                if not self.is_alive: # close() was called while we were
+                    # binding, so we close everything and return
                     queue.put(None)
                     net.shutdown(s)
                     input_thread.function = lambda *args: None
@@ -121,12 +126,23 @@ class Connection(object):
                 with print_exceptions:
                     if self.open_listener:
                         self.open_listener(self)
-                self.connect_condition.notify_all()
-                if self.open_listener:
-                    with print_exceptions:
-                        self.open_listener(self)
+                self._on_connection_succeeded()
                 # FIXME: send initial messages here, once we have any to send
             return
+    
+    def _on_connection_failed(self):
+        self.connect_attempts += 1
+        self.connect_condition.notify_all()
+        with print_exceptions:
+            if self.fail_listener:
+                self.fail_listener(self)
+    
+    def _on_connection_succeeded(self):
+        self.connect_attempts += 1
+        self.connect_condition.notify_all()
+        with print_exceptions:
+            if self.open_listener:
+                self.open_listener(self)
 
     def close(self):
         with self.lock:
@@ -258,6 +274,24 @@ class Connection(object):
                 self.is_connected, self.is_alive)
     
     __repr__ = __str__
+    
+    def wait_for_connect(self, timeout=10):
+        """
+        Waits until this connection has made at least one attempt since it was
+        first created to connect. If the attempt succeeds, this function
+        returns. If the attempt fails, this function throws an exception.
+        
+        If the connection's attempt to connect does not complete by the given
+        timeout, an exception will be thrown.
+        """
+        with self.lock:
+            if self.connect_attempts == 0:
+                self.connect_condition.wait(timeout)
+            if self.connect_attempts == 0:
+                raise exceptions.TimeoutException()
+            if not self.is_connected:
+                raise exceptions.ConnectionException()
+            
 
 
 class ConnectionManager(object):
