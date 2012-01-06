@@ -1,5 +1,5 @@
 
-from threading import RLock
+from threading import RLock, Condition
 import autobus2
 from autobus2 import exceptions, common
 from afn.utils import wrap
@@ -10,6 +10,7 @@ class SingleServiceProxy(common.AutoClose):
         self.bus = bus
         self.info_filter = info_filter
         self.lock = RLock()
+        self.bind_condition = Condition(self.lock)
         self.service_map = {}
         self.connection = None
         self.is_alive = True
@@ -41,7 +42,15 @@ class SingleServiceProxy(common.AutoClose):
             self.connection = None
         if service_id:
             host, port = self.service_map[service_id]
-            self.connection = self.bus.connect(host, port, service_id, lock=self.lock)
+            self.connection = self.bus.connect(host, port, service_id, open_listener=self.connection_opened,
+                                               close_listener=self.connection_closed, lock=self.lock)
+    
+    def connection_opened(self, connection):
+        with self.lock:
+            self.bind_condition.notify_all()
+    
+    def connection_closed(self, connection):
+        pass
     
     def __getitem__(self, name):
         return SingleServiceFunction(self, name)
@@ -53,6 +62,17 @@ class SingleServiceProxy(common.AutoClose):
         self.is_alive = False
         self.connect_to(None)
         self.bus.remove_service_listener(self.service_event_wrapper)
+    
+    def wait_for_bind(self, timeout=10):
+        with self.lock:
+            if self.connection:
+                if self.connection.is_connected:
+                    return
+            self.bind_condition.wait(timeout)
+            if self.connection:
+                if self.connection.is_connected:
+                    return
+            raise exceptions.TimeoutException()
 
 
 class SingleServiceFunction(object):

@@ -58,7 +58,7 @@ and objects and multiple service proxies and individual connections and
 discoverers and publishers and such.
 """
 
-from autobus2 import net, discovery, local, remote, exceptions, messaging, common
+from autobus2 import net, discovery, local, remote, exceptions, messaging, common, proxy
 from autobus2.filter import filter_matches, ANY, NOT_PRESENT
 from threading import Thread, RLock
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
@@ -213,6 +213,12 @@ class Bus(common.AutoClose):
                     host, port = d.locations.keys()[0]
                     return self.connect(host, port, service_id, timeout, open_listener, close_listener, fail_listener, lock)
             raise exceptions.NoMatchingServiceException()
+    
+    def get_service_proxy(self, info_filter, multiple=False):
+        if multiple:
+            raise Exception("Multiple service proxies haven't yet been written.")
+        with self.lock:
+            return proxy.SingleServiceProxy(self, info_filter)
     
     @synchronized_on("lock")
     def close(self):
