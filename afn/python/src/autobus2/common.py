@@ -25,6 +25,11 @@ class AutoClose(object):
 
 
 class ServiceConnector(object):
+    """
+    This class isn't yet complete. I'm hoping to use it to merge the stuff in
+    Connection, SingleServiceProxy, and MultipleServiceProxy into this class at
+    some point in the future.
+    """
     __metaclass__ = ABC
     
     @abstract
