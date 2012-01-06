@@ -12,6 +12,7 @@ class SingleServiceProxy(object):
         self.lock = RLock()
         self.service_map = {}
         self.connection = None
+        self.is_alive = True
         self.service_event_wrapper = wrap(self.service_event)
         bus.add_service_listener(self.service_event_wrapper, info_filter, True)
     
@@ -37,12 +38,21 @@ class SingleServiceProxy(object):
     def connect_to(self, service_id):
         if self.connection is not None:
             self.connection.close()
+            self.connection = None
         if service_id:
             host, port = self.service_map[service_id]
             self.connection = self.bus.connect(host, port, service_id, lock=self.lock)
     
     def __getitem__(self, name):
         return SingleServiceFunction(self, name)
+    
+    @synchronized_on("lock")
+    def close(self):
+        if not self.is_alive: # Already closed
+            return
+        self.is_alive = False
+        self.connect_to(None)
+        self.bus.remove_service_listener(self.service_event_wrapper)
 
 
 class SingleServiceFunction(object):
