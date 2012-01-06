@@ -1,11 +1,11 @@
 
 from threading import RLock
 import autobus2
-from autobus2 import exceptions
+from autobus2 import exceptions, common
 from afn.utils import wrap
 from afn.utils.concurrent import synchronized_on
 
-class SingleServiceProxy(object):
+class SingleServiceProxy(common.AutoClose):
     def __init__(self, bus, info_filter):
         self.bus = bus
         self.info_filter = info_filter

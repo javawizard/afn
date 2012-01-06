@@ -58,7 +58,7 @@ and objects and multiple service proxies and individual connections and
 discoverers and publishers and such.
 """
 
-from autobus2 import net, discovery, local, remote, exceptions, messaging
+from autobus2 import net, discovery, local, remote, exceptions, messaging, common
 from autobus2.filter import filter_matches, ANY, NOT_PRESENT
 from threading import Thread, RLock
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
@@ -104,7 +104,7 @@ class DiscoveredService(object):
         self.info = info
 
 
-class Bus(object):
+class Bus(common.AutoClose):
     def __init__(self, default_discoverers=True, default_publishers=True,
                  port=None):
         """
@@ -237,18 +237,6 @@ class Bus(object):
         # TODO: In the future, store some sort of closed field so that if
         # someone tries to double-close us, we can tell and just ignore it
         # the second time
-    
-    def __enter__(self):
-        # Increment the number of context entrances
-        self.context_enters += 1
-        return self
-    
-    def __exit__(self, *args):
-        # Decrement the number of context entrances
-        self.context_enters -= 1
-        # If the number of entrances is 0, close the bus
-        if self.context_enters == 0:
-            self.close()
     
     @synchronized_on("lock")
     def install_publisher(self, publisher):

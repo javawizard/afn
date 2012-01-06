@@ -4,7 +4,7 @@ remote services.
 """
 
 from Queue import Queue, Empty
-from autobus2 import net, messaging, exceptions
+from autobus2 import net, messaging, exceptions, common
 from utils import Suppress, print_exceptions, Consume
 from threading import Thread, RLock, Condition
 import json
@@ -16,7 +16,7 @@ from socket import socket as Socket, error as SocketError, timeout as SocketTime
 from afn.utils import full_name
 
 
-class Connection(object):
+class Connection(common.AutoClose):
     """
     A connection to a remote service. This class allows for calling functions
     on the remote service, listening for events, and watching objects.
@@ -260,15 +260,6 @@ class Connection(object):
     
     def __getitem__(self, name):
         return Function(self, name)
-    
-    def __enter__(self):
-        self.context_enters += 1
-        return self
-    
-    def __exit__(self, *args):
-        self.context_enters -= 1
-        if self.context_enters == 0:
-            self.close()
     
     def __str__(self):
         return "<%s to %s:%s service_id=%s is_connected=%s is_alive=%s>" % (
