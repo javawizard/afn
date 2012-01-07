@@ -2,7 +2,7 @@
 from threading import RLock, Condition
 import autobus2
 from autobus2 import exceptions, common
-from afn.utils import wrap
+from afn.utils import wrap, print_exceptions
 from afn.utils.concurrent import synchronized_on
 from functools import partial
 
@@ -92,11 +92,13 @@ class SingleServiceFunction(object):
 
 
 class MultipleServiceProxy(common.AutoClose):
-    def __init__(self, bus, info_filter):
+    def __init__(self, bus, info_filter, bind_function=None, unbind_function=None):
         self.bus = bus
         self.info_filter = info_filter
         self.lock = RLock()
         self.bind_condition = Condition(self.lock)
+        self.bind_function = bind_function
+        self.unbind_function = unbind_function
         self.service_map = {} # Map of service ids to connections
         self.is_alive = True
         self.service_event_wrapper = wrap(self.service_event)
@@ -109,28 +111,34 @@ class MultipleServiceProxy(common.AutoClose):
         getattr(self, "service_" + event.short_name.lower())(service_id, host, port, info)
     
     def service_discovered(self, service_id, host, port, info):
-        self.connect_to(service_id, host, port)
+        self.connect_to(service_id, host, port, info)
     
     def service_changed(self, service_id, host, port, info):
         self.disconnect_from(service_id)
-        self.connect_to(service_id, host, port)
+        self.connect_to(service_id, host, port, info)
     
     def service_undiscovered(self, service_id, host, port, info):
         self.disconnect_from(service_id)
     
-    def connect_to(self, service_id, host, port):
+    def connect_to(self, service_id, host, port, info):
         self.service_map[service_id] = self.bus.connect(host, port, service_id,
-                open_listener=self.connection_opened, close_listener=self.connection_closed, lock=self.lock)
+                open_listener=partial(self.connection_opened, info),
+                close_listener=partial(self.connection_closed, info),
+                lock=self.lock)
     
     def disconnect_from(self, service_id):
         self.service_map[service_id].close()
         del self.service_map[service_id]
     
-    def connection_opened(self, connection):
-        pass
+    def connection_opened(self, info, connection):
+        with print_exceptions:
+            if self.bind_function:
+                self.bind_function(self, connection, info)
     
-    def connection_closed(self, connection):
-        pass
+    def connection_closed(self, info, connection):
+        with print_exceptions:
+            if self.unbind_function:
+                self.unbind_function(self, connection, info)
     
     @synchronized_on("lock")
     def close(self):

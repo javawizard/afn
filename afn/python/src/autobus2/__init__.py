@@ -223,11 +223,12 @@ class Bus(common.AutoClose):
                     return self.connect(host, port, service_id, timeout, open_listener, close_listener, fail_listener, lock)
             raise exceptions.NoMatchingServiceException()
     
-    def get_service_proxy(self, info_filter, multiple=False):
-        if multiple:
-            return proxy.MultipleServiceProxy(self, info_filter)
+    def get_service_proxy(self, info_filter, bind_function=None, unbind_function=None, multiple=False):
         with self.lock:
-            return proxy.SingleServiceProxy(self, info_filter)
+            if multiple:
+                return proxy.MultipleServiceProxy(self, info_filter, bind_function, unbind_function)
+            else:
+                return proxy.SingleServiceProxy(self, info_filter)
     
     @synchronized_on("lock")
     def close(self):
