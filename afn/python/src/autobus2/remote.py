@@ -81,9 +81,11 @@ class Connection(common.AutoClose):
                         self.would_be_socket = None
             except SocketError:
                 # Connection failed; wait the specified delay, then start over
+                net.shutdown(s)
                 self._on_connection_failed()
                 self.sleep_while_alive(delay)
                 continue
+            s.settimeout(None)
             # Create the queue holding messages to be sent to the remote end
             queue = Queue()
             input_thread, output_thread = net.start_io_threads(s, None, queue.get)
