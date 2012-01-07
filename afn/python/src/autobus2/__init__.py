@@ -58,6 +58,8 @@ and objects and multiple service proxies and individual connections and
 discoverers and publishers and such.
 """
 
+import sys
+from traceback import print_exc
 from autobus2 import net, discovery, local, remote, exceptions, messaging, common, proxy
 from autobus2.filter import filter_matches, ANY, NOT_PRESENT
 from threading import Thread, RLock
@@ -135,15 +137,24 @@ class Bus(common.AutoClose):
         Thread(name="autobus2.Bus.accept_loop", target=self.accept_loop).start()
     
     def accept_loop(self):
-        while True:
+        self.server.settimeout(1)
+        while not self.closed:
             try:
                 socket = None
                 socket = self.server.accept()[0]
                 self.setup_inbound_socket(socket)
-            except SocketError: # This happens when the server socket is closed
+            except SocketTimeout: # This happens when we time out, which is
+                # normal. The 4-second timeout is to fix what appears to be a
+                # bug with Windows not properly throwing an exception from
+                # accept when another thread closes the socket.
+                pass
+            except: # This happens when the server socket is closed
                 if socket:
                     socket.close() # Make sure it's /really/ closed on the
                     # off chance that something else caused the exception
+                if not issubclass(sys.exc_type, SocketError): # Something else
+                    # happened
+                    print_exc()
                 # print "Bus server died"
                 return
     
