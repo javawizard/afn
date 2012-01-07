@@ -4,6 +4,7 @@ import autobus2
 from autobus2 import exceptions, common
 from afn.utils import wrap
 from afn.utils.concurrent import synchronized_on
+from functools import partial
 
 class SingleServiceProxy(common.AutoClose):
     def __init__(self, bus, info_filter):
@@ -130,7 +131,40 @@ class MultipleServiceProxy(common.AutoClose):
         if not self.is_alive: # Already closed
             return
         self.is_alive = False
+        for service_id in list(self.service_map.keys()):
+            self.disconnect_from(service_id)
         self.bus.remove_service_listener(self.service_event_wrapper)
+    
+    def __getitem__(self, name):
+        return MultipleServiceFunction(self, name)
+
+
+class MultipleServiceFunction(object):
+    def __init__(self, proxy, name):
+        self.proxy = proxy
+        self.name = name
+    
+    def __call__(self, *args, **kwargs):
+        with self.proxy.lock:
+            callback = kwargs.get("callback", autobus2.SYNC)
+            timeout = kwargs.get("timeout", 30)
+            safe = kwargs.get("safe", False)
+            if callback is None:
+                for connection in self.proxy.service_map.values():
+                    connection[self.name](*args, callback=None, safe=safe)
+                return len(self.proxy.service_map)
+            elif callback is autobus2.SYNC:
+                # This is a bit more complicated. What we're going to do is
+                # create one queue for each connection, then call the functions
+                # on the connections with each queue's put method as the
+                # callback.
+                raise NotImplementedError
+            else:
+                for connection in self.proxy.service_map.values():
+                    connection[self.name](*args, callback=partial(callback, connection.service_id), safe=safe)
+                return len(self.proxy.service_map)
+                
+        
     
 
 
