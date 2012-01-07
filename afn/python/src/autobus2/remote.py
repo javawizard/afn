@@ -34,6 +34,7 @@ class Connection(common.AutoClose):
         self.context_enters = 0
         self.bus = bus
         self.socket = None
+        self.would_be_socket = None
         self.host = host
         self.port = port
         self.service_id = service_id
@@ -60,7 +61,7 @@ class Connection(common.AutoClose):
         delay = 0.1
         delay_increment = 1.5
         delay_max = 20
-        while True:
+        while self.is_alive:
             delay *= delay_increment
             if delay > delay_max:
                 delay = delay_max
@@ -69,12 +70,19 @@ class Connection(common.AutoClose):
                     return
             # Try to connect to the remote end
             s = Socket()
+            s.settimeout(10) # TODO: make this configurable
+            with self.lock:
+                self.would_be_socket = s
             try:
-                s.connect((self.host, self.port))
+                try:
+                    s.connect((self.host, self.port))
+                finally:
+                    with self.lock:
+                        self.would_be_socket = None
             except SocketError:
                 # Connection failed; wait the specified delay, then start over
                 self._on_connection_failed()
-                time.sleep(delay)
+                self.sleep_while_alive(delay)
                 continue
             # Create the queue holding messages to be sent to the remote end
             queue = Queue()
@@ -106,7 +114,7 @@ class Connection(common.AutoClose):
                 net.shutdown(s)
                 input_thread.function = lambda *args: None
                 self._on_connection_failed()
-                time.sleep(delay)
+                self.sleep_while_alive(delay)
                 continue
             # The connection succeeded and we've bound to the remote service
             # successfully, so we lock on ourselves and stick everything into
@@ -126,6 +134,11 @@ class Connection(common.AutoClose):
                 self._on_connection_succeeded()
                 # FIXME: send initial messages here, once we have any to send
             return
+    
+    def sleep_while_alive(self, amount):
+        while amount > 0 and self.is_alive:
+            time.sleep(amount%1.0)
+            amount -= 1
     
     @synchronized_on("lock")
     def _on_connection_failed(self):
@@ -151,6 +164,8 @@ class Connection(common.AutoClose):
                 self.queue.put(None)
                 net.shutdown(self.socket)
                 self.socket = None
+            if self.would_be_socket:
+                net.shutdown(self.would_be_socket)
             self.is_connected = False
             self.is_alive = False
     

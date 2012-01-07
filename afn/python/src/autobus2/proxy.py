@@ -151,6 +151,13 @@ class MultipleServiceProxy(common.AutoClose):
     
     def __getitem__(self, name):
         return MultipleServiceFunction(self, name)
+    
+    @property
+    def live_connections(self):
+        with self.lock:
+            for connection in list(self.service_map.values()):
+                if connection.is_connected:
+                    yield connection
 
 
 class MultipleServiceFunction(object):
@@ -164,9 +171,11 @@ class MultipleServiceFunction(object):
             timeout = kwargs.get("timeout", 30)
             safe = kwargs.get("safe", False)
             if callback is None:
-                for connection in self.proxy.service_map.values():
+                count = 0
+                for connection in self.proxy.live_connections:
+                    count += 1
                     connection[self.name](*args, callback=None, safe=safe)
-                return len(self.proxy.service_map)
+                return count
             elif callback is autobus2.SYNC:
                 # This is a bit more complicated. What we're going to do is
                 # create one queue for each connection, then call the functions
@@ -174,9 +183,11 @@ class MultipleServiceFunction(object):
                 # callback.
                 raise NotImplementedError
             else:
-                for connection in self.proxy.service_map.values():
+                count = 0
+                for connection in self.proxy.live_connections:
+                    count += 1
                     connection[self.name](*args, callback=partial(callback, connection.service_id), safe=safe)
-                return len(self.proxy.service_map)
+                return count
                 
         
     
