@@ -84,8 +84,10 @@ class BroadcastDiscoverer(object):
             raise Exception("BroadcastDiscoverers can only be used once")
         self.bus = bus
         self.sender, self.receiver = create_broadcast_sockets()
-        Thread(name="broadcast-discoverer-loop", target=self.receive_loop).start()
-        Thread(name="broadcast-discoverer-initial", target=self.send_initial_requests).start()
+        Thread(name="autobus2.discovery.BroadcastDiscoverer.receive_loop", 
+                target=self.receive_loop).start()
+        Thread(name="autobus2.discovery.BroadcastDiscoverer.send_initial_requests", 
+                target=self.send_initial_requests).start()
     
     def shutdown(self):
         with self.bus.lock:
@@ -148,7 +150,8 @@ class BroadcastDiscoverer(object):
                 if v[1] + expire_interval < current_time: # Haven't received a
                     # message from this server in a while, so check to see if
                     # we can connect to it
-                    Thread(target=self.try_to_connect, args=(k, v)).start()
+                    Thread(name="autobus2.discovery.BroadcastDiscoverer.try_to_connect",
+                            target=self.try_to_connect, args=(k, v)).start()
     
     def try_to_connect(self, k, v):
         host, port, service_id = k
@@ -243,7 +246,7 @@ class BroadcastPublisher(Publisher):
             raise Exception("BroadcastPublishers can't be re-used.")
         self.bus = bus
         self.sender, self.receiver = create_broadcast_sockets()
-        Thread(name="broadcast-publisher-loop", target=self.receive_loop).start()
+        Thread(name="autobus2.discovery.BroadcastPublisher.receive_loop", target=self.receive_loop).start()
     
     def shutdown(self):
         # print "Shutting down"

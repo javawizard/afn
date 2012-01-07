@@ -132,7 +132,7 @@ class Bus(common.AutoClose):
             self.install_discoverer(discovery.BroadcastDiscoverer())
         if default_publishers:
             self.install_publisher(discovery.BroadcastPublisher())
-        Thread(target=self.accept_loop).start()
+        Thread(name="autobus2.Bus.accept_loop", target=self.accept_loop).start()
     
     def accept_loop(self):
         while True:

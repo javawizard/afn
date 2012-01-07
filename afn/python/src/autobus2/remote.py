@@ -55,7 +55,7 @@ class Connection(common.AutoClose):
         # We query here so that an invalid service id will cause an exception
         # to be raised while constructing the service
         # self.query(messaging.create_command("bind", False, service=service_id), timeout=10)
-        Thread(name="autobus-initial-connect-thread", target=self._connect).start()
+        Thread(name="autobus2.remote.Connection._connect-initial", target=self._connect).start()
     
     def _connect(self):
         delay = 0.1
@@ -185,7 +185,7 @@ class Connection(common.AutoClose):
                 if self.close_listener:
                     self.close_listener(self)
             if self.is_alive:
-                Thread(name="autobus-reconnect-thread", target=self._connect).start()
+                Thread(name="autobus2.remote.Connection._connect-reconnect", target=self._connect).start()
     
     def send(self, message):
         with self.lock:

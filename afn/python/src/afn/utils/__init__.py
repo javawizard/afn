@@ -175,7 +175,7 @@ def at(seconds, function):
     def run():
         time.sleep(seconds)
         function()
-    Thread(target=run).start()
+    Thread(name="afn.utils.at", target=run).start()
 
 
 def print_on_fail(function):

@@ -86,10 +86,12 @@ class RemoteConnection(object):
         if function.mode == autobus2.SYNC:
             self.send(function.call(message, args))
         elif function.mode == autobus2.THREAD:
-            Thread(target=lambda: self.send(function.call(message, args))).start()
+            Thread(name="autobus2.local.RemoteConnection-function-caller", 
+                    target=lambda: self.send(function.call(message, args))).start()
         else:
             self.send(messaging.create_response(message, result=None))
-            Thread(target=functools.partial(function.call, message, args)).start()
+            Thread(name="autobus2.local.RemoteConnection-function-async-caller", 
+                    target=functools.partial(function.call, message, args)).start()
     
     def process_ping(self, message):
         self.send(messaging.create_response(message))

@@ -12,7 +12,7 @@ def as_new_thread(function):
     the resulting function will always return None.
     """
     def wrapper(*args, **kwargs):
-        Thread(target=function, args=args, kwargs=kwargs).start()
+        Thread(name="afn.utils.concurrent.as_new_thread", target=function, args=args, kwargs=kwargs).start()
     update_wrapper(wrapper, function)
     wrapper.wrapped = function
     return wrapper
