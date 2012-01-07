@@ -19,6 +19,8 @@ class SingleServiceProxy(common.AutoClose):
     
     @synchronized_on("lock")
     def service_event(self, service_id, host, port, info, event):
+        if not self.is_alive:
+            return
         getattr(self, "service_" + event.short_name.lower())(service_id, host, port, info)
     
     def service_discovered(self, service_id, host, port, info):
@@ -86,6 +88,50 @@ class SingleServiceFunction(object):
                 raise exceptions.NotConnectedException
             function = self.proxy.connection[self.name]
         return function(*args, **kwargs)
+
+
+class MultipleServiceProxy(common.AutoClose):
+    def __init__(self, bus, info_filter):
+        self.bus = bus
+        self.info_filter = info_filter
+        self.lock = RLock()
+        self.bind_condition = Condition(self.lock)
+        self.service_map = {} # Map of service ids to connections
+        self.is_alive = True
+        self.service_event_wrapper = wrap(self.service_event)
+        bus.add_service_listener(self.service_event_wrapper, info_filter, True)
+    
+    @synchronized_on("lock")
+    def service_event(self, service_id, host, port, info, event):
+        if not self.is_alive:
+            return
+        getattr(self, "service_" + event.short_name.lower())(service_id, host, port, info)
+    
+    def service_discovered(self, service_id, host, port, info):
+        self.connect_to(service_id, host, port)
+    
+    def service_changed(self, service_id, host, port, info):
+        self.disconnect_from(service_id)
+        self.connect_to(service_id, host, port)
+    
+    def service_undiscovered(self, service_id, host, port, info):
+        self.disconnect_from(service_id)
+    
+    def connect_to(self, service_id, host, port):
+        self.service_map[service_id] = self.bus.connect(host, port, service_id,
+                open_listener=self.connection_opened, close_listener=self.connection_closed, lock=self.lock)
+    
+    def disconnect_from(self, service_id):
+        self.service_map[service_id].close()
+        del self.service_map[service_id]
+    
+    @synchronized_on("lock")
+    def close(self):
+        if not self.is_alive: # Already closed
+            return
+        self.is_alive = False
+        self.bus.remove_service_listener(self.service_event_wrapper)
+    
 
 
 
