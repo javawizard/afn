@@ -225,7 +225,7 @@ class Bus(common.AutoClose):
     
     def get_service_proxy(self, info_filter, multiple=False):
         if multiple:
-            raise Exception("Multiple service proxies haven't yet been written.")
+            return proxy.MultipleServiceProxy(self, info_filter)
         with self.lock:
             return proxy.SingleServiceProxy(self, info_filter)
     

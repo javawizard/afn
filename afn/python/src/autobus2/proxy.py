@@ -126,6 +126,12 @@ class MultipleServiceProxy(common.AutoClose):
         self.service_map[service_id].close()
         del self.service_map[service_id]
     
+    def connection_opened(self, connection):
+        pass
+    
+    def connection_closed(self, connection):
+        pass
+    
     @synchronized_on("lock")
     def close(self):
         if not self.is_alive: # Already closed
