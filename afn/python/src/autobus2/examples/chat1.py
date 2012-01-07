@@ -6,15 +6,31 @@ class ChatService(object):
         print sender + ": " + message
 
 
+def signed_on(proxy, connection, info):
+    print info["name"] + " has signed on."
+
+
+def signed_off(proxy, connection, info):
+    print info["name"] + " has signed off."
+
+
 def main():
     name = raw_input("Enter your name: ")
     print "You've been successfully connected to the chat network."
     print "Type messages to send them."
     with Bus() as bus:
-        service = bus.create_service({"autobus.example": "chat1"}, from_py_object=ChatService())
+        service = bus.create_service({"autobus.example": "chat1", "name": name},
+                from_py_object=ChatService())
         with bus.get_service_proxy({"autobus.example": "chat1",
-                "service": NotEqualTo(service.id)}, multiple=True) as proxy:
+                "service": NotEqualTo(service.id)}, bind_function=signed_on,
+                unbind_function=signed_off, multiple=True) as proxy:
             while True:
-                message = raw_input()
+                try:
+                    message = raw_input()
+                except KeyboardInterrupt:
+                    return
                 proxy["message_happened"](name, message, callback=None)
-            
+
+
+
+

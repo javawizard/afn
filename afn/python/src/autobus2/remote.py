@@ -123,9 +123,6 @@ class Connection(common.AutoClose):
                 self.is_connected = True
                 self.queue = queue
                 input_thread.function = self.received
-                with print_exceptions:
-                    if self.open_listener:
-                        self.open_listener(self)
                 self._on_connection_succeeded()
                 # FIXME: send initial messages here, once we have any to send
             return
