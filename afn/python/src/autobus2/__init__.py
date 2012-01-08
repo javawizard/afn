@@ -14,21 +14,20 @@ into some examples. Let's start off with the venerable Hello, World example:
 
 # server.py
 from autobus2 import Bus, wait_for_interrupt
+class HelloService(object):
+    def hi(self, text="world"):
+        print "Saying hi to " + str(text)
+        return "Hi, " + str(text) + "! How are you?"
 with Bus() as bus:
-    service = bus.create_service({"type": "autobus.examples.hello_world"})
-    def hi(name):
-        print "Saying hi to " + name
-        return "Hello, " + name + "! How are you?"
-    service.create_function("hi", hi)
-    service.activate()
-    wait_for_interrupt() # Keep running until someone hits Ctrl+C
+    bus.create_service({"autobus.example": "hello_server"}, from_py_object=HelloService())
+    wait_for_interrupt()
 
 # client.py
 from autobus2 import Bus
 with Bus() as bus:
-    with bus.get_proxy({"type": "autobus.examples.hello_world"}) as proxy:
-        proxy.wait_for_bind() # Wait until it connects to the remote service
-        print proxy.functions.hi("world")
+    with bus.get_service_proxy({"autobus.example": "hello_server"}) as service:
+        service.wait_for_bind(timeout=2)
+        print service["hi"]("great big round world")
 
 Run server.py first, then run client.py. You'll see the server print out
 "Saying hi to world" and the client print "Hello, world! How are you?". Try

@@ -1,6 +1,4 @@
 from autobus2 import Bus
-import sys
-from time import sleep
 
 def main():
     with Bus() as bus:
