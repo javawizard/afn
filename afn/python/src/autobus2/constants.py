@@ -8,6 +8,6 @@ broadcast_interval = 10
 broadcast_random = 5
 broadcast_receiver_timeout = 1
 query_initial_intervals = [0.1, 0.5, 1, 2, 4, 7]
-query_response_random = 0.3 # Same as broadcast_random, but specifies up to how
+query_response_random = 0.2 # Same as broadcast_random, but specifies up to how
 # many seconds may be delayed between receiving a query and sending a response
 # to that query.
