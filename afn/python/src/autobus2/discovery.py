@@ -239,7 +239,7 @@ class BroadcastPublisher(Publisher):
     def __init__(self):
         self.running = True
         self.services = {}
-        self.last_time = 0
+        self.next_time = 0
     
     def startup(self, bus):
         if not self.running:
@@ -254,9 +254,9 @@ class BroadcastPublisher(Publisher):
         net.shutdown(self.receiver)
     
     def run_recurring(self):
-        if self.last_time + (constants.broadcast_interval
-                + random.randint(0, constants.broadcast_random)) < time.time():
-            self.last_time = time.time()
+        if self.next_time < time.time():
+            self.next_time = time.time() + (constants.broadcast_interval
+                + (random.random() * constants.broadcast_random))
             self.broadcast_services()
             
     def receive_loop(self):
@@ -280,6 +280,10 @@ class BroadcastPublisher(Publisher):
                 print "Couldn't read message in BroadcastPublisher"
                 print_exc()
                 continue
+    
+    def respond_to_query(self):
+        time.sleep(random.random() * constants.query_response_random)
+        self.broadcast_services()
     
     def broadcast_services(self):
         with self.bus.lock:
