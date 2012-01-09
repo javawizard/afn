@@ -46,7 +46,7 @@ def main():
             print discovery_mode_header
             bus.add_service_listener(discovery_mode_listener, info_filter=info_filter, initial=True)
             wait_for_interrupt()
-            print
+            print 
             return
 
 
