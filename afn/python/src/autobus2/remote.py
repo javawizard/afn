@@ -52,6 +52,7 @@ class Connection(common.AutoClose):
         self.is_connected = False
         self.is_alive = True
         self.object_watchers = Multimap(self.send_watch, self.send_unwatch)
+        self.object_values = {}
 #        net.OutputThread(socket, self.queue.get).start()
 #        net.InputThread(socket, self.received, self.cleanup).start()
         # We query here so that an invalid service id will cause an exception
@@ -270,25 +271,38 @@ class Connection(common.AutoClose):
                     else:
                         f(message)
         if message["_type"] in [1, 3]:
-            command = message["_command"]
-            # TODO: add things for processing change and fire commands
-            print "Invalid message received and ignored. Command: %s" % command
+            # TODO: consider merging this part of this class with
+            # local.RemoteConnection since it's substantially the same. Maybe
+            # even consider having the command/response system be its own layer
+            # underneath this class, which would then function purely as the
+            # layer on top of that that deals with Autobus-specific stuff.
+            processor = getattr(self, "process_" + message["_command"], None)
+            if not processor:
+                print "Invalid message received and ignored. Command: %s" % message["_command"]
+                return
+            processor(message)
     
     def __getitem__(self, name):
         return Function(self, name)
     
+    @synchronized_on("lock")
     def watch_object(self, name, function):
         self.object_watchers.add(name, function)
     
+    @synchronized_on("lock")
     def unwatch_object(self, name, function):
         self.object_watchers.remove(name, function)
     
     def send_watch(self, name):
-        pass # TODO: pick up here, and send_unwatch, and check libautobus to
-        # see how I implemented them there
+        self.send_async(message, callback, True)
     
     def send_unwatch(self, name):
         pass
+    
+    def process_changed(self, message):
+        name = message["name"]
+        for watcher in self.object_watchers.get(name, []):
+            watcher(message["value"])
     
     def __str__(self):
         return "<%s to %s:%s service_id=%s is_connected=%s is_alive=%s>" % (
