@@ -10,6 +10,9 @@ from utils import no_exceptions
 from traceback import print_exc
 from threading import Thread
 import functools
+from afn.utils.concurrent import synchronized_on
+from afn.utils.multimap import Multimap as _Multimap
+import itertools
 
 class RemoteConnection(object):
     """
@@ -26,6 +29,8 @@ class RemoteConnection(object):
         self.socket = socket
         self.queue = Queue()
         self.service = None
+        self.watched_objects = set()
+        self.listened_events = set()
         net.OutputThread(socket, self.queue.get).start()
         net.InputThread(socket, self.received).start()
     
@@ -34,7 +39,7 @@ class RemoteConnection(object):
             self.cleanup()
             return
         try:
-            if self.service is None:
+            if self.service is None: 
                 if message["_command"] != "bind":
                     raise Exception("First message must be bind")
                 name = message["service"]
@@ -72,13 +77,18 @@ class RemoteConnection(object):
         net.shutdown(self.socket)
     
     def cleanup(self):
-        self.queue.put(None)
         with self.bus.lock:
+            self.queue.put(None)
             self.bus.bound_connections.remove(self)
-        self.socket.close()
+            net.shutdown(self.socket)
+            if self.service:
+                for name in self.watched_objects:
+                    self.service.unwatch_object(self, name)
+                for name in self.listened_events:
+                    self.service.unlisten_for_event(self, name)
     
     def process_call(self, message):
-        function = self.service.functions.get(message["name"], None)
+        function = self.service.functions.get(message["name"])
         if not function:
             self.send_error(message, "That function does not exist.")
             return
@@ -92,6 +102,24 @@ class RemoteConnection(object):
             self.send(messaging.create_response(message, result=None))
             Thread(name="autobus2.local.RemoteConnection-function-async-caller", 
                     target=functools.partial(function.call, message, args)).start()
+    
+    def process_watch(self, message):
+        with self.bus.lock:
+            name = message["name"]
+            if name in self.watched_objects:
+                self.send_error(message, "You're already watching that object.")
+                return
+            self.watched_objects.add(name)
+            self.service.watch_object(self, name)
+    
+    def process_listen(self, message):
+        raise NotImplementedError
+    
+    def process_unwatch(self, message):
+        raise NotImplementedError
+    
+    def process_unlisten(self, message):
+        raise NotImplementedError
     
     def process_ping(self, message):
         self.send(messaging.create_response(message))
@@ -119,8 +147,9 @@ class LocalService(object):
         self.functions = {}
         self.events = {}
         self.objects = {}
-        # TODO: manually create autobus.objects, then create autobus.events and
-        # autobus.functions the normal way
+        self.event_listeners = _Multimap() # Maps event names to
+        # RemoteConnection instances listening for them
+        self.object_watchers = _Multimap() # Ditto but for object watches
     
     def activate(self):
         with self.bus.lock:
@@ -137,10 +166,12 @@ class LocalService(object):
         self.functions[name] = function
     
     def create_event(self):
-        pass
+        raise NotImplementedError
     
-    def create_object(self):
-        pass
+    def create_object(self, name, value):
+        object = LocalObject(self, name, value)
+        self.objects[name] = object
+        object.notify_created()
     
     def use_py_object(self, py_object):
         for name in dir(py_object):
@@ -150,6 +181,12 @@ class LocalService(object):
             if not callable(value):
                 continue
             self.create_function(name, value)
+    
+    def watch_object(self, connection, name):
+        self.object_watchers.add(name, connection)
+    
+    def unwatch_object(self, connection, name):
+        self.object_watchers.remove(name, connection)
 
 
 class LocalFunction(object):
@@ -176,7 +213,25 @@ class LocalEvent(object):
 
 
 class LocalObject(object):
-    pass
+    def __init__(self, service, name, value):
+        net.ensure_jsonable(value)
+        self.service = service
+        self.name = name
+        self.value = value
+    
+    def set_value(self, value):
+        net.ensure_jsonable(value)
+        with self.service.bus.lock:
+            self.value = value
+            for watcher in self.service.object_watchers.get(self.name, []):
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=value))
+    
+    def notify_created(self):
+        with self.service.bus.lock:
+            for watcher in self.service.object_watchers.get(self.name, []):
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.value))
+
+
 
 
 
