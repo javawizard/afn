@@ -10,6 +10,7 @@ from utils import no_exceptions
 from traceback import print_exc
 from threading import Thread
 import functools
+from afn.utils import Suppress
 from afn.utils.concurrent import synchronized_on
 from afn.utils.multimap import Multimap as _Multimap
 import itertools
@@ -160,18 +161,20 @@ class LocalService(object):
                 publisher.add(self)
     
     def create_function(self, name, function, mode=None):
-        if mode is None:
-            mode = autobus2.THREAD
-        function = LocalFunction(self, name, function, mode)
-        self.functions[name] = function
+        with self.bus.lock:
+            if mode is None:
+                mode = autobus2.THREAD
+            function = LocalFunction(self, name, function, mode)
+            self.functions[name] = function
     
     def create_event(self):
         raise NotImplementedError
     
     def create_object(self, name, value):
-        object = LocalObject(self, name, value)
-        self.objects[name] = object
-        object.notify_created()
+        with self.bus.lock:
+            object = LocalObject(self, name, value)
+            self.objects[name] = object
+            object.notify_created()
     
     def use_py_object(self, py_object):
         for name in dir(py_object):
@@ -224,12 +227,20 @@ class LocalObject(object):
         with self.service.bus.lock:
             self.value = value
             for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=value))
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=value, event="changed"))
     
     def notify_created(self):
         with self.service.bus.lock:
             for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.value))
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.value, event="created"))
+    
+    def remove(self):
+        with self.service.bus.lock:
+            del self.service.objects[self.name]
+            for watcher in self.service.object_watchers.get(self.name, []):
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=None, event="removed"))
+            with Suppress(KeyError):
+                del self.service.object_watchers[self.name]
 
 
 

@@ -14,6 +14,7 @@ import time
 from concurrent import synchronized_on
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
 from afn.utils import full_name
+from afn.utils.multimap import Multimap
 
 
 class Connection(common.AutoClose):
@@ -50,6 +51,7 @@ class Connection(common.AutoClose):
         self.fail_listener = fail_listener
         self.is_connected = False
         self.is_alive = True
+        self.object_watchers = Multimap(self.send_watch, self.send_unwatch)
 #        net.OutputThread(socket, self.queue.get).start()
 #        net.InputThread(socket, self.received, self.cleanup).start()
         # We query here so that an invalid service id will cause an exception
@@ -274,6 +276,19 @@ class Connection(common.AutoClose):
     
     def __getitem__(self, name):
         return Function(self, name)
+    
+    def watch_object(self, name, function):
+        self.object_watchers.add(name, function)
+    
+    def unwatch_object(self, name, function):
+        self.object_watchers.remove(name, function)
+    
+    def send_watch(self, name):
+        pass # TODO: pick up here, and send_unwatch, and check libautobus to
+        # see how I implemented them there
+    
+    def send_unwatch(self, name):
+        pass
     
     def __str__(self):
         return "<%s to %s:%s service_id=%s is_connected=%s is_alive=%s>" % (
