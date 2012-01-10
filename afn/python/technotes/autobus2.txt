@@ -486,6 +486,36 @@ That also worked wonderfully well. And I've converted Bus, Connection, and Singl
 
 
 
+Hm, I'm not sure if I mentioned this or not, but I got MultipleServiceProxy working as well.
+
+So now I'm working on getting objects working.
+
+And I'm having a hard time of it.
+
+Basically, I'm trying to figure out how to properly synchronize everything on the client side.
+
+So what does the object system need?
+
+And what things do the object system and the event system have in common?
+
+Well... actually, the event system is going to be easier to implement because it doesn't have all of these synchronization issues since events don't have an initial value that needs to be conveyed to things listening for it.
+
+So with objects...
+
+Watch and unwatch commands sent to the remote end are /not/ reentrant, so we have to locally track whether we've already submitted a request to watch an object or not.
+
+So, we have a map that maps object names to lists of functions listening for changes to that object.
+
+And then presumably we have another map that maps object names to their known current values. This only holds values for objects that have been watched and whose response has arrived.
+
+So the main problem I'm seeing is when we try to unwatch an object. This happens when all functions watching the object have been removed. The problem is how to deal with instances where more functions are added to watch the object, with the unwatch response not having yet arrived and a potential number of changed responses queued up for us to receive, which could cause object change notifications to these functions that are inaccurate.
+
+Maybe we should just say screw it, an occasional notification that an object has become null is a small price to pay and just run with it.
+
+So in that case, the object_values map would only be altered by inbound changed commands and watch and unwatch responses. A changed command would cause the corresponding value in object_values to change to the new object value as reported by the server, as would a watch response. An unwatch response would delete the entry 
+
+
+
 
 
 
