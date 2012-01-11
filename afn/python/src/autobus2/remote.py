@@ -51,7 +51,7 @@ class Connection(common.AutoClose):
         self.fail_listener = fail_listener
         self.is_connected = False
         self.is_alive = True
-        self.object_watchers = Multimap(self.send_watch, self.send_unwatch)
+        self.object_watchers = {}
         self.object_values = {}
 #        net.OutputThread(socket, self.queue.get).start()
 #        net.InputThread(socket, self.received, self.cleanup).start()
@@ -287,20 +287,41 @@ class Connection(common.AutoClose):
     
     @synchronized_on("lock")
     def watch_object(self, name, function):
-        self.object_watchers.add(name, function)
+        watchers = self.object_watchers.get(name)
+        if watchers is None:
+            watchers = []
+            self.object_watchers[name] = watchers
+            if self.is_connected:
+                self.send_watch(name)
+        watchers += function
+        with print_exceptions:
+            function(self.object_values.get(name))
     
     @synchronized_on("lock")
     def unwatch_object(self, name, function):
-        self.object_watchers.remove(name, function)
+        watchers = self.object_watchers[name]
+        watchers.remove(function)
+        with print_exceptions:
+            function(None)
+        if watchers == []:
+            del self.watchers[name]
+            if self.is_connected:
+                self.send_unwatch(name)
     
     def send_watch(self, name):
-        self.send_async(message, callback, True)
+        self.send_async(messaging.create_command("watch", name=name), self.process_changed)
     
     def send_unwatch(self, name):
-        pass
+        self.send_async(messaging.create_command("unwatch", name=name), self.process_changed)
     
     def process_changed(self, message):
+        if isinstance(message, exceptions.ConnectionLostException):
+            return
         name = message["name"]
+        value = message["value"]
+        if value is None:
+            with Suppress(KeyError):
+                del self.object_values[name]
         for watcher in self.object_watchers.get(name, []):
             watcher(message["value"])
     

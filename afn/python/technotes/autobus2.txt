@@ -512,7 +512,21 @@ So the main problem I'm seeing is when we try to unwatch an object. This happens
 
 Maybe we should just say screw it, an occasional notification that an object has become null is a small price to pay and just run with it.
 
-So in that case, the object_values map would only be altered by inbound changed commands and watch and unwatch responses. A changed command would cause the corresponding value in object_values to change to the new object value as reported by the server, as would a watch response. An unwatch response would delete the entry 
+So in that case, the object_values map would only be altered by inbound changed commands and watch and unwatch responses. A changed command would cause the corresponding value in object_values to change to the new object value as reported by the server, as would a watch response. An unwatch response would delete the entry in object_values.
+
+So whenever a changed command or watch/unwatch response is received, we update object_values, then call all of the listeners we currently have and tell them about the change.
+
+Then when we add a new listener, if it's the first listener, we send a watch command. And when we remove a listener, if it's the last listener, we send an unwatch command.
+
+Hm... How does this play in with connections being disconnected and having to reconnect?
+
+Well... Let's say that when a connection disconnects, we clear out object_values, then scan through the list of listeners and notify them that the object has gone away..
+
+Then, when a connection reconnects, we look at all of the objects that we're currently listening for and send out watches for them. When the watch responses arrive, the listeners will be duly notified.
+
+That should work.
+
+So let's see if we can implement that.
 
 
 
