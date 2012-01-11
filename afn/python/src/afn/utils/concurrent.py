@@ -1,8 +1,11 @@
 from __future__ import with_statement
 
 from threading import Thread, RLock
+import threading
 from functools import partial, update_wrapper
 import inspect
+import sys
+import traceback
 
 def as_new_thread(function): 
     """
@@ -202,3 +205,42 @@ class AtomicInteger(object):
         with self.lock:
             self.integer = self.integer.__or__(other)
             return self
+
+
+def dump_thread_traces():
+    """
+    Prints a traceback to stdout for each live thread in the Python interpreter.
+    This is useful for when infinite loops or other strange behavior are
+    occurring and you're not sure where; you could write some code to call this
+    function when such a situation is detected or when the user sends a
+    particular signal to the process.
+    """
+    threads = threading.enumerate()
+    threads_by_id = dict((t.ident, t) for t in threads)
+    stack_traces = sys._current_frames()
+    print "*** STACK TRACES OF ALL LIVE THREADS ***"
+    print ""
+    for thread_id, frame in stack_traces.items():
+        print "Stack trace for " + str(threads_by_id.get(thread_id, thread_id)) + ":"
+        lines = traceback.format_list(traceback.extract_stack(frame))
+        for line in lines:
+            print line,
+        print ""
+    print "*** END STACK TRACES ***"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

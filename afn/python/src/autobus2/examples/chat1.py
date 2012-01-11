@@ -1,5 +1,6 @@
 from autobus2 import Bus
 from autobus2.filter import NotEqualTo
+from afn.utils.concurrent import dump_thread_traces
 
 class ChatService(object):
     def message_happened(self, sender, message):
@@ -30,6 +31,9 @@ def main():
                     message = raw_input()
                 except KeyboardInterrupt:
                     return
+                if message == "==trace==":
+                    dump_thread_traces()
+                    continue
                 proxy["message_happened"](name, message, callback=None)
 
 
