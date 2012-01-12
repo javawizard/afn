@@ -6,18 +6,19 @@ class Multimap(dict):
     
     def add(self, key, value):
         created = False
-        if not self.key in self:
+        if not key in self:
             self[key] = []
             created = True
         self[key].append(value)
         if created:
-            self.on_create(key)
+            if self.on_create is not None:
+                self.on_create(key)
     
     def remove(self, key, value):
         self[key].remove(value)
         if not self[key]:
             del self[key]
-            if self.on_delete:
+            if self.on_delete is not None:
                 self.on_delete(key)
     
     # TODO: add more stuff to this class

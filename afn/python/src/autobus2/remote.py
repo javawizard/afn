@@ -157,6 +157,8 @@ class Connection(common.AutoClose):
     def _on_connection_succeeded(self):
         self.connect_attempts += 1
         self.connect_condition.notify_all()
+        for name in self.object_watchers:
+            self.send_watch(name)
         with print_exceptions:
             if self.open_listener:
                 self.open_listener(self)
@@ -184,6 +186,10 @@ class Connection(common.AutoClose):
                 with print_exceptions:
                     f(exceptions.ConnectionLostException())
             self.query_map.clear()
+            for watchers in self.object_watchers.values():
+                for watcher in watchers:
+                    with print_exceptions:
+                        watcher(None)
             with print_exceptions:
                 if self.close_listener:
                     self.close_listener(self)
@@ -191,6 +197,7 @@ class Connection(common.AutoClose):
                 Thread(name="autobus2.remote.Connection._connect-reconnect", target=self._connect).start()
     
     def send(self, message):
+        # print "Sending: " + str(message)
         with self.lock:
             if message:
                 if self.is_connected:
@@ -257,6 +264,7 @@ class Connection(common.AutoClose):
     
     @synchronized_on("lock")
     def received(self, message):
+        # print "Received: " + str(message)
         if message is None: # The input thread calls this function with None as
             # the argument when the socket closes
             self.cleanup()
@@ -293,7 +301,7 @@ class Connection(common.AutoClose):
             self.object_watchers[name] = watchers
             if self.is_connected:
                 self.send_watch(name)
-        watchers += function
+        watchers.append(function)
         with print_exceptions:
             function(self.object_values.get(name))
     

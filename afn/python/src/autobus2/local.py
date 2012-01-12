@@ -36,6 +36,7 @@ class RemoteConnection(object):
         net.InputThread(socket, self.received).start()
     
     def received(self, message):
+        # print "Received: " + str(message)
         if message is None: # Connection lost
             self.cleanup()
             return
@@ -67,6 +68,7 @@ class RemoteConnection(object):
                 self.send_error(message, "An exception was thrown while processing that command.")
     
     def send(self, message):
+        # print "Sending " + str(message)
         if message:
             self.queue.put(message)
     
@@ -106,12 +108,18 @@ class RemoteConnection(object):
     
     def process_watch(self, message):
         with self.bus.lock:
+            # print "watch: ", message
             name = message["name"]
             if name in self.watched_objects:
                 self.send_error(message, "You're already watching that object.")
                 return
             self.watched_objects.add(name)
             self.service.watch_object(self, name)
+            if self.service.objects.get(name):
+                object_value = self.service.objects[name].value
+            else:
+                object_value = None
+            self.send(messaging.create_response(message, name=name,     value=object_value))
     
     def process_listen(self, message):
         raise NotImplementedError
@@ -175,6 +183,7 @@ class LocalService(object):
             object = LocalObject(self, name, value)
             self.objects[name] = object
             object.notify_created()
+            return object
     
     def use_py_object(self, py_object):
         for name in dir(py_object):
