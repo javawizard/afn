@@ -553,7 +553,7 @@ So then when a service is created... Hang on, let me go add a thing to local ser
 
 Ok, that's done. So now... When we create a Bus, we go create a service as mentioned above. We then create some functions, events, and objects that I'll describe in a bit. We then store this service on the bus as a field.
 
-When someone asks us to create a service, we duly create it. Then we go and add appropriate entries to the objects in the introspection service.
+When someone asks us to create a service, we duly create it. Then we go and tell the introspection service's objects that they've changed (since they're virtual objects) and to go update themselves. If the service we're creating is the introspection service itself (which we can tell by there being no other services yet existing), then we skip this step... TODO: when do we actually do this step then?
 
 
 

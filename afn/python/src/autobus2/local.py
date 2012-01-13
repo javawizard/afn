@@ -265,11 +265,20 @@ class LocalObject(object):
             return self._value
     
     def set_value(self, value):
-        net.ensure_jsonable(value)
+        net.ensure_jsonable(value() if callable(value) else value)
         with self.service.bus.lock:
             self._value = value
             for watcher in self.service.object_watchers.get(self.name, []):
                 watcher.send(messaging.create_command("changed", True, name=self.name, value=self.get_value(), event="changed"))
+    
+    def changed(self):
+        """
+        Causes this object to act as if its value had changed. This is really
+        only useful when this object's value has been set to a function; this
+        indicates that the return value of the function has changed.
+        """
+        with self.service.bus.lock:
+            self.set_value(self._value)
     
     def notify_created(self):
         with self.service.bus.lock:
