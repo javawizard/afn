@@ -5,6 +5,7 @@ from autobus2 import exceptions, common
 from afn.utils import wrap, print_exceptions
 from afn.utils.concurrent import synchronized_on
 from functools import partial
+from afn.utils.multimap import Multimap as _Multimap
 
 class MultipleServiceProxy(common.AutoClose):
     def __init__(self, bus, info_filter, bind_function=None, unbind_function=None):
@@ -15,9 +16,9 @@ class MultipleServiceProxy(common.AutoClose):
         self.bind_function = bind_function
         self.unbind_function = unbind_function
         self.service_map = {} # Map of service ids to connections
+        self.object_watchers = _Multimap()
         self.is_alive = True
-        self.service_event_wrapper = wrap(self.service_event)
-        bus.add_service_listener(self.service_event_wrapper, info_filter, True)
+        bus.add_service_listener(self.service_event, info_filter, True)
     
     @synchronized_on("lock")
     def service_event(self, service_id, host, port, info, event):
@@ -63,7 +64,7 @@ class MultipleServiceProxy(common.AutoClose):
         self.is_alive = False
         for service_id in list(self.service_map.keys()):
             self.disconnect_from(service_id)
-        self.bus.remove_service_listener(self.service_event_wrapper)
+        self.bus.remove_service_listener(self.service_event)
     
     def __getitem__(self, name):
         return MultipleServiceFunction(self, name)
@@ -77,6 +78,19 @@ class MultipleServiceProxy(common.AutoClose):
     
     @synchronized_on("lock")
     def watch_object(self, name, function):
+        """
+        function -> (connection, info, value) -> None
+        """
+        self.object_watchers.add(name, function)
+    
+    @synchronized_on("lock")
+    def unwatch_object(self, name, function):
+        """
+        """
+        self.object_watchers.remove(name, function)
+    
+    def object_changed(self, name, connection, info, value):
+        for watcher in self.object_watchers.get()
 
 
 class MultipleServiceFunction(object):
