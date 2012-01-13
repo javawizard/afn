@@ -76,6 +76,7 @@ class MultipleServiceProxy(common.AutoClose):
                     yield connection
     
     @synchronized_on("lock")
+    def watch_object(self, name, function):
 
 
 class MultipleServiceFunction(object):
