@@ -39,9 +39,9 @@ out their salutations, even though you didn't instruct, for example, client.py
 which host on your network was running server.py.
 
 So how did the client find out about the server? That's the beauty of Autobus;
-it includes service discovery built in. Notice in the client, when we call
-bus.get_proxy (which, by the way, asks Autobus to get us an object that knows
-how to find other services on the network; we'll call these service-finding
+it comes with service discovery built in. Notice in the client, when we call
+bus.get_service_proxy (which, by the way, asks Autobus to get us an object that
+knows how to find other services on the network; we'll call these service-finding
 things proxies from now on), we pass it a dictionary. Notice also that when we
 call bus.create_service in the server, we pass it the same dictionary.
 

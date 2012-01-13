@@ -1,3 +1,7 @@
+"""
+This module primarily contains Autobus's service discovery code.
+"""
+
 from abc import ABCMeta as ABC, abstractmethod as abstract
 from socket import socket as Socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR, SO_BROADCAST, timeout as SocketTimeout, error as SocketError
 from autobus2 import constants, net, exceptions
@@ -33,39 +37,6 @@ class Discoverer(object):
     def shutdown(self):
         """
         """
-
-
-"""
-So, how should discovery work?
-
-Well, basically we need something where, when we receive a packet indicating
-that a service is available, then we add it to a list and if it wasn't in the
-list then we tell the bus about it. If it was in the list but with a different
-info object, we tell the bus about it again.
-
-If we receive a message saying that a service has disappeared, we check to see
-if it's in our list. If it is, then we tell the bus that it's disappeared and
-remove it from our list.
-
-So then we check every few seconds to see when the last time we received a
-"I'm alive" message from any individual service was, every few seconds. If it's
-been more than, say, a minute, we ask the bus to connect to that service. If
-it's unable to do so after, say, ten seconds, then we remove the service, but
-we remove it in a try/catch in case a "delete this service" was received later
-on that caused it to be removed.
-
-So we can do this using a single thread, like BroadcastPublisher: we have a
-thread that receives broadcast packets, but times out every second or so. On
-timeout, it checks to see if there are any services that we haven't received a
-broadcast for in the last minute or so. If there are, it spawns a thread that
-tries to connect by using the bus itself. This thread tries to connect; if it
-succeeds, it resets the timeout. If it doesn't, it removes the service from the
-discoverer. There is a potential for ten separate connect threads to get
-started since every second that the loop times out, it'll start another one,
-but once the first one times out and removes the service, the other nine will
-time out shortly thereafter and all will be well. And once I up that timeout to
-something more sane like fifteen seconds, then this won't be a problem at all.
-"""
 
 
 class BroadcastDiscoverer(object):

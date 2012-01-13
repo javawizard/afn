@@ -530,6 +530,17 @@ So let's see if we can implement that.
 
 
 
+Ok, so I just did a ton of stuff. I basically got objects working and then wrote support for them into MultipleServiceProxy. So objects work (and I'll be writing support for them into SingleServiceProxy soon).
+
+
+So now I'm thinking I need to create the introspection service. There will be one introspection service per autobus2.Bus instance (other languages can choose whether to create one introspection service per bus or one introspection service per user-created service; either's fine, but the Python version uses the former since the introspection service is built to be able to provide information about multiple services at a time).
+
+The introspection service will have an info object {"type": "autobus"}. It will publish the following objects:
+
+services: This is a 
+
+
+
 
 
 
