@@ -3,8 +3,8 @@ from threading import RLock, Condition
 import autobus2
 from autobus2 import exceptions, common
 from afn.utils import wrap, print_exceptions
+from afn.utils.partial import partial
 from afn.utils.concurrent import synchronized_on
-from functools import partial
 from afn.utils.multimap import Multimap as _Multimap
 
 class MultipleServiceProxy(common.AutoClose):
@@ -41,6 +41,9 @@ class MultipleServiceProxy(common.AutoClose):
                 open_listener=partial(self.connection_opened, info),
                 close_listener=partial(self.connection_closed, info),
                 lock=self.lock)
+        for name, watchers in self.object_watchers:
+            for watcher in watchers:
+                connection.watch_object(name, partial(watcher, connection, info))
         self.service_map[service_id] = connection
     
     def disconnect_from(self, service_id):
@@ -82,15 +85,16 @@ class MultipleServiceProxy(common.AutoClose):
         function -> (connection, info, value) -> None
         """
         self.object_watchers.add(name, function)
+        for info, connection in self.service_map.items():
+            connection.watch_object(name, partial(connection, info))
     
     @synchronized_on("lock")
     def unwatch_object(self, name, function):
         """
         """
         self.object_watchers.remove(name, function)
-    
-    def object_changed(self, name, connection, info, value):
-        for watcher in self.object_watchers.get()
+        for info, connection in self.service_map.items():
+            connection.unwatch_object(name, partial(connection, info))
 
 
 class MultipleServiceFunction(object):
