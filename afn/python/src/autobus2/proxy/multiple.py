@@ -41,7 +41,7 @@ class MultipleServiceProxy(common.AutoClose):
                 open_listener=partial(self.connection_opened, info),
                 close_listener=partial(self.connection_closed, info),
                 lock=self.lock)
-        for name, watchers in self.object_watchers:
+        for name, watchers in self.object_watchers.items():
             for watcher in watchers:
                 connection.watch_object(name, partial(watcher, connection, info))
         self.service_map[service_id] = connection

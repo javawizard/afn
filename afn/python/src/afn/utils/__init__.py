@@ -227,7 +227,7 @@ def wrap(function):
 def get_path(object, path):
     if isinstance(path, basestring):
         components = path.split(".")
-    for component in path:
+    for component in components:
         object = getattr(object, component)
     return object
 
