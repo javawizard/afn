@@ -535,9 +535,23 @@ Ok, so I just did a ton of stuff. I basically got objects working and then wrote
 
 So now I'm thinking I need to create the introspection service. There will be one introspection service per autobus2.Bus instance (other languages can choose whether to create one introspection service per bus or one introspection service per user-created service; either's fine, but the Python version uses the former since the introspection service is built to be able to provide information about multiple services at a time).
 
-The introspection service will have an info object {"type": "autobus"}. It will publish the following objects:
+The introspection service will have an info object {"type": "autobus"}. It will publish the following functions:...
 
-services: This is a 
+hm...
+
+I'm thinking this will be a lot easier if I have special autobus.something (or autobus_something) functions/events/objects on every service...
+
+Hm... So what are the advantages and disadvantages of the approaches?
+
+Let's see... If we have an introspection service, we can... You know what, I'm going to have an introspection service. I think this will make things easier.
+
+I do think that I should probably have every service publish the service id of their introspection service in their info object... That might come in useful, although I don't yet have a use for it myself, so maybe I should wait on it...
+
+Anyways... So when a new Bus instance is created, it creates a service for itself as mentioned above. It then creates some functions, evens, and objects which I'll get into in a bit.
+
+So then when a service is created... Hang on, let me go add a thing to local services to allow them to be closed, which deletes them and stuffs, cause that's going to be useful in the future, and it's going to tie into how I implement the introspection service...
+
+
 
 
 
