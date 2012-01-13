@@ -4,7 +4,7 @@ This module contains classes and functions relating to publishing services.
 
 from Queue import Queue, Empty
 
-from autobus2 import net, messaging, exceptions
+from autobus2 import net, messaging, exceptions, common
 import autobus2
 from utils import no_exceptions
 from traceback import print_exc
@@ -134,7 +134,7 @@ class RemoteConnection(object):
         self.send(messaging.create_response(message))
 
 
-class LocalService(object):
+class LocalService(common.AutoClose):
     """
     A service created locally and published to remote clients. This is the
     class of objects returned from bus.create_service().
@@ -153,6 +153,7 @@ class LocalService(object):
         self.info = info
         self.bus = bus
         self.active = False
+        self.is_alive = True
         self.functions = {}
         self.events = {}
         self.objects = {}
@@ -160,13 +161,31 @@ class LocalService(object):
         # RemoteConnection instances listening for them
         self.object_watchers = _Multimap() # Ditto but for object watches
     
+    @synchronized_on("bus.lock")
     def activate(self):
-        with self.bus.lock:
-            if self.active: # Already active
-                return
-            self.active = True
-            for publisher in self.bus.publishers:
-                publisher.add(self)
+        if self.active: # Already active
+            return
+        if not self.is_alive:
+            raise exceptions.ClosedException("This LocalService has been closed.")
+        self.active = True
+        for publisher in self.bus.publishers:
+            publisher.add(self)
+    
+    @synchronized_on("bus.lock")
+    def deactivate(self):
+        if not self.active: # Not active
+            return
+        if not self.is_alive:
+            return
+        self.active = False
+        for publisher in self.bus.publishers:
+            publisher.remove(self)
+    
+    @synchronized_on("bus.lock")
+    def close(self):
+        self.is_alive = False
+        self.deactivate()
+        self.bus._close_service(self)
     
     def create_function(self, name, function, mode=None):
         with self.bus.lock:

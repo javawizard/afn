@@ -189,6 +189,12 @@ class Bus(common.AutoClose):
             service.activate()
         return service
     
+    def _close_service(self, service):
+        # The service will already be deactivated when this gets called, so we
+        # don't need to remove it from any of the publishers. So I think the
+        # only thing we need to do is remove it from our map of services.
+        del self.local_services[service.id]
+    
     @synchronized_on("lock")
     def setup_inbound_socket(self, socket):
         # Create a connection and then add it to our list of connections

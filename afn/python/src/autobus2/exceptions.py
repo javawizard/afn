@@ -44,3 +44,7 @@ class NoMatchingServiceException(AutobusException):
     pass
 
 
+class ClosedException(AutobusException):
+    pass
+
+
