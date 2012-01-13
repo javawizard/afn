@@ -224,6 +224,14 @@ def wrap(function):
     return lambda *args, **kwargs: function(*args, **kwargs)
 
 
+def get_path(object, path):
+    if isinstance(path, basestring):
+        components = path.split(".")
+    for component in path:
+        object = getattr(object, component)
+    return object
+
+
 
 
 

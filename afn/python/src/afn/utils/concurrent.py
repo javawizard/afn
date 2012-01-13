@@ -6,6 +6,7 @@ from functools import partial, update_wrapper
 import inspect
 import sys
 import traceback
+import afn.utils
 
 def as_new_thread(function): 
     """
@@ -66,10 +67,14 @@ def synchronized_on(attribute=None):
     class. This will cause the method to be synchronized on the lock (or any
     other sort of context manager) located at self.some_attribute, which allows
     for methods to be synchronized on per-instance locks.
+    
+    some_attribute can contain dots; these will be parsed as per normal Python
+    semantics, so, for example, @synchronized_on("x.y") synchronizes on
+    self.x.y.
     """
     def decorator(function):
         def wrapper(self, *args, **kwargs):
-            with getattr(self, attribute):
+            with afn.utils.get_path(self, attribute):
                 return function(self, *args, **kwargs)
         update_wrapper(wrapper, function)
         wrapper.wrapped = function
