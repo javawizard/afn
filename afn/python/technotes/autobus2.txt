@@ -547,9 +547,13 @@ Let's see... If we have an introspection service, we can... You know what, I'm g
 
 I do think that I should probably have every service publish the service id of their introspection service in their info object... That might come in useful, although I don't yet have a use for it myself, so maybe I should wait on it...
 
-Anyways... So when a new Bus instance is created, it creates a service for itself as mentioned above. It then creates some functions, evens, and objects which I'll get into in a bit.
+Anyways... So when a new Bus instance is created, it creates a service for itself as mentioned above. It then creates some functions, events, and objects which I'll get into in a bit.
 
 So then when a service is created... Hang on, let me go add a thing to local services to allow them to be closed, which deletes them and stuffs, cause that's going to be useful in the future, and it's going to tie into how I implement the introspection service...
+
+Ok, that's done. So now... When we create a Bus, we go create a service as mentioned above. We then create some functions, events, and objects that I'll describe in a bit. We then store this service on the bus as a field.
+
+When someone asks us to create a service, we duly create it. Then we go and add appropriate entries to the objects in the introspection service.
 
 
 

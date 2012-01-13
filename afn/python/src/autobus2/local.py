@@ -248,19 +248,33 @@ class LocalObject(object):
         net.ensure_jsonable(value)
         self.service = service
         self.name = name
-        self.value = value
+        self._value = value
+    
+    @property
+    def value(self):
+        return self.get_value()
+    
+    @value.setter
+    def value(self, new_value):
+        self.set_value(new_value)
+    
+    def get_value(self):
+        if callable(self._value):
+            return self._value()
+        else:
+            return self._value
     
     def set_value(self, value):
         net.ensure_jsonable(value)
         with self.service.bus.lock:
-            self.value = value
+            self._value = value
             for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=value, event="changed"))
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.get_value(), event="changed"))
     
     def notify_created(self):
         with self.service.bus.lock:
             for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.value, event="created"))
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.get_value(), event="created"))
     
     def remove(self):
         with self.service.bus.lock:
