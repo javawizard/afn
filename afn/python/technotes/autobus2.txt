@@ -557,6 +557,10 @@ When someone asks us to create a service, we duly create it. Then we go and tell
 
 Man, if I'd gotten the KVO stuff working, this'd be a lot easier... Maybe I should go write that first...
 
+Actually no, I'm going to get Autobus objects working. So I just added a thing to allow Autobus objects to be virtual, where a function is invoked to get their value when Autobus needs it. That sorts out all of these issues, since I can just write that function to introspect the currently-active services on the bus and then once the introspection service itself is set up I can tell those objects that they've changed and so to go call that method again, which solves the bootstrapping problem.
+
+And speaking of that, I need to go create a thing to copy objects passed to local.LocalObject.set_value to prevent them from being accidentally modified by outside code...
+
 
 
 
