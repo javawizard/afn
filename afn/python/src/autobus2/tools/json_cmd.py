@@ -28,39 +28,109 @@ parser = ArgumentParser()
 
 parser.add_argument("-S", "--suppress-warnings", dest="warnings", action="store_false")
 
-actions = parser.add_argument_group("actions")
-add_action = partial(actions.add_argument, dest="actions", action=AppendWithConst)
-add_action("-u", "--up", const="up", nargs=0)
-add_action("-k", "--key", const="key", nargs=1)
-add_action("-K", "--key-and-up", const="key-and-up", nargs=1)
-add_action("-i", "--index", const="index", nargs=1)
-add_action("-I", "--index-and-up", const="index-and-up", nargs=1)
-add_action("-r", "--read", const="read", nargs=0)
-add_action("-R", "--read-file", const="read-file", nargs=1)
-add_action("-w", "--write", const="write", nargs=0)
-add_action("-W", "--write-file", const="write", nargs=1)
-add_action("-c", "--write-current", const="write-current", nargs=0)
-add_action("-C", "--write-current-to-file", const="write-current-to-file", nargs=1)
-add_action("-f", "--file", const="file", nargs=1)
-add_action("-o", "--object", const="object", nargs=0)
-add_action("-l", "--list", const="list", nargs=0)
-add_action("-s", "--string", const="string", nargs=1)
-add_action("-n", "--number", const="number", nargs=1)
-add_action("-b", "--bool", "--boolean", const="bool", nargs=1)
-add_action("-T", "--true", const="true", nargs=0)
-add_action("-F", "--false", const="false", nargs=0)
-add_action("-N", "--null", const="null", nargs=0)
-add_action("-v", "--value", const="value", nargs=1)
-add_action("-m", "--make", const="make", nargs=0)
-add_action("-j", "--json", const="json", nargs=0)
-add_action("-p", "--plist", const="plist", nargs=0)
-add_action("-P", "--python", const="python", nargs=0)
-add_action("-t", "--text", const="text", nargs=0)
-add_action("-x", "--delete", "--remove", const="delete", nargs=0)
-add_action("-a", "--append-and-up", const="append-and-up", nargs=0)
-add_action("-A", "--append", const="append", nargs=0)
-add_action("-g", "--insert-and-up", const="insert-and-up", nargs=1)
-add_action("-G", "--insert", const="insert", nargs=1)
+path_actions = parser.add_argument_group("path-related actions")
+add_path_action = partial(path_actions.add_argument, dest="actions", action=AppendWithConst)
+add_path_action("-u", "--up", const="up", nargs=0,
+        help='Jumps one level up the path. Analogous to "cd ..".')
+add_path_action("-k", "--key", const="key", nargs=1, metavar="<key>")
+add_path_action("-K", "--key-and-up", const="key-and-up", nargs=1, metavar="<key>",
+        help='Adds the specified key onto the end of the path. Analogous to "cd <key>".')
+add_path_action("-i", "--index", const="index", nargs=1, metavar="<index>")
+add_path_action("-I", "--index-and-up", const="index-and-up", nargs=1, metavar="<index>",
+        help='Adds the specified index onto the end of the path. Analogous to "cd <index".')
+add_path_action("-m", "--make", const="make", nargs=0,
+        help="This action doesn't work yet. In the future, it will function analogously "
+        'to "mkdir -p".')
+
+io_actions = parser.add_argument_group("I/O actions")
+add_io_action = partial(io_actions.add_argument, dest="actions", action=AppendWithConst)
+add_io_action("-r", "--read", const="read", nargs=0,
+        help="Reads data from stdin using the current mode, then sets the value at the "
+        "current path to contain the data read.")
+add_io_action("-R", "--read-file", const="read-file", nargs=1, metavar="<file>",
+        help="Reads the specified file using the current mode, then sets the value at the "
+        "current path to contain the data read.")
+add_io_action("-w", "--write", const="write", nargs=0,
+        help="Writes the root value to stdout using the current mode. Note that this writes "
+        "the root value, not the value at the current path.")
+add_io_action("-W", "--write-file", const="write", nargs=1, metavar="<file>",
+        help="Writes the root value to the specified file using the current mode. Note that "
+        "this writes the root value, not the value at the current path.")
+add_io_action("-c", "--write-current", const="write-current", nargs=0,
+        help="Writes the value at the current path to stdout using the current mode.")
+add_io_action("-C", "--write-current-to-file", const="write-current-to-file", nargs=1, metavar="<file>",
+        help="Writes the value at the current path to the specified file using the current mode.")
+add_io_action("-f", "--file", const="file", nargs=1, metavar="<file>",
+        help="Same as -R <file>, but adds -W <file> to the end of the command line. "
+        "This allows for editing files in place without having to specify -R and -W separately. "
+        "Note that even if the mode is changed after -f is specified, the file will still be "
+        "written back using the mode that -f used to read the file.")
+
+addition_actions = parser.add_argument_group("data actions")
+add_addition_action = partial(addition_actions.add_argument, dest="actions", action=AppendWithConst)
+add_addition_action("-o", "--object", const="object", nargs=0,
+        help="Sets the value at the current path to be a newly-created object/dictionary.")
+add_addition_action("-l", "--list", const="list", nargs=0,
+        help="Sets the value at the current path to be a newly-created list/array.")
+add_addition_action("-s", "--string", const="string", nargs=1, metavar="<text>",
+        help="Sets the value at the current path to be a string containing the specified text.")
+add_addition_action("-n", "--number", const="number", nargs=1, metavar="<number>",
+        help="Sets the value at the current path to be the specified number.")
+add_addition_action("-b", "--bool", "--boolean", const="bool", nargs=1, metavar="<bool>",
+        help="Sets the value at the current path to be the specified boolean, which can be "
+        "one of true, false, yes, no, on, or off. The value is case-insensitive.")
+add_addition_action("-T", "--true", const="true", nargs=0,
+        help="Sets the value at the current path to the boolean true.")
+add_addition_action("-F", "--false", const="false", nargs=0,
+        help="Sets the value at the current path to the boolean false.")
+add_addition_action("-N", "--null", const="null", nargs=0,
+        help="Sets the value at the current path to null.")
+add_addition_action("-v", "--value", const="value", nargs=1, metavar="<value>",
+        help="Reads <value> using the current mode and sets the value at the current "
+        "path to it.")
+
+mode_actions = parser.add_argument_group("modes")
+add_mode_action = partial(mode_actions.add_argument, dest="actions", action=AppendWithConst)
+add_mode_action("-j", "--json", const="json", nargs=0,
+        help="Changes the current mode to JSON mode. Data will be read and written "
+        "as JSON values.")
+add_mode_action("-p", "--plist", const="plist", nargs=0,
+        help="Changes the current mode to p-list mode. Data will be read and written "
+        "using Apple's p-list XML file format.")
+add_mode_action("-P", "--python", const="python", nargs=0,
+        help="Changes the current mode to Python mode. Data will be read and written "
+        "as Python objects. WARNING: This is not safe; reading data in Python mode "
+        "allows evaluation of arbitrary Python expressions, so Python mode should "
+        "only be used when you know that the data you'll be reading is safe.")
+add_mode_action("-t", "--text", const="text", nargs=0,
+        help="Changes the current mode to text mode. Data will be read as one "
+        "continuous string, and only strings and numbers can be written with this "
+        "mode. Strings will be written without quotes or escapes. This is intended "
+        "to be used when you want to print out the value of "
+        "a string without quotes, escapes, and other format-specific things.")
+
+modify_actions = parser.add_argument_group("modification actions")
+add_modify_action = partial(modify_actions.add_argument, dest="actions", action=AppendWithConst)
+add_modify_action("-x", "--delete", "--remove", const="delete", nargs=0,
+        help="Deletes the value at the current path, then jumps one level up the path. "
+        'For example, if the current path points to the key "test" of a particular '
+        'object/dictionary, -x will delete that key and whatever its value happens '
+        ' to be, and then jump up one path level so that the path then points to the '
+        'object/dictionary itself.')
+add_modify_action("-a", "--append-and-up", const="append-and-up", nargs=0)
+add_modify_action("-A", "--append", const="append", nargs=0,
+        help="Appends a new item to the list/array that the current path points to, "
+        'then adds the index of the newly-created item to the path. The item will have '
+        'the value null; this can then be changed with a command such as -s or -n. For '
+        'example, "-a -n 5" will append the number 5 to the list/array at the current path.')
+add_modify_action("-g", "--insert-and-up", const="insert-and-up", nargs=1, metavar="<index>")
+add_modify_action("-G", "--insert", const="insert", nargs=1, metavar="<index>",
+        help="Inserts a new item into the list/array that the current path points to, "
+        'then adds the specified index onto the path. Indexes start at 0. For example, running '
+        '-g 0 -n 7 into the list [1,2,3] will change the list to [7,1,2,3], and running '
+        '-g 1 -n 7 on the list [1,2,3] will change the list to [1,7,2,3]. This is different '
+        'from -i, which will just modify an existing item; running -i 1 -n 7 on the list '
+        '[1,2,3] will change the list to [1,7,3].')
 
 class JSONFormatter(object):
     def read(self, text):
