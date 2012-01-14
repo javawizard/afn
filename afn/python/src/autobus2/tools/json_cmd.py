@@ -12,6 +12,7 @@ from afn.utils.argparseutils import AppendWithConst
 from afn.utils.partial import partial
 import json
 import plistlib
+import sys
 
 description = """
 A command-line tool for editing JSON data and plist files.
@@ -24,6 +25,8 @@ Examples:
 """
 
 parser = ArgumentParser()
+
+parser.add_argument("-S", "--suppress-warnings", dest="warnings", action="store_false")
 
 actions = parser.add_argument_group("actions")
 add_action = partial(actions.add_argument, dest="actions", action=AppendWithConst)
@@ -56,8 +59,8 @@ add_action("-t", "--text", const="text", nargs=0)
 add_action("-x", "--delete", "--remove", const="delete", nargs=0)
 add_action("-a", "--append-and-up", const="append-and-up", nargs=0)
 add_action("-A", "--append", const="append", nargs=0)
-add_action("-g", "--insert-and-up", const="insert-and-up", nargs=0)
-add_action("-G", "--insert", const="insert", nargs=0)
+add_action("-g", "--insert-and-up", const="insert-and-up", nargs=1)
+add_action("-G", "--insert", const="insert", nargs=1)
 
 class JSONFormatter(object):
     def read(self, text):
@@ -141,17 +144,31 @@ def read_from_stdin():
     return input
 
 def main():
-    global formatter, path, working
+    global formatter, path, working, warnings
     args = parser.parse_args()
+    warnings = args.warnings
     # print args.actions
     formatter = JSONFormatter()
     path = []
+    jump_path_next = False
+    jump_path_now = False
     working = None
     file_to_write = None
     formatter_to_write_with = None
     for action_info in args.actions:
+        if jump_path_next:
+            jump_path_next = False
+            jump_path_now = True
+        elif jump_path_now:
+            jump_path_now = False
+            # print "Jumping up"
+            path = path[:-1]
+        # print "Action:", action_info, "Jump:", jump_path_next, jump_path_now, "Working:", working, "Path:", path
         action = action_info[0]
         params = action_info[1:]
+        if action.endswith("-and-up"):
+            action = action[:-len("-and-up")]
+            jump_path_next = True
         # print action, params, path
         if action == "up":
             path = path[:-1]
@@ -181,6 +198,12 @@ def main():
             set_to([])
         elif action == "string":
             set_to(params[0])
+        elif action == "number":
+            v = params[0]
+            if int(v) == float(v):
+                set_to(int(v))
+            else:
+                set_to(float(v))
         elif action == "bool":
             set_to(parse_bool(params[0]))
         elif action == "true":
@@ -199,6 +222,23 @@ def main():
             formatter = PythonFormatter()
         elif action == "text":
             formatter = TextFormatter()
+        elif action == "delete":
+            v = lookup(True)
+            del v[path[-1]]
+            path = path[:-1]
+            if jump_path_now and warnings:
+                print >>sys.stderr, ('WARNING: --delete automatically jumps up;'
+                ' putting a "-and-up" action before a --delete will jump twice, '
+                'which is probably not what you want. To suppress this warning, use -S.')
+        elif action == "append":
+            v = lookup()
+            v.append(None)
+            path.append(len(v) - 1)
+        elif action == "insert":
+            v = lookup()
+            index = int(params[0])
+            v.insert(index, None)
+            path.append(index)
     if file_to_write is not None:
         formatter_to_write_with.write_file(file_to_write, working)
         
