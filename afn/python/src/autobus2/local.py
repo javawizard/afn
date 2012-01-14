@@ -14,6 +14,7 @@ from afn.utils import Suppress
 from afn.utils.concurrent import synchronized_on
 from afn.utils.multimap import Multimap as _Multimap
 import itertools
+import copy
 
 class RemoteConnection(object):
     """
@@ -260,16 +261,23 @@ class LocalObject(object):
     
     def get_value(self):
         if callable(self._value):
-            return self._value()
+            value = self._value()
         else:
-            return self._value
+            value = self._value
+        return copy.copy(value) # TODO: do we need to copy the value when
+        # returning it here? We might only need to copy it when originally
+        # setting it...
     
     def set_value(self, value):
         net.ensure_jsonable(value() if callable(value) else value)
+        if not callable(value):
+            value = copy.copy(value) # Make a copy so that modifications to the
+            # original object don't affect us
         with self.service.bus.lock:
             self._value = value
+            new_value = self.get_value()
             for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.get_value(), event="changed"))
+                watcher.send(messaging.create_command("changed", True, name=self.name, value=new_value, event="changed"))
     
     def changed(self):
         """
