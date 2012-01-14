@@ -1,0 +1,1 @@
+See meta/LICENSE.txt for information about the licensing of the AFN repository.
