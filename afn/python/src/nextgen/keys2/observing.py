@@ -8,6 +8,7 @@ class KeyObservable(object):
     __metaclass__ = ABC
     
     def observe_path(self, observer, path, ):
+        raise NotImplementedError
 
 
 class ObservableObject(KeyObservable):
