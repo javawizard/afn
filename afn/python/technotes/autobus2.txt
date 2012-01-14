@@ -555,6 +555,8 @@ Ok, that's done. So now... When we create a Bus, we go create a service as menti
 
 When someone asks us to create a service, we duly create it. Then we go and tell the introspection service's objects that they've changed (since they're virtual objects) and to go update themselves. If the service we're creating is the introspection service itself (which we can tell by there being no other services yet existing), then we skip this step... TODO: when do we actually do this step then?
 
+Man, if I'd gotten the KVO stuff working, this'd be a lot easier... Maybe I should go write that first...
+
 
 
 
