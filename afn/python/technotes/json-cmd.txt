@@ -1,0 +1,70 @@
+So I'm writing a JSON comand-line tool...
+
+The source is located at src/autobus2/tools/json_cmd.py. There's a wrapper
+script to invoke it at ../json.
+
+So let's see...
+
+I'm thinking by default this thing will start off with null as the value it's
+storing.
+
+And by default it will print out the value when it's finished.
+
+Right now this will just be json data. I'm going to add additional command-line
+arguments to allow it to read and write in both Python-style structures and
+plist format.
+
+So we have our JSON value that we're manipulating. Then we have a current path
+that we're at. Things can be added to this path with -d x, where x is the
+textual key of the entry that we want to descend into if the current path
+points to an object, or an int representing the index that we want to descend
+into if the current path is an array.
+
+-o sets the value at the current path to a newly-created object. -l sets the
+value at the current path to a newly-created list. -x sets the value at the
+current path to the result of the specified json expression. -i sets the value
+at the current path to the specified number. -b sets the value at the current
+path to the specified boolean, which can be true, false, yes, no, on, or off.
+-T is short for -b true, and -F is short for -b false. -n sets the value at the
+current path to null. -s sets the value at the current path to a string
+containing the specified text.
+
+-r reads a line from stdin, parses it as a json value, and sets the value of
+the current path to it. -w writes the entire in-memory value, irrespective of
+the current path, to stdout; -c writes the value of the current path. -L writes
+the value of the current path, which should be a list, one line at a time to
+stdout.
+
+-j switches to JSON formatting, which is the default. -p switches to plist
+formatting. -P switches to Python formatting. -S switches to text formatting
+(the S stands for String); this formatting will only write strings and ints;
+strings are printed without quotes and escapes, and ints are printed as normal.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

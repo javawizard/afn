@@ -1,3 +1,8 @@
+"""
+Neat little command-line JSON tool written by Alexander Boyd as part of the AFN
+project. Copyright Alexander Boyd. Released under the terms of the GNU Lesser
+General Public License.
+"""
 
 try:
     from argparse import ArgumentParser
