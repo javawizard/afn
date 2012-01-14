@@ -15,18 +15,71 @@ import plistlib
 import sys
 
 description = """
-A command-line tool for editing JSON data and plist files.
+A command-line tool for editing JSON data and p-list files.
+
+Like ffmpeg, the order of command line arguments is significant. Every argument
+except for -S and --help is an action to be performed. Actions are performed in
+the order that they appear in the command line arguments, and a single action
+can be used multiple times.
+
+There are three important concepts that json uses to allow modification of data:
+the root value, the current path, and the current mode.
+
+The root value is the data that's being modified by the json command. It's
+typically an object/dictionary, although it can also be a list/array, a string,
+an int, or any other data supported by the json command.
+
+The current path is a path within the root value. This is analogous to the
+working directory of a shell such as bash, except that the current path relates
+to JSON objects/dictionaries and lists/arrays, not files and directories. There
+are a number of commands analogous to cd, mkdir, and such for modifying the
+current path. Note that unlike shell commands such as cd, the current path can
+be changed to a path that doesn't actually exist; modifying such a path will
+cause it to be created automatically, as if the equivalent of "mkdir" had been
+run for you.
+
+The current mode is the file format that will be used to read and write data.
+It can be changed in the middle of a json command line, which can be used to,
+for example, read data in one file format and write data in another.
+
+The current mode is, by default, JSON mode. This can be changed to p-list mode
+(a mode where data is read and written as Apple p-list files) with -p. It can
+also be changed to Python mode (a mode where data is read and written as Python
+objects) with -P, and it can be changed to text mode (a mode where strings,
+numbers, and such are written as plain text without character escapes or quotes)
+with -t. -j changes the mode back to JSON mode.
+
+Some commands, such as --key, have variants with "-and-up" appended to the
+command name. These cause a --up to be added after the command immediately
+following the "-and-up" command. For example, to create a new object and set
+the keys "first", "second", and "third" to have the values "one", "two", and
+"three", respectively, without using "-and-up" commands, you would have to do
+something like:
+
+    json -o -k first -s one -u -k second -s two -u -k third -s three -u
+
+but with "-and-up" commands (-K is the -and-up equivalent of -k), you could do:
+
+    json -o -K first -s one -K second -s two -K third -s three
+
+which is quite a bit more intuitive.
+
+Examples of how to use this command-line utility are present at the end of this
+help output.
 """
 
 epilog = """
 Examples:
+  Examples will be coming soon.
 
-
+Author:
+  Alexander Boyd (alex@opengroove.org). Created as part of the AFN project.
 """
 
-parser = ArgumentParser()
+parser = ArgumentParser(add_help=False, description="!!!DESC!!!", epilog="!!!END!!!")
 
 parser.add_argument("-S", "--suppress-warnings", dest="warnings", action="store_false")
+parser.add_argument("-?", "--help", action='store_true', help='show this help message and exit')
 
 path_actions = parser.add_argument_group("path-related actions")
 add_path_action = partial(path_actions.add_argument, dest="actions", action=AppendWithConst)
@@ -216,6 +269,10 @@ def read_from_stdin():
 def main():
     global formatter, path, working, warnings
     args = parser.parse_args()
+    if args.help:
+        print parser.format_help().replace("!!!DESC!!!", description.strip()
+                ).replace("!!!END!!!", epilog.strip())
+        return
     warnings = args.warnings
     # print args.actions
     formatter = JSONFormatter()
