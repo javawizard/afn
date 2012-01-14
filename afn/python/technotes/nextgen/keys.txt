@@ -142,6 +142,14 @@ So I'm going to implement that for now without supporting keys just yet. We can 
 
 
 
+So I did all that and it needs a rewrite.
+
+It also needs to allow reading and updating objects, not just observing them.
+
+
+
+
+
 
 
 
