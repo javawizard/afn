@@ -22,7 +22,7 @@ options_object_doc = """\
 Ok so, how this is going to work. Basically, we load up the configuration file
 and represent it as a RawConfigParser. We load up the changes from the
 specified configuration file, or create it if it doesn't exist. We then
-register ourselves as an interface on the specified Autobus connection under
+register ourselves as a service on the specified Autobus bus under
 the specified name. All of the functions lock on a variable, including the
 ones made available to the program that's using us. When a function's called
 that changes data, the data's changed in the config parser, the configuration
@@ -49,7 +49,7 @@ from ConfigParser import RawConfigParser
 from threading import RLock
 from concurrent import synchronized
 
-class _AutoconfigureInterface(object):
+class _AutoconfigureService(object):
     """
     This is an interface provided by the Autoconfigure system. Autoconfigure
     is a Python library (although it could feasibly be converted into a
@@ -113,6 +113,7 @@ class _AutoconfigureInterface(object):
     for name, function in locals().items()[:]:
         if not name.startswith("_"):
             function.__doc__ = getattr(RawConfigParser, name).__doc__
+    del name
     del function
 
 # TODO: convert this to one lock per Configuration instance at
@@ -120,25 +121,26 @@ class _AutoconfigureInterface(object):
 _lock = RLock()
 
 class Configuration(object):
-    def __init__(self, bus, interface_name, file_name):
+    def __init__(self, bus, target_name, file_name):
         self.bus = bus
-        self.interface_name = interface_name
+        self.target_name = target_name
         self.file_name = file_name
         self.config = RawConfigParser()
         self.config.read(file_name)
-        if interface_name is not None:
-            bus.add_interface(interface_name, _AutoconfigureInterface(self))
-            self.sections_object = bus.add_object(interface_name, "sections",
-                    sections_object_doc, self._compute_sections())
-            self.options_object = bus.add_object(interface_name, "options",
-                    options_object_doc, self._compute_options())
+        if target_name is not None:
+            self.service = bus.create_service({"type": "autoconfigure", "target": target_name},
+                    active=False, use_py_object=_AutoconfigureService(self))
+            self.sections_object = self.service.create_object("sections",
+                    self._compute_sections(), doc=sections_object_doc)
+            self.options_object = self.service.create_object("options",
+                    self._compute_options(), doc=options_object_doc)
     
     @synchronized(_lock)
     def _save(self):
         with open(self.file_name, "w") as file:
             self.config.write(file)
-        self.sections_object.set(self._compute_sections())
-        self.options_object.set(self._compute_options())
+        self.sections_object.set_value(self._compute_sections())
+        self.options_object.set_value(self._compute_options())
     
     @synchronized(_lock)
     def _compute_sections(self):
