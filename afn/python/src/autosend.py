@@ -6,8 +6,10 @@ from optparse import OptionParser
 from time import sleep
 
 description = """\
-A command-line Autobus client. Autosend allows a variety of actions to be
+A command-line Autobus 1 client. Autosend allows a variety of actions to be
 performed against an Autobus server.
+
+(If you want an Autobus 2 command-line client, use autosend2.)
 
 One, and only one, mode option can be specified. This tells autosend what to
 do.
