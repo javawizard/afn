@@ -1,9 +1,10 @@
 
 from datetime import datetime, timedelta as interval
 from time import sleep
-from libautobus import AutobusConnection
+from autobus2 import Bus
 import sys
 from concurrent import as_new_thread
+from afn.utils import speakutils, timeutils
 
 class RPC(object):
     """
@@ -16,18 +17,18 @@ class RPC(object):
         """
         Instructs the speak server to say the current time.
         """
-        speak_server.say_text("the_time is " + 
-                speak_server.time_format_time(current_time))
+        speak_server["say_text"]("the_time is " + 
+                speakutils.format_time(current_time), callback=None)
     
     @as_new_thread
     def datetime(self):
         """
         Instructs the speak server to say the current date and time.
         """
-        speak_server.say_text("today is " + 
-                speak_server.time_format_weekday_month_day(current_time) + 
+        speak_server["say_text"]("today is " + 
+                speakutils.format_weekday_month_day(current_time) + 
                 " :p:600 the_time is " + 
-                speak_server.time_format_time(current_time))
+                speakutils.format_time(current_time), callback=None)
     
     def current_time(self):
         """
@@ -35,7 +36,7 @@ class RPC(object):
         that would be spoken had datetime() or time() been called instead of
         this function.
         """
-        return current_time
+        return timeutils.to_time(current_time)
 
 def main():
     global current_time
@@ -43,19 +44,14 @@ def main():
     global rpc
     rpc = RPC()
     
-    host="localhost"
-    if len(sys.argv) > 1:
-        host = sys.argv[1]
-    bus = AutobusConnection(host)
-    bus.add_interface("saytime", rpc)
-    bus.start_connecting()
-    speak_server = bus["speak"]
+    with Bus() as bus:
+        service = bus.create_service({"type": "saytime"}, use_py_object=rpc)
+        speak_server = bus.get_service_proxy({"type": "speak"}, multiple=True)
+        
+        start_time = datetime.now()
+        current_time = start_time
+        next_minute = start_time
     
-    start_time = datetime.now()
-    current_time = start_time
-    next_minute = start_time
-    
-    try:
         while True:
             interval_to_next = next_minute - datetime.now()
             time_to_next = float(interval_to_next.seconds) + (interval_to_next.microseconds / 1000000.0)
@@ -76,8 +72,6 @@ def main():
                     rpc.datetime()
                 elif (current_minute % 15) == 0:
                     rpc.time()
-    finally:
-        bus.shutdown()
 
 
 
