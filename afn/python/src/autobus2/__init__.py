@@ -469,6 +469,7 @@ class Bus(common.AutoClose):
         for id, service in self.local_services.items():
             details = {}
             services[id] = details
+            details["doc"] = service.doc
             functions = {}
             events = {}
             objects = {}
@@ -476,11 +477,11 @@ class Bus(common.AutoClose):
             details["events"] = events
             details["objects"] = objects
             for name, function in service.functions.items():
-                functions[name] = {}
+                functions[name] = {"doc": function.doc}
             for name, event in service.events.items():
-                events[name] = {}
+                events[name] = {"doc": event.doc}
             for name, object in service.objects.items():
-                objects[name] = {}
+                objects[name] = {"doc": object.doc}
         return services
 
 
