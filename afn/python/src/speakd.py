@@ -360,7 +360,7 @@ def main():
                 sentence_tuple = get_next_sentence()
                 if sentence_tuple is None:
             #       print "Nothing to say"
-                    time.sleep(0.5)
+                    time.sleep(0.3)
                     continue
                 priority, sentence = sentence_tuple
                 print "Something to say: " + str(sentence.components)
@@ -369,7 +369,6 @@ def main():
                 else:
                     voice = voices[default_voice]
                 print "Saying with voice " + voice.name
-                audio_stream.start_stream()
                 for item in sentence.components:
                     scale_level = 1.0
                     if voice.scale_level is not None:
@@ -378,6 +377,7 @@ def main():
                         scale_level = scale_level * item.level
                         item = item.word
                     if isinstance(item, basestring):
+                        audio_stream.start_stream()
                         file = sanitize_file(item)
                         print "Saying word " + file
                         absolute_file = os.path.join(voice.path, file + ".wav")
@@ -390,6 +390,7 @@ def main():
                         while data != "":
                             audio_stream.write(scale_sound(data, scale_level))
                             data = wave_file.readframes(1024)
+                        audio_stream.stop_stream()
                     elif isinstance(item, int):
                         print "Pausing for " + str(item) + " milliseconds"
                         time.sleep((item * 1.0) / 1000.0)
@@ -399,7 +400,6 @@ def main():
                 print "Waiting..."
                 time.sleep(1)
                 print "Closing audio stream"
-                audio_stream.stop_stream()
                 print "Done."
         except KeyboardInterrupt:
             print "Interrupted, shutting down"

@@ -1,4 +1,6 @@
 
+# FIXME: convert this to Autobus 2
+
 from libautobus import AutobusConnection, start_thread
 from threading import Thread, RLock
 from datetime import datetime
