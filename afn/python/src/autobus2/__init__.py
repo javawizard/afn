@@ -472,6 +472,7 @@ class Bus(common.AutoClose):
             services[id] = details
             details["active"] = service.active
             details["doc"] = service.doc
+            details["info"] = service.info
             functions = {}
             events = {}
             objects = {}
