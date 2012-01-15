@@ -86,7 +86,7 @@ class MultipleServiceProxy(common.AutoClose):
         """
         self.object_watchers.add(name, function)
         for info, connection in self.service_map.items():
-            connection.watch_object(name, partial(connection, info))
+            connection.watch_object(name, partial(function, connection, info))
     
     @synchronized_on("lock")
     def unwatch_object(self, name, function):
@@ -94,7 +94,7 @@ class MultipleServiceProxy(common.AutoClose):
         """
         self.object_watchers.remove(name, function)
         for info, connection in self.service_map.items():
-            connection.unwatch_object(name, partial(connection, info))
+            connection.unwatch_object(name, partial(function, connection, info))
 
 
 class MultipleServiceFunction(object):

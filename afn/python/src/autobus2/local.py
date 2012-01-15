@@ -170,7 +170,7 @@ class LocalService(common.AutoClose):
         if not self.is_alive:
             raise exceptions.ClosedException("This LocalService has been closed.")
         self.active = True
-        self.bus._i_update()
+        self.bus._i_update(self.id)
         for publisher in self.bus.publishers:
             publisher.add(self)
     
@@ -183,7 +183,7 @@ class LocalService(common.AutoClose):
         self.active = False
         for publisher in self.bus.publishers:
             publisher.remove(self)
-        self.bus._i_update()
+        self.bus._i_update(self.id)
     
     @synchronized_on("bus.lock")
     def close(self):
@@ -195,19 +195,19 @@ class LocalService(common.AutoClose):
         with self.bus.lock:
             if mode is None:
                 mode = autobus2.THREAD
-            function = LocalFunction(self, name, function, mode)
+            function = LocalFunction(self, name, function, mode, doc)
             self.functions[name] = function
-            self.bus._i_update()
+            self.bus._i_update(self.id)
     
     def create_event(self):
         raise NotImplementedError
     
     def create_object(self, name, value, doc=""):
         with self.bus.lock:
-            object = LocalObject(self, name, value)
+            object = LocalObject(self, name, value, doc)
             self.objects[name] = object
             object.notify_created()
-            self.bus._i_update()
+            self.bus._i_update(self.id)
             return object
     
     def use_py_object(self, py_object):
@@ -227,11 +227,12 @@ class LocalService(common.AutoClose):
 
 
 class LocalFunction(object):
-    def __init__(self, service, name, function, mode):
+    def __init__(self, service, name, function, mode, doc):
         self.service = service
         self.name = name
         self.function = function
         self.mode = mode
+        self.doc = doc
     
     def call(self, message, args):
         """
@@ -250,11 +251,12 @@ class LocalEvent(object):
 
 
 class LocalObject(object):
-    def __init__(self, service, name, value):
-        net.ensure_jsonable(value)
+    def __init__(self, service, name, value, doc):
+        self._value = value
+        net.ensure_jsonable(self.get_value())
         self.service = service
         self.name = name
-        self._value = value
+        self.doc = doc
     
     @property
     def value(self):

@@ -196,6 +196,7 @@ class Bus(common.AutoClose):
         # don't need to remove it from any of the publishers. So I think the
         # only thing we need to do is remove it from our map of services.
         del self.local_services[service.id]
+        self._i_update(service.id)
     
     @synchronized_on("lock")
     def setup_inbound_socket(self, socket):
@@ -451,9 +452,9 @@ class Bus(common.AutoClose):
     def _create_introspection_service(self):
         service = self.create_service({"type": "autobus"})
         self._introspector = service
-        service.create_object("details", self._introspector_details)
+        service.create_object("details", self._i_details_function)
         service.activate()
-        self._i_update()
+        self._i_update(None)
     
     def _i_update(self, service_id):
         if not self._introspector:
@@ -469,6 +470,7 @@ class Bus(common.AutoClose):
         for id, service in self.local_services.items():
             details = {}
             services[id] = details
+            details["active"] = service.active
             details["doc"] = service.doc
             functions = {}
             events = {}
