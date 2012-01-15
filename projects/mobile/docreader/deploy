@@ -1,0 +1,6 @@
+#!/bin/bash
+echo Deleting
+rm -rf "/media/$1/docreader"
+echo Copying
+cp -r . "/media/$1/docreader"
+echo Done. 

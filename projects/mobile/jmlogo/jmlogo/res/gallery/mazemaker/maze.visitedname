@@ -1,0 +1,3 @@
+to maze.visitedname :x :y
+output (word "visitedx :x "y :y)
+end

@@ -1,0 +1,1 @@
+@java -cp classes;lib/* com.googlecode.jwutils.jdtype.JDType %*

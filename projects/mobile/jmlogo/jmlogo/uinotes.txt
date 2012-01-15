@@ -1,0 +1,15 @@
+Notes about the ui
+
+When JMLogo starts up, the user is presented with a screen asking them to choose a program to open. They can also choose to create a new one. One of the programs shows up as "Library", and is at the top of the list. It might, actually, be a separate "edit library" button or something. Anyway, if they choose to create a new program, then it's created, and automatically opened.
+
+When they open a program, they see the commander and the screen. A soft key shows a button called "command", which if pressed, opens a window where they can enter commands, and these are run. They can go to menu -> edit if they want to edit procedures. This will show a list of procedures that they can edit, with a button to create a new one. When they choose one, a full-screen textbox shows up, and they can use this to edit the procedure. It contains the "to name :var :var2" format of the procedure. They can then save it and return to the commander. They can also delete a procedure by running the erase command.
+
+The user can choose menu -> help to view help. This includes a list of commands and what they do, as well as general help on JMLogo, it's ui, and some logo tutorials. When the user chooses menu -> help, it keeps the menu window exactly where they were, so the user can switch between a tutorial and writing the actual program at the same time.
+
+The user can choose menu -> close to close the program and go back to the screen where they can choose which program to open. This will also save the program. They can choose menu -> exit to completely exit JMLogo.
+
+The bye command exits only that program. The exit command completely exits JMLogo. Essentially, bye does the same thing as menu -> close and exit does the same thing as menu -> exit.
+
+The user can go to menu -> copy procedures. This opens a window where they can choose other logo programs or the library. Then a list of procedures that are in that program appears, and they can select procedures. These are then copied to this program. If this program already has a procedure named that, the user is told this, and that the new procedure will be renamed, and that they should make sure to change all references in other procedures that call it.
+
+TODO: some sort of ui for copying programs and for copying procedures between programs...

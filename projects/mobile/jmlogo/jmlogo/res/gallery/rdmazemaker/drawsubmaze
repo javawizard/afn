@@ -1,0 +1,5 @@
+to drawsubmaze :w :h :pathsize
+pendown setpc [0 0 0]
+repeat 2 [forward product :h :pathsize right 90 forward product :w :pathsize right 90]
+submaze pos :w :h :pathsize heading
+end

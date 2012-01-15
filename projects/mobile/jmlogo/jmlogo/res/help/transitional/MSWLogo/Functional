@@ -1,0 +1,5 @@
+In MSWLogo, you can set the variable redefp to be true if you want to be able to redefine primitives (and erase them) and false if you wish to disallow such behavior. In MSWLogo, redefp is false by default. In JMLogo, redefp does not exist, but JMLogo acts as if it were partially true. Primitives cannot be redefined, although they can be temporarily erased. When a program is closed, and then opened, any primitives that were erased are present again. In addition, a procedure named the same as a primitive will exist, but it's sixes which one will be called, so it's not a good idea.
+
+For the purposes of equalp, JMLogo acts as if MSWLogo's caseignoredp were always set to false. The iequalp primitive can be used instead to perform case-insensitive comparisons.
+
+Errors in procedures are not detected until the procedure is actually run. This means that a procedure's contents could be entirely garbage, and it would save OK.

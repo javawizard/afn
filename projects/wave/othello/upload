@@ -1,0 +1,8 @@
+#!/bin/bash
+echo Deleting existing files
+ssh root@trivergia.com rm -rf /apache/tomcat/webapps/wavyothello
+echo Uploading new files
+scp -r war root@trivergia.com:/apache/tomcat/webapps/wavyothello
+echo Changing files to be readable by everyone
+ssh root@trivergia.com chmod -R a+r /apache/tomcat/webapps/wavyothello
+echo Done.

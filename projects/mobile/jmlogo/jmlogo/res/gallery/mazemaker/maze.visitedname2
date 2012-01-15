@@ -1,0 +1,3 @@
+to maze.visitedname2 :v
+output maze.visitedname first :v last :v
+end

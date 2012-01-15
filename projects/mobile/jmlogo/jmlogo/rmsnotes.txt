@@ -1,0 +1,5 @@
+Each program is stored as it's own record store. It's name begins with the letter "p". The library (a common set of procedures that all programs inherit) is stored in the same format as a program, but with it's record store being named "library" (with no "p" on the front). 
+
+Within a program, record number 1 is the information record, which contains general information about a program. I'm still working out the format for this record.
+
+Records 2 and on start with a "p" for procedure, or others...

@@ -1,0 +1,9 @@
+Technically, any set of scripts that will run can be installed on the bot. However, if all the scripts used their own format, it would be very difficult indeed for someone to write, say, a new command that could be used across multiple people's bots. Therefore, I've come up with some good guidelines for how the scripts should be written, and an init.js script that implements these guidelines.
+
+These guidelines tend to make for a command-oriended bot. If you want your bot to be different, then just apply those guidelines that you want to use, and modify init.js to suit you.
+
+First off, a level of protocol independence is needed. This means that commands and what not should generally be able to run on any protocol. The protocol classes exposed to the scripting interface from the bot are not protocol-independent, so this has to be written at the script level.
+
+
+
+TBD
