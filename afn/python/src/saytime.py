@@ -45,7 +45,7 @@ def main():
     rpc = RPC()
     
     with Bus() as bus:
-        service = bus.create_service({"type": "saytime"}, use_py_object=rpc)
+        service = bus.create_service({"type": "saytime"}, from_py_object=rpc)
         speak_server = bus.get_service_proxy({"type": "speak"}, multiple=True)
         
         start_time = datetime.now()

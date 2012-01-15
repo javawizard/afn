@@ -13,7 +13,7 @@ import time
 from itertools import chain
 import re
 from datetime import datetime
-from libautobus import AutobusConnection, DEFAULT_PORT, start_thread
+from autobus2 import Bus
 from concurrent import synchronized
 from cStringIO import StringIO
 import audioop
@@ -33,15 +33,11 @@ configuration = RawConfigParser()
 print "Loading configuration from speakd.conf..."
 try:
     configuration.read("speakd.conf")
-    configuration.get("autobus", "host")
 except:
     print "You need to create the configuration file speakd.conf before you "
     print "can use speakd. Open speakd.conf.example for an example."
     sys.exit()
 
-host = configuration.get("autobus", "host")
-port = configuration.getint("autobus", "port") if configuration.has_option("autobus", "port") else DEFAULT_PORT 
-interface_name = configuration.get("autobus", "interface")
 voices = {}
 default_voice = None
 speech_queue = {}
@@ -198,7 +194,6 @@ class RPC(object):
     Allows communicating with the speak server. This allows pre-recorded
     phrases and synthesized speech to be spoken.
     """
-    @start_thread
     @synchronized(lock)
     def say(self, components, priority=0, voice=None):
         """
@@ -229,7 +224,6 @@ class RPC(object):
         print "After adding request, speech queue is " + str(speech_queue)
 #        speech_queue_object.set(speech_queue)
     
-    @start_thread
     @synchronized(lock)
     def say_text(self, text, priority=0, voice=None):
         """
@@ -286,7 +280,6 @@ class RPC(object):
                 new_tokens.append(token)
         self.say(new_tokens, priority, voice)
     
-    @start_thread
     @synchronized(lock)
     def get_queue_size(self):
         """
@@ -295,7 +288,6 @@ class RPC(object):
         """
         return len(list(chain(*speech_queue.values())))
     
-    @start_thread
     @synchronized(lock)
     def get_voice_names(self):
         """
@@ -304,7 +296,6 @@ class RPC(object):
         """
         return voices.keys()
     
-    @start_thread
     @synchronized(lock)
     def get_default_voice(self):
         """
@@ -315,7 +306,6 @@ class RPC(object):
         """
         return default_voice
     
-    @start_thread
     @synchronized(lock)
     def set_default_voice(self, voice_name):
         """
@@ -328,7 +318,6 @@ class RPC(object):
                             "configured in speakd.conf.")
         default_voice = voice_name
     
-    @start_thread
     @synchronized(lock)
     def get_pid(self):
         """
@@ -353,70 +342,67 @@ def main():
                                      frames_per_buffer=1024)
     audio_stream.stop_stream()
     
-    bus = AutobusConnection(host, port, print_exceptions=True)
-    bus.add_interface(interface_name, RPC())
-    speech_queue_object = bus.add_object(interface_name, "speech_queue",
-    "This doesn't work yet.", {})
-    speech_queue_size_object = bus.add_object(interface_name,
-            "speech_queue_size", "The number of items currently in the "
-            "speech queue. This does not include the item currently being "
-            "spoken, if any.", 0)
-    bus.start_connecting()
-    
-    print ""
-    print "Speakd has successfully started up. PID is " + str(os.getpid())
-    try:
-        while not is_shutting_down:
-        #   print "Main loop"
-            sentence_tuple = get_next_sentence()
-            if sentence_tuple is None:
-        #       print "Nothing to say"
-                time.sleep(0.5)
-                continue
-            priority, sentence = sentence_tuple
-            print "Something to say: " + str(sentence.components)
-            if sentence.voice is not None:
-                voice = voices[sentence.voice]
-            else:
-                voice = voices[default_voice]
-            print "Saying with voice " + voice.name
-            audio_stream.start_stream()
-            for item in sentence.components:
-                scale_level = 1.0
-                if voice.scale_level is not None:
-                    scale_level = scale_level * voice.scale_level
-                if isinstance(item, ScaleLevel):
-                    scale_level = scale_level * item.level
-                    item = item.word
-                if isinstance(item, basestring):
-                    file = sanitize_file(item)
-                    print "Saying word " + file
-                    absolute_file = os.path.join(voice.path, file + ".wav")
-                    try:
-                        wave_file = wave.open(absolute_file, "r")
-                    except:
-                        print "File " + absolute_file + " does not exist for voice " + voice.name + ". It will be silently ignored."
-                        continue
-                    data = wave_file.readframes(1024)
-                    while data != "":
-                        audio_stream.write(scale_sound(data, scale_level))
+    with Bus() as bus:
+        service = bus.create_service({"type": "speak"}, active=False, from_py_object=RPC())
+        speech_queue_object = service.create_object("speech_queue",
+        {}, "This doesn't work yet.")
+        speech_queue_size_object = service.create_object(
+                "speech_queue_size", 0, "The number of items currently in the "
+                "speech queue. This does not include the item currently being "
+                "spoken, if any.")
+        service.activate()
+        
+        print ""
+        print "Speakd has successfully started up. PID is " + str(os.getpid())
+        try:
+            while not is_shutting_down:
+            #   print "Main loop"
+                sentence_tuple = get_next_sentence()
+                if sentence_tuple is None:
+            #       print "Nothing to say"
+                    time.sleep(0.5)
+                    continue
+                priority, sentence = sentence_tuple
+                print "Something to say: " + str(sentence.components)
+                if sentence.voice is not None:
+                    voice = voices[sentence.voice]
+                else:
+                    voice = voices[default_voice]
+                print "Saying with voice " + voice.name
+                audio_stream.start_stream()
+                for item in sentence.components:
+                    scale_level = 1.0
+                    if voice.scale_level is not None:
+                        scale_level = scale_level * voice.scale_level
+                    if isinstance(item, ScaleLevel):
+                        scale_level = scale_level * item.level
+                        item = item.word
+                    if isinstance(item, basestring):
+                        file = sanitize_file(item)
+                        print "Saying word " + file
+                        absolute_file = os.path.join(voice.path, file + ".wav")
+                        try:
+                            wave_file = wave.open(absolute_file, "r")
+                        except:
+                            print "File " + absolute_file + " does not exist for voice " + voice.name + ". It will be silently ignored."
+                            continue
                         data = wave_file.readframes(1024)
-                elif isinstance(item, int):
-                    print "Pausing for " + str(item) + " milliseconds"
-                    time.sleep((item * 1.0) / 1000.0)
-                elif isinstance(item, VoiceChange):
-                    print "Switching voice to " + item.voice
-                    voice = voices[item.voice]
-                print "Flushing bus outbound queue"
-                bus.flush()
-            print "Waiting..."
-            time.sleep(1)
-            print "Closing audio stream"
-            audio_stream.stop_stream()
-            print "Done."
-    except KeyboardInterrupt:
-        print "Interrupted, shutting down"
-        bus.shutdown()
+                        while data != "":
+                            audio_stream.write(scale_sound(data, scale_level))
+                            data = wave_file.readframes(1024)
+                    elif isinstance(item, int):
+                        print "Pausing for " + str(item) + " milliseconds"
+                        time.sleep((item * 1.0) / 1000.0)
+                    elif isinstance(item, VoiceChange):
+                        print "Switching voice to " + item.voice
+                        voice = voices[item.voice]
+                print "Waiting..."
+                time.sleep(1)
+                print "Closing audio stream"
+                audio_stream.stop_stream()
+                print "Done."
+        except KeyboardInterrupt:
+            print "Interrupted, shutting down"
 
 
 
