@@ -1,4 +1,7 @@
 __doc__ = """\
+FIXME: THIS HAS BEEN PORTED TO AUTOBUS 2 BUT NOT YET TESTED. IT NEEDS TO BE
+TESTED AND ANY BUGS WORKED OUT BEFORE IT CAN BE USED AGAIN.
+
 Autoconfigure is a library that Python applications connecting to Autobus and
 providing interfaces can use. It allows remote editing of configuration files
 that a particular application uses. Typically, an application called "example"
