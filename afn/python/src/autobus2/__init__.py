@@ -116,6 +116,7 @@ class Bus(common.AutoClose):
         self.context_enters = 0
         if port is None:
             port = 0
+        self._introspector = None
         self.closed = False
         self.server = Socket()
         self.server.bind(("", port))
@@ -134,6 +135,7 @@ class Bus(common.AutoClose):
         if default_publishers:
             self.install_publisher(discovery.BroadcastPublisher())
         Thread(name="autobus2.Bus.accept_loop", target=self.accept_loop).start()
+        self._create_introspection_service()
     
     def accept_loop(self):
         self.server.settimeout(1)
@@ -158,7 +160,7 @@ class Bus(common.AutoClose):
                 return
     
     @synchronized_on("lock")
-    def create_service(self, info, active=None, from_py_object=None):
+    def create_service(self, info, active=None, from_py_object=None, doc=""):
         """
         Creates a new service on this bus. info is the info object to use for
         this service. active is True to publish this service immediately, False
@@ -178,7 +180,7 @@ class Bus(common.AutoClose):
         # Create a new id for the service
         service_id = messaging.create_service_id()
         # Create the actual service object
-        service = local.LocalService(self, service_id, info)
+        service = local.LocalService(self, service_id, info, doc)
         # Then store the service in our services map
         self.local_services[service_id] = service
         if from_py_object is not None:
@@ -445,6 +447,41 @@ class Bus(common.AutoClose):
             if filter_matches(info, filter):
                 with print_exceptions:
                     listener(service_id, host, port, info, event)
+    
+    def _create_introspection_service(self):
+        service = self.create_service({"type": "autobus"})
+        self._introspector = service
+        service.create_object("details", self._introspector_details)
+        service.activate()
+        self._i_update()
+    
+    def _i_update(self, service_id):
+        if not self._introspector:
+            return
+        introspector = self._introspector
+        if not introspector.objects["details"]:
+            return
+        introspector.objects["details"].changed()
+    
+    @synchronized_on("lock")
+    def _i_details_function(self):
+        services = {}
+        for id, service in self.local_services.items():
+            details = {}
+            services[id] = details
+            functions = {}
+            events = {}
+            objects = {}
+            details["functions"] = functions
+            details["events"] = events
+            details["objects"] = objects
+            for name, function in service.functions.items():
+                functions[name] = {}
+            for name, event in service.events.items():
+                events[name] = {}
+            for name, object in service.objects.items():
+                objects[name] = {}
+        return services
 
 
 def wait_for_interrupt():

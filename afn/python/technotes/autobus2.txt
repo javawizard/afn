@@ -561,6 +561,8 @@ Actually no, I'm going to get Autobus objects working. So I just added a thing t
 
 And speaking of that, I need to go create a thing to copy objects passed to local.LocalObject.set_value to prevent them from being accidentally modified by outside code...
 
+Ok, that's done. Now to creating the introspection service...
+
 
 
 

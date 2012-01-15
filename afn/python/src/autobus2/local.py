@@ -149,10 +149,11 @@ class LocalService(common.AutoClose):
     all of the functions needed for a particular service to be set up before
     it's published to the network.
     """
-    def __init__(self, bus, id, info):
+    def __init__(self, bus, id, info, doc):
         self.id = id
         self.info = info
         self.bus = bus
+        self.doc = doc
         self.active = False
         self.is_alive = True
         self.functions = {}
@@ -169,6 +170,7 @@ class LocalService(common.AutoClose):
         if not self.is_alive:
             raise exceptions.ClosedException("This LocalService has been closed.")
         self.active = True
+        self.bus._i_update()
         for publisher in self.bus.publishers:
             publisher.add(self)
     
@@ -181,6 +183,7 @@ class LocalService(common.AutoClose):
         self.active = False
         for publisher in self.bus.publishers:
             publisher.remove(self)
+        self.bus._i_update()
     
     @synchronized_on("bus.lock")
     def close(self):
@@ -188,21 +191,23 @@ class LocalService(common.AutoClose):
         self.deactivate()
         self.bus._close_service(self)
     
-    def create_function(self, name, function, mode=None):
+    def create_function(self, name, function, mode=None, doc=""):
         with self.bus.lock:
             if mode is None:
                 mode = autobus2.THREAD
             function = LocalFunction(self, name, function, mode)
             self.functions[name] = function
+            self.bus._i_update()
     
     def create_event(self):
         raise NotImplementedError
     
-    def create_object(self, name, value):
+    def create_object(self, name, value, doc=""):
         with self.bus.lock:
             object = LocalObject(self, name, value)
             self.objects[name] = object
             object.notify_created()
+            self.bus._i_update()
             return object
     
     def use_py_object(self, py_object):
