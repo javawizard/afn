@@ -1,0 +1,3 @@
+The AFN Project is a collection of libraries and tools initially created by Alexander Boyd and with contributions from others. TODO: expand on this more
+
+All of the folders in this folder are original to the AFN repository, with the exception of the projects folder. This folder, and its revision history, were originally the jwutils project, which was Alex's original collection of libraries and tools. He later created the AFN project to hold primarily home automation software, and as its scope expanded he decided to merge jwutils into afn. The version history of jwutils is preserved in the AFN repository.
