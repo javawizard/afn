@@ -1,7 +1,7 @@
 
 # FIXME: convert this to Autobus 2
 
-from libautobus import AutobusConnection, start_thread
+from autobus2 import Bus
 from threading import Thread, RLock
 from datetime import datetime
 from time import sleep
@@ -17,7 +17,7 @@ STATES = [UP, DOWN, STOPPED]
 lock = RLock()
 time_since_startup = 0
 startup_time = datetime.now()
-timer_map = {} # Maps timer numbers to timer instances
+timer_map = {} # Maps timer numbers to Timer instances
 is_shut_down = False
 
 class Timer(object):
@@ -71,14 +71,14 @@ class Timer(object):
     def on_manual_state_change(self):
         print ("Manual state change on timer " + str(self.number) + 
                 " with state set to " + str(self.state))
-        manual_state_change_event(self.number, self.state)
+        # manual_state_change_event(self.number, self.state)
         if self.announce_on_state_change:
             rpc.announce(self.number)
     
     def on_beeping(self):
         print "Timer " + str(self.number) + " is beeping"
-        state_change_event(self.number, self.state)
-        timer_beeping_event(self.number)
+        # state_change_event(self.number, self.state)
+        # timer_beeping_event(self.number)
     
     def get_time_fields(self):
         """
@@ -96,7 +96,7 @@ class Timer(object):
 
 @synchronized(lock)
 def publish_timer_object():
-    timer_object.set(build_timer_object())
+    timer_object.set_value(build_timer_object())
 
 @synchronized(lock)
 def build_timer_object():
@@ -115,12 +115,27 @@ class RPC(object):
     increments/decrements it automatically if the timer is counting up or
     counting down, respectively.
     
-    Integration with the speak daemon is provided. If this Autobus server has
-    an interface available named speak when a timer goes off, that interface's
-    say_text function will be used to say that the timer is beeping.
+    Integration with the speak daemon is provided. If any speak servers are
+    available on the network when a timer goes off, those speak servers will be
+    instructed to say that the timer is beeping.
+    
+    In order to reduce network overhead, the time of every timer that is not
+    currently stopped is stored as an offset from the number of seconds that
+    the timer server will have been running when the timer's value is 0. The
+    timer server then only has to publish the time since it last started up
+    every second, not the new values on every timer. To compute the absolute
+    value showing on a timer that is counting up, where time is the timer's
+    offset and startup is the current time since the timer server started up,
+    you simply compute startup - time. To compute the absolute value showin on a
+    timer that is counting down, you compute time - startup. For stopped timers,
+    time will already be the absolute value displaying on a timer, not an
+    offset.
+    
+    If you don't want to do the above calculations yourself, you can just call
+    get_time(timer_number) on this service every second. That function will
+    return the absolute time on the specified timer.
     """
     
-    @start_thread
     @synchronized(lock)
     def create(self):
         """
@@ -135,7 +150,6 @@ class RPC(object):
         publish_timer_object()
         return timer_number
     
-    @start_thread
     @synchronized(lock)
     def set_time(self, timer_number, new_absolute_time):
         """
@@ -144,7 +158,6 @@ class RPC(object):
         timer_map[timer_number].set_absolute_time(new_absolute_time)
         publish_timer_object()
     
-    @start_thread
     @synchronized(lock)
     def update_time(self, timer_number, amount_to_add):
         """
@@ -155,7 +168,6 @@ class RPC(object):
                 timer_map[timer_number].get_absolute_time() + amount_to_add)
         publish_timer_object()
     
-    @start_thread
     @synchronized(lock)
     def get_time(self, timer_number):
         """
@@ -163,7 +175,6 @@ class RPC(object):
         """
         return timer_map[timer_number].get_absolute_time()
     
-    @start_thread
     @synchronized(lock)
     def set(self, timer_number, *args):
         """
@@ -175,9 +186,9 @@ class RPC(object):
         A quick note: to make it easier to set timer state via autosend, a
         timer's state can be one of "up", "down", or "stopped", which will be
         translated by this function to 1, 2, and 3. Normal programs using
-        timerd via libautobus should stick with the numeric constants where
-        possible, though, as these names may change. This name translation also
-        works for the set_attribute function.
+        timerd via the autobus2 module should stick with the numeric constants
+        where possible, though, as these names may change. This name
+        translation also works for the set_attribute function.
         
         An additional note: "stop" is accepted as a synonym for "stopped" in
         the above translation. I just added support for that.
@@ -202,15 +213,14 @@ class RPC(object):
             timer.announce_count = attributes["announce_count"]
         if "state" in attributes:
             if isinstance(attributes["state"], basestring):
-                attributes["state"] = {"up": 1, "down": 2, "stop": 3, 
+                attributes["state"] = {"up": 1, "down": 2, "stop": 3,
                         "stopped": 3}[attributes["state"]]
             if attributes["state"] != timer.state:
                 timer.set_state(attributes["state"])
                 timer.on_manual_state_change()
-                state_change_event(timer.number, timer.state)
+                # state_change_event(timer.number, timer.state)
         publish_timer_object()
     
-    @start_thread
     @synchronized(lock)
     def set_attribute(self, timer_number, name, value):
         """
@@ -221,7 +231,6 @@ class RPC(object):
         """
         self.set(timer_number, {name: value})
     
-    @start_thread
     @synchronized(lock)
     def delete(self, timer_number):
         """
@@ -233,13 +242,12 @@ class RPC(object):
         del timer_map[timer_number]
         publish_timer_object()
     
-    @start_thread
     @synchronized(lock)
     def announce(self, timer_number):
         """
-        Announces the time remaining on the specified timer. If speakd is not
-        currently running and connected to this Autobus server, this function
-        does nothing.
+        Announces the time remaining on the specified timer to all speakd
+        servers on the local network. If there aren't any speakd servers
+        currently running, this function does nothing.
         """
         timer = timer_map[timer_number]
         field_values = timer.get_time_fields()
@@ -260,11 +268,10 @@ class RPC(object):
         announce_string = ("timer :n:" + str(timer_number) + " shows " + 
                 announce_string + " " + state_string)
         try:
-            speak.say_text(announce_string)
+            speak["say_text"](announce_string, callback=None)
         except:
             pass
     
-    @start_thread
     @synchronized(lock)
     def dismiss(self, timer_number):
         """
@@ -272,7 +279,6 @@ class RPC(object):
         speakd, this function stops it. Otherwise, this function does nothing.
         """
     
-    @start_thread
     @synchronized(lock)
     def list_timers(self):
         """
@@ -281,7 +287,6 @@ class RPC(object):
         """
         return [timer.number for timer in timer_map.values()]
     
-    @start_thread
     @synchronized(lock)
     def get_attribute(self, timer_number, attribute_name):
         """
@@ -292,7 +297,6 @@ class RPC(object):
         """
         return self.get(timer_number)[attribute_name]
     
-    @start_thread
     @synchronized(lock)
     def get(self, timer_number, attribute_name=None):
         """
@@ -325,7 +329,7 @@ def run_periodic_actions():
     startup_interval = now - startup_time
     time_since_startup = startup_interval.seconds + (startup_interval.days * 86400)
     startup_object.set(time_since_startup)
-    print "Startup time: " + str(time_since_startup)
+    # print "Startup time: " + str(time_since_startup)
     modified = False
     for timer_number in timer_map:
         timer = timer_map[timer_number]
@@ -356,14 +360,14 @@ class IntervalThread(Thread):
 def main():
     global is_shut_down
     try:
-        run()
+        with Bus() as bus:
+            run(bus)
     except KeyboardInterrupt:
         print "Interrupted, shutting down"
     finally:
-        bus.shutdown()
         is_shut_down = True
 
-def run():
+def run(bus_to_use):
     global bus
     global speak
     global rpc
@@ -372,37 +376,36 @@ def run():
     global timer_beeping_event
     global state_change_event
     global manual_state_change_event
-    bus = AutobusConnection(host=sys.argv[1] if len(sys.argv) > 1 else None, 
-            port=int(sys.argv[2]) if len(sys.argv) > 2 else None,
-            print_exceptions=True)
-    speak = bus["speak"]
+    bus = bus_to_use
+    speak = bus.get_service_proxy({"type": "speak"}, multiple=True)
     rpc = RPC()
-    bus.add_interface("timer", rpc)
-    timer_object = bus.add_object("timer", "timers", "This object is a map of "
+    service = bus.create_service({"type": "timer"}, from_py_object=rpc, active=False)
+    timer_object = bus.create_object("timers", {}, "This object is a map of "
             "maps. The outer map maps timer numbers to maps representing "
-            "those timers. Each timer's map ", {})
-    startup_object = bus.add_object("timer", "startup", "", 0)
-    timer_beeping_event = bus.add_event("timer", "beeping", "This event is "
-            "fired whenever a timer that is counting down reaches zero and "
-            "has its state reset to stopped. It is passed one parameter, "
-            "the number of the timer that just went off. The event is fired "
-            "before the timer object is updated to reflect that the timer is "
-            "now stopped.")
-    state_change_event = bus.add_event("timer", "state_change", "This event "
-            "is fired whenever a timer changes state, both when a user "
-            "manually changes the timer's state and when the state changes "
-            "due to the timer reaching zero. This event is passed two "
-            "parameters: the number of the timer whose state changed and the "
-            "new state of the timer.")
-    manual_state_change_event = bus.add_event("timer", "manual_state_change",
-            "This event is fired whenever a timer's state is changed "
-            "manually by a call to either the set or set_attribute functions. "
-            "This event is passed the same set of parameters that "
-            "state_change is passed.")
-    bus.start_connecting()
-    while not is_shut_down:
-        sleep(1)
-        run_periodic_actions()
+            "those timers. Each timer's map contains a number of keys which "
+            "will be described at some point (Alex: TODO: write this), which "
+            "contain the timer's info.")
+    startup_object = bus.add_object("startup", 0, "The number of seconds since "
+            "timerd started up.")
+#    timer_beeping_event = bus.add_event("timer", "beeping", "This event is "
+#            "fired whenever a timer that is counting down reaches zero and "
+#            "has its state reset to stopped. It is passed one parameter, "
+#            "the number of the timer that just went off. The event is fired "
+#            "before the timer object is updated to reflect that the timer is "
+#            "now stopped.")
+#    state_change_event = bus.add_event("timer", "state_change", "This event "
+#            "is fired whenever a timer changes state, both when a user "
+#            "manually changes the timer's state and when the state changes "
+#            "due to the timer reaching zero. This event is passed two "
+#            "parameters: the number of the timer whose state changed and the "
+#            "new state of the timer.")
+#    manual_state_change_event = bus.add_event("timer", "manual_state_change",
+#            "This event is fired whenever a timer's state is changed "
+#            "manually by a call to either the set or set_attribute functions. "
+#            "This event is passed the same set of parameters that "
+#            "state_change is passed.")
+    service.activate()
+    IntervalThread().start()
 
 
 
