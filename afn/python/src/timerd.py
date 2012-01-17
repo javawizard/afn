@@ -1,7 +1,7 @@
 
 # FIXME: convert this to Autobus 2
 
-from autobus2 import Bus
+from autobus2 import Bus, wait_for_interrupt
 from threading import Thread, RLock
 from datetime import datetime
 from time import sleep
@@ -328,7 +328,7 @@ def run_periodic_actions():
     now = datetime.now()
     startup_interval = now - startup_time
     time_since_startup = startup_interval.seconds + (startup_interval.days * 86400)
-    startup_object.set(time_since_startup)
+    startup_object.set_value(time_since_startup)
     # print "Startup time: " + str(time_since_startup)
     modified = False
     for timer_number in timer_map:
@@ -380,12 +380,12 @@ def run(bus_to_use):
     speak = bus.get_service_proxy({"type": "speak"}, multiple=True)
     rpc = RPC()
     service = bus.create_service({"type": "timer"}, from_py_object=rpc, active=False)
-    timer_object = bus.create_object("timers", {}, "This object is a map of "
+    timer_object = service.create_object("timers", {}, "This object is a map of "
             "maps. The outer map maps timer numbers to maps representing "
             "those timers. Each timer's map contains a number of keys which "
             "will be described at some point (Alex: TODO: write this), which "
             "contain the timer's info.")
-    startup_object = bus.add_object("startup", 0, "The number of seconds since "
+    startup_object = service.create_object("startup", 0, "The number of seconds since "
             "timerd started up.")
 #    timer_beeping_event = bus.add_event("timer", "beeping", "This event is "
 #            "fired whenever a timer that is counting down reaches zero and "
@@ -406,6 +406,7 @@ def run(bus_to_use):
 #            "state_change is passed.")
     service.activate()
     IntervalThread().start()
+    wait_for_interrupt()
 
 
 
