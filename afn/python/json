@@ -11,12 +11,9 @@ from os.path import join, dirname, realpath
 afn_path = dirname(realpath(__file__))
 sys.path.append(join(afn_path, "src"))
 
-try:
-    from argparse import ArgumentParser
-except ImportError:
-    from afn.backports.argparse import ArgumentParser
+from afn.backports.argparse import ArgumentParser
 from afn.utils.argparseutils import AppendWithConst
-from afn.utils.partial import partial
+from functools import partial
 import json
 import plistlib
 
