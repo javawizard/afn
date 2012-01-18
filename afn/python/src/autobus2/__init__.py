@@ -135,7 +135,10 @@ class Bus(common.AutoClose):
         if default_publishers:
             self.install_publisher(discovery.BroadcastPublisher())
         Thread(name="autobus2.Bus.accept_loop", target=self.accept_loop).start()
-        self._create_introspection_service()
+        # Disable the introspection service for now. I'm seeing what would
+        # happen if I have per-service introspection functions and objects, so
+        # I'm disabling the bus-wide introspection service.
+        # self._create_introspection_service()
     
     def accept_loop(self):
         self.server.settimeout(1)
@@ -185,6 +188,7 @@ class Bus(common.AutoClose):
         self.local_services[service_id] = service
         if from_py_object is not None:
             service.use_py_object(from_py_object)
+        service.add_introspection()
         # If the service is to be immediately activated it, then we should
         # do so
         if active:
@@ -457,34 +461,21 @@ class Bus(common.AutoClose):
         self._i_update(None)
     
     def _i_update(self, service_id):
-        if not self._introspector:
-            return
-        introspector = self._introspector
-        if not introspector.objects["details"]:
-            return
-        introspector.objects["details"].changed()
+        if self._introspector:
+            introspector = self._introspector
+            if introspector.objects["details"]:
+                introspector.objects["details"].changed()
+        if service_id in self.local_services:
+            service = self.local_services[service_id]
+            if "autobus.details" in service.objects:
+                service.objects["autobus.details"].changed()
     
     @synchronized_on("lock")
     def _i_details_function(self):
         services = {}
         for id, service in self.local_services.items():
-            details = {}
+            details = service._i_details_function()
             services[id] = details
-            details["active"] = service.active
-            details["doc"] = service.doc
-            details["info"] = service.info
-            functions = {}
-            events = {}
-            objects = {}
-            details["functions"] = functions
-            details["events"] = events
-            details["objects"] = objects
-            for name, function in service.functions.items():
-                functions[name] = {"doc": function.doc}
-            for name, event in service.events.items():
-                events[name] = {"doc": event.doc}
-            for name, object in service.objects.items():
-                objects[name] = {"doc": object.doc}
         return services
 
 

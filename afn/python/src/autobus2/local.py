@@ -100,11 +100,11 @@ class RemoteConnection(object):
         if function.mode == autobus2.SYNC:
             self.send(function.call(message, args))
         elif function.mode == autobus2.THREAD:
-            Thread(name="autobus2.local.RemoteConnection-function-caller", 
+            Thread(name="autobus2.local.RemoteConnection-function-caller",
                     target=lambda: self.send(function.call(message, args))).start()
         else:
             self.send(messaging.create_response(message, result=None))
-            Thread(name="autobus2.local.RemoteConnection-function-async-caller", 
+            Thread(name="autobus2.local.RemoteConnection-function-async-caller",
                     target=functools.partial(function.call, message, args)).start()
     
     def process_watch(self, message):
@@ -120,7 +120,7 @@ class RemoteConnection(object):
                 object_value = self.service.objects[name].value
             else:
                 object_value = None
-            self.send(messaging.create_response(message, name=name,     value=object_value))
+            self.send(messaging.create_response(message, name=name, value=object_value))
     
     def process_listen(self, message):
         raise NotImplementedError
@@ -210,6 +210,7 @@ class LocalService(common.AutoClose):
             self.bus._i_update(self.id)
             return object
     
+    @synchronized_on("bus.lock")
     def use_py_object(self, py_object):
         for name in dir(py_object):
             if name.startswith("_"):
@@ -224,10 +225,42 @@ class LocalService(common.AutoClose):
     
     def unwatch_object(self, connection, name):
         self.object_watchers.remove(name, connection)
+    
+    def _add_introspection(self):
+        self.create_object("autobus.details",
+                self._i_details_function, "Provides information about the "
+                "various functions, objects, and such provided by this interface")
+        # Creating this function will cause the above object to update, so we
+        # don't need to manually update it.
+        self.create_function("autobus.get_details", self._i_details_function,
+                doc="Returns the current value of the autobus.details object.")
+    
+    @synchronized_on("bus.lock")
+    def _i_details_function(self):
+        details = {}   
+        details["id"] = self.id         
+        details["active"] = self.active
+        details["doc"] = self.doc
+        details["info"] = self.info
+        functions = {}
+        events = {}
+        objects = {}
+        details["functions"] = functions
+        details["events"] = events
+        details["objects"] = objects
+        for name, function in self.functions.items():
+            functions[name] = {"name": name, "doc": function.doc}
+        for name, event in self.events.items():
+            events[name] = {"name": name, "doc": event.doc}
+        for name, object in self.objects.items():
+            objects[name] = {"name": name, "doc": object.doc}
+
 
 
 class LocalFunction(object):
     def __init__(self, service, name, function, mode, doc):
+        if mode not in (autobus2.SYNC, autobus2.ASYNC, autobus2.THREAD):
+            raise ValueError("Invalid mode: " + str(mode))
         self.service = service
         self.name = name
         self.function = function

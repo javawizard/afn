@@ -91,7 +91,12 @@ def main():
                         call_mode_print_result(e)
             return
         if mode == "list":
-            pass
+            with bus.get_service_proxy(info_filter, multiple=args.multiple) as proxy:
+                if args.multiple:
+                    time.sleep(args.time)
+                else:
+                    proxy.wait_for_bind(timeout=args.time)
+                results = proxy[...]
         print "Unsupported mode used: " + str(mode)
 
 

@@ -6,6 +6,7 @@ from afn.utils import wrap, print_exceptions
 from afn.utils.partial import partial
 from afn.utils.concurrent import synchronized_on
 from afn.utils.multimap import Multimap as _Multimap
+from Queue import Queue
 
 class MultipleServiceProxy(common.AutoClose):
     def __init__(self, bus, info_filter, bind_function=None, unbind_function=None):
@@ -113,16 +114,40 @@ class MultipleServiceFunction(object):
                     count += 1
                     connection[self.name](*args, callback=None, safe=safe)
                 return count
-            elif callback is autobus2.SYNC:
-                # This is a bit more complicated. What we're going to do is
-                # create one queue for each connection, then call the functions
-                # on the connections with each queue's put method as the
-                # callback.
-                raise NotImplementedError
-            else:
+            elif callback is not autobus2.SYNC:
                 count = 0
                 for connection in self.proxy.live_connections:
                     count += 1
                     connection[self.name](*args, callback=partial(callback, connection.service_id), safe=safe)
                 return count
-                
+            # SYNC mode.
+            # This is a bit more complicated. What we're going to do is
+            # create one queue for each connection, then call the functions
+            # on the connections with each queue's put method as the
+            # callback.
+            queues = dict((c.service_id, Queue()) for c in self.proxy.live_connections)
+            for c in self.proxy.live_connections:
+                connection[self.name](*args, callback=queues[c.service_id].put, safe=True)
+        # We drop out of self.proxy.lock so that we can block on the queues
+        results = {}
+        for service_id in queues:
+            # FIXME: This causes the timeout to be applied once for each
+            # service that we're actually contacting. What we need to do is
+            # keep track of when we start blocking and then only block how much
+            # time is left until the timeout would have expired.
+            try:
+                results[service_id] = queues[service_id].get(timeout=timeout)
+            except Exception as e:
+                results[service_id] = e
+        # Scan through and accumulate any exceptions into a map
+        exception_map = {}
+        for service_id, value in results.items():
+            if isinstance(value, Exception):
+                exception_map[service_id] = value
+        # Then, if there were any exceptions to accumulate, throw an exception
+        # containing them all
+        if exception_map:
+            raise exceptions.CommandErrorException(exception_map)
+        # No exception happened, so return the results
+        return results
+
