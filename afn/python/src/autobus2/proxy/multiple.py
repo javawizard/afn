@@ -127,7 +127,7 @@ class MultipleServiceFunction(object):
             # callback.
             queues = dict((c.service_id, Queue()) for c in self.proxy.live_connections)
             for c in self.proxy.live_connections:
-                connection[self.name](*args, callback=queues[c.service_id].put, safe=True)
+                c[self.name](*args, callback=queues[c.service_id].put, safe=True)
         # We drop out of self.proxy.lock so that we can block on the queues
         results = {}
         for service_id in queues:

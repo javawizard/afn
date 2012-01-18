@@ -188,7 +188,7 @@ class Bus(common.AutoClose):
         self.local_services[service_id] = service
         if from_py_object is not None:
             service.use_py_object(from_py_object)
-        service.add_introspection()
+        service._add_introspection()
         # If the service is to be immediately activated it, then we should
         # do so
         if active:

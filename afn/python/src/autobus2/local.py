@@ -254,7 +254,7 @@ class LocalService(common.AutoClose):
             events[name] = {"name": name, "doc": event.doc}
         for name, object in self.objects.items():
             objects[name] = {"name": name, "doc": object.doc}
-
+        return details
 
 
 class LocalFunction(object):

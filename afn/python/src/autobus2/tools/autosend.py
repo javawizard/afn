@@ -26,7 +26,13 @@ add_mode("-f", "--call", const="call",
 add_mode("-b", "--broadcast", const="broadcast",
         help="Broadcast watch mode")
 add_mode("-d", "--discovery", const="discovery",
-        help="Discovery mode. In this mode, autosend2 ")
+        help="Discovery mode. In this mode, autosend2 prints a table of all "
+        "services available on the network, and then prints a message whenever "
+        "a service appears or disappears.")
+add_mode("-l", "--list", const="list",
+        help="List mode. In this mode, autosend2 prints out information about "
+        "all matching services, including their documentation and a list of "
+        "all functions, events, etc on the service and their documentation.")
 add_mode("-?", "--help", const="help",
         help="Show this help message")
 
@@ -46,7 +52,7 @@ options.add_argument("-t", "--time", action="store", type=int, default=2, help=
 
 def main():
     args = parser.parse_args()
-    if not args.mode and not args.type:
+    if args.mode is None and args.type is None:
         print "Use autosend2 --help for more information."
         return
     if args.mode == "help":
@@ -96,7 +102,49 @@ def main():
                     time.sleep(args.time)
                 else:
                     proxy.wait_for_bind(timeout=args.time)
-                results = proxy[...]
+                results = proxy["autobus.get_details"]()
+                if not args.multiple:
+                    results = {proxy.current_service_id: results}
+                if len(results) == 0:
+                    print "No matching services found."
+                for i, (service_id, details) in enumerate(results.items()):
+                    if i > 0:
+                        print "#" * 70
+                    
+                    print "Service " + str(service_id) + ":"
+                    if details["doc"]:
+                        print "\n" + details["doc"]
+                    print "=" * 70
+                    functions = filter_hidden(args, details["functions"])
+                    if len(functions) == 0:
+                        print "No functions available on this service."
+                    for j, function in enumerate(functions.values()):
+                        if j > 0:
+                            print "-" * 70
+                        print "Function " + function["name"] + ":"
+                        if function["doc"]:
+                            print "\n" + function["doc"]
+                    print "=" * 70
+                    events = filter_hidden(args, details["events"])
+                    if len(events) == 0:
+                        print "No events available on this service."
+                    for j, event in enumerate(events.values()):
+                        if j > 0:
+                            print "-" * 70
+                        print "Event " + event["name"] + ":"
+                        if event["doc"]:
+                            print "\n" + event["doc"]
+                    print "=" * 70
+                    objects = filter_hidden(args, details["objects"])
+                    if len(objects) == 0:
+                        print "No objects available on this service."
+                    for j, object in enumerate(objects.values()):
+                        if j > 0:
+                            print "-" * 70
+                        print "Object " + object["name"] + ":"
+                        if object["doc"]:
+                            print "\n" + object["doc"]
+                return
         print "Unsupported mode used: " + str(mode)
 
 
@@ -159,6 +207,14 @@ def parse_value(value):
     except ValueError:
         pass
     return value
+
+
+def filter_hidden(args, dictionary):
+    new_dict = {}
+    for k, v in dictionary.items():
+        if not k.startswith("autobus."):
+            new_dict[k] = v
+    return new_dict
 
 
 

@@ -76,6 +76,13 @@ class SingleServiceProxy(common.AutoClose):
                 if self.connection.is_connected:
                     return
             raise exceptions.TimeoutException()
+    
+    @property
+    @synchronized_on("lock")
+    def current_service_id(self):
+        if self.connection:
+            return self.connection.service_id
+        return None
 
 
 class SingleServiceFunction(object):
