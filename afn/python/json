@@ -31,9 +31,9 @@ can be used multiple times.
 There are three important concepts that json uses to allow modification of data:
 the root value, the current path, and the current mode.
 
-The root value is the data that's being modified by the json command. It's
-typically an object/dictionary, although it can also be a list/array, a string,
-an int, or any other data supported by the json command.
+The root value is the data that you're editing with the json command. When
+you're using the --file command, for example, the root value is the data
+contained within that file.
 
 The current path is a path within the root value. This is analogous to the
 working directory of a shell such as bash, except that the current path relates
@@ -96,7 +96,7 @@ add_path_action("-K", "--key-and-up", const="key-and-up", nargs=1, metavar="<key
         help='Adds the specified key onto the end of the path. Analogous to "cd <key>".')
 add_path_action("-i", "--index", const="index", nargs=1, metavar="<index>")
 add_path_action("-I", "--index-and-up", const="index-and-up", nargs=1, metavar="<index>",
-        help='Adds the specified index onto the end of the path. Analogous to "cd <index".')
+        help='Adds the specified index onto the end of the path. Analogous to "cd <index>".')
 add_path_action("-m", "--make", const="make", nargs=0,
         help="This action doesn't work yet. In the future, it will function analogously "
         'to "mkdir -p".')
@@ -270,103 +270,105 @@ def read_from_stdin():
         pass
     return input
 
-def main():
-    global formatter, path, working, warnings
-    args = parser.parse_args()
-    if args.help:
-        print parser.format_help().replace("!!!DESC!!!", description.strip()
-                ).replace("!!!END!!!", epilog.strip())
-        return
-    warnings = args.warnings
-    # print args.actions
-    formatter = JSONFormatter()
-    path = []
-    jump_path_next = False
-    jump_path_now = False
-    working = None
-    file_to_write = None
-    formatter_to_write_with = None
-    for action_info in args.actions:
-        if jump_path_next:
-            jump_path_next = False
-            jump_path_now = True
-        elif jump_path_now:
-            jump_path_now = False
-            # print "Jumping up"
-            path = path[:-1]
-        # print "Action:", action_info, "Jump:", jump_path_next, jump_path_now, "Working:", working, "Path:", path
-        action = action_info[0]
-        params = action_info[1:]
-        if action.endswith("-and-up"):
-            action = action[:-len("-and-up")]
-            jump_path_next = True
-        # print action, params, path
-        if action == "up":
-            path = path[:-1]
-        elif action == "key":
-            path.append(params[0])
-        elif action == "index":
-            path.append(int(params[0]))
-        elif action == "read":
-            set_to(formatter.read(read_from_stdin()))
-        elif action == "read-file":
-            set_to(formatter.read_file(params[0]))
-        elif action == "write":
-            print formatter.write(working)
-        elif action == "write-file":
-            formatter.write_file(params[0], working)
-        elif action == "write-current":
-            print formatter.write(lookup())
-        elif action == "write-current-to-file":
-            formatter.write_file(params[0], lookup())
-        elif action == "file":
-            set_to(formatter.read_file(params[0]))
-            file_to_write = params[0]
-            formatter_to_write_with = formatter
-        elif action == "object":
-            set_to({})
-        elif action == "list":
-            set_to([])
-        elif action == "string":
-            set_to(params[0])
-        elif action == "number":
-            v = params[0]
-            if int(v) == float(v):
-                set_to(int(v))
-            else:
-                set_to(float(v))
-        elif action == "bool":
-            set_to(parse_bool(params[0]))
-        elif action == "true":
-            set_to(True)
-        elif action == "false":
-            set_to(False)
-        elif action == "null":
-            set_to(None)
-        elif action == "value":
-            set_to(formatter.read(params[0]))
-        elif action == "json":
-            formatter = JSONFormatter()
-        elif action == "plist":
-            formatter = PlistFormatter()
-        elif action == "python":
-            formatter = PythonFormatter()
-        elif action == "text":
-            formatter = TextFormatter()
-        elif action == "delete":
-            v = lookup(True)
-            del v[path[-1]]
-        elif action == "append":
-            v = lookup()
-            v.append(None)
-            path.append(len(v) - 1)
-        elif action == "insert":
-            v = lookup()
-            index = int(params[0])
-            v.insert(index, None)
-            path.append(index)
-    if file_to_write is not None:
-        formatter_to_write_with.write_file(file_to_write, working)
+global formatter, path, working, warnings
+args = parser.parse_args()
+if args.help:
+    print parser.format_help().replace("!!!DESC!!!", description.strip()
+            ).replace("!!!END!!!", epilog.strip())
+    sys.exit()
+if not args.actions:
+    print "Use json --help for more information."
+    sys.exit()
+warnings = args.warnings
+# print args.actions
+formatter = JSONFormatter()
+path = []
+jump_path_next = False
+jump_path_now = False
+working = None
+file_to_write = None
+formatter_to_write_with = None
+for action_info in args.actions:
+    if jump_path_next:
+        jump_path_next = False
+        jump_path_now = True
+    elif jump_path_now:
+        jump_path_now = False
+        # print "Jumping up"
+        path = path[:-1]
+    # print "Action:", action_info, "Jump:", jump_path_next, jump_path_now, "Working:", working, "Path:", path
+    action = action_info[0]
+    params = action_info[1:]
+    if action.endswith("-and-up"):
+        action = action[:-len("-and-up")]
+        jump_path_next = True
+    # print action, params, path
+    if action == "up":
+        path = path[:-1]
+    elif action == "key":
+        path.append(params[0])
+    elif action == "index":
+        path.append(int(params[0]))
+    elif action == "read":
+        set_to(formatter.read(read_from_stdin()))
+    elif action == "read-file":
+        set_to(formatter.read_file(params[0]))
+    elif action == "write":
+        print formatter.write(working)
+    elif action == "write-file":
+        formatter.write_file(params[0], working)
+    elif action == "write-current":
+        print formatter.write(lookup())
+    elif action == "write-current-to-file":
+        formatter.write_file(params[0], lookup())
+    elif action == "file":
+        set_to(formatter.read_file(params[0]))
+        file_to_write = params[0]
+        formatter_to_write_with = formatter
+    elif action == "object":
+        set_to({})
+    elif action == "list":
+        set_to([])
+    elif action == "string":
+        set_to(params[0])
+    elif action == "number":
+        v = params[0]
+        if int(v) == float(v):
+            set_to(int(v))
+        else:
+            set_to(float(v))
+    elif action == "bool":
+        set_to(parse_bool(params[0]))
+    elif action == "true":
+        set_to(True)
+    elif action == "false":
+        set_to(False)
+    elif action == "null":
+        set_to(None)
+    elif action == "value":
+        set_to(formatter.read(params[0]))
+    elif action == "json":
+        formatter = JSONFormatter()
+    elif action == "plist":
+        formatter = PlistFormatter()
+    elif action == "python":
+        formatter = PythonFormatter()
+    elif action == "text":
+        formatter = TextFormatter()
+    elif action == "delete":
+        v = lookup(True)
+        del v[path[-1]]
+    elif action == "append":
+        v = lookup()
+        v.append(None)
+        path.append(len(v) - 1)
+    elif action == "insert":
+        v = lookup()
+        index = int(params[0])
+        v.insert(index, None)
+        path.append(index)
+if file_to_write is not None:
+    formatter_to_write_with.write_file(file_to_write, working)
         
 
 
