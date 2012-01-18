@@ -11,8 +11,8 @@ from os.path import join, dirname, realpath
 afn_path = dirname(realpath(__file__))
 sys.path.append(join(afn_path, "src"))
 
-from afn.backports.argparse import ArgumentParser
-from afn.utils.argparseutils import AppendWithConst
+from afn.backports.argparse import ArgumentParser ###REPLACE:src/afn/backports/argparse.py
+from afn.utils.argparseutils import AppendWithConst ###REPLACE:src/afn/backports/argparse.py
 from functools import partial
 import json
 import plistlib
