@@ -182,6 +182,7 @@ class Bus(common.AutoClose):
                 active = False
         # Create a new id for the service
         service_id = messaging.create_service_id()
+        self.set_remote_info_builtins(service_id, info)
         # Create the actual service object
         service = local.LocalService(self, service_id, info, doc)
         # Then store the service in our services map
@@ -330,7 +331,7 @@ class Bus(common.AutoClose):
     @synchronized_on("lock")
     def discover(self, discoverer, host, port, service_id, info):
         # print "Discovered:", (host, port, service_id, info)
-        info = self.set_info_builtins(host, port, service_id, info)
+        info = self.set_local_info_builtins(host, port, service_id, info)
         # Check to see if the specified service has been discovered yet, and if
         # it hasn't, create an entry for it
         is_new_service = False
