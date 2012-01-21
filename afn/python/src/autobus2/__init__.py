@@ -62,7 +62,7 @@ from traceback import print_exc
 from autobus2 import net, discovery, local, remote, exceptions, messaging, common, proxy
 from autobus2.filter import filter_matches, ANY, NOT_PRESENT
 from threading import Thread, RLock
-from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
+from socket import socket as Socket, error as SocketError, timeout as SocketTimeout, gethostname
 from Queue import Queue
 from concurrent import synchronized
 import time
@@ -317,12 +317,15 @@ class Bus(common.AutoClose):
         self.discoverers.remove(discoverer)
         discoverer.shutdown()
     
-    def set_info_builtins(self, host, port, service_id, info):
+    def set_local_info_builtins(self, host, port, service_id, info):
         new_info = info.copy()
         new_info["host"] = host
         new_info["port"] = port
         new_info["service"] = service_id
         return new_info
+    
+    def set_remote_info_builtins(self, service_id, info):
+        info["hostname"] = gethostname()
     
     @synchronized_on("lock")
     def discover(self, discoverer, host, port, service_id, info):
