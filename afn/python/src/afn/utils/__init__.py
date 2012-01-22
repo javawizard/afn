@@ -231,6 +231,9 @@ def get_path(object, path):
         object = getattr(object, component)
     return object
 
+def print_args(*args, **kwargs):
+    print args, kwargs
+
 
 
 
