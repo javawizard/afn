@@ -8,7 +8,7 @@ from time import sleep
 from afn.utils import print_args
 from functools import partial
 
-def run():
+def main():
     p = Parallel()
     previous = True
     with Bus() as bus:
