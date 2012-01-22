@@ -7,7 +7,7 @@ from autobus2 import Bus
 from time import sleep
 
 p = Parallel()
- 
+
 previous = True
 
 with Bus() as bus:
