@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.append("src")
+from os.path import join, dirname, realpath
+afn_path = dirname(realpath(__file__))
+sys.path.append(join(afn_path, "src"))
 if len(sys.argv) <= 1:
     print 'usage: run python_module_name'
     print 'adds "src" to the path, then imports the specified module and calls'
