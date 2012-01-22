@@ -20,7 +20,7 @@ with Bus() as bus:
                     # was just shorted to ground)
                     print "Doorbell was pressed"
                     try:
-                        s["say_text"]("someone is ringing the_front doorbell", callback=None)
+                        print s["say_text"]("someone is ringing the_front doorbell", callback=None)
                     except:
                         print_exc()
                     sleep(5)
