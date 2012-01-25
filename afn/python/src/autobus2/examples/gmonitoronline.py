@@ -9,6 +9,8 @@ from autobus2 import Bus
 
 def main():
     gobject.threads_init()
+    Thread
+    gtk.main()
     window = gtk.Window()
     window.set_title("hello world")
     window.show()
