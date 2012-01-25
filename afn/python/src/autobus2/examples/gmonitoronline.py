@@ -18,7 +18,7 @@ def main():
             w = gtk.Window()
             w.set_title("GMonitorOnline")
             label = gtk.Label()
-            refresh_text()
+            gobject.idle_add(refresh_text)
             w.add(label)
             label.show()
             w.show()
@@ -29,7 +29,7 @@ def main():
                 else:
                     online_monitors[connection.service_id] = info.get("hostname", "unknown")
                 refresh_text()
-            proxy.watch_object("cpu", listener)
+            proxy.watch_object("status", lambda *args: gobject.idle_add(partial(listener, *args)))
             gtk.main()
 
 def refresh_text():
