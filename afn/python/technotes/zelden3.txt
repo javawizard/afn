@@ -1,0 +1,8 @@
+So I'm thinking about picking up Zelden again.
+
+And I'm thinking about making it less complex.
+
+And I'm thinking of getting rid of the ability or need to run any code on the client side, on Matias's suggestion. I think I should be able to come up with a list of predefined message types that should be enough for any sane protocol to use.
+
+I've also been thinking about making Zelden distributed, so that if one server fails, everything will switch over to another server, which will go and connect to all of the users' chat protocols.
+

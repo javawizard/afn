@@ -22,6 +22,8 @@ def main():
         cpu_monitor = CPUMonitor()
         cpu_monitor.refresh()
         memory_monitor = MemoryMonitor()
+        sleep(0.2)
+        update_status()
         try:
             while True:
                 sleep(5)
