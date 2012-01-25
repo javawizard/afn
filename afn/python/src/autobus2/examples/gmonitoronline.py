@@ -11,33 +11,39 @@ from afn.utils import Suppress
 online_monitors = {}
 
 def main():
-    global label
     gobject.threads_init()
     with Bus() as bus:
         with bus.get_service_proxy({"type": "monitord"}, multiple=True) as proxy:
             w = gtk.Window()
             w.set_title("GMonitorOnline")
+            vbox = gtk.VBox()
+            w.add(vbox)
+            vbox.show()
             label = gtk.Label()
-            gobject.idle_add(refresh_text)
-            w.add(label)
+            label.set_text("CPU usage:")
+            vbox.add(label)
             label.show()
             w.show()
             def listener(connection, info, value):
+                service_id = connection.service_id
                 if value is None:
-                    with Suppress(KeyError):
-                        del online_monitors[connection.service_id]
+                    if service_id in online_monitors:
+                        online_monitors[service_id].destroy()
+                        del online_monitors[service_id]
                 else:
-                    online_monitors[connection.service_id] = info.get("hostname", "unknown")
-                refresh_text()
-            proxy.watch_object("status", lambda *args: gobject.idle_add(partial(listener, *args)))
+                    if service_id not in online_monitors:
+                        online_monitors[service_id] = gtk.ProgressBar()
+                        online_monitors[service_id].set_text(info.get("hostname", "unknown"))
+                        online_monitors[service_id].set_fraction(0)
+                        vbox.add(online_monitors[service_id])
+                        online_monitors[service_id].show()
+                    # [0] is user, [1] is system
+                    cpu = value["cpu"][0] + value["cpu"][1]
+                    online_monitors[service_id].set_fraction(cpu / 100.0)
+            proxy.watch_object("status", lambda * args: gobject.idle_add(partial(listener, *args)))
             gtk.main()
 
-def refresh_text():
-    if len(online_monitors) == 0:
-        label.set_text("No monitors are currently online.")
-    else:
-        label.set_text("The following monitors are currently online:\n\n"
-                + "\n".join(online_monitors.values()))
+
 
 
 
