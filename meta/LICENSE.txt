@@ -1,1 +1,6 @@
-TODO: finish this.
+TODO: this needs to be finished up.
+
+All code written by Alexander Boyd for the AFN project (and that's most of the code) is Copyright 2010-2012 Alexander Boyd, and is released under the terms of the GNU Lesser General Public License.
+
+Unless otherwise licensed or unless not legally applicable, all other code in the AFN project is copyright the respective authors of said code, and is also released under the terms of the GNU Lesser General Public License.
+
