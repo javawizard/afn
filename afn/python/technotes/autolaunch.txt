@@ -1,0 +1,5 @@
+Autolaunch is a launchd-like thing that can be configured remotely via Autobus.
+
+Right now I'm just going to have it support always-running daemons.
+
+And for now I'm going to have the list of daemons, their underlying commands, and the users that they are to be run as stored in a file that can't be modified by Autobus, since Autobus doesn't yet support authentication. Services can therefore only be started and stopped remotely.
