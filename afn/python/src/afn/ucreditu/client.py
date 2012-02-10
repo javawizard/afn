@@ -4,6 +4,7 @@ import urllib
 import urllib2
 from getpass import getpass
 import re
+from decimal import Decimal
 
 def main():
     print "Testing out the University Federal Credit Union client..."
@@ -36,7 +37,17 @@ class Session(object):
         login_submit_url = login_page.find("form", {"name": "signin"})["action"]
         summary_page = self._post("https://mobile.ucreditu.com/" + login_submit_url[1:],
                 {"userNumber": self.username, "password": self.password, "Login": "Login"})
-        print summary_page
+        try:
+            checking_location = summary_page.find("E-Checking")
+            available_location = summary_page.find("Available", checking_location)
+            close_b_location = summary_page.find("</b>", available_location)
+            open_br_location = summary_page.find("<br>", close_b_location)
+            available = summary_page[close_b_location+len("</b>"):open_br_location]
+            available = Decimal(available)
+            self.checking_balance = available
+        except Exception as e:
+            # TODO: handle this in some manner
+            raise
 
 
 
