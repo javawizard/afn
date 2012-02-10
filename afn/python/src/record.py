@@ -90,14 +90,16 @@ raw_input()
 print "Waiting two seconds for the sound of you pressing enter to pass..."
 time.sleep(2)
 print "Starting your microphone up..."
-block_size = 1024
+block_size = 256
+block_multiplier = 4
 
 pa = pyaudio.PyAudio()
-mic = pa.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=block_size)
+mic = pa.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, output=False, frames_per_buffer=block_size)
+mic.start_stream()
 print "Awesome, your microphone works. Let's see what silence sounds like..."
 
 silent_blocks = []
-for i in xrange(200):
+for i in xrange(200*block_multiplier):
     silent_blocks.append(mic.read(block_size))
 
 mic.stop_stream()
@@ -128,7 +130,7 @@ print "Now let's see what you sound like when you're talking..."
 
 noisy_blocks = []
 mic.start_stream()
-for i in xrange(200):
+for i in xrange(200*block_multiplier):
     noisy_blocks.append(mic.read(block_size))
 
 mic.stop_stream()
