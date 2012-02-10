@@ -1,0 +1,126 @@
+This document specifies the Autobus 2 protocol. I've already written Autobus 2 itself, but other people (mainly James Stoker) are wanting to write Autobus 2 implementations for languages other than Python, so I decided I should probably write up a protocol spec.
+
+So... Autobus uses UDP broadcasts for service discovery and TCP connections for actually communicating with services. I'll cover some architectural things about Autobus first before getting into either of these.
+
+---------------------------------------------------------------------
+
+Autobus-using programs publish services. Services are collections of functions (things that can be called from remote clients), events (things that let remote clients know when something's happened; sort of like functions in reverse), and objects (sort of like Python object attributes; these are values that a service can change to whatever it wants and remote clients can receive notifications when its value changes).
+
+Services have an associated id, which can be any random string as long as there's essentially no chance of any other service choosing the same string. The Python Autobus 2 library uses a combination of the system time at which the service was created, the computer's hostname, and a random number as the service's id.
+
+Services have an info object associated with them. This is simply a JSON dictionary providing information about the service. The program publishing a service decides what its info object is (and by convention, it at least contains one key, "type", whose value is something like "monitor", "speak", "jzbot", etc). Remote clients can then look up services by certain keys in their info object; for example, a remote service could connect to all services whose "type" key is "speak" and whose "hostname" key is "phenoxydine". An Autobus library should automatically add the following keys to a service's info object when asked to publish a service:
+
+    hostname: This should be set to the computer's hostname up to but not including the first ".".
+
+Note that info objects are not allowed to change after a service has been created.
+
+An Autobus library should automatically add the following keys to the info objects that it receives from remote services:
+
+    host: This should be set to the IP address or fully-qualified hostname of the computer publishing the service.
+    port: This should be set to the port on which the service is being published. (Multiple services can be published on the same port; it's up to an Autobus client library whether it listens on a different port for each service or listens on a single port for all services published in a single process.)
+    service: This should be set to the id of the service.
+
+---------------------------------------------------------------------
+
+So now let's get into the actual protocol details. And we'll start with the UDP broadcast part of the Autobus protocol.
+
+All Autobus UDP packets are sent to the broadcast address, and are sent to port 52722. (This is more or less a random port number I decided on.) These packets contain a single JSON object, the contents of which vary depending on what type of packet it is.
+
+There are three types of broadcast packets:
+
+    Queries: These packets contain one key, "command", whose value is "query". They are sent out whenever an Autobus-using program starts up. They instruct all Autobus clients on the local network to send an Add command to the machine that sent out the query. (The Python Autobus library is somewhat stupid and sends out Add messages that are in response to Query messages using UDP broadcast, but once Alex decides to go make it sane, it will unicast them to the machine that sent out the query. Other libraries should be prepared to handle both methods; this usually doesn't require writing any additional code, since the messages are the same and are sent to the same port.)
+    
+    Add: These packets are sent periodically by a service (once every minute or two; it's up to a particular Autobus library to decide how often) to let other clients on the network know about themselves. They are also sent in response to Query packets being sent out. These packets contain four keys:
+    
+        "command": This has the value "add".
+        
+        "port": This is the port on which the service being advertised is available. The host is always assumed to be the host that sent out the Add packet, so a "host" key isn't needed.
+        
+        "service": This is the service id of the service being advertised.
+        
+        "info": This is the info object of the service being advertised.
+    
+    Remove: These packets are sent out when a particular service is being unpublished. They let other clients on the network know that the service is no longer available. They have the same keys as Add packets, except they do not contain the "info" key. Clients should not rely on Remove packets being sent for a given service, however, since things like kill -9 on a process publishing a service will result in the service disappearing without Remove packets being broadcast. Clients should therefore automatically time out services for which they have not received an Add packet in several minutes.
+
+---------------------------------------------------------------------
+
+So now we get into the TCP part of the Autobus protocol.
+
+Once a client has the host, port, and service id of a particular service, and it wants to connect to and use that service, it uses Autobus's TCP protocol to communicate with it.
+
+The TCP protocol consists of commands, in the form of JSON objects separated by newlines, being exchanged between both ends of the connection. Every one of these objects has the following keys:
+
+    "_type": This is the type of the message, as a number. 1 means a command, 2 means a response, and 3 means a notification. Commands and notifications are exactly the same thing, and any particular command may be sent as a notification instead; the only difference is that a response is always sent for a command, whereas a response is never sent for a notification. A particular end of the connection will therefore typically send a message as a command if it cares about the response or as a notification if it doesn't.
+    
+    "_id": This is the id of the message. When a side of the connection sends a command or a notification, it randomly (or otherwise) generates an id for the message. When a response is sent for a particular command by the other side of the connection, it will have the same id; this allows the command-sending client to tell which command a particular response is intended for.
+    
+    "_command": This is only present for commands and notifications and contains the name of the command.
+    
+    "_error": This is only present in a response, and it's only present if the command failed for some reason. Its value is a dictionary which itself contains one key, "text", whose value is a message describing the problem.
+    
+    Additional keys are present depending on the command in question.
+
+When a particular client connects to a particular service, the first command it sends is "bind" (a.k.a. the command's "_comand" key is "bind"). This has one key (one key in addition to "_command", "_id", "_type"), "service", which is the id of the service to connect to. The response has no keys (no keys in addition to the above mentioned keys, unless the bind command fails, which can happen if, for example, the service in question doesn't actually exist; the remote end immediately closes the connection after the failed bind happens if this is the case).
+
+From then on, the following keys can be sent from the client to the service at the client's leisure:
+
+    call: This command tells the service to run a particular function. It has two keys, "name", which contains the name of the function to call, and "args", which is a list of the arguments to pass to the function. The response contains one key, "result", which is the return value of the function. If the functions throws an exception, a response containing a "_error" key as described above is sent.
+    
+    watch: This command tells the service that the client would like to watch a particular object. It has one key, "name", which is the name of the object to watch. The response contains two keys, "name", which has the same value as the "name" key in the command, and "value", which is the current value of the object. Thereafter, changed commands will be sent from the service to the client whenever the object's value changes, until the client either disconnects or sends an unwatch command.
+    
+    unwatch: This command tells the service that the client would like to stop watching the specified object. It, and its response, take the same form as the watch command; the "value" key in the response, however, must always be null.
+
+The following keys are then sent from the service to the client as needed:
+
+    changed: This command tells the client that a particular object's value has changed on the service. It has two keys, "name", which contains the name of the object, and "value", which contains the object's new value. The response, sent from the client to the service, contains no keys. The Python Autobus library always sends this as a notification, but Autobus libraries should be prepared to handle services that send this as a command, and respond accordingly.
+
+When a client doesn't need to talk to a particular service anymore, it simply closes the connection to the service.
+
+NOTE: Autobus libraries should be prepared to handle extra keys present in messages. Typically they should just ignore them, but regardless of what they do, they should not issue an error message or otherwise fail simply because extra keys are present. In the future, for example, I'll be adding a key that can be sent with the initial bind command requesting the remote service to send only /changes/ to objects instead of the object's entire value as part of changed messages; services that don't support this would then respond with the normal empty bind response, while services that do would respond with a key indicating that they support this and that they will be sending only changes as requested.
+
+---------------------------------------------------------------------
+
+That's it for the protocol. I'll be adding support for events soon, which will add two client-to-service messages (listen and unlisten) and one service-to-client message (fired), and I'll update the spec when I add those. I'll also be adding some sort of authentication support in the future.
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
