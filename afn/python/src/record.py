@@ -71,8 +71,9 @@ if len(new_words) == 0:
     print "re-run this program."
     sys.exit()
 
-print "Here's how it works: I'll tell you a word for you to record. 0 should "
-print "be pronounced as 'zero', not 'oh'. Once I've shown you the word, I'll "
+print "Here's how it works: I'll tell you a word for you to record. NOTE: 0 should "
+print "be pronounced as 'zero', not 'oh', and 'am' should be pronounced as 'AY EM', "
+print "not 'am', and likewise for 'pm'. Once I've shown you the word, I'll "
 print "wait for it to be completely silent, then I'll tell you. You can then "
 print "say the word. I'll again wait for it to be completely silent, then I'll "
 print "save what you said. If you want to pause at any time, just remain silent "
