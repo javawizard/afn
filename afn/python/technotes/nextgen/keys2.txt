@@ -7,3 +7,48 @@ I also read through the source for GNUStep's implementation of KVC and KVO, whic
 So... One major thing that I was messing up on was that I was thinking that KVO was a system provided by Apple that objects could make use of. In reality, it's more an informal protocol; the system provided by Apple is only one possible implementation of it, and developers are encouraged to manually implement the protocol if need be. That means that encapsulation is particularly important; a particular object using my Python implementation of KVO can't expect that any other objects it might use also use the same implementation.
 
 I also found out that a number of methods that I thought were implementation-specific are in fact standardized as part of the protocol. One important example: willChangeValueForKey and didChangeValueForKey. These are called just before and just after the actual change takes place; willChangeValueForKey stores off the key's current value, and didChangeValueForKey looks up the key's new value and fires off notifications as needed. Those are standardized so that code supporting custom... Hm, I want to go read up on NSEditor and NSEditorRegistration before doing anything else, to make sure that I factor their capabilities into this whole system...
+
+Ok, this looks interesting. There's not really a programming guide on how to use it, but basically, things that can be edited provide commitEditing and discardEditing methods, and controllers provide objectDidBeginEditing and objectDidEndEditing methods. Nothing's mentioned about how a particular editor is instructed which controllers to send objectDidBeginEditing and objectDidEndEditing messages do, so I'm guessing that it uses the controller to which it is bound, which I consider somewhat daft as it means that a controller has to be present (and I'm thinking of writing Nextgen UI's components in such a way that controllers only need to be used when certain behaviors provided by them are useful). But either way...
+
+Oh, also, commitEditing can error out if the contents aren't valid for some reason. For example, if a particular text field is bound to a property of a model object whose validator requires that the value be parseable as an int, then committing the text field would fail if the contents had been changed to something that wasn't a valid int. This needs to be factored in.
+
+So the more I've thought about bindings, the more I'm thinking that they really should be completely symmetrical, meaning that binding two properties A and B of two objects together perform the same actions on both, and neither has preferential status as the binder. Setting up a binding between the two would cause an observer to be added to A which, on receiving changes, would push them into B, and vice versa. As part of setting up the binding, one of the two would take on the other's value; I'm thinking that binding A to B would cause A to take on B's value. But that part of the system, the part that copies one's value to the other on creation of the binding, would be the only non-symmetrical part of the system.
+
+Validation is an altogether more difficult topic. The idea would be that in addition to simply having key-value observers, one could also register key-value validators on a particular property; all of a property's key-value validators would be checked against the property's would-be new value, and if any of them rejects the new value, an exception would be thrown and the new value wouldn't be set. Binding A to B, then, would register a validator on A that calls all of B's validators and a validator on B that calls all of A's validators, thereby ensuring that values set into one can be properly set into the other. (Binding A to B would also check that A's validators allow B's current value; if they don't, an exception would be thrown indicating that the binding cannot be established since B's current value is not a valid value for A.)
+
+This would work in theory, but it presents one important problem: it causes an infinite loop. Suppose we bind A to B, and then set A's value. A's delegate-to-B validator invokes B's validators, one of which is B's delegate-to-A validator, which calls A's validators all over again, and so on.
+
+If the order of validator invocation is unspecified, and this sounds reasonable to me, then this could potentially be solved by passing each validator a list of validators that have already been invoked for this property. Any delegating validator would add all of its delegates to the list, and would also skip over any validators already in the list. This sounds like an overly-complex solution to the problem, but it's at least a solution, so I can run with it if need be.
+
+Of course, that brings up the question of how editors should be implemented, and whether there's really a need for listening for when editing has started and when editing has finished. There is definitely still a need to be able to tell an editor to commit or discard its changes, since, for example, saving a document requires the editor representing the document's contents to commit its changes before the document can be saved.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
