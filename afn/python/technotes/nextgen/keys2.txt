@@ -48,7 +48,32 @@ Yeah, I think a list's size should be published as part of the list protocol its
 
 So objects, lists, and sets all implement the key-path versions of the methods of all three, but only the non-key-path versions of the methods of the types that they themselves support.
 
-(And then of course Python list, set, and dict proxies can be obtained that wrap a particular key path on a particular object. These proxies would not themselves be KVO-compliant, same as Cocoa's corresponding proxies are not KVO-compliant.)
+(And then of course Python list, set, and dict proxies can be obtained that wrap a particular key path on a particular object. These proxies would not themselves be KVO-compliant, same as Cocoa's corresponding proxies are not KVO-compliant, mainly for simplicity. At some future point I might decide to make them compliant, but it's just too complicated right now, and I don't have any really good need for it.)
+
+So let's think of what functions we want to have...
+
+Non path-related functions:
+    For objects:
+        Getters (functions that get data from an object):
+            get_value_for_key(key) -> value
+        Setters (functions that change the data held in an object):
+            set_value_for_key(key) -> value
+    For lists:
+        Getters:
+            size_of_list() -> list size, as an int (or a long)
+            get_list_value(index) -> value; index is zero-based
+        Setters:
+            insert_list_value(index, value)
+            remove_list_value(index)
+            replace_list_value(index, value)
+    For sets:
+        Getters:
+            size_of_set() -> set size
+            get_set_iterator() -> iterator yielding the set's values
+            member_of_set(value) -> boolean indicating whether value is in the set
+        Setters:
+            add_set_value(value)
+            remove_set_value(value)
 
 
 
