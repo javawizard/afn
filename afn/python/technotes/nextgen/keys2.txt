@@ -53,11 +53,12 @@ So objects, lists, and sets all implement the key-path versions of the methods o
 So let's think of what functions we want to have...
 
 Non path-related functions:
+
     For objects:
         Getters (functions that get data from an object):
             get_value_for_key(key) -> value
         Setters (functions that change the data held in an object):
-            set_value_for_key(key) -> value
+            set_value_for_key(key, value)
     For lists:
         Getters:
             size_of_list() -> list size, as an int (or a long)
@@ -74,6 +75,60 @@ Non path-related functions:
         Setters:
             add_set_value(value)
             remove_set_value(value)
+
+I think the path-related functions are going to basically be the same as the non path-related functions with an additional path parameter, but let's see...
+
+Hm, I just realized this needs some additional thought. When adding to a list, what path does one specify? Is it x/y/* or just x/y?
+
+Well...
+
+Expanded paths (expanded paths are the list equivalents of paths; the path x/y/* would be converted to the expanded path [Key("x"), Key("y"), Index(None)]) contain enough information to be able to tell whether the thing we're currently targeting is an object or a list or a set. So how would we do this...
+
+Let's say we have {"x": {"y": [{"a": "i"}, {"a": "j"}]}}, and we want to add {"a": "k"} to the list at x/y. If we want to observe the property containing the list and get notified whenever a different list instance is set into y, but not when the contents of the list actually change, we would observe x/y. If we wanted to observe the list's contents and know when new things were added to the list or removed from the list, we would observe x/y/*. So it makes sense that if we wanted to replace the current list object, we would use x/y, and if we wanted to insert a new item into the list, we would use x/y/*. So how would this be implemented?
+
+Well, we tell our root object to go insert our new value into x/y/*. It sees that x is a key, and so invokes its own get_value_for_key, passing in that key, and instructs the result to insert the new value at the path y/*.
+
+This object, which is the one that has y as a key, sees that y is also a key, and does the same thing, with the result that it gets the actual list object and tells it to insert the new value at the path *.
+
+The list, then, sees that the insertion is to be performed on *, and that this is the only component of the path. It therefore knows that the insertion is to be performed on itself, so it duly performs the insertion.
+
+This sounds good.
+
+Now let's imagine that the list was a list of lists, and we wanted to add our value to each of these sublists. (Cocoa KVC dictates that if one mutates through a to-many relationship, all items in the relationship receive the same mutation, and I'm going to follow that as well.) So we insert at x/y/*/*. This follows the same protocol as mentioned above until we get to the root list. Its path-related insert method notices that the current path contains more than one item, so it gets all the list items (the only valid path that can be specified for a list is *, which corresponds to Index(None) (since I'm not currently allowing any list paths that have to do with particular indexes; cocoa does much the same thing by not allowing any list-related path components), so the only valid thing it can do is get all the items in the list) and then iterates over each one and asks them to insert the value in question at the path *. These lists then process the request in much the same way that our root list did when we were just inserting into x/y/*.
+
+And, of course, if we want to insert a whole new list into our list of lists, we can do that by inserting into x/y/*, since the root list will notice that the path only contains *, so it will perform the insertion on itself.
+
+Ok, I like how this is shaping up.
+
+Sets would basically be done in the same way.
+
+So given that, let's see what methods we're going to have... (Oh, and object-related ones don't need a key since they can derive it from the path, and sets don't need an index or anything since they don't care about the location; lists, however, still need their explicit index, which is fine.)
+
+Path-related functions:
+
+    For objects:
+        Getters:
+            get_value_for_key_path(path) -> value
+        Setters:
+            set_value_for_key_path(path, value)
+    For lists:
+        Getters:
+            size_of_list_at_path(path) -> list size
+            get_list_value_at_path(path, index) -> value
+        Setters:
+            insert_list_value_at_path(path, index, value)
+            remove_list_value_at_path(path, index)
+            replace_list_value_at_path(path, index, value)
+    For sets:
+        Getters:
+            size_of_set_at_path(path) -> set size
+            get_set_iterator_at_path(path) -> iterator yielding the set's values
+            member_of_set_at_path(path, value) -> boolean
+        Setters:
+            add_set_value_at_path(path, value)
+            remove_set_value_at_path(path, value)
+
+I believe I just did it. All of these methods make perfect sense.
 
 
 
