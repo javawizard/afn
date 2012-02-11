@@ -1,0 +1,9 @@
+So I decided to read through the Apple developer docs on KVC, KVO, and bindings, and this has helped a lot and has made me realize that I'm doing a lot of things wrong.
+
+So I need to completely redo how I'm doing stuff.
+
+I also read through the source for GNUStep's implementation of KVC and KVO, which also helped.
+
+So... One major thing that I was messing up on was that I was thinking that KVO was a system provided by Apple that objects could make use of. In reality, it's more an informal protocol; the system provided by Apple is only one possible implementation of it, and developers are encouraged to manually implement the protocol if need be. That means that encapsulation is particularly important; a particular object using my Python implementation of KVO can't expect that any other objects it might use also use the same implementation.
+
+I also found out that a number of methods that I thought were implementation-specific are in fact standardized as part of the protocol. One important example: willChangeValueForKey and didChangeValueForKey. These are called just before and just after the actual change takes place; willChangeValueForKey stores off the key's current value, and didChangeValueForKey looks up the key's new value and fires off notifications as needed. Those are standardized so that code supporting custom... Hm, I want to go read up on NSEditor and NSEditorRegistration before doing anything else, to make sure that I factor their capabilities into this whole system...
