@@ -8,6 +8,8 @@ from time import sleep
 import sys
 from concurrent import synchronized
 from utils import cast
+from afn.utils import print_exceptions
+from functools import partial
 
 UP = 1
 DOWN = 2
@@ -32,6 +34,7 @@ class Timer(object):
         self.name = ""
         self.announce_count = 5
         self.announce_on_state_change = True
+        self.is_beeping = False
     
     def get_absolute_time(self):
         """
@@ -77,8 +80,19 @@ class Timer(object):
     
     def on_beeping(self):
         print "Timer " + str(self.number) + " is beeping"
+        self.is_beeping = True
+        self.announce_beeping()
         # state_change_event(self.number, self.state)
         # timer_beeping_event(self.number)
+    
+    def announce_beeping(self):
+        for connection in speak.live_connections:
+            def callback(c, result):
+                with print_exceptions:
+                    if result == 0:
+                        c["say_text"]("timer " + str(self.number) + " is beeping", callback=None)
+            with print_exceptions:
+                connection["get_queue_size"](callback=partial(callback, connection))
     
     def get_time_fields(self):
         """
@@ -278,6 +292,9 @@ class RPC(object):
         If the specified timer is currently announcing that it is beeping over
         speakd, this function stops it. Otherwise, this function does nothing.
         """
+        timer = timer_map[timer_number]
+        if timer.is_beeping:
+            timer.is_beeping = False
     
     @synchronized(lock)
     def list_timers(self):
@@ -319,12 +336,15 @@ class RPC(object):
         else:
             return result
 
+last_announce_check = 0
+
 @synchronized(lock)
 def run_periodic_actions():
     """
     Runs tasks that should be run once per second.
     """
     global time_since_startup
+    global last_announce_check
     now = datetime.now()
     startup_interval = now - startup_time
     time_since_startup = startup_interval.seconds + (startup_interval.days * 86400)
@@ -346,6 +366,11 @@ def run_periodic_actions():
             timer.set_absolute_time(0)
     if modified:
         publish_timer_object()
+    if last_announce_check + 10 <= time_since_startup:
+        last_announce_check = time_since_startup
+        for timer in timer_map.values():
+            if timer.is_beeping:
+                timer.announce_beeping()
 
 class IntervalThread(Thread):
     """
