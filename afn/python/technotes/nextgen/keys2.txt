@@ -22,6 +22,23 @@ If the order of validator invocation is unspecified, and this sounds reasonable 
 
 Of course, that brings up the question of how editors should be implemented, and whether there's really a need for listening for when editing has started and when editing has finished. There is definitely still a need to be able to tell an editor to commit or discard its changes, since, for example, saving a document requires the editor representing the document's contents to commit its changes before the document can be saved.
 
+So I just checked on gtk.Entry and it notifies whenever a single character is changed in the text field, which is good because it means I can implement the editor logic on my own. (And that also brings up a good point: I want some sort of property on text fields that reflects the exact character content of the text field at any given time, which, if bound to a property, would cause the property to update as each character were typed.)
+
+So, I've just thought of a use case that I can work with to make sure I get this editor stuff right. Let's say we have a list of dicts, each dict being a person, and the overall list being an address book of people. (Arguably this should be a set, but I'll worry about that later.) Let's say we wanted to create a GUI that shows a list box containing the names of the people and then a number of text fields below it that display and allow editing of the currently-selected person's name, phone number, email address, etc. When text is typed in one of the text fields, it needs to be pushed into the correspondin person's dict, and in particular this needs to still happen even if the currently-selected person spontaneously changes. So when the selected person changes, the edit needs to commit, and it needs to happen before the selection changes.
+
+Hm, I need to come back to that and think about that a bit.
+
+So I also just realized that it's not just key value updates that need to be validated; mutations to lists and sets need to be validated as well. An example of where this would come in useful: a controller that takes a set as input and provides a list as output, showing all the items in the set ordered by some criteria. The controller would allow new items to be inserted into the list and items to be removed from the list, but it would not allow reordering of items, and it would force items to be inserted at particular positions. (Arguably the controller shouldn't even support mutations of the list, and should require that the underlying set be mutated instead, but I'll think about that later.) In this case, the validator would deny attempts to reorder the list. A validator might also want to deny attempts to add invalid values to a list; for example, if a contact's phone number were a list instead of a single text field, each entry should be validated to ensure that it represents a valid phone number.
+
+(And this, of course, opens a whole new can of worms on how to update things in lists, particularly where those things are primitives such as numbers instead of objects themselves, but I'll think about that in a bit.)
+
+So I need to get into the details of how coding and observing work before I even start to get into binding and its bearing upon te GUI.
+
+So... Half of me really wants to have objects, lists, and sets all be distinct constructs, and the other half of me wants sets and lists to be simply aspects of objects like Cocoa does. There are pros and cons to both. Some of the pros of having sets and lists be aspects of objects are that Cocoa's already done the design for us, and it makes performing list modifications easier. There are cons, though, one of the most notable of which is that it makes it quite a bit harder to represent JSON values as observing-compliant objects, since an object with a single property of "value", whose value is a to-many relationship, would have to stand in for a JSON list.
+
+One of the major issues I'm trying to deal with in having objects, lists, and sets all be different is that nested keys within any of them might be of another type, and so all three have to provide methods for performing the mutations of any of those three on keys. In Cocoa, objects provide methods for all three types of mutations; objects, lists, and sets would all have to do likewise. This might not be so horrible, though, as a class providing such methods could be written, but it makes the informal protocol somewhat more complex.
+
+I'm thinking I'm going to work under the model that all three are separate for now, since I like a lot of things about this model. As I develop this model further, I'll think about whether it was a good idea, and switch to the other model if this model becomes untenable.
 
 
 
