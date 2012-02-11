@@ -40,6 +40,16 @@ One of the major issues I'm trying to deal with in having objects, lists, and se
 
 I'm thinking I'm going to work under the model that all three are separate for now, since I like a lot of things about this model. As I develop this model further, I'll think about whether it was a good idea, and switch to the other model if this model becomes untenable.
 
+So I'm thinking all three types should follow the same protocol for key paths, meaning that all three provide methods like set_key_at_path, insert_at_path, remove_at_path, replace_at_path, get_key_at_path, etc. Each type would then provide the corresponding non-path versions for whatever type it is; objects, therefore, would only provide set_key and get_key, not insert. (And I need to think up what names I want to use for these.) A particular Python instance should be able to be all three types at one time; the methods, therefore, need to be named differently so that any given object can provide all three sets of methods. NextgenList, for example, which is a list-like class that will implement KVO, will be both a list and an object; the main property it would publish as an object would be size, length, or count (I haven't decided which one to use yet), which would provide the number of items currently in the list. (Although perhaps this should be something that's part of the list protocol itself, and not published as part of the object protocol...)
+
+Hm...
+
+Yeah, I think a list's size should be published as part of the list protocol itself. NextgenList could also publish it as an object property for things interested simply in the size, but the size should be part of the list protocol itself (and I will probably write a value transformer, which, by the way, are just going to be ordinary objects providing, say, two properties named in and out that can be bound to in order to perform the transformation, that takes a list as input and provides its size as output, for the benefit of those custom list implementations that don't publish their size as an object property). And same goes for sets.
+
+So objects, lists, and sets all implement the key-path versions of the methods of all three, but only the non-key-path versions of the methods of the types that they themselves support.
+
+(And then of course Python list, set, and dict proxies can be obtained that wrap a particular key path on a particular object. These proxies would not themselves be KVO-compliant, same as Cocoa's corresponding proxies are not KVO-compliant.)
+
 
 
 
