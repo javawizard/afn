@@ -130,6 +130,14 @@ Path-related functions:
 
 I believe I just did it. All of these methods make perfect sense.
 
+So, all KVC-compliant things must implement every path-related function, regardless of what sort of thing they are. Then they only need to implement the non path-related functions corresponding to what sort of thing they are. I'll provide a class that implements the path-related functions using the system I described above; most classes will be able to extend this class and thus only have to worry about implementing the non-path-related functions.
+
+So now, the observing protocol.
+
+We need to be able to observe a particular path for changes. The change notifications that we receive will be specific to the type of the last item in the path. (And I'm thinking that if said item doesn't support the type that the relevant path component indicates, then for lists, they should appear empty, same with sets, and for keys, they should appear null, or something; this needs thought).
+
+So let's see... How does GNUStep implement observing paths with more than one component in them?
+
 
 
 
