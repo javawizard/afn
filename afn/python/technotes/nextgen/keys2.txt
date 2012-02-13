@@ -138,6 +138,26 @@ We need to be able to observe a particular path for changes. The change notifica
 
 So let's see... How does GNUStep implement observing paths with more than one component in them?
 
+Oh for... It uses these forwarder things that appear to be hopelessly complicated. It does, as I expected, register observers (namely the forwarder) on the values of the keys in the path, so, given a, observing x/y/z causes two observers to be registered: one on a observing x, and one on a.x observing y/z. Whenever the first observer is triggered, it removes the second observer from the old value and installs it onto the new value. Whenever the second observer is triggered, it notifies the original observer that changes have happened.
+
+The one thing I haven't found is how it handles observing through lists. Meaning, for example, to put this in Python's terms, what happens if an observer is added to a/*/b? My thought would be that... Actually, using the above coding logic, what would even happen if I tried to ask an object for the value of the key a/*/b?
+
+You know what, I never went through the semantics of actually getting things instead of setting them.
+
+So I just went through the semantics and they're rather less advanced than I expected them to be, but I'm not going to complain, because if they pulled it off then theoretically I can as well.
+
+So, their semantics: observers can't observe through to-many relationships. Attempting to register such an observer causes exceptions to be thrown.
+
+So the Python thing doesn't need to be able to do this either.
+
+However, it needs to not throw exceptions; it needs to do something else sensible instead; what, I'm not exactly sure.
+
+And I need to maintain encapsulation, too, but I still want as much code as possible to be reusable throughout the KVO implementations for lists, objects, and sets.
+
+So Cocoa has willChangeValueForKey: and didChangeValueForKey: which are called just before and just after the key's value is to be changed. NSObject provides these methods, as well as addObserver:forKeyPath:change:context:. When an observer is added, it tracks it internally; when willChangeValueForKey: is called, all observers that have requested to receive prior notifications are sent such notifications and the current value of the key is stored; and when didChangeValueForKey: is called, all observers are notified, specifying the stored-off value as the old value and the property's current value as the new value. (This, of course, means that we need to keep track of a thread-local stack of properties that are in the process of being changed; calling willChangeValueForKey: pushes an entry onto the stack, and calling didChangeValueForKey: pops the most recent entry off the stack, checks it to make sure that the keys match (throwing an exception if they don't), and sends out observation notices.
+
+Cocoa also has willChange:valuesAtIndexes:forKey: and didChange:valuesAtIndexes:forKey:, which are called under the same circumstances but when a list modification is taking place; the first argument is the type of change (insertion, removal, or replacement), the second argument is a list of indexes that the changes relate to, and the third argument is the key of the to-many relationship in question. The equivalents for sets, willChangeValueForKey:withSetMutation:usingObjects: and didChangeValueForKey:withSetMutation:usingObjects:, is also present; the first argument is the key, the second argument is the modification that is being performed, and the third argument is a list or set of objects that will be given to the modification. 
+
 
 
 
