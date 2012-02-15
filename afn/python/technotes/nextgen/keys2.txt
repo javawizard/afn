@@ -224,6 +224,24 @@ Although... There is a possibility I could override __getattribute__ and have it
 
 Actually, I need to see if super(...).__getattribute__ works properly...
 
+It does. I just don't like this whole idea... It seems hackish... Although so does isa-swizzling, which Cocoa has no problem using to implement KVO...
+
+I guess I'll have to run with it for now.
+
+So this particular bit watches for requests to get the attribute set_value_for_key and provides a wrapper method around whatever super(..., self).__getattribute__("set_value_for_key") returns. The wrapper calls will_change_key, then calls the underlying set_value_for_key implementation, then calls did_change_key.
+
+And likewise, the list version of this whole thing overrides insert_list_value, remove_list_value, and replace_list_value, and has them all call will_change_list_value and did_change_list_value first. The set version of this whole thing also overrides add_set_value and remove_set_value and has them call will_change_set_value and did_change_set_value beforehand.
+
+Then there's another thing that one can include, which overrides attempts to set properties for which automatically_notifies_for_key returns true. I'm not sure what the default behavior will be if that method isn't present.
+
+So then there's the main thing that's a bit higher up that actually provides will_change_key and did_change_key and so on. I'm still trying to decide: should one class provide all six methods (two each for objects, lists, and sets), or should there be a separate class for each one?
+
+And I just ran across another problem: there needs to be a default implementation of set_value_for_key that will set the corresponding attribute, but if I'm not careful, that will cause the __setattr__ logic to trip, which will cause the object's observers to be notified twice.
+
+Hm, how does Cocoa deal with that?
+
+
+
 
 
 
