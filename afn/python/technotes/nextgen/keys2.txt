@@ -160,6 +160,56 @@ Cocoa also has willChange:valuesAtIndexes:forKey: and didChange:valuesAtIndexes:
 
 Then there's a method automaticallyNotifiesObserversForKey:. If this returns true for a particular key, Cocoa KVO will override the property setters and make them call willChangeValueForKey: and didChangeValueForKey before and after updating the property. It will also override setValue:forKey:, insertObject:inKeyAtIndex:, etc. and so on, and make them call willChangeValueForKey/didChangeValueForKey, willChange:valuesAtIndexes:forKey:/didChange:valuesAtIndexes:forKey:, etc.
 
+So I'm going to get back to all this in a second. I've been thinking about this and I realized that I have a major problem with implementing bindings using this system: it creates observation loops, which will result in an infinite loop whenever the value of any bound property is changed. That is not good.
+
+To demonstrate, imagine that we have three objects, X, Y, and Z, which have properties A, B, and C, respectively. A is bound to B and B is bound to C. Something changes C; this causes a KVO observation to be issued, and B's binding to C receives that and updates B's value accordingly. B then issues its own KVO observation, which C's binding to B picks up, and updates C, thereby causing C to issue another observation, and so on in an infinite loop.
+
+Cocoa avoids this by having bindings be one way only and requiring one of the sides, usually a controller class such as NSArrayController, do the heavy lifting by implementing its code to push changes out without using KVO. This, of course, means that simple properties can't be bound together in Cocoa.
+
+A potential solution to this problem for the case of binding keys would be to have the KVO system check to see if setting a property's value actually caused the value to change, and not issue observations if the value hasn't. C would then issue an observation, which would be picked up by B. B would then issue an observation which would cause B's new value to be set on C, but since C already has that value, it would do nothing. B would then go on to notify A, which would update its value and notify B, which would attempt to update its own value and notice that they're the same and so refrain from passing on the notification. No more notifications would be propagated until the next time one of their values was updated.
+
+This also works with sets; additions check to see that the specified items aren't already in the set and removals check to see that the specified items are actually present in the set and haven't already been removed.
+
+The problem is lists.
+
+An item can legally appear more than once in a list, so we can't refuse to pass on notifications simply because an item is already present in the list as the correct thing to do may very well be to add that item again.
+
+So that solution, elegant though it may be, won't work.
+
+So we need to think of another one.
+
+There's only one viable solution that I can think of right now, and it's not elegant at all. But it would work.
+
+That solution is to maintain a thread-local stack of modifications that are currently in progress, and then refuse to modify a particular property as a result of a particular observation if that property is already listed on the thread-local stack as having been modified.
+
+And now that I think about it, that might have issues with causing list duplicates in the property that was changed by an outside source, so even it might not even work.
+
+Let's see how this would work with just A and BÉ
+
+(Also, when I refer to observer AB, I mean the one observing A that will push changes with KVC to B. Likewise, observer BA observes B and pushes changes to A.)
+
+A is modified, and AB is notified. AB adds A to the stack of things that are being modified, then updates B. BA is triggered and adds B to the stack, then goes to update A, but notices that A is already on the stack. It therefore skips notifying A. Since it's finished updating things, it removes B from the stack, then returns. Back in AB, the update of B has finished, so it's done updating; it then removes A from the stack and returns.
+
+So that worked. Now let's try thinking about this as a list, and let's also have the above-mentioned A, B, and C scenario, so there are three things instead of two.
+
+So A, B, and C are lists, and they're currently empty but we want to add the number 42 to them. So we go add 42 to C.
+
+This causes an observation to be sent to CB. CB adds C to the stack, then adds 42 to B.
+
+B then issues an observation to BA. BA adds B to the stack, then proceeds to add 42 to A.
+
+This causes an observation to be issued to AB. AB adds A to the stack, then sees that B is already on the stack and returns, removing A from the stack.
+
+Back in BA, the insertion of 42 into A is done, so BA removes B from the stack and returns.
+
+The update of B isn't yet over, as it has two observers: BA and BC. BC is now notified.
+
+BC adds B to the stack, then notices that C is already on the stack, so it skips updating C and removes B from the stack, then returns.
+
+Back in CB, updating B is now done, so CB removes C from the stack and returns.
+
+That worked perfectly fine, and no duplications happened. I think this will work after all.
+
 
 
 
