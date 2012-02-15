@@ -240,6 +240,8 @@ And I just ran across another problem: there needs to be a default implementatio
 
 Hm, how does Cocoa deal with that?
 
+I think I need to go to bed for tonight and think some more about this tomorrow.
+
 
 
 
