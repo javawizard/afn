@@ -184,7 +184,7 @@ That solution is to maintain a thread-local stack of modifications that are curr
 
 And now that I think about it, that might have issues with causing list duplicates in the property that was changed by an outside source, so even it might not even work.
 
-Let's see how this would work with just A and BÉ
+Let's see how this would work with just A and Bï¿½
 
 (Also, when I refer to observer AB, I mean the one observing A that will push changes with KVC to B. Likewise, observer BA observes B and pushes changes to A.)
 
@@ -209,6 +209,20 @@ BC adds B to the stack, then notices that C is already on the stack, so it skips
 Back in CB, updating B is now done, so CB removes C from the stack and returns.
 
 That worked perfectly fine, and no duplications happened. I think this will work after all.
+
+Verifiers could work the same way. I think I mentioned before that I'm planning on having a system for registering verifiers for a particular property; binding A to B could register verifiers on both A and B which run the others' verifiers in turn. These verifiers would make use of a context stack in the same way as the observers would.
+
+For simplicity, however, I'm not going to worry about verifiers for now. I'm going to write the system as though verification didn't exist, and then I'll think about how to properly implement it later.
+
+So now back to the KVO and KVC stuff.
+
+So, a class that wants to implement a custom storage mechanism for, say, a dictionary, and that wants it to be observable, would only need to override set_value_for_key and get_value_for_key... Hm, just realized that the subclass implementation is going to override the superclass implementation, which won't work...
+
+That might mean I would need to monkey patch objects when observers are added to them, which I would really rather not do.
+
+Although... There is a possibility I could override __getattribute__ and have it wrap set_value_for_key and return the wrapped version. That might work.
+
+Actually, I need to see if super(...).__getattribute__ works properly...
 
 
 
