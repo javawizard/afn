@@ -242,6 +242,20 @@ Hm, how does Cocoa deal with that?
 
 I think I need to go to bed for tonight and think some more about this tomorrow.
 
+So I think I already wrote some stuff about this on another machine that I haven't pushed from yet, and I'm trying to remember what I wrote...
+
+And I'm not even sure if I wrote anything, but still...
+
+So I'm thinking that ordinarily, you need to call will_change_key and did_change_key from every setter as well as from set_value_for_key. There will, however, be two classes that can be mixed in: the first will provide a __getattribute__ that checks to see if the requested attribute is "set_value_for_key", and if it is, it will return a wrapper around super(...).__getattribute__("set_value_for_key") that calls will_change_key and did_change_key before calling it, and the second will provide a __setattr__ that calls will_change_key and did_change_key before and after setting any attributes. Then, of course, there's a default implementation of set_value_for_key that can be provided in some other class, which basically just delegates to __setattr__ (and this also provides get_value_for_key); if this class sees that the object in question subclasses from the second class as well, it will set (and then clear) a thread-local flag somewhere indicating that the __setattr__ provided by the second class is not to invoke notifications. This needs some more thought to make sure I'm not overlooking anything, but on the whole, I think it could work.
+
+There aren't any default implementations of the list and set methods except for NextgenList and NextgenSet themselves. (There's also an object-like class called NextgenDict that provides the object protocol.) There are, however, classes corresponding to the first class mentioned above, the one that uses __getattribute__ to override set_value_for_key, that override all of the list and set modifiers and cause them to invoke will_insert_list_value, did_insert_list_value, will_remove_list_value, did_remove_list_value, will_replace_list_value, did_replace_list_value, will_add_set_value, did_add_set_value, will_remove_set_value, and did_remove_set_value, respectively. NextgenList and NextgenObject may or may not subclass from these classes, I haven't decided yet.
+
+I am somewhat tempted not to write any of these utility classes to start with, and get the underlying system working before writing them. That way I have something that works to start off with.
+
+So in that case, we'd just have the class or classes that provide the base coding and observing layer. I'm thinking I'm going to do those as two separate classes like Cocoa does if I can manage it. The Coding class would provide all of the methods such as set_value_for_key_path, get_value_for_key_path, insert_list_value_at_path, and so on. The Observing class would provide both the public-facing methods (add_observer_for_path most notably) and the private-facing methods (such as will_change_key, which I'm thinking I might rename to will_set_value_for_key for naming consistency); it would track the observers added by add_observer_for_path, register any observers on child objects that it needs to (in case the path has more than one element in it), and notify observers whenever the will_... and do_... methods are called.
+
+Ok, I have that all resolved now. So there's one big thing to think about now: I mentioned that unlimited nested keys should be observable, but only one layer of list and set should be. What happens if we violate that by observing, say, */*/*, or what happens if we observe a list when that list is actually an object?
+
 
 
 
