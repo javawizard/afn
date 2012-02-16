@@ -258,6 +258,10 @@ Ok, I have that all resolved now. So there's one big thing to think about now: I
 
 So I'm thinking that the last thing in the path should govern what types of events we observe, and perhaps if something is not observable along the way (or it gets set to null, since None definitely isn't observable) or we're observing the wrong type, we either see a key be removed if it's a key, list items disappear if it's a list, or set items disappear if it's a set. Another way to do it would be to have an observation change called NotApplicable or something that's fired to indicate that a key is missing or we're observing the wrong type or something like that, which could be used to similar effect as Cocoa's bindings' support for the not applicable marker.
 
+(Also, noting: apparently the default implementation of setValue:forKey: doesn't call willChangeValueForKey: and didChangeValueForKey: automatically; only the setX:, setY: etc methods do that. That explains how they avoid double notifying things.)
+
+So I need to go see what happens when a Cocoa thing gets set to null and then we observe it… I believe that when we try to observe it and it's currently null, we get an exception, but I don't know if this is the case if we're already observing it and then it gets set to null...
+
 
 
 
