@@ -2,9 +2,9 @@
 from afn.dnsd.server import Server
 from afn.dnsd.data import Answer, A, CNAME
 
-def resolver(question_type, name):
-    print (question_type, name)
-    if question_type == "A":
+def resolver(source, question, name):
+    print (source, question, name)
+    if question == "A":
         return [
             Answer(name, "CNAME", 1, [
                 CNAME("www.redirected.example.com")

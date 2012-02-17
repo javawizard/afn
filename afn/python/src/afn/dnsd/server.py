@@ -1,5 +1,5 @@
 """
-Resolvers have the signature resolver(type, name) -> answer
+Resolvers have the signature resolver(source, type, name) -> answer
 
 type is the string type of the request ("A", "MX", etc)
 
@@ -33,21 +33,21 @@ class Server(object):
             print "Message is " + repr(message_content)
             message = dns.message.from_wire(message_content)
             print "Request: " + repr(message)
-            response = self.process_message(message)
+            response = self.process_message((source_host, source_port), message)
             response_content = response.to_wire()
             print "Response: " + repr(response)
             print "Response is " + repr(response_content)
             self.socket.sendto(response_content, (source_host, source_port))
     
-    def process_message(self, message):
+    def process_message(self, source, message):
         questions = message.question
-        answers = [self.process_question(q) for q in questions]
+        answers = [self.process_question(source, q) for q in questions]
         answers = [answer for answer_list in answers for answer in answer_list]
         response = dns.message.make_response(message)
         response.answer += answers
         return response
     
-    def process_question(self, question):
+    def process_question(self, source, question):
         if dns.rdataclass.to_text(question.rdclass) != "IN":
             raise Exception("Only IN class queries are supported.")
         datatype = dns.rdatatype.to_text(question.rdtype)
@@ -55,7 +55,7 @@ class Server(object):
         textual_name = ".".join(question.name.labels[:-1])
         answers = None
         for resolver in self.resolvers:
-            answers = resolver(datatype, textual_name)
+            answers = resolver(source, datatype, textual_name)
             if answers:
                 break
         if not answers:
