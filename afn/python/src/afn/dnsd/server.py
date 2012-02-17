@@ -12,6 +12,7 @@ import socket as s
 import dns.message
 import dns.rrset
 from dns.rdtypes.IN import *
+from dns.rdtypes.ANY import *
 from dns.rdataclass import from_text as text_to_class
 from dns.rdatatype import from_text as text_to_type
 from afn.dnsd import data as d
@@ -73,6 +74,9 @@ def data_to_dnspy(data):
         return result
     if isinstance(data, d.A):
         return A.A(text_to_class("IN"), text_to_type("A"), data.ip)
+    if isinstance(data, d.CNAME):
+        return CNAME.CNAME(text_to_class("IN"), text_to_type("CNAME"),
+                dns.name.from_text(data.target))
     raise Exception("Can't convert instance of " + repr(type(data)) + ": " + repr(data))
                 
 
