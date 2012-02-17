@@ -41,6 +41,7 @@ class Server(object):
     def process_message(self, message):
         questions = message.question
         answers = [self.process_question(q) for q in questions]
+        answers = [answer for answer_list in answers for answer in answer_list]
         response = dns.message.make_response(message)
         response.answer += answers
         return response
@@ -62,15 +63,16 @@ class Server(object):
 
 
 def data_to_dnspy(data):
-    if isinstance(data, (list, tuple)):
+    if isinstance(data, list):
         return [data_to_dnspy(x) for x in data]
     if isinstance(data, d.Answer):
-        result = dns.rrset.RRset(data.name, text_to_class("IN"), text_to_type(data.type))
+        result = dns.rrset.RRset(dns.name.from_text(data.name),
+                text_to_class("IN"), text_to_type(data.type))
         result.ttl = data.ttl
-        result.items += data.items
+        result.items += data_to_dnspy(data.items)
         return result
     if isinstance(data, d.A):
-        return A.A(text_to_class("IN"), text_to_class("A"), data.ip)
+        return A.A(text_to_class("IN"), text_to_type("A"), data.ip)
     raise Exception("Can't convert instance of " + repr(type(data)) + ": " + repr(data))
                 
 
