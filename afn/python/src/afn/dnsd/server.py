@@ -74,6 +74,8 @@ def data_to_dnspy(data):
         return result
     if isinstance(data, d.A):
         return A.A(text_to_class("IN"), text_to_type("A"), data.ip)
+    if isinstance(data, d.AAAA):
+        return AAAA.AAAA(text_to_class("IN"), text_to_type("AAAA"), data.ip)
     if isinstance(data, d.CNAME):
         return CNAME.CNAME(text_to_class("IN"), text_to_type("CNAME"),
                 dns.name.from_text(data.target))
