@@ -10,7 +10,9 @@ def resolver(source, question, name):
                 CNAME("www.redirected.example.com")
             ]),
             Answer("www.redirected.example.com", "A", 1, [
-                A("1.2.3.4")
+                A("1.2.3.4"),
+                A("5.6.7.8"),
+                A("9.10.11.12")
             ])
         ]
 
