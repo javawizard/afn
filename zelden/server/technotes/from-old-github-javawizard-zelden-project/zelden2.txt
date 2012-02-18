@@ -1,0 +1,463 @@
+This is my second time writing out stuff on Zelden. I'll import the older documents I wrote out at some point.
+
+So I've decided that, in the interest of getting the server/client working as soon as possible, I'm not going to have the server store its data in JPath. I think I'm going to use a traditional relational database instead, and switch over once JPath is in a workable state.
+
+So I've been using Quassel recently and it's given me some ideas. One huge idea is the chat monitor; it's a view that shows all messages received, no matter what user, channel, or account they're from. It's an interesting concept that I think I'm going to write into Zelden too.
+
+And speaking of that: views. This is a generalized notion of a conversation that I'm slowly coming up with. The idea would be that a view shows a series of messages, and optionally provides a space for writing new messages. It would also optionally provide a space indicating users contributing to that view; this would be used, for example, in channels to show the channel members; it would be hidden in normal
+
+Conversations would be a particular type of view; the chat monitor would also be a view, but one without support for sending messages. Plugins could also provide views where they could log information and perhaps allow the user to instruct them to do things by sending messages of a particular format.
+
+Then I'm also thinking there should be a notion of screens, which are like views but without the whole messaging idea on top of them. Screens would simply display a block of HTML, with the ability for said HTML to communicate with the server-side plugin that created it via certain JavaScript functions. Screens need to be thought out more.
+
+Then there are settings. These are going to be nearly identical to the notion of configuration variables present in JZBot. There's a root settings folder, which contains other settings and folders. Folders can contain arbitrarily-nested folders. Settings have a name and a description; I may add support for a longer description at some point, but for now, there's just going to be the name and a short-ish description.
+
+Settings have an identifier as well, which is used when referring to the setting in code. Settings also have a type; I'm thinking that for now this should be one of bool (a boolean; would most likely show up as a checkbox), integer (a whole number; text field in desktop clients and spinner in the Android client), decimal (text field that's checked when the OK button is clicked), text (a single-line piece of text), essay (a multi-line piece of text), password (a single-line piece of text that's masked when displayed to the user, although I'm thinking there should be a checkbox that the user can temporarily check to see the contents of the password field), and option (a choice from among a list of predefined options; in the future, I may add support for custom values to be set by the user for some certain fields).
+
+Settings also have a flag indicating whether they can contain multiple values; settings that can contain multiple values allow ordered lists of values of the setting's type.
+
+Non-list settings have a default value, which will be used as the value for the setting if it's unset (and clients should provide a UI for unsetting settings). Such settings that are currently set are stored as if they were lists of one value, and such settings that are currently unset are stored as if they were lists containing no values. Settings that become lists from non-lists have one value if they were set and zero values if they were unset. Settings that become non-lists from lists take the value of their first item but preserve the rest of the items in the database until the user manually unsets the setting, which clears the items from the list. So list settings that have no values are inherently unset, and as such no UI is provided to unset a list setting, unless the client wants to provide one in which case it's essentially a shortcut for clearing the list as this is the action that the server takes when asked to unset a setting.
+
+For settings that are of type option, there's also an additional property: the list of options for the setting. Each option in this list consists of two values: the name of the option (the value that's stored in the database as the setting's value when this option is chosen; also the value passed through code when this option is chosen), and the option's label (the text that's shown to the user when they're choosing the option value). The list of valid options can be added to and removed from in real time by a plugin. Option settings cannot be set to a value not present in the setting's list of choices, and if a particular option is removed and the option setting currently held that value, its value appears to be changed to be the default.
+
+Note that if an option setting does not have a default value, or if the default value is not a valid option, the option will be unset. This is perfectly valid for an option to be unset, and the only way to create an option setting that cannot be unset is to provide it with a default that is in the list of the setting's valid options.
+
+Settings also have a flag indicating whether or not they're enabled. This, like most other things about settings, is not stored in the database, but it is sent to the client, and clients should gray out disabled options. Such options should be used in preference to simply deleting an option and re-creating it when it's a relevant option, for two reasons: 1, this will typically look cleaner, since things don't have to constantly shift around, and 2, the user can then see that the option actually exists, and they can see the option's name and description (although they will be unable to edit it).
+
+The idea with enabled/disabled options is that an option setting can be created with one of its options being "other", and setting it to that option would cause another setting just below it to enable and allow the user to enter a custom value.
+
+Folders, like any other setting, can be disabled; disabling a folder implicitly disables every setting contained within it (including other folders and their contained settings). It's up to a particular client whether or not to allow the contents of such folders to be viewed; like other settings, however, said contents cannot be edited.
+
+The server will actually enforce that disabled settings cannot be modified. I haven't decided yet whether or not the server will simply ignore such a request or whether it will send a response to the client saying that the setting has been disabled. I'm leaning toward the latter so that the client can pop up a message telling the user that the setting was disabled.
+
+The server will also enforce that a setting cannot be set to a value that's not valid for the setting's type; this includes option settings, meaning that the server will not allow a client to set a setting to a value not in the list of options for that setting if the setting is of type option.
+
+If a setting changes types and the new type enforces a constraint that the current value does not satisfy (for example, the setting was formerly text and the current value is some string of characters, but the setting has now become an integer setting), the setting will be reported as currently being set to its default value.
+
+Also, quick note: while settings can change their type, they cannot change whether or not they are a folder, i.e. non-folder settings cannot become folders and folder settings cannot become non-folder settings. The database storage for settings will ensure that such a thing does not cause conflicts (folders aren't actually stored in the database; settings are instead stored with their full path spelled out, although I may change this if it ends up taking up too much space).
+
+Another quick note: the function used for sticking a new value into a setting can throw an exception of a certain to-be-determined class that indicates that the value to be set is not valid. StoredSetting would allow listeners to be provided when an instance of it is created that are notified of the new value before it's set; these can throw a not valid exception if they want to, and it will propagate it out. If a message arrives from a client indicating that a particular setting is to be altered, and an exception is thrown, a message will be sent back to the client with the exception's detail message; clients can then use that to display a "This setting could not be modified: insert exception message here" sort of message.
+
+A third quick note: I'm also thinking that settings should not be able to change type while actually existing. By that, I mean that I don't think it should be possible to change the type of a setting that Zelden itself is already aware of; the setting would have to be unregistered and then re-registered under its new type. This is just a thought.
+
+
+
+Ok, I think that about works out the settings system. I'm not going to get too much into implementation yet, but I think that it would be nice if settings were represented in the server as instances of classes that could be defined on a per-plugin basis; StoredSetting would be a setting class provided by Zelden that stores its data to the database. The ability of plugins to provide their own settings classes would mean that settings don't necessarily need to be tied directly to the database; some plugins might end up finding this useful. The idea would be that settings have functions for registering listeners to be notified when the setting's value, options, type, name, description, etc change, and a default ABC called Setting would provide these methods and methods such as fire_value_changed() for subclasses to call. Settings that are folders would have listeners to listen for settings within said folders being added or removed, and probably listeners for listening for child settings being reordered.
+
+
+
+So now, of course, we hit upon a huge topic: there's beginning to be a significant overlap between a lot of Zelden storage things and the settings storage mechanism. So the question is: what should be stored where?
+
+You know what... Before I answer all of that, I'm going to write out stuff about all of the other aspects of how Zelden works, and see if I don't have a clearer answer by then.
+
+(Also, I need to think of how clients should store client-specific settings, and whether or not the server should be able to manage any client-specific settings at all; such a thing would be useful if a user wanted to open a client of the same type on a different computer and preserve their former settings; perhaps a number of client profiles should be creatable, which each govern the configuration of a client, and clients can switch between client profiles if they choose to make use of that mechanism. It's something to think about.)
+
+So... We have accounts. Accounts are the same as in Pidgin: they're the details needed to connect as a particular user to a particular chat system. For most protocols, this would include a server, a username, and a password. Each account should have a group of settings tied to it; individual protocol plugins would register settings like server, usernamd, and password, and other protocols could register their own per-account settings as needed.
+
+Hm... Now I need to think about the fundamental differences between users and contacts. There was a suggestion a while back (I think by Matias) to create a contact for every user interaction that occurs, the rationale being that said interaction would be logged anyway and so creating a hidden contact on top of it couldn't be that expensive. I rather like this idea since it has amortized constant space overhead; events triggered by a contact would outweigh the space taken up by the contact record itself. The only potential problem would be that users included simply because of their being present at a channel upon join would a significant amount of overhead; a user spamming a channel with repeated joins using different nicks would likewise trigger this problem.
+
+Of course, the other problem is that an IRC nickname does not always distinguish a user from another, since nicknames are, in general, volatile. This making me think more and more that contacts should not be implicitly created.
+
+So, in that case, what exactly are contacts?
+
+Or rather, what sort of things do contacts need to be able to do?
+
+Well...
+
+It should be possible to start a conversation with a contact, which means that the contact should have enough protocol-specific information to identify a single user on a single account. (For example, IRC requires only the user's nick, while XMPP requires only the user's JID.)
+
+It should also be possible to attribute any messages or events that pertain to a particular contact to that contact.
+
+So it seems like the information that defines a contact should be the same as the information that defines a user for the sake of private messaging.
+
+Does that work with existing protocols? Let's see...
+
+IRC: A user/contact is identified based on their nick. Conversations can be initiated with them based on this, messages sourced from that nick can be identified, and so on. This sounds like a workable idea.
+
+XMPP: A user/contact is identified based on their JID. This also satisfies all of the requirements: messages coming from a resource under that JID are attributed to that contact, and messages sent to that contact would be sent to the JID. That works.
+
+AIM: A user/contact is identified based on their screen name. That works just like the others do.
+
+BZFlag: A user/contact is identified based on their BZFlag name, with an extra piece of information stored in each message and event that indicates whether or not the user was identified when that event happened. That also seems to work out just fine.
+
+Those are the most important protocols to support in Zelden. So I think this will work out just perfect.
+
+Private message windows should function with the same information, as should colorizing of users' names in messages sent by them.
+
+So... Then we run into another question: aside from the account with which a particular user is associated, can the data needed to uniquely identify a user within an account be specified as a single string, or does it need to be a more complex structure?
+
+IRC would use the nick, XMPP would use the JID, AIM would use the screen name, and BZFlag would use the username. Skype would use the username as well. Mumble, if support for Mumble is ever added, would also use the username. So I think we're good for now with just using a single string to identify a user.
+
+Ok, that just about works out the identifying information of a user. Now what about chat rooms?
+
+Actually, I'm thinking that they should work pretty much the same way. Any given room can be identified by two things: the account to which it belongs, and the name of the chat room. For IRC, this name would be the channel name. For XMPP, this would be the address of the chat room (name@conference.example.org). For BZFlag, this would be one of a few hard-coded strings such as observer, all, admin, etc.
+
+There would be some way for every protocol to verify that a particular chat room which is to be joined or added to the chat room list is of a valid format. XMPP chat rooms must follow the format x@y, IRC chat rooms must start with one of the channel prefixes (#!& and a few others; I don't remember the full list right now), and BZFlag chat rooms must be named one of a few constant strings as mentioned in the previous paragraph.
+
+So now I'm remembering that there are a ton of protocol-specific things that may need to be done (like subscribing in XMPP, or custom XMPP commands, or kicking users with a specified duration and message in BZFlag). And that's making me start to think about two separate ways to go about addressing this, both of which would work together: forms and screens.
+
+I mentioned screens near the top of this file; I'll get to them in a second.
+
+I'll also get to forms in a second, after I discuss my idea of actions.
+
+So my thing I'm thinking about with actions is that things like contacts and accounts and chat rooms and users and things like that could have actions associated with them. Actions have a name, optionally a description, and some information describing the action to the server so that it can dispatch it to the correct plugin and so that the plugin knows what to do. When an action is triggered, a message will be sent to the server, providing information about the action and the object on which it was fired. The server then uses this to route the action to the appropriate plugin, which will come up with a response.
+
+The response can be one of five different types:
+
+1: A null response; nothing will happen. The client should essentially discard this response and not show the user anything.
+
+2: A notification response. This will contain a short message, which the client should notify the user of. I expect the Android client to show a message of this type as a toast.
+
+3: A message response. This will contain a piece of text, similar to notification responses; the difference is that the text is expected to be longer, and so it will be shown as an alert box that the user can dismiss. I expect both notifications and message responses to be shown the same in the desktop client for now.
+
+4: A form response. This will contain some instructions, a list of fields, each field having a name, a label, a default value, and an optional description, and a list of actions, each of which consists of a name and a label. The fields are shown as text boxes; once the user fills them out, and presses one of the action buttons, the action will again be fired, this time including the submitted form information. (I'm thinking hidden fields should also somehow be possible.) If the user hits cancel, this is sent to the server and the form is discarded. The response from the server in that case can only be of type 1, 2, or 3.
+
+5: A screen response. This provides the HTML to show in a screen and the information needed to wire up that screen's javascript objects to the plugin to which the action was dispatched. A screen showing said HTML will then be displayed.
+
+I'm also thinking about adding a sixth type of response, which would need some more thought:
+
+6: A settings response. This instructs the client to display a particular settings page for a particular object. This could be used by an action that creates a new settings folder to actually open said folder to allow the user to further configure it. An example I was thinking of would be an alarm plugin for Zelden that sets off an insistent notification (a notification that repeats a certain sound over and over again until it's dismissed, and one that probably hovers over the user's screen on a desktop client) whenever the time specified by any alarm happens; there would be a global action called "create alarm" or some such thing, and this would create a settings folder for that alarm and then switch to it in the client.
+
+(I've been thinking about the Android client during design of this system, so I need to make sure that all these ideas work for the desktop client too.)
+
+That also gives me an idea: allow settings folders to contain actions, which, when tapped, trigger certain actions on that settings folder. Alarms could be implemented entirely in terms of settings, with an action in the "Alarms" folder called "Create alarm" that creates a new alarm folder and switches to it, and an action in each alarm folder called "Delete alarm" that would respond with a form containing the instructions "Are you sure you want to delete this alarm?" and a response titled "Delete" or some such thing. (and note on settings: if a setting folder that a client is currently visiting is deleted, it should switch to the parent folder, unless it's been deleted in which case it should switch to its parent folder, and so on.)
+
+That might actually allow accounts to be implemented in terms of settings, but I'm not yet sure if I actually want to do that. More thought on this is needed.
+
+Also, actions within settings folders should be disableable as well, but their disabled state should be tri-value: enabled, disabled, or follow-folder, the latter of which means that the action's enabled state follows that of its parent folder.
+
+(Also, on alarms: the description for each alarm's folder could read "This alarm will go off in 17 hours and 42 minutes" if it's enabled, or "This alarm is disabled" if it's disabled. This also highlights the need for the ability to alter the description of a setting or folder live. There should, however, be a setting provided by the alarm plugin that can be used to specify how often these descriptions should be updated in order to prevent tons of updates from draining the battery of Android clients.)
+
+So now I'm wondering if I can make this notion of actions into a concept that can be used throughout other parts of Zelden as well. Specifically, I'm wondering what would happen if notifications had actions attached that were triggered whenever the notification was clicked.
+
+That would require a seventh response to an action: the ability to open up a particular view. And views need to be specified further as well.
+
+But before I get on to views, and how the action system might be generalized, I'm going to think a bit about notifications.
+
+So... what are notifications and how do they work?
+
+Notifications are things that can be created by Zelden itself or by a particular plugin. They are shown on all clients; there's intentionally not a way to create a notification that shows up on only one client. It will, however, be possible to suppress a notification temporarily on a particular client, although that client can still see it; the notification just would make itself insignificant in a client-specific way.
+
+So... Notifications are things that can be created and shown, and every client shows them. They can be dismissed, which removes the notification from all clients. They can be suppressed for a specific duration, which makes the notification insignificant in a client-specific way; I'm thinking that, for the desktop client, the system tray icon would stop flashing and just display a tiny symbol in one corner if there are only suppressed notifications (as opposed to flashing and displaying a largeish symbol). The android client would do something similar; perhaps have the normal Z icon with a small circle in a corner, instead of the entire Z changing into some message thing or whatever like would happen when a non-suppressed notification is present.
+
+It should be possible for notifications to be suppressed for only a specific client, and to that end I'm thinking that clients should have names. When you set up a connection to a particular Zelden Server, you specify the name that the client should connect as. That way the server can identify clients when they reconnect. If a client connects and identifies successfully and a client with the same name is already connected, the server will disconnect that client, and warn the entire system that a duplicate client was just removed from the network via a notice to some system view or something.
+
+So, notifications are created with a unique integer id and some more info that will probably be stored as a JSON object so that I can change it in the future. The information, right now, is the text of the notification, the plugin that created it (or some special value if Zelden itself created it; I'll get to situations where this can happen in a bit), and a plugin-specific object providing more information about the notification.
+
+Actually... I'm getting too much into details. Let me back up and think of what I want notifications to be able to do.
+
+I want it so that when a highlight or a private message arrives, a notification can be sent out to all connected machines. These notifications would also be persistent, meaning that they would be stored in the database so that in the event of a server crash, they would still be available to clients. And, of course, I want it so that a client connecting to a server will see all currently-existing notifications, even if it wasn't connected when they happened.
+
+I want the ability for a user to put a notification into a suppressed state, where it still exists and it's still possible to view it from a client but where it's not very obvious that it's there and where the client doesn't take exorbitant measures that it normally would with normal notifications (like toasts and flashing icons) to let the user know that it's there. I want it to be possible for a user to suppress a notification either globally or just for the client that they're on, and I want it to be possible for a user to suppress the notification for other computers as well. I want notifications to be suppressable like this only for a specific duration (or more accurately, until a specific date) after which they return to normal. I want some way to be able to suppress notifications at creation time via plugins so that, for example, a plugin can suppress notifications for some clients while others are not idle. (and clients should report how long they've been idle.)
+
+So I just thought of some more ideas while taking my shower today (2011.08.11). It should be possible to create ongoing notifications. These are similar in intent to Android's ongoing notifications; unlike Android's ongoing notifications, however, Zelden ongoing notifications have some functional differences from Zelden normal notifications. In Zelden, only normal notifications are stored in the database; ongoing notifications are volatile, like the settings schema, and therefore must be recreated after a server restart.
+
+Notifications can be switched from normal to suppressed by the user werfself, and set to suppressed on some machines while normal on others. Ongoing notifications, however, are ongoing no matter what, and this can't be changed by the end user. The idea would be that ongoing notifications could be used for things like a plugin that automatically suppresses things based on channel; it could show what channels it's currently auto-suppressing as ongoing notifications. It would store that list on disk every time it's updated, and when the plugin loads, it would re-create the ongoing notifications for it. (except that I think it will just use a single ongoing notification to mention all of the channels/users/accounts that are currently on auto-suppress.
+
+It should also be possible to group notifications by the plugin that created them. I might also make it possible to group notifications by some other criteria that could be specified by each plugin in the future.
+
+Anyways... So I want there to be ongoing notifications that don't bug the user but let them know about all of the ongoing things that they should be aware about.
+
+So I've decided that I want it to be possible to suppress a notification for an infinite amount of time, the idea being that it remains suppressed until it's dismissed or until the user unsuppresses it by hand.
+
+I also want it to be possible for plugins to attach arbitrary information to a particular notification, including ones that they didn't create. I'm not going to concentrate really hard on this since I had a reason for doing it but I completely forgot said reason, but I just want to make it at least possible.
+
+So now I can't decide whether notification suppression should be stored on disk or simply in memory. Some applications of suppression, such as automatically suppressing notifications to a particular machine instead of...
+
+So I mentioned this to James Stoker, and he suggested doing a combination of both: have notifications be suppressed only in memory, but allow plugins to attach data to the notification that's persistent. I'm thinking notifications will have get_user, set_user, and list_user for getting, setting, and listing user-defined JSON values. Each one of those calls will update the notification in the database.
+
+Notifications, then, can have potentially several different suppressions attached to them. So long as at least one suppression is present on a notification, it remains suppressed. Each suppression tracks the plugin that added it and the duration that the suppression should last for, which can potentially be 0 to represent an indefinite suppression. Zelden will automatically remove each suppression as its duration elapses, and suppressions can be manually removed by plugins.
+
+In addition to specifying a plugin and a duration, and any other attributes that the plugin might assign to the suppression object (and all of the suppress methods will take a dict of such attributes to assign on creation of a suppression), a suppression also tracks a specific client for which it applies, by name. If this is None, the suppression applies for all computers. Suppressions can be created for computers that aren't currently connected or even for those that don't exist; such suppressions won't have any effect until such a computer connects or is created.
+
+Each suppression currently active is sent out with every notification. This allows the client to show information about suppressions to the user, if they have some advanced mode enabled that would cause it to be shown. The server also computes whether or not those suppressions mean that the notification should be suppressed on that client so that the client doesn't have to.
+
+Notifications would therefore need to be able to allow actions to be attached to them. A plugin for manual notification suppression would then be present that adds a "Suppress" action to notifications, and an "Unsuppress" action to notifications that it has suppressed. It would probably show a smallish instruction or some such thing below that if the notification were being suppressed by another plugin indicating such so that the user knows that they need to do something else to unsuppress it.
+
+Hm... Now I'm thinking it might be good if there was a standardized manual suppression-for-a-particular-duration mechanism so that automatic channel-based suppression could be unsuppressed by the manual plugin. This needs more thought...
+
+Actually, let me get back to the "what do I want this to be able to do" thing and see if I can't work something out. So, some things that might or might not be written as plugins that I want to be happenable:
+
+-----------------------------
+
+1: I want notifications to occur when a highlight or a message arrives for my username, and possibly some other strings on a per-account or global basis.
+
+2: I want notifications to be persistent, so that if I have an active notification, and I reconnect or restart Zelden Server, I will still see that notification.
+
+3: I want my manually-suppressing a notification to be persistent, so that if I suppress a notification globally or on a specific computer for a day, then disconnect or restart Zelden Server, that notification will still be suppressed until a day from when I originally suppressed it. (Thus suppression durations should be stored as dates to unsuppress at, not remaining durations.)
+
+4: I want to be able to suppress a notification for all clients for, say, a day.
+
+5: I want to be able to suppress a notification on my android for, say, a day, or indefinitely, but not have it suppressed on my computer.
+
+6: I want to be able to suppress a notification on my computer from my android, exactly the same as I would be able to if I were actually at my computer.
+
+7: I want to be able to unsuppress a notification for any particular computer, or for all computers, from any computer. If I unsuppress a notification for a single computer, I'm ok with it being converted to a computer-specific-suppressed notification that happens to be suppressed for all other computers that the server has ever seen.
+
+8: I want to be able to suppress a notification on my android for, say, a day, and then suppress it on my computer (or suppress it on my computer from my android) for, say, two days.
+
+9: I want to be able to configure Zelden so that it will suppress notifications on my android as long as my laptop is not idle, and by "not idle" I mean that there's been mouse movement at my laptop in the last five minutes.
+
+10: I want to be able to set particular channels and PMs to automatically suppress notifications coming from highlights or messages in said channels or PMs. I also want to have the option of setting this to a whitelist configuration, where notifications are suppressed from said channels/pms except for ones on the whitelist. I want the ability to extend this in the future to be able to specify specific computers for each channel for which notifications should be suppressed. *
+
+11: I want to be able to specify that notifications are to be suppressed for a certain device during certain times or situations, but I want this to be implementable via a plugin so that said times/situations can be customized. Notifications suppressed because of this should be unsuppressed at the end of this delay. I'm ok with making it so that notifications can't be unsuppressed during this time. (James Stoker specifically wants the ability to suppress all notifications for his laptop when he's in certain locations.)
+
+12: I want the channel or pm corresponding to a notification to become switched to when I dismiss that notification.
+
+13: I want a way to visit the channel or pm corresponding to a notification without dismissing it.
+
+14: I want the channel or pm corresponding to a notification to scroll to the message that triggered the notification when I dismiss the notification or instruct the notification to open the channel/pm associated with it.
+
+15: I want to be able to write a calendar plugin that provides some sort of global menu item which opens a screen where the user can add and edit calendar items. I want each calendar item, when clicked, to open a corresponding settings page for the newly-created calendar item that only shows that item's folder and the settings contained within it. I want calendar items to cause notifications at the time when they're supposed to trigger their alarm. I want each calendar notification to dismiss itself and open up a screen showing the corresponding calendar item when the notification is clicked, and I want an additional menu item to be addable to the calendar notification that opens up the corresponding calendar item without dismissing the notification.
+
+16: I want the ability to create a plugin that allows me to set alarms in some fashion. I want said alarms to be able to provide notifications that keep beeping or making noise until I shut them off, I.E. they don't go away
+
+-----------------------------
+
+* This made me think of an excellent use for alternate implementations of Setting besides StoredSetting: each channel could have two settings, "suppress notifications" and "don't suppress notifications" that blacklist and whitelist that channel, respectively, and then there would be a global setting for choosing whether the blacklist or whitelist is used. To allow for an easy way to see if any channels are blacklisted or whitelisted and modify them all together, two global settings, "suppressed channels/pms" and "non-suppressed channels/pms" could be present, each one being a multi-value multiple choice setting, which is actually provided by a custom subclass of Setting that backs the available choices from the list of channels and pms and that backs the current values from those channels and pms which have their "suppress notifications" and "don't suppress notifications" settings set, respectively. It would most likely not allow reordering of values and complain if values were reordered via a toast, and it would also most likely not allow duplicate values. Anyways, back to the topic at hand.
+
+I just trimmed down a bunch of stuff here; look back in Git history to find it.
+
+So, we have a concept of actions and reactions and notices. Actions are things consisting of a name, a label, a description, and a list of reactions that can be attached to various objects within Zelden such as notifications, channels, users, Zelden itself (i.e. global actions), and so on. Reactions are things to do on the client side; they can't change any server side state themselves. Types of reactions include forms, toasts, links to settings pages (specifying the root of the hierarchy to display and the folder to select), notices, and so on. Notices are a packet and a corresponding type of reaction that causes said packet to be sent to a certain plugin with a certain data object and a source object specific to what caused the notice reaction to be triggered. Thus the only way for an action to effect any server-related state change is for it to contain a notice reaction and have the server-side plugin receiving the notice effect such server-side changes. Each reaction type contains an associated JSON object providing more information specific to that particular reaction.
+
+Ok, with that out of the way, let's see if we can design a notification system that fulfills all of the above requirements.
+
+Notifications are things that are created and stored in the server-side database. Each notification has a unique integer id. It also has the name of the plugin that created it, a label, a description, an insistent flag, and a JSON userland object. These are all stored on disk. Additionally, a separate table containing all the manual suppressions that apply to the notification is stored; each entry in that table specifies the computer for which the suppression applies (there must be only one suppression per computer, and only one suppression that does not specify a computer). Notifications also have a list of actions and a list of default reactions which are run when the notification itself is simply clicked; these could be thought of as making up the "default" action for the notification. These actions and reactions, however, are not stored on disk. Zelden won't ever send out a notification without any reactions attached to it; if the reaction list ever becomes empty (and when it starts out empty, as it will when Zelden loads), Zelden will attach a reaction that opens a form telling the user that no reactions are attached and would they like to dismiss the notification, and if they hit yes a notice will be sent to Zelden which will cause it to dismiss the notification.
+
+Notifications can be created and dismissed only on the server-side. They can be created and dismissed by any plugin. This satisfies #1 on the list of objectives for notifications.
+
+The current list of notifications is sent to each client when it connects, and notifications, as mentioned above, are persisted in the database, with plugins restoring actions and the default set of reactions as needed. This satisfies #2 on the list.
+
+A UI will be presented to clients whereby a suppression can be added for a particular client, or for all clients, or a particular suppression (or all suppressions) removed. Plugins will have access to the mechanism for doing this as well. Adding a suppression for a computer that already has one will cause the existing one to be replaced. This satisfies #3.
+
+A suppression can be added that applies to all computers. This satisfies #4.
+
+A suppression can be added that applies only to a specific computer. This satisfies #5.
+
+The user would be able to choose that the suppression they are creating should apply to a different computer than the one from which they are connecting. This satisfies #6.
+
+Arbitrary suppressions can be removed from any client. This satisfies #7.
+
+Different suppressions can have different durations. This satisfies #8.
+
+Now we get into another feature: automatic suppressions. The above suppression mechanism I'm calling manual suppressions; automatic suppressions are suppressions that only persist as long as a particular instance of Zelden Server is running, same as actions and reactions on notifications. They cannot be added, modified, or removed by the user; they can only be added, modified, and removed by plugins, though the user will be able to see that they are present. They have the same features as manual suppressions other than that, except that multiple automatic suppressions may exist for a particular computer, and each one has a name, the plugin that created it, and a userland object which can be used by the plugin to tell multiple instances apart.
+
+A plugin could then be written which monitors my laptop's idle status and applies an automatic suppression to all notifications for my android when it is idle but removes said suppression when it is no longer idle. It would also listen for notifications being created and apply said suppression to them if my laptop is currently idle. This satisfies #9.
+
+Plugins would have access to the manual suppression facility as well. This would satisfy #10 if I implement it to create manual suppressions as I plan on doing so that users can remove the suppression if they want; otherwise, #10 would be satisfied by the automatic suppression system.
+
+The automatic suppression mechanism is available to plugins (and, as mentioned above, /only/ available to plugins, not to the end user). This satisfies #11.
+
+Notifications can have reactions attached to them. The first such reaction could switch to a particular channel (there would be a type of reaction that opens a particular channel or pm) and the second reaction could notice the server with a particular notice to which the plugin that created the notification would respond by dismissing the notification. This satisfies #12.
+
+A custom action can be attached to a notification that only has the reaction that opens the corresponding channel, without noticing the server to dismiss the notification. This satisfies #13.
+
+The reaction specifying that a particular channel should be opened would likely have a particular entry in its associated information object specifying that a particular message should be scrolled to, and perhaps that a border should be shown around said message for a few seconds. This satisfies #14.
+
+A particular type of reaction would be present that opens up a screen with certain parameters passed to said screen. This, along with the facilities that satisfy #12 and #13, would satisfy #15.
+
+Notifications have an insistent flag that specifies whether or not the client should continuously bug the user until they dismiss the notification, or until the insistent flag gets unset. This satisfies #16.
+
+-----------------------------
+
+Wow, I did it. I actually designed the notification system.
+
+And it looks pretty good.
+
+Now... what's next...
+
+I think what I'm going to do next is write out a list of the reactions that I'm thinking should be possible at this point.
+
+So... reaction types:
+
+    null: This reaction does nothing. It's present so that it can be specified as the single reaction in the default reaction list for a notification in order to tell the client that it really should do nothing when the notification is tapped; if an empty reaction list were specified, Zelden Server would add a reaction allowing the user to manually delete the notification under the assumption that the plugin responsible for the notification is no longer installed.
+    
+    settings: This reaction opens a particular settings page. Its data object contains three keys: root, the path to the folder that should be shown as the root of the settings window to be opened, name, the name to show in place of the actual name for the root (this key can be ommitted, in which case the root's actual folder name will be used), and folder, the folder to actually view, which should be the root or one of its children (and this can be omitted as well, in which case the root will be used). If a window rooted at the specified root is already open, the client can (and should, if possible and not really difficult) re-use that window and simply move the selection to the specified folder.
+    
+    toast: This reaction shows a toast to the user. It has three keys: label, description, and text. Label is the caption to show and description is the description to show. This will be used on clients that support toasts containing a prominent label and a less-prominent description. Text is the single piece of text to show on clients that only support a single chunk of text. If text is not specified, then label and description must be, and vice versa; if both are specified, clients can choose whichever best fits their type of notification. Android, for example, will use text if possible since Android toasts only support a single blob of text; the Linux client will use label and description since libnotify, which it will use, supports the notion of a separate label and description.
+    
+    form: This reaction shows a form to the user. I'll provide more detail on this later, and I'll probably get Zelden fully working before I detail and implement it.
+    
+    notice: This reaction sends a notice to a particular plugin in the server. Two keys are used: plugin and data; data is optional and will be treated as if null if not supplied. plugin is the name of the plugin to dispatch the notice to. When a notice reaction is executed, a message is sent to the server containing the plugin, the data, and the source of the event that triggered the reaction; this is specific to what the reaction was supplied as part of, and I'll discuss this in more detail later. The server then calls the specified plugin's global notice() function, passing in three arguments: the client from which the notice was received, the data object (which should, of course, be valid JSON), and the source, in some to-be-defined format. The plugin's notice function can do any server-side activity it wants, such as dismissing notifications, broadcasting other reactions, and so on.
+    
+    screen: This reaction opens a screen with a particular bit of HTML in it. That bit of HTML has access to JavaScript functions that allow it to interact in various ways with the server. I haven't worked out the specifics yet but the idea is that the client can push things to various plugins in the server and vice versa. The idea would also be that the bit of HTML could either be supplied as part of the reaction, or some sort of thing could be specified for how to request that bit of HTML from a particular plugin.
+    
+    view: This reaction opens a particular view. I still need to work out the specifics of how views work and are addressed before I know what the format of this reaction will be.
+
+I think that's a good list of reactions for now. So then, of course, I need to think about how to do accounts, channels, users, pms, and conversations, and, of course, how views play into all that.
+
+That also brings up a question: should views be persistent and append-only? There are a lot of advantages to that: clients can cache data that they receive for a view so that only new messages need to be downloaded when the client attaches to the view. (Sane clients would, of course, have some functionality allowing the user to clear this cache.)
+
+This sounds like a good way to go. I'll plan on this for now, that views are not strictly MVC but instead are persistent named things that can be written to by plugins and by Zelden itself. I need to think more about whether plugins write to account-related views directly or whether they send messages and events to Zelden through some other mechanism.
+
+So now we get into another interesting problem: views should be able to show an aggregate of data from multiple sources. For example, a view for a particular channel should show things coming from that channel, certain things coming from the corresponding server (such as connects, disconnects, and quits), and certain global things (such as clients attaching and detaching).
+
+It would be nice if which sources contribute to a particular view could be customized on the client side so that, for example, global events could be hidden from a channel. But then it becomes a question of how important that is vs the added complexity.
+
+This also plays into how caching messages on the client side would need to work. (And note for tomorrow: figure out whether or not it should also be possible to hide events of a particular type, because if that's possible, then that could just be used to hide events from a particular source by hiding all of the type of event that that source issues. Just a thought.)
+
+And then we also have some other things to worry about, such as how to populate the list of nicknames of people currently at a view or specify for a particular view that such a list is not present, and how to be notified when a client starts typing a message into a view, stops typing said message (and start-typing messages will be resent once every N seconds, where N is something like 30, and if the server doesn't receive one for X seconds, where X would probably be around 45, then it unmarks the view as being typed into), and actually sends said message. The server should be able to find out which client the start-type, stop-type, and send-message things come from; typing is tracked on a per-client basis and the view is being typed into if at least one client is typing into it, and message sending will log what client sent the message.
+
+Oh shoot... Now I remember the chat monitor... and how that would appear to need virtualized views...
+
+Ok, maybe I'm over-generalizing views too much. I'm thinking: would there ever really be any good use for views outside of having one per channel/pm and one per server and one globally?
+
+But then there might; for example, it would be nice for a plugin to have a view of its own to log random information to. It would also be nice to be able to have a plugin create a view to which it logs, for example, a message whenever a notification is created.
+
+So then I'm wondering: what if we have sources, where a source is a named listing of messages that can be added to or removed from, and views, where a view specifies a list of sources which it then aggregates together? Clients could store this information about what views exist (the list of views that exist would be known by every client and updated by the server) for offline use when looking through messages, and then provide an extra view that shows /all/ sources (sources are also known by clients and are updated by the server) so that if a source has no view that uses it, the user can still read messages from it.
+
+Under that idea, clients would attach to sources instead of to views...
+
+Hm, I'm realizing more and more that this makes attachment and backlog requesting really complicated, and so now I'm wondering if there's a better way to do it...
+
+You know what, I'm going to make out a requirements list like I did for notifications and see if that helps.
+
+So, things that I want to be able to do, relating to conversations and such:
+
+1: I want to be able to select a channel or pm in the list of channels/pms (which would probably be on the home screen) and view it.
+
+2: I want to be able to see messages from a channel/pm in the view. This is probably obvious.
+
+3: I want only channels/pms that I'm currently viewing or that are currently open in a window to receive any messages over the network, in order to save bandwidth.
+
+4: I want to be able to scroll up the channel/pm and see messages from previous dates, all the way back until when the first relevant message was received.
+
+5: I want to be able to see some global events, such as an account being connected or being disconnected, a Zelden client attaching or detaching, and optionally when I change my local account status, in each channel/pm, but I don't want these to take up extra storage for every channel if these events are global or global to a particular server.
+
+6: I want to be able to see a list of users that are currently present in a channel, and perform actions on each of these users.
+
+7: I want the aforementioned user list to be hidden for pms, since user lists don't make sense for them.
+
+8: I want typing notifications to be sent correctly so that when I'm typing, other people on protocols that support it see that I'm typing. I want to appear to be typing as long as any client from which I'm attached registers that I'm typing. I want this typing status to time out after a certain number of seconds (I'm thinking 30 or 40 right now) of not being able to talk with the client so that a pingout causes the client to appear to stop typing after the above mentioned number of seconds.
+
+9: I want to be able to tell when the person with which I'm having a conversation is typing. I want the client to be able to tell what this means so that it could, for example, show a typing icon instead of "Bob Jones is typing" as a piece of text. I do want the ability to tell a client that multiple people are typing in case I'm connected to a chat room on a protocol that supports that.
+
+10: I want it to be possible to attach actions to each message.
+
+11: I want there to be some way to view more info on a particular message, which would open up a page providing details on that message. This might show things like the user's username and hostname for a message received from an IRC user, or the client from which a message was sent for a message sent by the local user. (This could possibly be implemented by Zelden itself as an action on the message that opens a screen displaying the additional information.)
+
+12: I want the nicknames of messages to show up certain colors depending on the nickname (and this string on which this is dependent should be protocol-specifiable).
+
+13: I want it to be possible to change how said colors show up, so for example have the background of that message instead be colorized.
+
+Hmm... I think I might be asking too much for now. I'm deciding that maybe I can do away with showing notifications for when a client connects and disconnects; this could be present simply in a global view, and users could consult that as needed.
+
+Oh also, I need to remember colorization for users, and user-related actions for messages sent by those users.
+
+So now I'm remembering that every client has access to a JavaScript interpreter, which makes me think that maybe it would be possible to have a notion of renderers, which are piece of JavaScript, HTML, and CSS, somehow mixed together or something, that are provided by server-side plugins for client-side plugins to use in rendering things.
+
+So here's what I'm thinking: there should be a fixed list of message types. I'll look around through various protocols in a bit and come up with a good list.
+
+This list could be later expanded by me, with the idea that themes would then have to upgrade themselves to support the new message types. Data would probably be represented as a JSON object, so themes could render types that they know nothing about as JSON strings as a last-ditch effort.
+
+So, for now, views of a particular channel or pm (and I am thinking that I'm just going to have channels, pms, servers themselves, and Zelden globally, and not a hugely-extensible notion of views for now) would be strictly vertical stacks of messages. The part that the theme decides is what each of those messages would look like. In some form or other, the theme would be responsible for producing a div (or some other element, but I'd think they'd all produce divs) representing a message fed into it. This div would then be displayed to the user. I'm also thinking that the theme would be able to supply stuff to put in the <head> of the view, which the theme could use to put styles and scripts into.
+
+A view could only use one theme at once; it couldn't, for example, render every other message with a different theme.
+
+So I'm thinking that a theme would supply a piece of JavaScript that could be sent out to each client. Messages would be sent to clients in the form of JSON objects whose keys are specific to the type of the message; this theme-supplied piece of JavaScript would then be called, passing in the JSON object representing the message, and it would be expected to return either a DOM node which is the div to show or a string which is the textual HTML to show; I haven't decided which yet but I'm leaning toward the former, and supplying a parseHTML function, if WebKit doesn't provide such a function already, that would parse HTML into a DOM node.
+
+(Or something like that. If DOM nodes need to be parented on creation, then I'd have that theme-supplied function accept an argument which is the parent into which the DOM node should be placed as the single child, or maybe have it inject whatever it wants into the node which it's passed and that node would be the div; it could then edit the node's attributes if it wanted and stuff.)
+
+Themes would be provided by server-side plugins, and there would be some to-be-determined way (which would likely use the settings system) for the user to decide which theme they want to use. It would also be nice if different themes could be chosen for different devices so that, for example, I could use a theme optimized for mobile devices on my Android and a more verbose theme on my normal computer. There could be a setting for the default theme and a setting for each computer where they can choose the theme to use or choose to use the default theme.
+
+(Quick note: I need to remember to write ClonedSetting or something which allows a database setting to be specified by specifying its schema exactly once and then instantiating it with multiple different paths, which would avoid the overhead of storing the schema, such as the label and description, several times for a setting used in multiple locations such as on every channel.)
+
+Anyways...
+
+So each client has a currently active theme, which can be changed out by the server. A theme as far as the client sees it is two things: 1, a piece of JavaScript that, when evaluated, should return a function accepting three arguments: the message to render in a to-be-determined JSON format, a div into which the message should be rendered, and the theme's data object, and said function should render said message into said div; and 2, the data object to be passed into the function, in the form of a string of JavaScript. The reason for keeping data separate from the function is so that the data can be parsed an instantiated once when the view loads up and stored in a JavaScript global, and then passed to the function from there; if it were just embedded in the function, it would have to be recreated every time a new messages were rendered, which would take time.
+
+If the theme doesn't have any relevant settings, it could just use something like the number 0 as the data object.
+
+It's up to the plugin to watch for conditions that would change the output produced by the theme and tell Zelden to instruct all client currently using the theme to reload all of their views. For example, most themes would want to watch for changes to a user's hash color (and Zelden will provide some way of watching for such changes) and effect a reload when such changes happen, since most themes would factor a user's hash color into how they render messages sent by the user.
+
+(Other quick note: channel and user views should provide a space at the top to display things like the user's current presence, the user's current status message, and the channel's current topic.)
+
+Themes would be installed into Zelden on startup or at any other time while Zelden is running by creating an instance of Theme, which accepts such parameters as the id, the JavaScript code, the JavaScript data expression, the name, the description, etc, and then registering this to a Server. (I'm thinking it should be possible to subclass Theme and override some methods such as ones used for accessing the JavaScript code and data to allow said code and data to be sourced from settings, but I can think more on that later.) Themes can also be unregistered at any time. Each theme has a unique string id; attempting to register a theme under an id that already exists will cause Zelden to throw an exception back to the caller attempting to register said theme.
+
+So, the theme can be modified by updating the JavaScript or by changing up the data object. These happen simply by modifying the attributes on the Theme instance, but when either of these happen, theme.update() must be called in order to tell it that it's been changed. (Theme will provide a pipeline that update() notifies that Zelden will attach to when a theme is registered; Zelden will, on this event being triggered, send out a message to all clients currently using this theme providing them with the new script and data object.) The theme's name and description, which are the only other theme attributes I can think of at present, can be set simply by assigning to their attributes (which would actually be properties); update() does not need to be called after this, as the new values will be pushed out automatically.
+
+Clients are allowed to not support themes if they don't want to, and render messages (which are delivered as JSON) however they like. To do that, all they have to do is not include the feature "server-side-themes" in the feature list that they send to the server as part of the initial connect message. The server won't send them any set-theme messages (which it sends to provide them with the theme to use under normal circumstances), and it will mention that the client in question doesn't support themes in the settings scren for configuring themes. Clients can also simply ignore any set-theme messages sent by the server, but that results in a notice not being present in the settings page for themes, which might confuse the user.
+
+So I think that's it about themes.
+
+So, there's a global view, a view for each server, a view for each channel, and a view for each user.
+
+So, things each view should have:
+
+	A list of users present in the channel, for channel views. The list of users in such a view is kept up-to-date when the view is attached to by the server. I'm not sure yet what data each of these users carries, but it should be possible for them to have actions attached to them, they should be shown in groups (where each group has a name and a label; groups are things like "Operators" and "Voiced"), they should be able to have server-specified info in some form or other that can show when an info menu item is chosen, they should contain enough information that a hash color can be generated for them by the client or that it can select an appropriate contact to apply to them, they should contain presence information if available, and they should provide a name for use with autocompletion.
+	
+	An area near the top that, for channels, indicates the current topic, and for users, indicates the user's current status message and their presence. This should also have a button for editing the topic on protocols that support it; such a button would probably also warn the user if they try to use it and they're not +o or a protocol-specific equivalent, although it would allow them to go ahead if they wanted to.
+	
+	A clickable display at the top indicating the date range of chat messages currently being looked at in the view. This could be clicked to select a date (and optionally time) to go to.
+	
+	A text box at the bottom for entering messages, with a send button, some sort of button for converting it to a text area and back to a text field, and some facility for auto-completing from the list of users for channel views.
+	
+	Some sort of location to display a sort of status message when the user being talked with is typing. This would simply not be used in channels at present, although in the future I would like to expand it to be able to show multiple typing notifications at a time in channels so that protocols that support typing notifications in channels (and I'm hoping to write one at some point) can show such information in Zelden.
+	
+	A list of actions attached to the view. I'm thinking these should include those attached to the corresponding channel in the contact list and similar for users; whether or not those sets of actions are /exactly/ the same (I.E. no actions specific to views) is to be determined.
+
+You know what, I'm getting too far into views without thinking about what they represent: channels, users, and accounts. I need to think abuot those some more.
+
+I think I'm going to make a requirements list for accounts, users, channels, and contacts:
+
+	1: I want to be able to create accounts that use a particular protocol. I don't want to be able to change the protocol after the account has been created.
+	
+	2: I want to be able to configure account-specific settings, such as the server for IRC, the JID for XMPP, etc.
+	
+	3: I want to be able to set whether or not an account is currently enabled; disabling it would cause it to disconnect from all of the servers that it's connected to and such. I want all views of the account to still show messages but to respond with a "disabled" sort of toast if the user tries to send anything, and I want views to show that the account is not currently enabled. (I want said disabled toasting to be at the protocol level, however, so that protocols that allow slash commands while offline can still work.)
+	
+	4: I want some way to be able to get rid of accounts that I'm no longer using. And specifically, I don't want them to take up any RAM on the server once I've gotten rid of them. However, I still want to be able to view logs for said accounts, and I still want the contacts (and especially their hash colors) to be preserved. And I want it to be possible to "undelete" an account, and I'm fine with requiring accounts to be undeleted to view logs in them. A deleted account, however, must not take up extra RAM until it's undeleted.
+	
+	5: I want contacts to have presence information (available, idle, away, DnD, etc, the amount of time that the contact has been idle, and the contact's status message). Actually, I want users in general to have this. (and my next point will hopefully mark a distinction between users and contacts.) I want a requirement, however, that presence information is only sent to a client when the list of contacts/users/etc is being viewed, or where a certain contact/user's presence is needed such as when a view is showing for a particular user or when a channel is showing that contains that user in its user list.
+	
+	6. I want to be able to somehow converse with users and see them in channels and get information on them without having to add them as a contact. I want to be able to see their presence if it's available; otherwise, I want to be able to tell that their presence information is unavailable. I want to be able to see a list of users with which I am conversing that aren't necessarily on my list of contacts, and I want this list to be persistent across server restarts.
+	
+	7. I want to be a...
+
+
+Hang on, I might be able to solve some stuff about settings. I think what I've laid out above is good (at the top of the file) in the way of settings, but I've got some other ideas to make it so that the system could function just fine even with ten thousand different contacts. I think it would take a good deal of work but it might be doable.
+
+The idea would be to create Setting sort of classes which represent a template for a setting. Operations on them then have to pass a parent setting and a pathname, or something like that, to indicate the actual instance of the setting.
+
+Then folders would be similar. More thought still needs to go into this, but the idea is that there could be a "template", so to speak, of a conversation, which could then be instantiated for every conversation. Conversation-specific settings would somehow be addable, maybe by however you ask a folder for its children allowing different children to be returned based on the path, and then providing a listener to notify when a particular child would no longer be returned for a particular path or some such thing.
+
+-----------------------------
+
+Hmm, that seems like a bit more complicated of an approach for settings than I'd like to take at present.
+
+So I'm going back to the old way of doing settings.
+
+Now then... Let's see... Hm...
+
+I do like Matias's idea of just having contacts be "starred" users/channels. The only problem I can see with that right now is the overhead of having settings stores for every user stored in memory on the server. Which makes me think of another idea...
+
+...and that idea is that we have settings be tied to disk storage for now, and not have a concept of virtual settings like I had discussed above. Virtual setting support could be added later if it becomes a really big useful thing.
+
+The reason why omitting support for virtual settings would help out so much is that then the settings scheme could be stored to disk in a database but still be constructed at runtime by deleting the database file at shutdown and creating it at startup.
+
+So the idea would be that... hmm...
+
+So I'm getting ideas on how to do this properly while preserving support for virtual settings and while not making it insanely complicated.
+
+The idea would be that we have a class called SettingStore or something. It has functions for all of the things that can be done on a setting, such as 
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
