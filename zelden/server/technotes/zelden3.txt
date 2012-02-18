@@ -10,5 +10,64 @@ Zelden 3 will also mandate log-keeping. If you don't want to keep logs, you can 
 
 There will also be some sort of command that can be used to export the logs and other associated data while Zelden is running live, which I will use for making backups. The resulting export will be as plain-text as possible so that I can version backups in a git repository.
 
+So I think I overcomplicated my previous attempts at Zelden for first tries. For now, then, I'm going to make things simpler.
+
+I haven't yet decided if I'm going to do settings, or how I'm going to do that bit. I want to think more about how everything else works.
+
+So, there are notifications, same as there were notifications in my previous versions of Zelden. These are created on the server side. They are either persistent or not; if they are persistent, then they stick around in the database; if they are not, then they don't, and have to be recreated at startup. The main use of notifications at present, indicating that there are new messages, would be a persistent use; other uses, such as indicating that an account failed to connect because of an incorrect password, would be non-persistent uses.
+
+I do want to have a notion of plugins in Zelden. Zelden itself would be a plugin, more or less.
+
+Notifications, of course, perform a client-side action when tapped; new-message notifications switch to the relevant conversation and highlight the relevant message, while invalid password notifications switch to the configurations screen of the relevant account.
+
+This, of course, is starting to feel complicated again.
+
+Maybe I should start off with notifications just being for unread messages.
+
+But then I want to be able to know when an account doesn't connect properly.
+
+I dunno... How about I think about messages and stuff and come back to this later.
+
+So each account that we've added has basically a list of users that we've ever interacted with. Some of these are marked as contacts and are shown; others aren't shown and are added simply because we needed to log a message about them.
+
+Each account also has a list of rooms that we've ever interacted with. Some of these are marked as being our list of rooms that we're currently joined to, others are not. Being forced out of a room by the server doesn't remove a room from this list. I'm not yet sure whether being forced into a room by the server adds the room to this list, however.
+
+Maybe the list of rooms we're joined to and the list of rooms on our contact list are two separate things. Rooms that are not on our contact list, and therefore not set to autojoin, but that we're currently joined to show up but in a gray font, for example; rooms that are not on our contact list and that are not joined do not show up; rooms that are on our contact list but not joined also show up but in yet another different color (and Zelden periodically attempts to rejoin these); and rooms that are on our contact list and are joined show up normally.
+
+Being forced into a room by the server would join it but not add it to our contact list. Simply joining a room would do similarly; there would, however, be an option in Zelden to add it to our contact list.
+
+There would also be a setting somewhere that could be used to show all rooms, even those that are not on our contact list or joined. This would show all rooms that have at least one log entry. These are useful mainly for viewing logs, but they could also be rejoined or added to the contact list.
+
+Labels can also be applied to rooms. In fact, perhaps the contact list is just a particular label. All of the labels show up in the contact list, with the rooms in each one listed below it. A room can have multiple labels. My idea with this is twofold: 1, it provides a useful generalization of the idea of a contact list, and 2, I can then have an "active" label, which is a label containing all of the rooms that I'm currently chatting in.
+
+So in that case, below the list of labels is a list of all rooms not in any labels. This wouldn't usually be displayed.
+
+Hm, perhaps the contact list should be a separate thing, and labels apply only to conversations within the contact list...
+
+Although it might be useful to have labels apply to other conversations...
+
+I need to think more on this.
+
+Conversations themselves, however... There are a number of different message types, and some sort of "custom message" type where the message is simply specified as text. Protocols could use this for messages that don't otherwise fit in normally.
+
+Messages have a date at which they appeared to have been issued, a date at which Zelden actually received them (these two can be different in XMPP under some circumstances), the type of message, attributes attached to the message by the protocol (clients would provide a "message information" dialog from which these attributes could be read), the person that sent the message, the room to which the message was sent, if it was sent to a room (or the contact, if the message was sent to or from a person directly instead of a room), and the text of the message, if relevant. There may be additional information specific to the message type. (In particular, I'm still think of whether having a notion of message text makes sense for every message; some where it might not include IRC mode changes, IRC nick changes, MSN nudges, etc.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
