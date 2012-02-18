@@ -4,5 +4,11 @@ And I'm thinking about making it less complex.
 
 And I'm thinking of getting rid of the ability or need to run any code on the client side, on Matias's suggestion. I think I should be able to come up with a list of predefined message types that should be enough for any sane protocol to use.
 
-I've also been thinking about making Zelden distributed, so that if one server fails, everything will switch over to another server, which will go and connect to all of the users' chat protocols.
+I've also been thinking about making Zelden distributed, so that if one server fails, everything will switch over to another server, which will go and connect to all of the users' chat protocols. Logs will, of course, be replicated on every server.
+
+Zelden 3 will also mandate log-keeping. If you don't want to keep logs, you can restart your server every, say, week, and delete the logs every time you do. Zelden just won't be tolerant of logs disappearing while it's running.
+
+There will also be some sort of command that can be used to export the logs and other associated data while Zelden is running live, which I will use for making backups. The resulting export will be as plain-text as possible so that I can version backups in a git repository.
+
+
 
