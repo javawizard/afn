@@ -58,7 +58,7 @@ This scheme also allows for clients to purge their caches of the server's logs e
 
 Servers would also be allowed to purge their logs under this mechanism. A client requesting a particular range for which logs have been purged in the server would receive no messages and an indication that the entire timeframe requested has been provided, i.e. that there are no messages in the given timeframe. Clients would still keep their copies of messages that had been purged on the server.
 
-
+Ok, that makes sense for conversations so far. Now I should go check out Quassel manages its list of rooms and users...
 
 
 
