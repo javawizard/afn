@@ -42,4 +42,6 @@ A brief summary of some of the projects provided as part of AFN:
 
 There are some others (such as speakd, record.py, saytime, timerd, TrayTimer, and doorbell.py) that I haven't yet documented, and there are others (such as Sixjet) that will be merged into AFN soon.
 
+(For those curious about the origins of the name "AFN", it's an acronym for Attic Full of Nerds. This, in turn, is derived from a quote from Artemis Fowl: The Arctic Incident, where Jerbal Argon mentions that every fairy that has a "crazy old uncle in the attic" can now have them treated in the lap of luxury (Argon's own hospital), and from the fact that Alex's family is predominantly made up of nerds, and AFN started out as a project providing home automation tools for Alex's house.)
+
     
