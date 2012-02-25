@@ -260,7 +260,7 @@ So I'm thinking that the last thing in the path should govern what types of even
 
 (Also, noting: apparently the default implementation of setValue:forKey: doesn't call willChangeValueForKey: and didChangeValueForKey: automatically; only the setX:, setY: etc methods do that. That explains how they avoid double notifying things.)
 
-So I need to go see what happens when a Cocoa thing gets set to null and then we observe it� I believe that when we try to observe it and it's currently null, we get an exception, but I don't know if this is the case if we're already observing it and then it gets set to null...
+So I need to go see what happens when a Cocoa thing gets set to null and then we observe it. I believe that when we try to observe it and it's currently null, we get an exception, but I don't know if this is the case if we're already observing it and then it gets set to null...
 
 So I just checked, and when this happens, an observation saying that the path was set to null is issued. This sounds like it's going to screw with bindings, if a binding to a list gets a key-related message, so I think I'm going to either have some sort of NotApplicable marker or have all of the list's items appear to be removed. The question is which one to do.
 
@@ -271,6 +271,16 @@ Maybe I should try this out and see what happens...
 Hm, I don't have access to a machine that I can try it out on right now. So what should I do...
 
 I'm sort of tempted to just try Cocoa's way of issuing "this key was set to null" events when something like this happens under the assumption that something like this /won't/ typically happen, and then let the bindings stuff throw exceptions when this happens and it wasn't expecting it. I think that's reasonably sane for now.
+
+Man, this whole thing is really complicated... There /has/ to be a simpler way to do it...
+
+I was thinking, what if I scrapped paths and just had two objects be bound together, but then I realized that has two problems: 1, that wouldn't allow for binding just individual keys of objects together, and 2, this would completely mess up the whole idea behind list controllers: you would want to be able to bind to controller/selectedObject/... which would allow you to edit the currently-selected object, but if we don't have a notion of paths, then that won't work because the various editing-related things (text fields etc) would end up bound to the first selected object but not follow the new selection when the selection changes.
+
+Of course, that makes me think that maybe path-based binding should be implemented as a separate controller class, such as PathController, which allows you to bind to a particular path of a particular thing, and it will handle everything else. But that seems like it would make it overly complicated to actually use the resulting system...
+
+(And, of course, I've been thinking a lot about replacing the whole path idea with JPath tracing/reverse queries (which are another thing I was thinking of that would be queries that use KVO to keep their results updated as their input data changes, and also change their input data as their results change, which would basically be a replacement for the whole bindings system anyways) which would be cool, except that I think the tracing engine is going to take a huge amount of work to write.)
+
+
 
 
 
