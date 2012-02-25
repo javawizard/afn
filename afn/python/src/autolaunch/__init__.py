@@ -6,4 +6,5 @@ class Service(object):
 
 def main():
     with Bus() as bus:
-        bus.create_service({"type": "autolaunch"}, Service())
+        bus.create_service({"type": "autolaunch"}, from_py_object=Service())
+        

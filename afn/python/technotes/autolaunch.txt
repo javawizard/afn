@@ -3,3 +3,17 @@ Autolaunch is a launchd-like thing that can be configured remotely via Autobus.
 Right now I'm just going to have it support always-running daemons.
 
 And for now I'm going to have the list of daemons, their underlying commands, and the users that they are to be run as stored in a file that can't be modified by Autobus, since Autobus doesn't yet support authentication. Services can therefore only be started and stopped remotely.
+
+So, the configuration file is a JSON dictionary, with each item corresponding to a launch item.
+
+The key is a name for the item.
+
+The value is a dictionary of options for that item. It has the following keys:
+
+command: This is the command to run.
+
+args: This is either a list of strings representing the arguments to pass or a string which will be split around spaces to come up with the list of arguments to pass. The specified arguments will be passed to the command when it is started.
+
+enabled: This is true if the command is currently enabled, false if it isn't. Commands can be enabled and disabled remotely; doing so will cause Autolaunch to edit the configuration file accordingly.
+
+user: This is the user to run the command as. This should be a numerical id.
