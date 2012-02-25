@@ -16,7 +16,7 @@ A brief summary of some of the projects provided as part of AFN:
     
         JPath Database is an in-development JSON database management system and application server that uses JSON to store and represent data. Queries and web pages are written in JPath, and data is stored as JSON. As development of JPath Database progresses, I'll post more information here. (As of February 2012, development is currently on hold due to Alex not having enough time; if anyone else wants to pick this up, let Alex know, alex at opengroove dot org.)
     
-    RTK, the Remote ToolKit, is a windowing toolkit that functions using a client-server model: applications are servers, and clients can connect to those applications with RTK viewers. Each client views their own instance of the application, but all instances run in the same server-side executable so they can communicate easily with each other. It's quite similar to [http://ntw.sourceforge.net Network Transparent Widgets], but the widget set can be extended on top of the existing RTK protocol.
+    RTK, the Remote ToolKit, is a windowing toolkit that functions using a client-server model: applications are servers, and clients can connect to those applications with RTK viewers. Each client views their own instance of the application, but all instances run in the same server-side executable so they can communicate easily with each other. It's quite similar to Network Transparent Widgets (http://ntw.sourceforge.net), but the widget set can be extended on top of the existing RTK protocol.
     
         librtk is a Python library for writing RTK applications. It's currently the only RTK server library; when I have time, I'll write some RTK libraries for other languages.
         
