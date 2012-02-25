@@ -1,5 +1,6 @@
 
 from autobus2 import Bus
+import multiprocessing as mp
 
 class Service(object):
     pass
