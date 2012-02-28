@@ -40,7 +40,7 @@ There are three types of broadcast packets:
         
         "info": This is the info object of the service being advertised.
     
-    Remove: These packets are sent out when a particular service is being unpublished. They let other clients on the network know that the service is no longer available. They have the same keys as Add packets, except they do not contain the "info" key. Clients should not rely on Remove packets being sent for a given service, however, since things like kill -9 on a process publishing a service will result in the service disappearing without Remove packets being broadcast. Clients should therefore automatically time out services for which they have not received an Add packet in several minutes.
+    Remove: These packets are sent out when a particular service is being unpublished. They let other clients on the network know that the service is no longer available. They have the same keys as Add packets, except they do not contain the "info" key, and the "command" key's value is "remove". Clients should not rely on Remove packets being sent for a given service, however, since things like kill -9 on a process publishing a service will result in the service disappearing without Remove packets being broadcast. Clients should therefore automatically time out services for which they have not received an Add packet in several minutes.
 
 ---------------------------------------------------------------------
 

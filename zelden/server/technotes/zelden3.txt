@@ -56,6 +56,10 @@ Clients store lists of messages for particular rooms and users that they've cach
 
 This scheme also allows for clients to purge their caches of the server's logs either automatically or at the user's request. Users might find it useful, for example, to store a complete history of their logs on their desktop computer (with their client configured to request all messages for all unknown timeframes whenever it can, without a maximum message limit) but only a partial history on their Android in the interest of saving storage space. (Clients would most likely make available their local caches of messages for offline log reading and searching.)
 
+Servers would also be allowed to purge their logs under this mechanism. A client requesting a particular range for which logs have been purged in the server would receive no messages and an indication that the entire timeframe requested has been provided, i.e. that there are no messages in the given timeframe. Clients would still keep their copies of messages that had been purged on the server.
+
+Ok, that makes sense for conversations so far. Now I should go check out Quassel manages its list of rooms and users...
+
 
 
 
