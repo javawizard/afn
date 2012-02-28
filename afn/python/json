@@ -7,9 +7,11 @@ the terms of the GNU Lesser General Public License.
 """
 
 import sys
-from os.path import join, dirname, realpath
+from os.path import join, dirname, realpath, exists as os_path_exists
 afn_path = dirname(realpath(__file__))
-sys.path.append(join(afn_path, "src"))
+# If we're running in the AFN repository, add the source folder to the path.
+if os_path_exists(join(afn_path, "src")):
+    sys.path.append(join(afn_path, "src"))
 
 from afn.backports.argparse import ArgumentParser ###REPLACE:src/afn/backports/argparse.py
 from afn.utils.argparseutils import AppendWithConst ###REPLACE:src/afn/backports/argparse.py
@@ -80,8 +82,8 @@ Author:
 """
 
 parser = ArgumentParser(add_help=False, description="!!!DESC!!!", epilog="!!!END!!!")
-
-parser.add_argument("-S", "--suppress-warnings", dest="warnings", action="store_false")
+parser.add_argument("-S", "--suppress-warnings", dest="warnings", action="store_false",
+                    help="Suppress warnings about some potentially-pathological situations")
 parser.add_argument("-?", "--help", action='store_true', help='show this help message and exit')
 
 path_actions = parser.add_argument_group("path-related actions")
