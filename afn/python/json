@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 
 """
 Neat little command-line JSON tool written by Alexander Boyd as part of the AFN
@@ -111,7 +111,7 @@ add_io_action("-R", "--read-file", const="read-file", nargs=1, metavar="<file>",
 add_io_action("-w", "--write", const="write", nargs=0,
         help="Writes the root value to stdout using the current mode. Note that this writes "
         "the root value, not the value at the current path.")
-add_io_action("-W", "--write-file", const="write", nargs=1, metavar="<file>",
+add_io_action("-W", "--write-file", const="write-file", nargs=1, metavar="<file>",
         help="Writes the root value to the specified file using the current mode. Note that "
         "this writes the root value, not the value at the current path.")
 add_io_action("-c", "--write-current", const="write-current", nargs=0,
