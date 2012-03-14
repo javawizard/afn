@@ -254,11 +254,11 @@ def set_to(new_value):
         target[path[-1]] = new_value
 
 def parse_bool(value):
-    if value.tolower() in ["true", "yes", "on"]:
+    if value.tolower() in ["true", "yes", "on", "t", "y", "1"]:
         return True
-    if value.tolower() in ["false", "no", "off"]:
+    if value.tolower() in ["false", "no", "off", "f", "n", "0"]:
         return False
-    raise ValueError("Value was supposed to be true, false, yes, no, on, or off, but was " + str(value))
+    raise ValueError("Value was supposed to be true, false, yes, no, on, off, t, f, y, n, 1, or 0, but was " + str(value))
 
 def read_from_stdin():
     input = ""
