@@ -234,15 +234,36 @@ class TextFormatter(object):
         with open(filename, "w") as f:
             f.write(str(value))
 
-def lookup(parent=False):
+def lookup(parent=False, create=False):
+    if create and not parent:
+        raise Exception("Parent must be true if create is true")
     global formatter, path, working
     value = working
     if parent:
         lookup_path = path[:-1]
     else:
         lookup_path = path
-    for p in lookup_path:
-        value = value[p]
+    for i, p in enumerate(lookup_path):
+        try:
+            value = value[p]
+        except:
+            if (not isinstance(value, (list, dict)) or # Value isn't a list or dict,
+                # so the exception is because other types don't support subscription
+                # (imagine json -i 42 -k test -s bogus)
+                (isinstance(value, dict) and not isinstance(p, basestring)) or 
+                (isinstance(value, list) and not isinstance(p, (int, long))) or
+                not create):
+                raise
+            # The value in question doesn't exist within the specified dict/list
+            # and auto-creation has been requested, so we need to create it.
+            if isinstance(path[i + 1], basestring): # Next path component is a 
+                # string, so we need to create a dictionary for it
+                value[p] = {}
+            else: # Next path component is an int, so we need to create a list
+                # for it
+                value[p] = []
+            # Now update the value to the thingie we just created
+            value = value[p]
     return value
 
 def set_to(new_value):
@@ -250,7 +271,7 @@ def set_to(new_value):
     if len(path) == 0:
         working = new_value
     else:
-        target = lookup(True)
+        target = lookup(True, True)
         target[path[-1]] = new_value
 
 def parse_bool(value):
