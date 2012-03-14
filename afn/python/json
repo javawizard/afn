@@ -307,16 +307,6 @@ for action_info in args.actions:
     if action == "up":
         path = path[:-1]
     elif action == "key":
-        if len(path) == 0:
-            if working is None:
-                working = {}
-        else:
-            current = lookup()
-            if not isinstance(current, dict):
-                raise Exception("Can't use -k when the current value isn't a dictionary (it's " + repr(current) + ")")
-            if params[0] not in current: # The specified key doesn't exist in
-                # the current dictionary, so we need to create it.
-                current[params[0]] = {}
         path.append(params[0])
     elif action == "index":
         path.append(int(params[0]))
