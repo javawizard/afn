@@ -84,6 +84,8 @@ Author:
 parser = ArgumentParser(add_help=False, description="!!!DESC!!!", epilog="!!!END!!!")
 parser.add_argument("-S", "--suppress-warnings", dest="warnings", action="store_false",
                     help="Suppress warnings about some potentially-pathological situations")
+parser.add_argument("-V", "--verbose", dest="verbose", action="store_true",
+                    help="Print information about the steps this command is taking as it takes them (TODO: add this)")
 parser.add_argument("-?", "--help", action='store_true', help='show this help message and exit')
 
 path_actions = parser.add_argument_group("path-related actions")
@@ -132,11 +134,27 @@ add_addition_action("-l", "--list", const="list", nargs=0,
         help="Sets the value at the current path to be a newly-created list/array.")
 add_addition_action("-s", "--string", const="string", nargs=1, metavar="<text>",
         help="Sets the value at the current path to be a string containing the specified text.")
+add_addition_action("--data", const="data", nargs=1, metavar="<raw-data>",
+        help="Sets the value at the specified path to be a data value containing the specified raw data.")
+add_addition_action("--data-hex", const="data-hex", nargs=1, metavar="<hex-data>",
+        help="Sets the value at the specified path to be a data value containing the specified data, which should "
+        "be encoded in hexidecimal.")
+add_addition_action("--data-base64", const="data-base64", nargs=1, metavar="<base64-data>",
+        help="Sets the value at the specified path to be a data value containing the speicifed data, which should "
+        "be encoded in Base64.")
 add_addition_action("-n", "--number", const="number", nargs=1, metavar="<number>",
         help="Sets the value at the current path to be the specified number.")
+add_addition_action("--date", const="date", nargs=1, metavar="<seconds-since-epoch>",
+        help="Sets the value at the current path to be a date representing the specified number of seconds since "
+        "Midnight, 1 January 1970, UTC.")
+add_addition_action("--strptime", const="strptime", nargs=2, metavar=("<format>", "<date>"),
+        help="Parses the specified date using the specified format, then sets the value at the "
+        "current path to be the corresponding date. <format> uses the same format as the C "
+        'strptime function (the UNIX date command also uses the same format); see "man strptime" '
+        ' or "man date" for details of the format used.')
 add_addition_action("-b", "--bool", "--boolean", const="bool", nargs=1, metavar="<bool>",
         help="Sets the value at the current path to be the specified boolean, which can be "
-        "one of true, false, yes, no, on, or off. The value is case-insensitive.")
+        "one of true, false, yes, no, on, off, t, f, y, n, 1, or 0. The value is case-insensitive.")
 add_addition_action("-T", "--true", const="true", nargs=0,
         help="Sets the value at the current path to the boolean true.")
 add_addition_action("-F", "--false", const="false", nargs=0,
@@ -154,7 +172,7 @@ add_mode_action("-j", "--json", const="json", nargs=0,
         "as JSON values.")
 add_mode_action("-p", "--plist", const="plist", nargs=0,
         help="Changes the current mode to p-list mode. Data will be read and written "
-        "using Apple's p-list XML file format.")
+        "using Apple's p-list XML file format. Support for binary plists will be coming soon.")
 add_mode_action("-P", "--python", const="python", nargs=0,
         help="Changes the current mode to Python mode. Data will be read and written "
         "as Python objects. WARNING: This is not safe; reading data in Python mode "
@@ -172,7 +190,7 @@ add_modify_action = partial(modify_actions.add_argument, dest="actions", action=
 add_modify_action("-x", "--delete", "--remove", const="delete", nargs=0,
         help="Deletes the value at the current path. For example, if the current "
         'value is an object, and you want to delete the keys "example" and "test", '
-        'you could do that with -K example -d -K test -d.')
+        'you could do that with -K example -d -u -K test -d.')
 add_modify_action("-a", "--append", const="append", nargs=0)
 add_modify_action("-A", "--append-and-up", const="append-and-up", nargs=0,
         help="Appends a new item to the list/array that the current path points to, "
@@ -187,6 +205,47 @@ add_modify_action("-G", "--insert-and-up", const="insert-and-up", nargs=1, metav
         '-g 1 -n 7 on the list [1,2,3] will change the list to [1,7,2,3]. This is different '
         'from -i, which will just modify an existing item; running -i 1 -n 7 on the list '
         '[1,2,3] will change the list to [1,7,3].')
+
+output_actions = parser.add_argument_group("output actions")
+add_output_action = partial(output_actions.add_argument, dest="actions", action=AppendWithConst)
+add_output_action("--size", const="size", nargs=0,
+        help="Prints to stdout the number of entries or items in the current list or dictionary, the number of "
+        "characters in the current string, or the number of bytes in the current data value.")
+add_output_action("--type", const="type", nargs=0,
+        help="Prints to stdout the type of the value at the current path. This will be one of number, boolean, null, "
+        "string, list, dictionary, date, or data.")
+add_output_action("--keys", const="keys", nargs=0,
+        help="Prints to stdout the keys in the current dictionary, each on a new line.")
+add_output_action("--print", const="print", nargs=0,
+        help="Prints to stdout the value at the current path, without any formatting. If the value is a "
+        "number, boolean, or if the value is null, it will be printed as it would using the JSON format. "
+        "If the value is a string, its textual content will be printed, without escapes. If the value is "
+        "data, it will be printed byte-for-byte with no escaping. It is an error to try to print a list or "
+        "dictionary with this command.")
+add_output_action("--print-hex", const="print-hex", nargs=0,
+        help="Prints the value at the current path, which should be data, to stdout, encoded using hexidecimal.")
+add_output_action("--print-base64", const="print-base64", nargs=0,
+        help="Prints the value at the current path, which should be data, to stdout, encoded using Base64.")
+add_output_action("--print-rot13", const="print-rot13", nargs=0,
+        help="Prints the value at the current path, which should be a string, to stdout, encoded "
+        "using ROT-13.")
+add_output_action("--print-flipped", const="print-flipped", nargs=0,
+        help="Prints the value at the current path, which should be a string, to stdout, flipped such that one "
+        "would be able to read the text in question upside-down.")
+add_output_action("--strftime", const="strftime", nargs=1, metavar="<format>",
+        help="Formats the date at the current path using <format> and prints the result to stdout."
+        "<format> uses the same format as the C "
+        'strftime function (the UNIX date command also uses the same format); see "man strftime" '
+        ' or "man date" for details of the format used.')
+
+
+
+flip_chars = (u"a\u0250bqc\u0254dpe\u01ddf\u025fg\u0183h\u0265i\u0131j\u027ek\u029ellm\u026fnuoopd"
+		u"qbr\u0279sst\u0287unv\u028cw\u028dxxy\u028ezz.\u02d9,'',`,;\u061b!\u00a1?\u00bf[]][())({}}{<>><_\u203e")
+flip_charmap = dict(zip(flip_chars[0::2], flip_chars[1::2])) # Map with odd-numbered
+# chars in flip_chars as keys and even-numbered chars as values
+flipped = lambda text: "".join([flip_charmap.get(c, c) for c in reversed(text.lower())])
+
 
 class JSONFormatter(object):
     def read(self, text):
@@ -353,6 +412,9 @@ for action_info in args.actions:
     elif action == "plist":
         formatter = PlistFormatter()
     elif action == "python":
+        if warnings:
+            print "Python mode is unsafe. You probably don't want to use it. If you really do, use -S to override this warning."
+            sys.exit()
         formatter = PythonFormatter()
     elif action == "text":
         formatter = TextFormatter()
@@ -368,6 +430,14 @@ for action_info in args.actions:
         index = int(params[0])
         v.insert(index, None)
         path.append(index)
+    elif action == "print-flipped":
+        v = lookup()
+        print flipped(v)
+    elif action == "size":
+        v = lookup()
+        print len(v)
+    else:
+        raise Exception("Unknown action (this is usually a bug in the JSON command): " + action)
 if file_to_write is not None:
     formatter_to_write_with.write_file(file_to_write, working)
         
