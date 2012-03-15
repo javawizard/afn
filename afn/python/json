@@ -211,6 +211,11 @@ add_output_action = partial(output_actions.add_argument, dest="actions", action=
 add_output_action("--size", const="size",
         help="Prints to stdout the number of entries or items in the current list or dictionary, the number of "
         "characters in the current string, or the number of bytes in the current data value.")
+add_output_action("--type", const="type",
+        help="Prints to stdout the type of the value at the current path. This will be one of number, boolean, null, "
+        "string, list, dictionary, date, or data.")
+add_output_action("--keys", const="keys",
+        help="Prints to stdout the keys in the current dictionary, each on a new line.")
 add_output_action("--print", const="print",
         help="Prints to stdout the value at the current path, without any formatting. If the value is a "
         "number, boolean, or if the value is null, it will be printed as it would using the JSON format. "
