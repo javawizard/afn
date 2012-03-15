@@ -208,35 +208,43 @@ add_modify_action("-G", "--insert-and-up", const="insert-and-up", nargs=1, metav
 
 output_actions = parser.add_argument_group("output actions")
 add_output_action = partial(output_actions.add_argument, dest="actions", action=AppendWithConst)
-add_output_action("--size", const="size",
+add_output_action("--size", const="size", nargs=0,
         help="Prints to stdout the number of entries or items in the current list or dictionary, the number of "
         "characters in the current string, or the number of bytes in the current data value.")
-add_output_action("--type", const="type",
+add_output_action("--type", const="type", nargs=0,
         help="Prints to stdout the type of the value at the current path. This will be one of number, boolean, null, "
         "string, list, dictionary, date, or data.")
-add_output_action("--keys", const="keys",
+add_output_action("--keys", const="keys", nargs=0,
         help="Prints to stdout the keys in the current dictionary, each on a new line.")
-add_output_action("--print", const="print",
+add_output_action("--print", const="print", nargs=0,
         help="Prints to stdout the value at the current path, without any formatting. If the value is a "
         "number, boolean, or if the value is null, it will be printed as it would using the JSON format. "
         "If the value is a string, its textual content will be printed, without escapes. If the value is "
         "data, it will be printed byte-for-byte with no escaping. It is an error to try to print a list or "
         "dictionary with this command.")
-add_output_action("--print-hex", const="print-hex",
+add_output_action("--print-hex", const="print-hex", nargs=0,
         help="Prints the value at the current path, which should be data, to stdout, encoded using hexidecimal.")
-add_output_action("--print-base64", const="print-base64",
+add_output_action("--print-base64", const="print-base64", nargs=0,
         help="Prints the value at the current path, which should be data, to stdout, encoded using Base64.")
-add_output_action("--print-rot13", const="print-rot13",
+add_output_action("--print-rot13", const="print-rot13", nargs=0,
         help="Prints the value at the current path, which should be a string, to stdout, encoded "
         "using ROT-13.")
-add_output_action("--print-flipped", const="print-flipped",
+add_output_action("--print-flipped", const="print-flipped", nargs=0,
         help="Prints the value at the current path, which should be a string, to stdout, flipped such that one "
         "would be able to read the text in question upside-down.")
 add_output_action("--strftime", const="strftime", nargs=1, metavar="<format>",
         help="Formats the date at the current path using <format> and prints the result to stdout."
         "<format> uses the same format as the C "
         'strftime function (the UNIX date command also uses the same format); see "man strftime" '
-        ' or "man date" for details of the format used.")
+        ' or "man date" for details of the format used.')
+
+
+
+flip_chars = (u"a\u0250bqc\u0254dpe\u01ddf\u025fg\u0183h\u0265i\u0131j\u027ek\u029ellm\u026fnuoopd"
+		u"qbr\u0279sst\u0287unv\u028cw\u028dxxy\u028ezz.\u02d9,'',`,;\u061b!\u00a1?\u00bf[]][())({}}{<>><_\u203e")
+flip_charmap = dict(zip(flip_chars[0::2], flip_chars[1::2])) # Map with odd-numbered
+# chars in flip_chars as keys and even-numbered chars as values
+flipped = lambda text: "".join([flip_charmap.get(c, c) for c in reversed(text.lower())])
 
 
 class JSONFormatter(object):
@@ -420,6 +428,12 @@ for action_info in args.actions:
         index = int(params[0])
         v.insert(index, None)
         path.append(index)
+    elif action == "print-flipped":
+        v = lookup()
+        print flipped(v)
+    elif action == "size":
+        v = lookup()
+        print len(v)
     else:
         raise Exception("Unknown action (this is usually a bug in the JSON command): " + action)
 if file_to_write is not None:
