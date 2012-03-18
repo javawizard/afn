@@ -1,0 +1,9 @@
+So I'm going to rewrite jzbot2-old in Python, and make it more sane in the process, and the result will be known as JZBot4.
+
+So there are some things that I want JZBot4 to do differently than JZBot did:
+
+    Fact, the scripting language used by JZBot, needs to be able to do more and be more flexible, and I need to write a decent editor for it, even if it's just one that highlights opening and closing braces.
+    
+    Most, if not all, commands should be written in Fact, and in line with the previous paragraph, Fact should be easy, flexible, and intuitive enough that this is possible. Most of these commands would have their ACLs set up so that they're read-only, and only someone with access to the machine on which the bot is running would be able to change that.
+    
+    As mentioned in the previous paragraph, factoids should have some sort of access control lists. The original JZBot had a single global list of users allowed to modify anything, which is rather inconvenient to say the least. The new bot should provide a better solution involving ACLs. The bot's underlying storage, the equivalent of persistent vars in the old JZBot, would also have to be ACL-regulated (and possibly even quota'd) to make the whole idea work.

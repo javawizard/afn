@@ -280,6 +280,12 @@ Of course, that makes me think that maybe path-based binding should be implement
 
 (And, of course, I've been thinking a lot about replacing the whole path idea with JPath tracing/reverse queries (which are another thing I was thinking of that would be queries that use KVO to keep their results updated as their input data changes, and also change their input data as their results change, which would basically be a replacement for the whole bindings system anyways) which would be cool, except that I think the tracing engine is going to take a huge amount of work to write.)
 
+Ok, I'm just going to implement this like cocoa, and if we're observing a list at a particular path, and somewhere up the path the key goes to null, then we'll get a key event for that observer saying that the value just went to null.
+
+Not necessarily optimal, but it'll do for now.
+
+
+
 
 
 
