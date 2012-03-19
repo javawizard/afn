@@ -21,3 +21,49 @@ true, true, true: ordered multimap
 
 So, the operations we need...
 
+We need things to add a new item to the collection.
+
+And we need a bunch of different variants of this sort of operation...
+
+We need a variant that adds the item to the end of the collection, and one that allows specifying an index to add the item at, and one that allows replacing the item at a particular index. Only the former would function correctly on an unordered collection; the behavior of the others is undefined.
+
+We also need a variant that gets rid of an existing conflicting value in the case of a unique collection, instead of refusing to add the new value.
+
+Then we need a variant that accepts a value.
+
+So that gives us 12 different methods.
+
+Wow.
+
+I think I'll run with it, though, and see how it goes.
+
+I need to come up with names for the methods, though.
+
+So, with List, the add-at-the-end and add-at-an-index methods are called add, while the set-an-index-to-an-item method is called set.
+
+So we could have add and set.
+
+Then we could have additional parameters for the value.
+
+So then what do we want to name the ones that replace existing values instead?
+
+Maybe put and replace.
+
+Let's try that.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
