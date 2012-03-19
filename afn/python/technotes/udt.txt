@@ -150,6 +150,8 @@ That's probably it for now.
 
 Ones I'll want to consider in the future: methods for adding all items from another collection, methods for converting the collection to an array, etc.
 
+So now we need an abstract implementation or two that provide a lot of the methods and require only a few to be implemented.
+
 
 
 
