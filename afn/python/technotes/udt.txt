@@ -85,6 +85,63 @@ And I'll probably have an iterable/collection for iterating over the values in t
 
 I might also have one that iterates over unique items; removing a value from this iterable would cause all corresponding items to be removed.
 
+So now we need to have methods for getting things.
+
+We'll want a variant that gets the item at a particular index and one that gets the item by a particular item. If that makes sense.
+
+We'll want variants that return the first, last, or all matching items. This, yet again, doesn't make sense for indexed requests, so they wouldn't count.
+
+We'll also want variants that return the items themselves, the indexes, or the values.
+
+Oh good heavens, that's sixteen different variants. There has to be a way to cut down on that...
+
+Well, let's see... We have three specializations: query by, first/last/all, and return items/indexes/values.
+
+So...
+
+index/first/item -> Yes
+index/first/index -> No, we already know the index
+index/first/value -> Yes
+index/last/item -> No, same as index/first/item
+index/last/index -> No, we already know the index
+index/last/value -> No, same as index/first/value
+index/all/items -> No, won't be more than one item per index
+index/all/indexes -> No, won't be more than one item per index
+index/all/values -> No, won't be more than one item per index
+item/first/item -> Maybe, could make sense if actual item is different than item being queried but are equals()-equal
+item/first/index -> Yes
+item/first/value -> Yes, equivalent to java.util.Map's get
+item/last/item -> Maybe, see three lines above
+item/last/index -> Yes
+item/last/value -> Yes
+item/all/items -> Maybe, see six lines above
+item/all/indexes -> Yes
+item/all/values -> Yes
+any/first/item -> Maybe, would be the same as index/first/item for index 0
+any/first/index -> Maybe, see previous line
+any/first/value -> Maybe, see previous line
+any/last/item -> Maybe, would be the same as index/last/item for index size()-1
+any/last/index -> Maybe, see previous line
+any/last/value -> Maybe, see previous line
+any/all/items -> No, same as the collection itself
+any/all/indexes -> No, can be derived from the length of the collection
+any/all/values -> Maybe, unless there's a separate dedicated mechanism for this
+
+Ok, that's 8 combinations, 18 if I choose to add the ones I'm still deciding about.
+
+That's a bit more reasonable.
+
+As for naming...
+
+Maybe we have methods named something like getFirstItem, getLastIndex,
+getValues, etc.
+
+So basically, get(First|Last|All)(Index|Item|Value)[s].
+
+Or maybe s/All//.
+
+That sounds good.
+
 
 
 
