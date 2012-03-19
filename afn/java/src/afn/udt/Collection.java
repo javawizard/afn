@@ -1,7 +1,18 @@
 package afn.udt;
 
+/**
+ * A general collection type that can represent a list, a set, or a map, as well
+ * as a variety of other types such as a multimap, a multiset, an ordered map,
+ * an ordered set, and an ordered multimap.
+ * 
+ * add and set do not replace any existing items; put and replace do.
+ * 
+ * @author jcp
+ * 
+ * @param <I>
+ * @param <V>
+ */
 public interface Collection<I, V> extends Iterable<I> {
-    
     public void add(I item);
     
     public void add(I item, V value);
@@ -26,23 +37,23 @@ public interface Collection<I, V> extends Iterable<I> {
     
     public void replace(int index, I item, V value);
     
-    public void removeFirst(I item);
-    
-    public void removeFirst();
+    public void remove(I item);
     
     public void removeLast(I item);
     
-    public void removeLast();
-    
     public void removeAll(I item);
     
-    public void removeAll();
-    
-    public void removeFirstValue(V value);
+    public void removeValue(V value);
     
     public void removeLastValue(V value);
     
     public void removeAllValues(V value);
+    
+    public void remove();
+    
+    public void removeLast();
+    
+    public void removeAll();
     
     public void remove(int index);
     
@@ -67,4 +78,14 @@ public interface Collection<I, V> extends Iterable<I> {
     public Collection<Integer, Void> getIndexes(I item);
     
     public Collection<V, Void> getValues(I item);
+    
+    public boolean isOrdered();
+    
+    public boolean allowsDuplicates();
+    
+    public boolean acceptsValues();
+    
+    public boolean hasItem(I item);
+    
+    public boolean hasValue(V value);
 }
