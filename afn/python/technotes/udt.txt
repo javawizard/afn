@@ -79,6 +79,12 @@ Done.
 
 So now, collections need to be iterable. And iterating over them yields their items, in order for ordered collections or in no particular order for unordered collections.
 
+Then we have a method entries() which for now returns an iterable over the entries in the collection. I may have it return a collection in its own right; I'll decide later.
+
+And I'll probably have an iterable/collection for iterating over the values in the future.
+
+I might also have one that iterates over unique items; removing a value from this iterable would cause all corresponding items to be removed.
+
 
 
 
