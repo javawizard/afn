@@ -5,7 +5,8 @@ package afn.udt;
  * as a variety of other types such as a multimap, a multiset, an ordered map,
  * an ordered set, and an ordered multimap.
  * 
- * add and set do not replace any existing items; put and replace do.
+ * add does not replace existing items; put does. This is irrelevant for set,
+ * which always sets the item at the index to the specified item.
  * 
  * @author jcp
  * 
@@ -33,10 +34,6 @@ public interface Collection<I, V> extends Iterable<I> {
     
     public void put(int index, I item, V value);
     
-    public void replace(int index, I item);
-    
-    public void replace(int index, I item, V value);
-    
     public void remove(I item);
     
     public void removeLast(I item);
@@ -48,10 +45,6 @@ public interface Collection<I, V> extends Iterable<I> {
     public void removeLastValue(V value);
     
     public void removeAllValues(V value);
-    
-    public void remove();
-    
-    public void removeLast();
     
     public void removeAll();
     
@@ -67,9 +60,7 @@ public interface Collection<I, V> extends Iterable<I> {
     
     public int getIndex(I item);
     
-    public V get(I item); // TODO: consider aliasing to get(), or
-    // change naming convention from getXValue to getX, then change getFirstX
-    // and getLastX to getX and getLastX
+    public V get(I item);
     
     public V getLastIndex(I item);
     

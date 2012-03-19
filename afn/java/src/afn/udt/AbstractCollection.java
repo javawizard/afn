@@ -29,8 +29,4 @@ public abstract class AbstractCollection<I, V> implements Collection<I, V> {
         put(index, item, null);
     }
     
-    public void replace(int index, I item) {
-        replace(index, item, null);
-    }
-    
 }
