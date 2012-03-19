@@ -1,7 +1,6 @@
 package afn.udt;
 
-public interface Collection<I, V> {
-    public int size();
+public interface Collection<I, V> extends Iterable<I> {
     
     public void add(I item);
     

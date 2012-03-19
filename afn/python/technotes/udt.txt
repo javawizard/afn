@@ -75,7 +75,9 @@ Well, we need a size method.
 
 Let's add that.
 
+Done.
 
+So now, collections need to be iterable. And iterating over them yields their items, in order for ordered collections or in no particular order for unordered collections.
 
 
 
