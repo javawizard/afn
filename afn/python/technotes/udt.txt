@@ -1,0 +1,23 @@
+So, I'm coming up with a collection-like thing that is a list, a set, and a dictionary all at the same time.
+
+I basically realized that there are three different aspects of this sort of datatype that lists, sets, and maps can fall into. Those are:
+
+    ordered: whether or not the collection is ordered
+    
+    duplicates: whether or not the collection allows duplicate items
+    
+    values: whether or not each item in the collection has an associated value
+
+There are, of course, eight possible combinations of the above aspects. The corresponding datatypes are:
+
+false, false, false: set
+false, false, true: map
+false, true, false: multiset
+false, true, true: multimap
+true, false, false: ordered set
+true, false, true: ordered map
+true, true, false: ordered multiset (also known as a list)
+true, true, true: ordered multimap
+
+So, the operations we need...
+
