@@ -47,4 +47,6 @@ public interface Collection<I, V> {
     
     public void remove(int index);
     
+    public int size();
+    
 }

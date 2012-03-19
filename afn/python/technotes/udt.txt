@@ -67,6 +67,16 @@ So we have 10 combinations then.
 
 Let's try that.
 
+Ok, that worked.
+
+So now, methods for getting things...
+
+Well, we need a size method.
+
+Let's add that.
+
+
+
 
 
 
