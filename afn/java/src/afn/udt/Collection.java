@@ -48,6 +48,8 @@ public interface Collection<I, V> extends Iterable<I> {
     
     public int size();
     
+    public Iterable<Entry<I, V>> entries();
+    
     public I getItem(int index);
     
     public V get(int index);
