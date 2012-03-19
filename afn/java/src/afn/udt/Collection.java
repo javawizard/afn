@@ -27,4 +27,24 @@ public interface Collection<I, V> {
     
     public void replace(int index, I item, V value);
     
+    public void removeFirst(I item);
+    
+    public void removeFirst();
+    
+    public void removeLast(I item);
+    
+    public void removeLast();
+    
+    public void removeAll(I item);
+    
+    public void removeAll();
+    
+    public void removeFirstValue(V value);
+    
+    public void removeLastValue(V value);
+    
+    public void removeAllValues(V value);
+    
+    public void remove(int index);
+    
 }

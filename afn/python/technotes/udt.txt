@@ -51,7 +51,21 @@ Maybe put and replace.
 
 Let's try that.
 
+Ok, that worked.
 
+So now, methods for removing things...
+
+We need a variant for removing a particular item, an item at a particular index, an item with a certain corresponding value, or any item.
+
+We need a variant for removing the first such item, the last such item, or all such items.
+
+And then, of course, we need a variant for clearing out the entire thing.
+
+It doesn't make sense, however, to have first/last/all variants when removing by index, so we don't need to worry about that.
+
+So we have 10 combinations then.
+
+Let's try that.
 
 
 
