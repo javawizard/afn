@@ -62,7 +62,7 @@ public interface Collection<I, V> extends Iterable<I> {
     
     public V get(I item);
     
-    public V getLastIndex(I item);
+    public int getLastIndex(I item);
     
     public V getLast(I item);
     

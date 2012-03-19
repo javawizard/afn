@@ -29,4 +29,12 @@ public abstract class AbstractCollection<I, V> implements Collection<I, V> {
         put(index, item, null);
     }
     
+    public void remove(I item) {
+        remove(getIndex(item));
+    }
+    
+    public void removeLast(I item) {
+        remove(getLastIndex(item));
+    }
+    
 }
