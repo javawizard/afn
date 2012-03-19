@@ -50,17 +50,17 @@ public interface Collection<I, V> extends Iterable<I> {
     
     public I getItem(int index);
     
-    public V getValue(int index);
+    public V get(int index);
     
-    public int getFirstIndex(I item);
+    public int getIndex(I item);
     
-    public V getFirstValue(I item); // TODO: consider aliasing to get(), or
+    public V get(I item); // TODO: consider aliasing to get(), or
     // change naming convention from getXValue to getX, then change getFirstX
     // and getLastX to getX and getLastX
     
     public V getLastIndex(I item);
     
-    public V getLastValue(I item);
+    public V getLast(I item);
     
     public Collection<Integer, Void> getIndexes(I item);
     
