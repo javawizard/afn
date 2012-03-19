@@ -152,6 +152,14 @@ Ones I'll want to consider in the future: methods for adding all items from anot
 
 So now we need an abstract implementation or two that provide a lot of the methods and require only a few to be implemented.
 
+So... I think I'm going to specify that, at least for the add/set/put/replace methods, if the collection doesn't support associated values, it should simply discard any values passed in, so that, for example, add(I item, V value) behaves exactly the same as add(I item) for a collection that does not support values.
+
+That allows all of the add/set/put/replace(I item) etc methods to be implemented by the abstract class to simply call the corresponding value version, passing null as the value.
+
+Then, the ones that don't take an index argument could be implemented to call add/put with the collection's size as the argument.
+
+So that cuts it down to four. I'll go implement those.
+
 
 
 
