@@ -20,12 +20,20 @@ public class Result {
     
     public Result(int end, Object value) {
         this.matched = true;
+        this.end = end;
         this.value = value;
     }
     
     public Result(int end, Object value, List<Expectation> expected) {
         this.matched = true;
+        this.end = end;
         this.value = value;
         this.expected.addAll(expected);
+    }
+    
+    public String toString() {
+        return "<afn.parcon.Result, " + (matched ? "matched" : "failed")
+                + ", end=" + end + ", value=" + value + ", expected="
+                + expected + ">";
     }
 }

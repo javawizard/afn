@@ -39,4 +39,7 @@ public class Then extends Parser {
         return result;
     }
     
+    public String toString() {
+        return "<Then: first=" + first + ", second=" + second + ">";
+    }
 }

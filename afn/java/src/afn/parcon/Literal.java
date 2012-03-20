@@ -22,4 +22,9 @@ public class Literal extends Parser {
         else
             return new Result();
     }
+    
+    public String toString() {
+        return "<Literal, " + (significant ? "significant" : "not significant")
+                + ": \"" + string + "\">";
+    }
 }
