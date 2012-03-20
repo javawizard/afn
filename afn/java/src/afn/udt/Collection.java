@@ -70,6 +70,18 @@ public interface Collection<I, V> extends Iterable<I> {
     
     public Collection<V, Void> getValues(I item);
     
+    public I getItemForValue(V value);
+    
+    public int getIndexForValue(V value);
+    
+    public I getLastItemForValue(V value);
+    
+    public int getLastIndexForValue(V value);
+    
+    public Collection<I, Void> getItemsForValue(V value);
+    
+    public Collection<Integer, Void> getIndexesForValue(V value);
+    
     public boolean isOrdered();
     
     public boolean allowsDuplicates();

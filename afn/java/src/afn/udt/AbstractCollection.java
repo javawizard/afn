@@ -37,4 +37,24 @@ public abstract class AbstractCollection<I, V> implements Collection<I, V> {
         remove(getLastIndex(item));
     }
     
+    public void removeAll(I item) {
+        
+    }
+    
+    public void removeValue(V value) {
+        
+    }
+    
+    public void removeLastValue(V value) {
+    }
+    
+    public void removeAllValues(V value) {
+    }
+    
+    public void removeAll() {
+        int size = size();
+        for (int i = size - 1; i >= 0; i--)
+            remove(i);
+    }
+    
 }
