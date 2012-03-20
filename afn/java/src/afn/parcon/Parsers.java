@@ -9,6 +9,10 @@ public class Parsers {
         return new Literal(text, true);
     }
     
+    public static Literal significant(String text) {
+        return significantLiteral(text);
+    }
+    
     public static First first(Parser... parsers) {
         return new First(parsers);
     }

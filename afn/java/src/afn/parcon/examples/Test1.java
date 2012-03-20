@@ -5,7 +5,8 @@ import afn.parcon.Parser;
 
 public class Test1 {
     public static void main(String[] args) {
-        Parser parser = literal("a").then(literal("b")).then(literal("c"));
+        Parser parser = significant("a").then(significant("b")).then(
+                significant("c"));
         Parser whitespace = literal(" ");
         String text = "abcde";
         System.out.println(parser);
