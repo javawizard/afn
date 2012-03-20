@@ -20,4 +20,8 @@ public abstract class Parser {
     public Then then(Parser next) {
         return new Then(this, next);
     }
+    
+    public Discard discard() {
+        return new Discard(this);
+    }
 }
