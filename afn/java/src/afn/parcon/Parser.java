@@ -28,4 +28,12 @@ public abstract class Parser {
     public Translate translate(OneFunction function) {
         return new Translate(this, function);
     }
+    
+    public OneOrMore onceOrMore() {
+        return new OneOrMore(this);
+    }
+    
+    public ZeroOrMore zeroOrMore() {
+        return new ZeroOrMore(this);
+    }
 }
