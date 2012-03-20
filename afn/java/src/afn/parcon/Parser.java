@@ -1,15 +1,15 @@
 package afn.parcon;
 
-public abstract class Parser<T> {
-    public abstract Result<T> parse(String text, int position, int end,
+public abstract class Parser {
+    public abstract Result parse(String text, int position, int end,
             Parser space);
     
-    public T parseString(String text) {
+    public Object parseString(String text) {
         return null;
     }
     
     public int consume(String text, int position, int end) {
-        Result<T> result = parse(text, position, end, Invalid.invalid);
+        Result result = parse(text, position, end, Invalid.invalid);
         while (result.matched) {
             position = result.end;
             result = parse(text, position, end, Invalid.invalid);
@@ -17,11 +17,7 @@ public abstract class Parser<T> {
         return position;
     }
     
-    public Then<T> then(Then<T> next) {
-        return new Then<T>(this, next);
-    }
-    
-    public Then<T> then(Parser<T> next) {
-        return new Then<T>(this, next);
+    public Then then(Parser next) {
+        return new Then(this, next);
     }
 }

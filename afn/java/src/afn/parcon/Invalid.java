@@ -1,6 +1,6 @@
 package afn.parcon;
 
-public class Invalid extends Parser<Void> {
+public class Invalid extends Parser {
     
     /**
      * A singleton Invalid instance that can be used to avoid the overhead of
@@ -8,8 +8,8 @@ public class Invalid extends Parser<Void> {
      */
     public static final Invalid invalid = new Invalid();
     
-    public Result<Void> parse(String text, int position, int end, Parser space) {
-        return new Result<Void>();
+    public Result parse(String text, int position, int end, Parser space) {
+        return new Result();
     }
     
 }

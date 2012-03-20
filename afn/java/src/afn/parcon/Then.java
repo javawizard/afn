@@ -1,68 +1,42 @@
 package afn.parcon;
 
-public class Then<C> extends Parser<ThenList<C>> {
+public class Then extends Parser {
     private Parser first;
     private Parser second;
     
-    public Then(Then<C> first, Then<C> second) {
-        this.first = first;
-        this.second = second;
-    }
-    
-    public Then(Then<C> first, Parser<C> second) {
-        this.first = first;
-        this.second = second;
-    }
-    
-    public Then(Parser<C> first, Then<C> second) {
-        this.first = first;
-        this.second = second;
-    }
-    
-    public Then(Parser<C> first, Parser<C> second) {
+    public Then(Parser first, Parser second) {
         this.first = first;
         this.second = second;
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public Result<ThenList<C>> parse(String text, int position, int end,
-            Parser space) {
-        Result<Object> firstResult = first.parse(text, position, end, space);
+    public Result parse(String text, int position, int end, Parser space) {
+        Result firstResult = first.parse(text, position, end, space);
         if (!firstResult.matched)
-            return new Result<ThenList<C>>(firstResult.expected);
-        Result<Object> secondResult = second.parse(text, firstResult.end, end,
-                space);
+            return new Result(firstResult.expected);
+        Result secondResult = second.parse(text, firstResult.end, end, space);
         if (!secondResult.matched)
-            return new Result<ThenList<C>>(secondResult.expected);
-        boolean combineFirst = first instanceof Then;
-        boolean combineSecond = second instanceof Then;
+            return new Result(secondResult.expected);
         Object a = firstResult.value;
         Object b = secondResult.value;
-        ThenList<C> items = new ThenList<C>();
+        boolean combineFirst = a instanceof ThenList;
+        boolean combineSecond = b instanceof ThenList;
+        ThenList items = new ThenList();
         if (combineFirst) {
             items.addAll((ThenList) a);
         } else if (a != null) {
-            items.add((C) a);
+            items.add(a);
         }
         if (combineSecond) {
             items.addAll((ThenList) b);
         } else if (b != null) {
-            items.add((C) b);
+            items.add(b);
         }
-        Result<ThenList<C>> result = new Result<ThenList<C>>(secondResult.end,
-                items);
+        Result result = new Result(secondResult.end, items);
         result.expected.addAll(firstResult.expected);
         result.expected.addAll(secondResult.expected);
         return result;
-    }
-    
-    public Then<C> then(Then<C> next) {
-        return new Then(this, next);
-    }
-    
-    public Then<C> then(Parser<C> next) {
-        return new Then(this, next);
     }
     
 }
