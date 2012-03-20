@@ -1,6 +1,6 @@
 package afn.parcon.examples;
 
-import static afn.parcon.Parsers.*;
+import static afn.parcon.Functions.*;
 import afn.parcon.Parser;
 
 public class Test1 {
