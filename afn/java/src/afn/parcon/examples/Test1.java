@@ -9,7 +9,7 @@ public class Test1 {
                 .then(first(significant("c"),
                         significant("d").then(significant("e"))));
         Parser whitespace = literal(" ");
-        String text = "abcdefg";
+        String text = "a   b  cdefg";
         System.out.println(parser);
         System.out.println(parser.parse(text, 0, text.length(), whitespace));
     }
