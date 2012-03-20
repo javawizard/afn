@@ -24,4 +24,8 @@ public abstract class Parser {
     public Discard discard() {
         return new Discard(this);
     }
+    
+    public Translate translate(Function function) {
+        return new Translate(this, function);
+    }
 }
