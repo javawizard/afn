@@ -56,4 +56,13 @@ public class Then<C> extends Parser<ThenList<C>> {
         result.expected.addAll(secondResult.expected);
         return result;
     }
+    
+    public Then<C> then(Then<C> next) {
+        return new Then(this, next);
+    }
+    
+    public Then<C> then(Parser<C> next) {
+        return new Then(this, next);
+    }
+    
 }

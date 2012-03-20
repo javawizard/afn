@@ -16,4 +16,12 @@ public abstract class Parser<T> {
         }
         return position;
     }
+    
+    public Then<T> then(Then<T> next) {
+        return new Then<T>(this, next);
+    }
+    
+    public Then<T> then(Parser<T> next) {
+        return new Then<T>(this, next);
+    }
 }
