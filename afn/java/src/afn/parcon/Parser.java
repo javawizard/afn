@@ -25,7 +25,7 @@ public abstract class Parser {
         return new Discard(this);
     }
     
-    public Translate translate(Function function) {
+    public Translate translate(OneFunction function) {
         return new Translate(this, function);
     }
 }

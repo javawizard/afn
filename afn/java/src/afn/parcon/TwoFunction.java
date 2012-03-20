@@ -9,6 +9,6 @@ package afn.parcon;
  * @param <B>
  * @param <R>
  */
-public interface Operation<A, B, R> {
+public interface TwoFunction<A, B, R> {
     public R call(A a, B b);
 }

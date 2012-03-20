@@ -8,6 +8,6 @@ package afn.parcon;
  * @param <P>
  * @param <R>
  */
-public interface Function<P, R> {
+public interface OneFunction<P, R> {
     public R call(P value);
 }
