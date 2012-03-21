@@ -25,34 +25,25 @@ import afn.parcon.Parser;
  */
 public class Expression {
     /*
-     * First we need to write a class providing our actual operations. If you
-     * wanted to parser but not evaluate an expression, you might write this to
-     * return (and accept as parameters) AST nodes of some sort. We, however,
-     * want our parser to actually evaluate the expression, so we'll have this
-     * class do the actual operations.
-     * 
-     * Note that we're writing these as one class to make things a bit shorter.
-     * The operations could instead have been written as anonymous inner classes
-     * at the locations where they're passed into the grammar.
+     * First we need to create some methods that will perform the actual
+     * operations. We choose to do the parsing and evaluating in the same steps
+     * for convenience; we could, instead, have had each of these methods return
+     * some sort of abstract syntax tree nodes.
      */
-    private static class Op implements TwoFunction<Double, Double, Double> {
-        private String op;
-        
-        public Op(String op) {
-            this.op = op;
-        }
-        
-        public Double call(Double a, Double b) {
-            if (op.equals("+"))
-                return a + b;
-            else if (op.equals("-"))
-                return a - b;
-            else if (op.equals("*"))
-                return a * b;
-            else if (op.equals("/"))
-                return a / b;
-            throw new RuntimeException("Invalid op: " + op);
-        }
+    public static Double add(Double x, Double y) {
+        return x + y;
+    }
+    
+    public static Double subtract(Double x, Double y) {
+        return x - y;
+    }
+    
+    public static Double multiply(Double x, Double y) {
+        return x * y;
+    }
+    
+    public static Double divide(Double x, Double y) {
+        return x / y;
     }
     
     /**
@@ -65,8 +56,11 @@ public class Expression {
         Forward expr = new Forward();
         Parser term = first(number.translate(toDouble), literal("(").then(expr)
                 .then(literal(")")));
-        term = new InfixExpr(term, op("*", new Op("*")), op("/", new Op("/")));
-        term = new InfixExpr(term, op("+", new Op("+")), op("-", new Op("-")));
+        term = new InfixExpr(term, op("*",
+                method2(Expression.class, "multiply")), op("/",
+                method2(Expression.class, "divide")));
+        term = new InfixExpr(term, op("+", method2(Expression.class, "add")),
+                op("-", method2(Expression.class, "subtract")));
         expr.parser = term;
         /*
          * That's it! Short, wasn't it? Now we'll use it to ask for an

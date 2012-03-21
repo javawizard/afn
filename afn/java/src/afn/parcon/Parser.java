@@ -5,7 +5,26 @@ public abstract class Parser {
             Parser space);
     
     public Object parseString(String text) {
-        return null;
+        return parseString(text, true, Functions.whitespace);
+    }
+    
+    public Object parseString(String text, boolean all, Parser whitespace) {
+        Result result = parse(text, 0, text.length(), whitespace);
+        if (result.matched) {
+            if (!all) { // We got a result back and we're not trying to match
+                // the entire string, so regardless of how much we parsed, we
+                // return.
+                return result.value;
+            }
+            // Result matched and we're trying to match everything, so we ask
+            // the whitespace parser to consume everything at the end, then
+            // check to see if the end position is equal to the string length,
+            // and if it is, we return the value.
+            if (whitespace.consume(text, result.end, text.length()) == text
+                    .length())
+                return result.value;
+        }
+        throw new RuntimeException("Parse failure");
     }
     
     public int consume(String text, int position, int end) {

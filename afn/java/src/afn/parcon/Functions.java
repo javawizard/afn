@@ -84,6 +84,8 @@ public class Functions {
         return (Parser) o;
     }
     
+    public static final Parser whitespace = charIn(" \n\r\t");
+    
     public static final Parser digit = charIn("0123456789");
     
     public static final Parser number = exact(
