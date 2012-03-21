@@ -10,6 +10,6 @@ public class ParseFailureException extends ParseException {
     }
     
     public String getMessage() {
-        return 
+        return Formatting.formatFailure(expectations);
     }
 }

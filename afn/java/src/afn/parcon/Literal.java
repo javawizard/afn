@@ -1,5 +1,7 @@
 package afn.parcon;
 
+import afn.parcon.errors.EStringLiteral;
+
 public class Literal extends Parser {
     private String string;
     private boolean significant;
@@ -18,9 +20,11 @@ public class Literal extends Parser {
         int expectedEnd = position + string.length();
         if (expectedEnd <= end
                 && text.substring(position, expectedEnd).equals(string))
-            return new Result(expectedEnd, significant ? string : null);
+            return new Result(expectedEnd, significant ? string : null,
+                    Functions.expectation0(expectedEnd));
         else
-            return new Result();
+            return new Result(Functions.expectation1(position,
+                    new EStringLiteral(text)));
     }
     
     public String toString() {

@@ -1,5 +1,7 @@
 package afn.parcon;
 
+import afn.parcon.errors.ParseFailureException;
+
 public abstract class Parser {
     public abstract Result parse(String text, int position, int end,
             Parser space);
@@ -24,7 +26,7 @@ public abstract class Parser {
                     .length())
                 return result.value;
         }
-        throw new RuntimeException("Parse failure");
+        throw new ParseFailureException(result.expected);
     }
     
     public int consume(String text, int position, int end) {

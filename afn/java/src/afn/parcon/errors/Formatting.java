@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Formatting {
-    public ExpectationSet filter(List<Expectation> expectations) {
+    public static ExpectationSet filter(List<Expectation> expectations) {
         if (expectations.size() == 0)
             return new ExpectationSet(0);
         boolean onlyUnsatisfiables = true;
@@ -42,12 +42,12 @@ public class Formatting {
         return new ExpectationSet(position, list3);
     }
     
-    public String formatFailure(List<Expectation> expectations) {
+    public static String formatFailure(List<Expectation> expectations) {
         ExpectationSet set = filter(expectations);
         return formatExpectations(set.position, set.expectations);
     }
     
-    public String formatExpectations(int position,
+    public static String formatExpectations(int position,
             List<ExpectationType> expectations) {
         StringBuilder b = new StringBuilder();
         for (ExpectationType e : expectations) {

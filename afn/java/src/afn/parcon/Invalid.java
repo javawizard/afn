@@ -9,7 +9,7 @@ public class Invalid extends Parser {
     public static final Invalid invalid = new Invalid();
     
     public Result parse(String text, int position, int end, Parser space) {
-        return new Result();
+        return new Result(Functions.expectation0(position));
     }
     
 }
