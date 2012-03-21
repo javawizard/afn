@@ -1,4 +1,4 @@
-package afn.parcon;
+package afn.parcon.expectations;
 
 public class Expectation {
     

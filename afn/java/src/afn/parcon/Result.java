@@ -3,6 +3,8 @@ package afn.parcon;
 import java.util.ArrayList;
 import java.util.List;
 
+import afn.parcon.expectations.Expectation;
+
 public class Result {
     public boolean matched;
     public int end;

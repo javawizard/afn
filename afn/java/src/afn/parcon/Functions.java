@@ -1,6 +1,7 @@
 package afn.parcon;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -83,6 +84,7 @@ public class Functions {
             return literal((String) o);
         return (Parser) o;
     }
+
     
     public static final Parser whitespace = charIn(" \n\r\t");
     

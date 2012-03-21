@@ -5,6 +5,8 @@ import static afn.parcon.Functions.literal;
 import java.util.ArrayList;
 import java.util.List;
 
+import afn.parcon.expectations.Expectation;
+
 public class InfixExpr extends Parser {
     public static class Operator {
         public Parser parser;
