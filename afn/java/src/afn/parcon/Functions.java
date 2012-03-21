@@ -68,6 +68,16 @@ public class Functions {
         return new Exact(parser);
     }
     
+    public static <P, R> ReflectiveOneFunction<P, R> method1(
+            Object objectOrClass, String method) {
+        return new ReflectiveOneFunction<P, R>(objectOrClass, method);
+    }
+    
+    public static <A, B, R> ReflectiveTwoFunction<A, B, R> method2(
+            Object objectOrClass, String method) {
+        return new ReflectiveTwoFunction<A, B, R>(objectOrClass, method);
+    }
+    
     public static Parser promote(Object o) {
         if (o instanceof String)
             return literal((String) o);
