@@ -5,6 +5,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import afn.parcon.errors.EUnsatisfiable;
+import afn.parcon.errors.Expectation;
+import afn.parcon.errors.ExpectationType;
+
 public class Functions {
     public static final OneFunction<Object, Double> toDouble = new OneFunction<Object, Double>() {
         public Double call(Object value) {
@@ -84,7 +88,30 @@ public class Functions {
             return literal((String) o);
         return (Parser) o;
     }
-
+    
+    /**
+     * Returns a list containing a single expectation, an expectation at the
+     * specified position and whose type is a newly-created EUnsatisfiable.
+     * 
+     * @param position
+     * @return
+     */
+    public static List<Expectation> expectation0(int position) {
+        return Utils.list(new Expectation(position, new EUnsatisfiable()));
+    }
+    
+    /**
+     * Returns a list containing a single expectation, an expectation at the
+     * specified position and with the specified type.
+     * 
+     * @param position
+     * @param expectation
+     * @return
+     */
+    public static List<Expectation> expectation1(int position,
+            ExpectationType expectation) {
+        return Utils.list(new Expectation(position, expectation));
+    }
     
     public static final Parser whitespace = charIn(" \n\r\t");
     

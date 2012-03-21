@@ -42,7 +42,22 @@ public class Formatting {
         return new ExpectationSet(position, list3);
     }
     
-    public String format(List<Expectation> expectations) {
-        
+    public String formatFailure(List<Expectation> expectations) {
+        ExpectationSet set = filter(expectations);
+        return formatExpectations(set.position, set.expectations);
+    }
+    
+    public String formatExpectations(int position,
+            List<ExpectationType> expectations) {
+        StringBuilder b = new StringBuilder();
+        for (ExpectationType e : expectations) {
+            if (b.length() != 0)
+                b.append(", ");
+            b.append(e.format());
+        }
+        if (expectations.size() == 1)
+            return "At position " + position + ": expected " + b;
+        else
+            return "At position " + position + ": expected one of " + b;
     }
 }

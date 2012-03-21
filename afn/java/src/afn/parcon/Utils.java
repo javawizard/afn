@@ -12,7 +12,7 @@ public class Utils {
         return list;
     }
     
-    public <A> List<A> list(A... a) {
+    public static <A> List<A> list(A... a) {
         return new ArrayList<A>(Arrays.asList(a));
     }
 }
