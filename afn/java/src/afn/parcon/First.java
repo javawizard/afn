@@ -3,7 +3,7 @@ package afn.parcon;
 import java.util.ArrayList;
 import java.util.List;
 
-import afn.parcon.expectations.Expectation;
+import afn.parcon.errors.Expectation;
 import static afn.parcon.Utils.concat;
 
 public class First extends Parser {
