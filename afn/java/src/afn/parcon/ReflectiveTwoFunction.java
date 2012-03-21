@@ -40,7 +40,8 @@ public class ReflectiveTwoFunction<A, B, R> implements TwoFunction<A, B, R> {
         try {
             return (R) method.invoke(object, a, b);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Exception calling with arguments " + a
+                    + " and " + b, e);
         }
     }
     

@@ -20,7 +20,7 @@ public class Optional extends Parser {
         if (result.matched)
             return result;
         else
-            return new Result(end, defaultResult, result.expected);
+            return new Result(position, defaultResult, result.expected);
     }
     
 }

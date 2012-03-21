@@ -33,7 +33,10 @@ public class Then extends Parser {
         } else if (b != null) {
             items.add(b);
         }
-        Result result = new Result(secondResult.end, items);
+        // For now, we mirror the Python version of Parcon's behavior and avoid
+        // wrapping single items. I may change this later.
+        Object resultValue = items.size() == 1 ? items.get(0) : items;
+        Result result = new Result(secondResult.end, resultValue);
         result.expected.addAll(firstResult.expected);
         result.expected.addAll(secondResult.expected);
         return result;
