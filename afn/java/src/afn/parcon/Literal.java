@@ -24,7 +24,7 @@ public class Literal extends Parser {
                     Functions.expectation0(expectedEnd));
         else
             return new Result(Functions.expectation1(position,
-                    new EStringLiteral(text)));
+                    new EStringLiteral(string)));
     }
     
     public String toString() {
