@@ -9,6 +9,8 @@ import afn.parcon.InfixExpr;
 import afn.parcon.TwoFunction;
 import static afn.parcon.InfixExpr.op;
 import afn.parcon.Parser;
+import afn.parcon.errors.Formatting;
+import afn.parcon.errors.ParseFailureException;
 
 /**
  * A simple Parcon example demonstrating how to write a mathematical expression
@@ -70,8 +72,21 @@ public class Expression {
                 .println("Type an expression to evaluate. Operations are "
                         + "+, -, *, and /. Parentheses are allowed. Order of precedence "
                         + "is as expected: + and - lower than * and /.");
-        String line = new Scanner(System.in).nextLine();
-        System.out.println("Result: " + expr.parseString(line)); // The result
-        // of expr.parseString will be a java.lang.Double
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String line = scanner.nextLine();
+            try {
+                System.out.println("Result: " + expr.parseString(line));
+                // The result of expr.parseString will be a java.lang.Double
+            } catch (ParseFailureException e) {
+                int position = Formatting.filter(e.expectations).position;
+                for(int i = 0; i < position; i++)
+                    System.out.print(" ");
+                System.out.println("^");
+                System.out.println("The expression you typed has a problem: "
+                        + e.getMessage());
+            }
+            System.out.println("Type another expression.");
+        }
     }
 }

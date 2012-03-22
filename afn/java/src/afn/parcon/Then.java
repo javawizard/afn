@@ -17,7 +17,8 @@ public class Then extends Parser {
             return new Result(firstResult.expected);
         Result secondResult = second.parse(text, firstResult.end, end, space);
         if (!secondResult.matched)
-            return new Result(secondResult.expected);
+            return new Result(Utils.concat(firstResult.expected,
+                    secondResult.expected));
         Object a = firstResult.value;
         Object b = secondResult.value;
         boolean combineFirst = a instanceof ThenList;
