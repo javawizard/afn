@@ -113,9 +113,14 @@ public class Functions {
         return Utils.list(new Expectation(position, expectation));
     }
     
+    public static ConstructorFunction construct(Class c) {
+        return new ConstructorFunction(c);
+    }
+    
     public static final Parser whitespace = charIn(" \n\r\t");
     
-    public static final Parser digit = charIn("0123456789").expect("any numerical digit");
+    public static final Parser digit = charIn("0123456789").expect(
+            "any numerical digit");
     
     public static final Parser number = exact(
             optional(charIn("-+")).then(digit.onceOrMore()).then(
