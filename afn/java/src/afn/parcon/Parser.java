@@ -57,4 +57,8 @@ public abstract class Parser {
     public ZeroOrMore zeroOrMore() {
         return new ZeroOrMore(this);
     }
+    
+    public Expected expect(String expected) {
+        return new Expected(this, expected);
+    }
 }
