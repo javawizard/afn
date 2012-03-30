@@ -1,5 +1,5 @@
 package afn.parcon.bnf;
 
-public interface Value {
+public interface Component {
     
 }

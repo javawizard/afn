@@ -1,6 +1,6 @@
 package afn.parcon.bnf;
 
-public class Text implements Value {
+public class Text implements Component {
     public Text(String value) {
         super();
         this.value = value;

@@ -1,6 +1,6 @@
 package afn.parcon.bnf;
 
-public class Reference implements Value {
+public class Reference implements Component {
     public Reference(String name) {
         super();
         this.name = name;

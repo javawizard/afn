@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Alternative {
-    public List<Value> values = new ArrayList<Value>();
+    public List<Component> values = new ArrayList<Component>();
 
     public Alternative() {
         super();
     }
 
-    public Alternative(List<Value> values) {
+    public Alternative(List<Component> values) {
         super();
         this.values = values;
     }

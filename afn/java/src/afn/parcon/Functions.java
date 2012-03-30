@@ -19,7 +19,13 @@ public class Functions {
             throw new RuntimeException("Not a string or a double: " + value);
         }
     };
-    
+    /**
+     * A OneFunction that flattens out the specified value. If the value is not
+     * an instance of {@link java.util.List List}, a new singleton List
+     * containing only the value in question is returned. If the value is a
+     * list, its values are recursively flattened and concatenated into a single
+     * list.
+     */
     public static final OneFunction<Object, List<Object>> flatten = new OneFunction<Object, List<Object>>() {
         public List<Object> call(Object value) {
             if (!(value instanceof List)) // If we just have one item, wrap it
@@ -44,6 +50,13 @@ public class Functions {
             return b.toString();
         }
     };
+    
+    public static <T> List<T> concatLists(List<T> first, List<T> second) {
+        return Utils.concat(first, second);
+    }
+    
+    public static final TwoFunction<List, List, List> concatLists = method2(
+            Functions.class, "concatLists");
     
     public static Literal literal(String text) {
         return new Literal(text);
@@ -75,6 +88,10 @@ public class Functions {
     
     public static Exact exact(Parser parser) {
         return new Exact(parser);
+    }
+    
+    public static Not not(Parser parser) {
+        return new Not(parser);
     }
     
     public static <P, R> ReflectiveOneFunction<P, R> method1(

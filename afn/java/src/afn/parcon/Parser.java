@@ -61,4 +61,20 @@ public abstract class Parser {
     public Expected expect(String expected) {
         return new Expected(this, expected);
     }
+    
+    public And onlyIf(Parser parser) {
+        return new And(this, parser);
+    }
+    
+    /**
+     * Same as <tt>this.translate(Functions.construct(c))</tt>, i.e. returns a
+     * new parser that constructs an instance of the specified class by invoking
+     * the class's one-argument constructor passing in this parser's result.
+     * 
+     * @param c
+     * @return
+     */
+    public Translate construct(Class c) {
+        return this.translate(Functions.construct(c));
+    }
 }
