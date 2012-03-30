@@ -27,6 +27,8 @@ public class BNF {
                 .construct(Alternative.class);
         Parser production = productionStart.then(new InfixExpr(alternative
                 .translate(flatten), InfixExpr.op("|", concatLists)));
+        Parser productions = production.onceOrMore();
+        return productions;
     }
     
     public static final Parser bnfParser = createBNFGrammar();
