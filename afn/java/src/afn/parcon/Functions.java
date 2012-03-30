@@ -65,6 +65,10 @@ public class Functions {
         return new CharIn(chars);
     }
     
+    public static CharNotIn charNotIn(String chars) {
+        return new CharNotIn(chars);
+    }
+    
     public static Optional optional(Parser parser) {
         return new Optional(parser);
     }
