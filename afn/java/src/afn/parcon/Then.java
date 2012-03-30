@@ -9,6 +9,25 @@ public class Then extends Parser {
         this.second = second;
     }
     
+    /**
+     * Constructs a Then parser that parses multiple parsers sequentially.
+     * Then.reduce(a, b, c, d) behaves the same as new Then(new Then(new Then(a,
+     * b), c), d).
+     * 
+     * @param parsers
+     * @return
+     */
+    public static Then reduce(Parser... parsers) {
+        if (parsers.length < 2)
+            throw new RuntimeException(
+                    "At least 2 parsers must be specified, but only "
+                            + parsers.length + " were.");
+        Then current = new Then(parsers[0], parsers[1]);
+        for (int i = 2; i < parsers.length; i++)
+            current = new Then(current, parsers[i]);
+        return current;
+    }
+    
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Result parse(String text, int position, int end, Parser space) {
