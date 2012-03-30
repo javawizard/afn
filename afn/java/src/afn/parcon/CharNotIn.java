@@ -3,9 +3,25 @@ package afn.parcon;
 import afn.parcon.errors.EAnyCharIn;
 import afn.parcon.errors.EAnyCharNotIn;
 
+/**
+ * A parser that matches a single character as long as the character in question
+ * is not in the set of characters passed to CharNotIn's constructor.
+ * 
+ * @author jcp
+ * 
+ */
 public class CharNotIn extends Parser {
-    private String chars;
+    /**
+     * The set of characters that this CharNotIn refuses to match
+     */
+    public String chars;
     
+    /**
+     * Creates a new CharNotIn that refuses to match any character in the
+     * specified set of characters.
+     * 
+     * @param chars
+     */
     public CharNotIn(String chars) {
         this.chars = chars;
     }

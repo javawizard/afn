@@ -2,6 +2,19 @@ package afn.parcon;
 
 import java.util.ArrayList;
 
+/**
+ * A parser that repeatedly attempts to match the parser it's constructed with.
+ * Once the parser in question fails, all of the results (even if there is just
+ * one result) are collected into a list, and OneOrMore's result value is this
+ * list.<br/>
+ * <br/>
+ * 
+ * Unlike {@link ZeroOrMore}, OneOrMore fails if the underlying parser doesn't
+ * match at least once.
+ * 
+ * @author jcp
+ * 
+ */
 public class OneOrMore extends Parser {
     
     private Parser parser;

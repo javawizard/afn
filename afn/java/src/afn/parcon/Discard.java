@@ -1,9 +1,24 @@
 package afn.parcon;
 
+/**
+ * A parser that acts exactly as the parser it's constructed with, except that
+ * it discards the parser's output; Discard, when it succeeds, always provides a
+ * result value of null.
+ * 
+ * @author jcp
+ * 
+ */
 public class Discard extends Parser {
+    /**
+     * The underlying parser that this Discard instance delegates to
+     */
+    public Parser parser;
     
-    private Parser parser;
-    
+    /**
+     * Creates a new Discard instance that will delegate to the specified parser
+     * 
+     * @param parser
+     */
     public Discard(Parser parser) {
         this.parser = parser;
     }

@@ -2,6 +2,14 @@ package afn.parcon;
 
 import afn.parcon.errors.ECustomExpectation;
 
+/**
+ * A parser that succeeds when its underlying parser fails and vice versa. Its
+ * result, when it succeeds (due to its underlying parser failing), is always
+ * null, and it consumes no input.
+ * 
+ * @author jcp
+ * 
+ */
 public class Not extends Parser {
     public Parser parser;
     

@@ -1,10 +1,29 @@
 package afn.parcon;
 
+/**
+ * A parser that always succeeds, even if the parser it's constructed with
+ * fails. When this happens, Optional consumes no input and returns the default
+ * result value it was constructed with (which defaults to null).
+ * 
+ * @author jcp
+ * 
+ */
 public class Optional extends Parser {
+    /**
+     * The underlying parser
+     */
+    public Parser parser;
+    /**
+     * The result that Optional will return if {@link #parser} fails
+     */
+    public Object defaultResult;
     
-    private Parser parser;
-    private Object defaultResult;
-    
+    /**
+     * Creates a new Optional with the specified parser and a
+     * {@link #defaultResult} of <tt>null</tt>.
+     * 
+     * @param parser
+     */
     public Optional(Parser parser) {
         this(parser, null);
     }
