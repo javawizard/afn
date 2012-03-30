@@ -48,10 +48,7 @@ public class Expression {
         return x / y;
     }
     
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
+    public static Parser createParser() {
         /*
          * Now we get to the actual grammar.
          */
@@ -64,10 +61,17 @@ public class Expression {
         term = new InfixExpr(term, op("+", method2(Expression.class, "add")),
                 op("-", method2(Expression.class, "subtract")));
         expr.parser = term;
+        return expr;
         /*
-         * That's it! Short, wasn't it? Now we'll use it to ask for an
-         * expression from standard in and then print out the result.
+         * That's it! Short, wasn't it?
          */
+    }
+    
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        Parser expr = createParser();
         System.out
                 .println("Type an expression to evaluate. Operations are "
                         + "+, -, *, and /. Parentheses are allowed. Order of precedence "
@@ -80,7 +84,7 @@ public class Expression {
                 // The result of expr.parseString will be a java.lang.Double
             } catch (ParseFailureException e) {
                 int position = Formatting.filter(e.expectations).position;
-                for(int i = 0; i < position; i++)
+                for (int i = 0; i < position; i++)
                     System.out.print(" ");
                 System.out.println("^");
                 System.out.println("The expression you typed has a problem: "

@@ -74,10 +74,7 @@ public class ExpressionWithAST {
         }
     }
     
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
+    public static Parser createParser() {
         Forward expr = new Forward();
         Parser term = first(
                 number.translate(toDouble)
@@ -88,6 +85,16 @@ public class ExpressionWithAST {
         term = new InfixExpr(term, op("+", construct(AddAST.class)), op("-",
                 construct(SubtractAST.class)));
         expr.parser = term;
-        System.out.println(((AST) expr.parseString("(5+3)*4")).evaluate());
+        return expr;
+    }
+    
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        Parser parser = createParser();
+        AST expr = (AST) parser.parseString("(5+3)*4");
+        double result = expr.evaluate();
+        System.out.println(result);
     }
 }
