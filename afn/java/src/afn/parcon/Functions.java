@@ -138,7 +138,7 @@ public class Functions {
         return new ConstructorFunction(c);
     }
     
-    public static final Parser whitespace = charIn(" \n\r\t");
+    public static final Parser whitespace = new StandardSpace();
     
     public static final Parser digit = charIn("0123456789").expect(
             "any numerical digit");

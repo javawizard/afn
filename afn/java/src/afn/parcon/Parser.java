@@ -46,9 +46,24 @@ public abstract class Parser {
      * <br/>
      * 
      * @param text
+     *            The text to parse
      * @param position
+     *            The position at which to start parsing
      * @param end
+     *            The position at which to stop parsing, regardless of whether
+     *            or not parsing further would affect the results of this parser
      * @param space
+     *            The whitespace parser to use. Parcon parsers parse and discard
+     *            all text matching the whitespace parser between every token
+     *            parsed (except that {@link Except} acts as if there was no
+     *            whitespace parser, which is useful for parsing, for example,
+     *            string literals, where whitespace should be preserved). The
+     *            whitespace parser, therefore, would typically be something
+     *            like <tt>new {@link CharIn}(" \t\r\n")</tt>, although it could
+     *            also be set to a parser that matches whitespace as well as
+     *            comments of whatever syntax the language being parsed
+     *            understands, which would cause comments to be automatically
+     *            filtered out.
      * @return
      */
     public abstract Result parse(String text, int position, int end,
@@ -60,7 +75,9 @@ public abstract class Parser {
      * <tt>parseString(text, true, Functions.whitespace)</tt>.
      * 
      * @param text
-     * @return
+     *            The text to parse
+     * @return The result of parsing the text; this is specific to the
+     *         particular parser you're using
      * @throws ParseFailureException
      *             If this parser cannot parse the specified input completely,
      *             from start to finish
@@ -71,6 +88,25 @@ public abstract class Parser {
         return parseString(text, true, Functions.whitespace);
     }
     
+    /**
+     * Parses the specified string, starting at the beginning, and returns the
+     * result.
+     * 
+     * @param text
+     *            The text to parse
+     * @param all
+     *            <tt>true</tt> if the entire input is to be parsed, or
+     *            <tt>false</tt> if the parser need only consume part of the
+     *            input. This is roughly analogous to the difference between
+     *            {@link java.util.regex.Matcher#matches() matches} and
+     *            {@link java.util.regex.Matcher#lookingAt() lookingAt} in
+     *            Java's regex library.
+     * @param whitespace
+     *            The whitespace parser to use. See
+     *            {@link #parse(String, int, int, Parser) parse} for a
+     *            description of what this does.
+     * @return
+     */
     public Object parseString(String text, boolean all, Parser whitespace) {
         Result result = parse(text, 0, text.length(), whitespace);
         if (result.matched) {
@@ -106,7 +142,12 @@ public abstract class Parser {
      * This method's main use is for whitespace parsing: most parsers call the
      * whitespace parser's consume method to filter out whitespace. Parsers
      * should therefore override this if they can provide a more efficient
-     * implementation.
+     * implementation.<br/>
+     * <br/>
+     * 
+     * <b>Note:</b> This parser passes {@link Invalid#invalid} as the whitespace
+     * parser when calling {@link #parse(String, int, int, Parser)} to prevent
+     * infinite recursion.
      * 
      * @param text
      * @param position
@@ -122,30 +163,69 @@ public abstract class Parser {
         return position;
     }
     
+    /**
+     * Returns <tt>new {@link Then}(this, next)</tt>.
+     * 
+     * @param next
+     * @return
+     */
     public Then then(Parser next) {
         return new Then(this, next);
     }
     
+    /**
+     * Returns <tt>new {@link Discard}()</tt>.
+     * 
+     * @return
+     */
     public Discard discard() {
         return new Discard(this);
     }
     
+    /**
+     * Returns <tt>new {@link Translate}(this, function)</tt>.
+     * 
+     * @param function
+     * @return
+     */
     public Translate translate(OneFunction function) {
         return new Translate(this, function);
     }
     
+    /**
+     * Returns <tt>new {@link OneOrMore}(this)</tt>.
+     * 
+     * @return
+     */
     public OneOrMore onceOrMore() {
         return new OneOrMore(this);
     }
     
+    /**
+     * Returns <tt>new {@link ZeroOrMore}(this)</tt>.
+     * 
+     * @return
+     */
     public ZeroOrMore zeroOrMore() {
         return new ZeroOrMore(this);
     }
     
+    /**
+     * Returns <tt>new {@link Expected}(this, expected)</tt>.
+     * 
+     * @param expected
+     * @return
+     */
     public Expected expect(String expected) {
         return new Expected(this, expected);
     }
     
+    /**
+     * Returns <tt>new {@link And}(this, parser)</tt>.
+     * 
+     * @param parser
+     * @return
+     */
     public And onlyIf(Parser parser) {
         return new And(this, parser);
     }
