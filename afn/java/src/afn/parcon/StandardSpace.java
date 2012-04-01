@@ -29,7 +29,7 @@ public class StandardSpace extends Parser {
     
     @Override
     public int consume(String text, int position, int end) {
-        for (; " \n\r\t".indexOf(text.charAt(position)) != -1 && position < end; position++)
+        for (; position < end && " \n\r\t".indexOf(text.charAt(position)) != -1; position++)
             ;
         return position;
     }
