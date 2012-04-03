@@ -1,4 +1,3 @@
-
 [
 	{
 		"name": "Sarah Weiler",
@@ -14,7 +13,7 @@
 	},
 	{
 		"name": "James Stoker",
-		"nick": "Amelia",
+		"nick": "JStoker",
 		"age": 16
 	}
 ]/*[age>17]/name
