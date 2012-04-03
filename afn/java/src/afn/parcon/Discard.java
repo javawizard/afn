@@ -10,12 +10,13 @@ package afn.parcon;
  */
 public class Discard extends Parser {
     /**
-     * The underlying parser that this Discard instance delegates to
+     * The underlying parser that this Discard instance behaves as
      */
     public Parser parser;
     
     /**
-     * Creates a new Discard instance that will delegate to the specified parser
+     * Creates a new Discard instance that will behave the same as the specified
+     * parser, other than always returning null.
      * 
      * @param parser
      */

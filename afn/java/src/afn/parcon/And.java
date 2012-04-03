@@ -2,7 +2,8 @@ package afn.parcon;
 
 /**
  * A parser that matches (and otherwise acts as) the parser it's constructed
- * with as long as the check parser it's constructed with also matches.
+ * with as long as the check parser it's constructed with also matches at the
+ * same position.
  * 
  * @author jcp
  * 
@@ -23,8 +24,8 @@ public class And extends Parser {
      * same location; the result will be that of <tt>parser</tt>, not
      * <tt>checkParser</tt>.
      * 
-     * @param parser
-     * @param checkParser
+     * @param parser The parser to behave as
+     * @param checkParser The parser which must also match
      */
     public And(Parser parser, Parser checkParser) {
         this.parser = parser;

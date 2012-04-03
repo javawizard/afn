@@ -5,7 +5,7 @@ import afn.parcon.errors.EAnyCharIn;
 /**
  * A parser that matches a single character. The character must be a character
  * present in the string passed into CharIn's constructor. The result of this
- * parser is the character matched.
+ * parser is a String of length 1 containing the character matched.
  * 
  * @author jcp
  * 
@@ -20,7 +20,7 @@ public class CharIn extends Parser {
      * Creates a new CharIn that will only match the specified set of
      * characters.
      * 
-     * @param chars
+     * @param chars The set of characters that this CharIn will match
      */
     public CharIn(String chars) {
         this.chars = chars;

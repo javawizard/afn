@@ -94,6 +94,25 @@ public class Functions {
         return new Not(parser);
     }
     
+    /**
+     * Constructs a Then parser that parses multiple parsers sequentially.
+     * sequence(a, b, c, d) behaves the same as new Then(new Then(new Then(a,
+     * b), c), d).
+     * 
+     * @param parsers
+     * @return
+     */
+    public static Then sequence(Parser... parsers) {
+        if (parsers.length < 2)
+            throw new RuntimeException(
+                    "At least 2 parsers must be specified, but only "
+                            + parsers.length + " were.");
+        Then current = new Then(parsers[0], parsers[1]);
+        for (int i = 2; i < parsers.length; i++)
+            current = new Then(current, parsers[i]);
+        return current;
+    }
+    
     public static <P, R> ReflectiveOneFunction<P, R> method1(
             Object objectOrClass, String method) {
         return new ReflectiveOneFunction<P, R>(objectOrClass, method);

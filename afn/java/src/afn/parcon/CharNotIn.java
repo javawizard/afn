@@ -5,7 +5,8 @@ import afn.parcon.errors.EAnyCharNotIn;
 
 /**
  * A parser that matches a single character as long as the character in question
- * is not in the set of characters passed to CharNotIn's constructor.
+ * is not in the set of characters passed to CharNotIn's constructor. This
+ * parser otherwise behaves like {@link CharIn}.
  * 
  * @author jcp
  * 
@@ -20,7 +21,7 @@ public class CharNotIn extends Parser {
      * Creates a new CharNotIn that refuses to match any character in the
      * specified set of characters.
      * 
-     * @param chars
+     * @param chars The set of characters not to match
      */
     public CharNotIn(String chars) {
         this.chars = chars;
