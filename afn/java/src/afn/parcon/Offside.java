@@ -81,6 +81,7 @@ public class Offside {
             levels.pop();
             result.append(DEDENT);
         }
+        return result.toString();
     }
     
     private static int getLeadingSpaces(String line) {
