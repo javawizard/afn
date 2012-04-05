@@ -241,4 +241,8 @@ public abstract class Parser {
     public Translate construct(Class c) {
         return this.translate(Functions.construct(c));
     }
+    
+    public Translate construct(Class c, boolean expandThenLists) {
+        return this.translate(Functions.construct(c, expandThenLists));
+    }
 }

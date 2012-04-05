@@ -5,10 +5,31 @@ import java.util.Arrays;
 
 public class ConstructorFunction<A, B, R> implements OneFunction<A, R>,
         TwoFunction<A, B, R> {
-    private Class<R> c;
+    public Class<R> c;
+    public boolean expandThenLists = false;
     
     public ConstructorFunction(Class<R> c) {
         this.c = c;
+    }
+    
+    /**
+     * Creates a new constructor function.
+     * 
+     * @param c
+     *            The class to construct
+     * @param expandThenLists
+     *            Whether or not to expand a ThenList passed to
+     *            {@link #call(Object)}. If this is false, the single-argument
+     *            constructor will be invoked no matter what the parameter to
+     *            {@link #call(Object)} is. If this is true, a null argument to
+     *            <tt>call</tt> will result in the no-argument constructor being
+     *            invoked, and a ThenList passed to <tt>call</tt> will result in
+     *            the <tt>thenList.size()</tt>-arg constructor being invoked
+     *            with the items in the ThenList as arguments.
+     */
+    public ConstructorFunction(Class<R> c, boolean expandThenLists) {
+        this.c = c;
+        this.expandThenLists = expandThenLists;
     }
     
     Constructor getConstructor(int args) {
@@ -29,9 +50,20 @@ public class ConstructorFunction<A, B, R> implements OneFunction<A, R>,
         }
     }
     
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public R call(A a) {
         try {
-            return (R) getConstructor(1).newInstance(a);
+            if (expandThenLists && (a == null || a instanceof ThenList)) {
+                if (a == null)
+                    return (R) getConstructor(0).newInstance();
+                else {
+                    ThenList t = (ThenList) a;
+                    return (R) getConstructor(t.size())
+                            .newInstance(t.toArray());
+                }
+            } else {
+                return (R) getConstructor(1).newInstance(a);
+            }
         } catch (Exception e) {
             throw new RuntimeException("class " + c.getName() + " with arg "
                     + a, e);

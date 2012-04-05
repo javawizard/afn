@@ -86,6 +86,10 @@ public class Functions {
         return new Optional(parser);
     }
     
+    public static Optional optional(Parser parser, Object defaultValue) {
+        return new Optional(parser, defaultValue);
+    }
+    
     public static Exact exact(Parser parser) {
         return new Exact(parser);
     }
@@ -157,6 +161,10 @@ public class Functions {
         return new ConstructorFunction(c);
     }
     
+    public static ConstructorFunction construct(Class c, boolean expandThenLists) {
+        return new ConstructorFunction(c, expandThenLists);
+    }
+    
     public static final Parser whitespace = new StandardSpace();
     
     public static final Parser digit = charIn("0123456789").expect(
@@ -164,6 +172,11 @@ public class Functions {
     
     public static final Parser number = exact(
             optional(charIn("-+")).then(digit.onceOrMore()).then(
-                    optional(significant(".").then(digit.onceOrMore()))))
+                    optional(significant(".").then(digit.onceOrMore()), "")))
             .translate(flatten).translate(joinStrings);
+    
+    public static final Parser exponentNumber = exact(
+            number.then(optional(charIn("eE").then(optional(charIn("+-"), "+"))
+                    .then(digit.onceOrMore()), ""))).translate(flatten)
+            .translate(joinStrings);
 }
