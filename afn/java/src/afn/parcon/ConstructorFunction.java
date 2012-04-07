@@ -38,7 +38,7 @@ public class ConstructorFunction<A, B, R> implements OneFunction<A, R>,
                 return cs;
         }
         throw new RuntimeException("Of " + c.getConstructors().length
-                + " constructors, none have the correct number of arguments");
+                + " *public* constructors, none have the correct number of arguments");
     }
     
     public R call(A a, B b) {

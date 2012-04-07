@@ -52,12 +52,32 @@ public class Functions {
         }
     };
     
+    /**
+     * Returns a new list containing the items in <tt>first</tt> followed by the
+     * items in <tt>second</tt>.
+     * 
+     * @param first
+     * @param second
+     * @return
+     */
     public static <T> List<T> concatLists(List<T> first, List<T> second) {
         return Utils.concat(first, second);
     }
     
     public static final TwoFunction<List, List, List> concatLists = method2(
             Functions.class, "concatLists");
+    /**
+     * A OneFunction wrapper around {@link Collections#singletonList(Object)}.
+     */
+    public static final OneFunction<Object, List> singletonList = method1(
+            Collections.class, "singletonList");
+    
+    public static String toString(Object value) {
+        return value.toString();
+    }
+    
+    public static final OneFunction<Object, String> toString = method1(
+            Functions.class, "toString");
     
     public static Literal literal(String text) {
         return new Literal(text);

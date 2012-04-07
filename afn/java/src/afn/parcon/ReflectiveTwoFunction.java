@@ -23,7 +23,7 @@ public class ReflectiveTwoFunction<A, B, R> implements TwoFunction<A, B, R> {
                 }
             }
             if (this.method == null)
-                throw new RuntimeException("No such method");
+                throw new RuntimeException("No such *public* method");
             int argCount = this.method.getParameterTypes().length;
             if (argCount != 2)
                 throw new RuntimeException("Method takes " + argCount
