@@ -1,5 +1,6 @@
 package afn.parcon;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -179,4 +180,16 @@ public class Functions {
             number.then(optional(charIn("eE").then(optional(charIn("+-"), "+"))
                     .then(digit.onceOrMore()), ""))).translate(flatten)
             .translate(joinStrings);
+    
+    public static final Parser numberAsDouble = number.translate(toDouble);
+    
+    public static final Parser numberAsBigDecimal = number
+            .construct(BigDecimal.class);
+    
+    public static final Parser exponentNumberAsDouble = exponentNumber
+            .translate(toDouble);
+    
+    public static final Parser exponentNumberAsBigDecimal = exponentNumber
+            .construct(BigDecimal.class);
+    
 }
