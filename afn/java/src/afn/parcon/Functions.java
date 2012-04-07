@@ -176,10 +176,7 @@ public class Functions {
             .translate(flatten).translate(joinStrings);
     
     public static final Parser exponentNumber = exact(
-            sequence(
-                    number,
-                    optional(
-                            sequence(charIn("eE"), optional(charIn("+-"), "+"),
-                                    digit.onceOrMore()), ""))).translate(
-            flatten).translate(joinStrings);
+            number.then(optional(charIn("eE").then(optional(charIn("+-"), "+"))
+                    .then(digit.onceOrMore()), ""))).translate(flatten)
+            .translate(joinStrings);
 }
