@@ -1,1 +1,9 @@
 Ok really, writing a database cannot possibly be this hard.
+
+I mean, seriously...
+
+So I'm going to create this initial JPath file format first, before I get to writing the query engine again.
+
+That way, the database could be used from Python applications without the involvement of the query language.
+
+Except now I'm getting ideas on how to write Zelden, the main use for JPath, without using JPath...
