@@ -60,6 +60,8 @@ Servers would also be allowed to purge their logs under this mechanism. A client
 
 Ok, that makes sense for conversations so far. Now I should go check out Quassel manages its list of rooms and users...
 
+UPDATE: I decided that I want to use JPathDB for this again, so I'm going to go work on that for a bit.
+
 
 
 
