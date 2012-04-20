@@ -82,6 +82,7 @@ class DBStorage(jpath4.db.storage.Storage):
         self.z_root = self.connection.root()
         if "jpath4-root" not in self.z_root:
             self.z_root["jpath4-root"] = DBDict()
+            transaction.commit()
         self.root = self.z_root["jpath4-root"]
     
     def get_root(self):
@@ -96,9 +97,13 @@ class DBStorage(jpath4.db.storage.Storage):
     def commit(self):
         transaction.commit()
     
+    def abort(self):
+        transaction.abort()
+    
     def close(self):
         self.connection.close()
         self.db.close()
+        self.storage.close()
         
 
 
