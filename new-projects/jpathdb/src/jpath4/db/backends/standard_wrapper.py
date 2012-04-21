@@ -39,7 +39,34 @@ class ObjectWrapper(d.Object):
     def __init__(self, py_dict):
         self.py_dict = py_dict
     
+    def get_value(self, key):
+        # TODO: Only string keys are supported right now; consider allowing
+        # other types in case the underlying implementation wants to permit them
+        if isinstance(key, d.String):
+            string_key = key.get_value()
+            if string_key in self.py_dict:
+                return wrap(self.py_dict[string_key]) 
+        return None
     
+    def get_pair(self, key):
+        # TODO: There /has/ to be a better way than this... Maybe write an
+        # ObjectWrapperPair class that dynamically fetches the key and value of
+        # the pair or something...
+        value = self.get_value(key)
+        if not value:
+            return None
+        return d.StandardPair(key, value)
+    
+    def get_size(self):
+        return len(self.py_dict)
+    
+    def get_values(self):
+        # TODO: write a thing similar to ListWrapperSequence for values
+        return d.StandardSequence([wrap(v) for v in self.py_dict.itervalues()])
+    
+    def get_pairs(self):
+        # TODO: write a thing similar to ListWrapperSequence for pairs
+        return d.StandardSequence([d.StandardPair(wrap(k), wrap(v)) for k, v in self.py_dict.iteritems()])
 
 
 def wrap(value):

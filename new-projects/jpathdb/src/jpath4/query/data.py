@@ -437,6 +437,9 @@ class List(Item):
     def get_size(self): pass
     
     @abstract
+    # NOTE: This, unlike Object.get_value, seems not to be called if the index
+    # in question is out of range. If this is true, I need to duly document it
+    # so that people don't write unnecessary range checks.
     def get_item(self, index): pass
     
     @abstract
