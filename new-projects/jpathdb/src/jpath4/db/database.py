@@ -2,7 +2,7 @@
 from jpath4.query import translate, data as d, utils
 from jpath4.query.context import DynamicContext
 
-class Database(connection):
+class Database(object):
     def __init__(self, datastore, interpreter_constructor):
         self.datastore = datastore
         self.interpreter_constructor = interpreter_constructor
