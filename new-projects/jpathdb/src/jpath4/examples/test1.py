@@ -11,7 +11,7 @@ storage = zodb.DBStorage(File(__file__).parent().parent().parent().parent().chil
 db = Database(storage, Interpreter)
 
 print "start"
-print db.run_query('$x/a/b/c', False, {"x": json})
+print db.run_query('.', False, {"x": json})
 print "end"
 
 
