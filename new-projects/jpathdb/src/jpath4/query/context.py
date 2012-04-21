@@ -93,7 +93,7 @@ class LocalContext(Context):
         if "set_name" in kwargs:
             new.vars[kwargs["set_name"]] = utils.check_sequence(kwargs["set_value"])
         if "set_map" in kwargs:
-            for k, v in kwargs.iteritems():
+            for k, v in kwargs["set_map"].iteritems():
                 utils.check_sequence(v)
             new.vars.update(kwargs["set_map"])
         if "unset_name" in kwargs:

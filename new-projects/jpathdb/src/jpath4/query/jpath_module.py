@@ -1,5 +1,5 @@
 
-from jpath4.query import module, productions, context, constants
+from jpath4.query import module, productions, context, constants, utils
 
 class JPathModule(module.Module):
     def __init__(self, interpreter, path):
@@ -103,7 +103,7 @@ class JPathModule(module.Module):
                 key, value = pair.get_key().get_value(), pair.get_value()
                 if not isinstance(key, (str, unicode)):
                     raise TypeError(type(key))
-                var_map[key] = value
+                var_map[key] = utils.singleton(value)
             local_context = context.LocalContext().new(set_map=var_map)
         return self.main_function.call_function(dynamic_context, [], local_context)
     
