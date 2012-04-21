@@ -1,2 +1,2 @@
 
-prelude = "native", "jpath.query.library.prelude"
+prelude = "native", "jpath4.query.library.prelude"
