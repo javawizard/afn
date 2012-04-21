@@ -1,5 +1,5 @@
 
-# from jpath.query import data as d, utils, exceptions as e
+from jpath.query import data as d, utils, exceptions as e
 import operator
 
 def init(*names):

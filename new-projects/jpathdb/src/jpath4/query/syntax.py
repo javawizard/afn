@@ -5,7 +5,7 @@ from parcon import (Literal, InfixExpr, SignificantLiteral, Forward,
         digit_chars, CharIn, digit, Alpha, Upper, Lower, Optional, ZeroOrMore,
         Keyword, OneOrMore, flatten, Exact, AnyChar, Except, Return, Invalid,
         Whitespace)
-from jpath4.query.productions import *
+from jpath.query.productions import *
 from collections import namedtuple
 import operator
 
