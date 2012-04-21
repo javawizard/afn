@@ -87,9 +87,7 @@ def wrap(value):
         raise Exception("Cannot wrap value " + repr(value) + " of type " + repr(type(value)))
 
 
-def apply_updates(self, root, updates, classes={"object": dict, "list": list,
-        "number": (lambda a: int(a) if int(a) == float(a) else float(a)),
-        "string": unicode, "boolean": bool, "null": (lambda a: None)}):
+def apply_updates(self, root, updates, classes=None):
     """
     Applies the specified updates.
     
@@ -101,6 +99,10 @@ def apply_updates(self, root, updates, classes={"object": dict, "list": list,
     one-arg factory function) that should be used to construct values of the
     specified types for insertion into the standard wrapper instances.
     """
+    new_classes = {"object": dict, "list": list,
+        "number": (lambda a: int(a) if int(a) == float(a) else float(a)),
+        "string": unicode, "boolean": bool, "null": (lambda *args: None)}
+    new_classes.update(classes)
     raise NotImplementedError
 
 

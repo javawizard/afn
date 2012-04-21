@@ -5,14 +5,6 @@ class Storage(object):
     __metaclass__ = ABCMeta
     
     @abstract
-    def create_dict(self):
-        pass
-    
-    @abstract
-    def create_list(self):
-        pass
-    
-    @abstract
     def apply_updates(self, list_of_updates):
         pass
     
@@ -22,4 +14,12 @@ class Storage(object):
     
     @abstract
     def commit(self):
+        pass
+    
+    @abstract
+    def abort(self):
+        pass
+    
+    @abstract
+    def close(self):
         pass

@@ -91,13 +91,8 @@ class DBStorage(jpath4.db.storage.Storage):
         return self.root
     
     def apply_updates(self, updates):
-        standard_wrapper.apply_updates(self.wrapped_root, updates)
-    
-    def create_list(self):
-        return DBList()
-    
-    def create_dict(self):
-        return DBDict()
+        standard_wrapper.apply_updates(self.wrapped_root, updates,
+                classes={"object": DBDict, "list": DBList})
     
     def commit(self):
         transaction.commit()
