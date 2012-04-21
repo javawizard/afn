@@ -1,5 +1,5 @@
 
-from jpath.query.binders import jpath_binder, native
+from jpath4.query.binders import jpath_binder, native
 
 class Interpreter(object):
     def __init__(self):

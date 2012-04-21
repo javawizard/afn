@@ -7,6 +7,7 @@ from persistent.list import PersistentList as ZPersistentList
 from BTrees.OOBTree import OOBTree as ZOOBTree
 from collections import MutableMapping, MutableSequence
 import jpath4.db.storage
+from jpath4.db.backends import standard_wrapper
 from ZODB import FileStorage as ZFileStorage, DB as ZDB
 import transaction
 
@@ -83,10 +84,14 @@ class DBStorage(jpath4.db.storage.Storage):
         if "jpath4-root" not in self.z_root:
             self.z_root["jpath4-root"] = DBDict()
             transaction.commit()
-        self.root = self.z_root["jpath4-root"]
+        self.unwrapped_root = self.z_root["jpath4-root"]
+        self.wrapped_root = standard_wrapper.wrap(self.unwrapped_root)
     
     def get_root(self):
         return self.root
+    
+    def apply_updates(self, updates):
+        standard_wrapper.apply_updates(self.wrapped_root, updates)
     
     def create_list(self):
         return DBList()

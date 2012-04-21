@@ -87,6 +87,23 @@ def wrap(value):
         raise Exception("Cannot wrap value " + repr(value) + " of type " + repr(type(value)))
 
 
+def apply_updates(self, root, updates, classes={"object": dict, "list": list,
+        "number": (lambda a: int(a) if int(a) == float(a) else float(a)),
+        "string": unicode, "boolean": bool, "null": (lambda a: None)}):
+    """
+    Applies the specified updates.
+    
+    The updates must only update objects that are instances of the standard
+    wrapper classes.
+    
+    classes is a dictionary containing the keys "object", "list", "number",
+    "string", "boolean", and "null", with each key's value being the class (or
+    one-arg factory function) that should be used to construct values of the
+    specified types for insertion into the standard wrapper instances.
+    """
+    raise NotImplementedError
+
+
 
 
 

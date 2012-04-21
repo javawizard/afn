@@ -13,6 +13,10 @@ class Storage(object):
         pass
     
     @abstract
+    def apply_updates(self, list_of_updates):
+        pass
+    
+    @abstract
     def get_root(self):
         pass
     
