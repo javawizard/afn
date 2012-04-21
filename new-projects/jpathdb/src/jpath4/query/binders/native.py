@@ -1,5 +1,5 @@
 
-from jpath.query import binder, module, data, exceptions, utils
+from jpath4.query import binder, module, data, exceptions, utils
 
 class NativeBinder(binder.Binder):
     default_name = "native"

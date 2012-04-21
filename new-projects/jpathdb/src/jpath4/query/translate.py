@@ -1,5 +1,5 @@
 
-from jpath.query import data as d
+from jpath4.query import data as d
 
 def jpath_to_json(value, strict=False):
     """

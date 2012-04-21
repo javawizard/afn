@@ -30,9 +30,9 @@ class Production(object):
         else:
             return self.evaluate_i(static, dynamic, local)
     
-    @abstract
+    # @abstract
     def evaluate_i(self, static, dynamic, local):
-        pass
+        raise NotImplementedError("Production " + str(type(self)) + " does not implement evaluate_i")
     
     def __str__(self):
         if getattr(self. __init__, "names", None) is None:

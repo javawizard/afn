@@ -4,19 +4,19 @@ from abc import ABCMeta as ABC, abstractmethod as abstract
 class Function(object):
     __metaclass__ = ABC
     
-    @abstract
+    # @abstract
     def get_closures(self, arg_count):
         raise NotImplementedError
     
-    @abstract
+    # @abstract
     def call_function(self, dynamic_context, args):
         raise NotImplementedError
     
-    @abstract
+    # @abstract
     def get_min_args(self):
         raise NotImplementedError
     
-    @abstract
+    # @abstract
     def get_max_args(self):
         raise NotImplementedError
     
@@ -30,11 +30,11 @@ class Function(object):
 class Module(Function):
     __metaclass__ = ABC
     
-    @abstract
+    # @abstract
     def get_function(self, name):
         raise NotImplementedError
     
-    @abstract
+    # @abstract
     def get_default_bind_name(self):
         raise NotImplementedError
 
