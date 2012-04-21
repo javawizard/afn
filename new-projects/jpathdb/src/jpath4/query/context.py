@@ -1,6 +1,6 @@
 
 from copy import copy
-from jpath.query import exceptions as e
+from jpath4.query import exceptions as e
 
 class Context(object):
     def new(self, **kwargs):
@@ -85,6 +85,10 @@ class LocalContext(Context):
         self.vars = {}
     
     def new(self, **kwargs):
+        """
+        Allows either set_name="...",set_value="..." or set_map={...} or
+        unset_name="..."
+        """
         new = Context.new(self, **kwargs)
         if "set_name" in kwargs:
             new.vars[kwargs["set_name"]] = kwargs["set_value"]
