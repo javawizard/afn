@@ -33,7 +33,7 @@ def flatten(sequences):
     """
     Flattens a list of Sequence objects into a single Sequence object.
     """
-    return jpath.query.data.StandardSequence([
+    return jpath4.query.data.StandardSequence([
                 s.get_item(i) for s in sequences for i in xrange(s.get_size())
             ])
 
@@ -49,9 +49,9 @@ def boolean(sequence):
         return False
     if sequence.get_size() == 1:
         item = sequence.get_item(0)
-        if isinstance(item, jpath.query.data.Boolean) and not item.get_value():
+        if isinstance(item, jpath4.query.data.Boolean) and not item.get_value():
             return False
-        if isinstance(item, jpath.query.data.Null):
+        if isinstance(item, jpath4.query.data.Null):
             return False
     return True
 
@@ -61,7 +61,7 @@ def create_boolean(value):
     Creates a sequence containing one item, a StandardBoolean representing the
     specified Python boolean value.
     """
-    return jpath.query.data.StandardSequence([jpath.query.data.StandardBoolean(value)])
+    return jpath4.query.data.StandardSequence([jpath4.query.data.StandardBoolean(value)])
 
 
 def create_number(value):
@@ -69,28 +69,28 @@ def create_number(value):
     Creates a sequence containing one item, a StandardNumber representing the
     specified Python int, long, or float.
     """
-    return jpath.query.data.StandardSequence([jpath.query.data.StandardNumber(value)])
+    return jpath4.query.data.StandardSequence([jpath4.query.data.StandardNumber(value)])
 
 
 def create_empty():
-    return jpath.query.data.StandardSequence([])
+    return jpath4.query.data.StandardSequence([])
 
 
 def singleton(value):
     """
     Creates a sequence containing only the specified Item instance.
     """
-    return jpath.query.data.StandardSequence([value])
+    return jpath4.query.data.StandardSequence([value])
 
 
 def binary_numeric(left, right, operation):
     """
     Performs a binary numeric operation.
     """
-    left = get_single_instance(left, jpath.query.data.Number)
-    right = get_single_instance(right, jpath.query.data.Number)
-    return jpath.query.data.StandardSequence([
-            jpath.query.data.StandardNumber(
+    left = get_single_instance(left, jpath4.query.data.Number)
+    right = get_single_instance(right, jpath4.query.data.Number)
+    return jpath4.query.data.StandardSequence([
+            jpath4.query.data.StandardNumber(
                     operation(left.get_as_float(), right.get_as_float())
                     )
             ])

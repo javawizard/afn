@@ -1,6 +1,9 @@
 
 from jpath4.query import data as d, utils, exceptions as e
+from jpath4.query.utils import singleton
 import operator
+from abc import ABCMeta as ABC, abstractmethod as abstract
+from jpath4 import options
 
 def init(*names):
     def __init__(self, *args):
@@ -15,8 +18,21 @@ def init(*names):
 
 
 class Production(object):
+    __metaclass__ = ABC
+    
     def evaluate(self, static, dynamic, local):
-        raise NotImplementedError
+        if options.check_types_in_production_evaluation:
+            value = self.evaluate_i(static, dynamic, local)
+            if not isinstance(value, d.Sequence):
+                raise Exception("Production of type " + str(type(self)) + 
+                        " returned a non-sequence result: " + str(value))
+            return value
+        else:
+            return self.evaluate_i(static, dynamic, local)
+    
+    @abstract
+    def evaluate_i(self, static, dynamic, local):
+        pass
     
     def __str__(self):
         if getattr(self. __init__, "names", None) is None:
@@ -32,42 +48,42 @@ class Production(object):
 class NumberLiteral(Production):
     __init__ = init("value")
     
-    def evaluate(self, static, dynamic, local):
-        return d.StandardSequence([d.StandardNumber(self.value)])
+    def evaluate_i(self, static, dynamic, local):
+        return singleton(d.StandardNumber(self.value))
 
 
 class StringLiteral(Production):
     __init__ = init("value")
     
-    def evaluate(self, static, dynamic, local):
-        return d.StandardSequence([d.StandardString(self.value)])
+    def evaluate_i(self, static, dynamic, local):
+        return singleton(d.StandardString(self.value))
 
 
 class BooleanLiteral(Production):
     __init__ = init("value")
     
-    def evaluate(self, static, dynamic, local):
-        return d.StandardSequence([d.StandardBoolean(self.value)])
+    def evaluate_i(self, static, dynamic, local):
+        return singleton(d.StandardBoolean(self.value))
 
 
 class NullLiteral(Production):
     __init__ = init()
     
-    def evaluate(self, static, dynamic, local):
-        return d.StandardSequence([d.StandardNull()])
+    def evaluate_i(self, static, dynamic, local):
+        return singleton(d.StandardNull())
 
 
 class VarReference(Production):
     __init__ = init("name")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return local.get_var(self.name)
 
 
 class FunctionCall(Production):
     __init__ = init("name", "args")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         function = static.find_function(self.name)
         args = self.args
         closures = function.get_closures(len(args))
@@ -84,49 +100,49 @@ class FunctionCall(Production):
 class Pattern(Production):
     __init__ = init("value")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return dynamic.context_item.get_for_pattern(self.value)
 
 
 class PairPattern(Production):
     __init__ = init("value")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return dynamic.context_item.get_for_pair_pattern(self.value)
 
 
 class ContextItem(Production):
     __init__ = init()
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return d.StandardSequence([dynamic.context_item])
 
 
 class Children(Production):
     __init__ = init()
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return dynamic.context_item.get_children()
 
 
 class PairChildren(Production):
     __init__ = init()
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return dynamic.context_item.get_pair_children()
 
 
 class ParenExpr(Production):
     __init__ = init("expr")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return self.expr.evaluate(static, dynamic, local)
 
 
 class ListConstructor(Production):
     __init__ = init("expr")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         value = self.expr.evaluate(static, dynamic, local)
         return d.StandardSequence([d.StandardList([
                     value.get_item(i) for i in xrange(value.get_size())
@@ -136,14 +152,14 @@ class ListConstructor(Production):
 class EmptyListConstructor(Production):
     __init__ = init()
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return d.StandardSequence([d.StandardList([])])
 
 
 class ObjectConstructor(Production):
     __init__ = init("expr")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         value = self.expr.evaluate(static, dynamic, local)
         return d.StandardSequence([d.StandardObject(value)])
 
@@ -151,14 +167,14 @@ class ObjectConstructor(Production):
 class EmptyObjectConstructor(Production):
     __init__ = init()
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return d.StandardSequence([d.StandardObject(d.StandardSequence([]))])
 
 
 class EmptySequenceConstructor(Production):
     __init__ = init()
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return d.StandardSequence([])
 
 
@@ -173,21 +189,21 @@ class XMLAttribute(Production):
 class Indexer(Production):
     __init__ = init("expr")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return dynamic.context_item.get_for_indexer(self.expr.evaluate(static, dynamic, local))
 
 
 class PairIndexer(Production):
     __init__ = init("expr")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return dynamic.context_item.get_for_pair_indexer(self.expr.evaluate(static, dynamic, local))
 
 
 class Path(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         sequence = self.left.evaluate(static, dynamic, local)
         # TODO: need to change this to take into account if the above sequence
         # is synthetic, and if so, avoid stuffing all the items into a list
@@ -203,7 +219,7 @@ class Path(Production):
 class Predicate(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         # TODO: same thing about synthetic lists as with Path
         sequence = self.left.evaluate(static, dynamic, local)
         sequence_size = sequence.get_size()
@@ -219,7 +235,7 @@ class Predicate(Production):
 class Multiply(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         right = self.right.evaluate(static, dynamic, local)
         return utils.binary_numeric(left, right, operator.mul)
@@ -228,7 +244,7 @@ class Multiply(Production):
 class Divide(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         right = self.right.evaluate(static, dynamic, local)
         return utils.binary_numeric(left, right, operator.div)
@@ -237,7 +253,7 @@ class Divide(Production):
 class Add(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         right = self.right.evaluate(static, dynamic, local)
         return utils.binary_numeric(left, right, operator.add)
@@ -246,7 +262,7 @@ class Add(Production):
 class Subtract(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         right = self.right.evaluate(static, dynamic, local)
         return utils.binary_numeric(left, right, operator.sub)
@@ -255,7 +271,7 @@ class Subtract(Production):
 class Otherwise(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         if left.get_size() > 0:
             return left
@@ -266,7 +282,7 @@ class Otherwise(Production):
 class Concatenate(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = utils.get_single(self.left.evaluate(static, dynamic, local))
         right = utils.get_single(self.right.evaluate(static, dynamic, local))
         if left.jpath_type != right.jpath_type:
@@ -297,7 +313,7 @@ class Concatenate(Production):
 class GreaterOrEqual(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = utils.get_single(self.left.evaluate(static, dynamic, local))
         right = utils.get_single(self.right.evaluate(static, dynamic, local))
         return d.StandardSequence([d.StandardBoolean(left >= right)])
@@ -306,7 +322,7 @@ class GreaterOrEqual(Production):
 class LessOrEqual(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = utils.get_single(self.left.evaluate(static, dynamic, local))
         right = utils.get_single(self.right.evaluate(static, dynamic, local))
         return d.StandardSequence([d.StandardBoolean(left <= right)])
@@ -315,7 +331,7 @@ class LessOrEqual(Production):
 class Greater(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = utils.get_single(self.left.evaluate(static, dynamic, local))
         right = utils.get_single(self.right.evaluate(static, dynamic, local))
         return d.StandardSequence([d.StandardBoolean(left > right)])
@@ -324,7 +340,7 @@ class Greater(Production):
 class Less(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = utils.get_single(self.left.evaluate(static, dynamic, local))
         right = utils.get_single(self.right.evaluate(static, dynamic, local))
         return d.StandardSequence([d.StandardBoolean(left < right)])
@@ -333,7 +349,7 @@ class Less(Production):
 class NotEqual(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = utils.get_single(self.left.evaluate(static, dynamic, local))
         right = utils.get_single(self.right.evaluate(static, dynamic, local))
         return d.StandardSequence([d.StandardBoolean(left != right)])
@@ -342,7 +358,7 @@ class NotEqual(Production):
 class Equal(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = utils.get_single(self.left.evaluate(static, dynamic, local))
         right = utils.get_single(self.right.evaluate(static, dynamic, local))
         return d.StandardSequence([d.StandardBoolean(left == right)])
@@ -351,7 +367,7 @@ class Equal(Production):
 class And(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         if not utils.boolean(left):
             return utils.create_boolean(False)
@@ -361,7 +377,7 @@ class And(Production):
 class Or(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         if utils.boolean(left):
             return utils.create_boolean(True)
@@ -371,7 +387,7 @@ class Or(Production):
 class PairConstructor(Production):
     __init__ = init("left", "right")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         left = self.left.evaluate(static, dynamic, local)
         right = self.right.evaluate(static, dynamic, local)
         return d.StandardSequence([d.StandardPair(utils.get_single(left), utils.get_single(right))])
@@ -379,14 +395,14 @@ class PairConstructor(Production):
 class SequenceConstructor(Production):
     __init__ = init("exprs")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         return utils.flatten([p.evaluate(static, dynamic, local) for p in self.exprs])
 
 
 class IfThenElse(Production):
     __init__ = init("condition", "true", "false")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         condition = utils.boolean(self.condition.evaluate(static, dynamic, local))
         if condition:
             return self.true.evaluate(static, dynamic, local)
@@ -397,7 +413,7 @@ class IfThenElse(Production):
 class Quantifier(Production):
     __init__ = init("type", "name", "expr", "condition")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         name = self.name
         expr_value = self.expr.evaluate(static, dynamic, local)
         condition = self.condition
@@ -500,7 +516,7 @@ class FlworDo(Production):
 class Flwor(Production):
     __init__ = init("constructs", "return_expr")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         current = [{}]
         for construct in self.constructs:
             current = construct.generate(static, dynamic, local, current)
@@ -510,7 +526,7 @@ class Flwor(Production):
 class Insert(Production):
     __init__ = init("value", "position", "reference")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         value = utils.get_single(self.value.evaluate(static, dynamic, local))
         reference = utils.get_single(self.reference.evaluate(static, dynamic, local))
         if isinstance(self.position, Production):
@@ -524,7 +540,7 @@ class Insert(Production):
 class Delete(Production):
     __init__ = init("expr")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         value = self.expr.evaluate(static, dynamic, local)
         return utils.singleton(d.StandardDelete(value))
 
@@ -532,7 +548,7 @@ class Delete(Production):
 class Replace(Production):
     __init__ = init("target", "replacement")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         target = self.target.evaluate(static, dynamic, local)
         replacement = self.replacement.evaluate(static, dynamic, local)
         return utils.singleton(d.StandardReplace(target, replacement))
@@ -541,7 +557,7 @@ class Replace(Production):
 class Merge(Production):
     __init__ = init("source", "target")
     
-    def evaluate(self, static, dynamic, local):
+    def evaluate_i(self, static, dynamic, local):
         source = self.source.evaluate(static, dynamic, local)
         target = self.target.evaluate(static, dynamic, local)
         return utils.singleton(d.StandardMerge(source, target))
