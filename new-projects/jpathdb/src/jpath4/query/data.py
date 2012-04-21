@@ -249,6 +249,9 @@ class Sequence(object):
         """
         for i in xrange(self.get_size()):
             yield self.get_item(i)
+    
+    def __len__(self):
+        return self.get_size()
         
     def __eq__(self, other):
         if not isinstance(other, Sequence):

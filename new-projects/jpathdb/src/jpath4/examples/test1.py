@@ -5,11 +5,13 @@ from jpath4.query.interpreter import Interpreter
 from jpath4.query.translate import json_to_jpath, jpath_to_json
 from jpath4.fileutils import File
 
-json = json_to_jpath({"a": {"b": {"c": "d"}}})
+json = {"a": {"b": {"c": "d"}}}
 
 storage = zodb.DBStorage(File(__file__).parent().parent().parent().parent().child("landfill").child("test1-db").path)
 db = Database(storage, Interpreter)
 
-db.run_query("$x/a/b/c", False, {"x": json})
+print "start"
+print db.run_query('let $y := {"a": {"b": {"c": "d"}}} return ($y/a/b/c)', False, {"x": json})
+print "end"
 
 

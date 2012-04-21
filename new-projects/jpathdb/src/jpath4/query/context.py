@@ -1,6 +1,6 @@
 
 from copy import copy
-from jpath4.query import exceptions as e
+from jpath4.query import exceptions as e, utils
 
 class Context(object):
     def new(self, **kwargs):
@@ -91,8 +91,10 @@ class LocalContext(Context):
         """
         new = Context.new(self, **kwargs)
         if "set_name" in kwargs:
-            new.vars[kwargs["set_name"]] = kwargs["set_value"]
+            new.vars[kwargs["set_name"]] = utils.check_sequence(kwargs["set_value"])
         if "set_map" in kwargs:
+            for k, v in kwargs.iteritems():
+                utils.check_sequence(v)
             new.vars.update(kwargs["set_map"])
         if "unset_name" in kwargs:
             del new.vars[kwargs["unset_name"]]

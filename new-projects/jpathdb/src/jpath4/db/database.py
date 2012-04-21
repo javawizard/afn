@@ -63,7 +63,10 @@ class Database(object):
             self.storage.apply_updates(result)
             result = None
         else:
-            result = translate.jpath_to_json(result)
+            if len(result) == 0: # Result is the empty sequence
+                result = None
+            else: # Try to get the single resulting item
+                result = translate.jpath_to_json(utils.get_single(result))
         self.storage.commit()
         return result
         

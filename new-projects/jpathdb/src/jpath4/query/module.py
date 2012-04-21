@@ -24,7 +24,7 @@ class Function(object):
         # TODO: What this should do is check to see if any of the args are
         # closures, and if they are, wrap them in closures that just return
         # the values provided here.
-        return self.call(dynamic_context, args)
+        return self.call_function(dynamic_context, args)
 
 
 class Module(Function):

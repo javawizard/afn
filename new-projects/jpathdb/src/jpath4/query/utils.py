@@ -83,6 +83,13 @@ def singleton(value):
     return jpath4.query.data.StandardSequence([value])
 
 
+def check_sequence(value):
+    if not isinstance(value, jpath4.query.data.Sequence):
+        raise Exception("Value " + str(value) + " of type " + str(type(value))
+                + " was required to be a Sequence instance but is not.")
+    return value
+
+
 def binary_numeric(left, right, operation):
     """
     Performs a binary numeric operation.

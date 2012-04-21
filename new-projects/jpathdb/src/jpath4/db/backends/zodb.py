@@ -88,7 +88,7 @@ class DBStorage(jpath4.db.storage.Storage):
         self.wrapped_root = standard_wrapper.wrap(self.unwrapped_root)
     
     def get_root(self):
-        return self.root
+        return self.wrapped_root
     
     def apply_updates(self, updates):
         standard_wrapper.apply_updates(self.wrapped_root, updates,
