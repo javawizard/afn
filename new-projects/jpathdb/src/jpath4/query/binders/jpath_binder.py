@@ -49,7 +49,7 @@ class JPathBinder(binder.Binder):
         # We've found the module file. Now we read it in and parse it.
         with file.open() as file_reader:
             contents = file_reader.read()
-        parsed_module = syntax.module.parse_string(contents) #@UndefinedVariable
+        parsed_module = syntax.parse_module(contents) #@UndefinedVariable
         # The module has been read in and is syntactically valid. Now we go
         # create a Module object for it.
         module = jpath_module.JPathModule(self.interpreter, path)
@@ -73,7 +73,7 @@ class JPathBinder(binder.Binder):
         This is the function you'd typically use to initialize a JPath query
         from some arbitrary piece of text the user supplied.
         """
-        parsed_module = syntax.module.parse_string(text) #@UndefinedVariable
+        parsed_module = syntax.parse_module(text) #@UndefinedVariable
         module = jpath_module.JPathModule(self.interpreter, "<query>")
         module.load(parsed_module)
         return module

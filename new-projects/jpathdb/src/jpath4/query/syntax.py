@@ -227,6 +227,9 @@ comment_or_whitespace = Whitespace() | comment
 
 module = Exact((prolog + Optional(expr, EmptySequenceConstructor())), comment_or_whitespace)[lambda a: Module(*a)](name="query")
 
+def parse_module(text):
+    return module.parse_string(text, whitespace=comment_or_whitespace)
+
 
 
 

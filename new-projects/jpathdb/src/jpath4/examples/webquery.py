@@ -17,6 +17,28 @@ jpath_examples = [
     ["Hello world (the short way)", '"Hello, world!"', "{}"],
     ["Hello world (the long way)", "a/b/c", '{"a": {"b": {"c": "Hello, world!"}}}'],
     ["Predicate 1", "*[p=true]/a", '[{"a": "b", "p": true}, {"a": "c", "p": false}, {"a": "d", "p": true}]'],
+    ["Predicate 1 with comments", 
+            """
+(: The asterisk gets all of the items in the current list :)
+*
+(: The brackets are known as a predicate (brackets after an expression are a predicate; brackets /as/
+an expression create a new list). They evaluate what's inside them for every item and filter out items
+for which the expression was not true. :)
+[
+(: So now we're going to check whether the current value, which is presumably a dictionary, has a key
+"p" whose value is the boolean true. :)
+p=true
+(: And then of course the bracket to close the predicate :)
+]
+(: The slash runs the expression on the right against all of the items on the left, and the result is
+all of the items on the right combined into a single sequence :)
+/
+(: So now we just get the value of the key "a". :)
+a
+(: And that's it! As you've probably worked out, this query will get the value of the key "a" in every
+dict in the list handed it where there's a key "p" whose value is true. :)
+""", 
+            '[{"a": "b", "p": true}, {"a": "c", "p": false}, {"a": "d", "p": true}]'],
 ]
 
 pages = {}
@@ -81,9 +103,9 @@ def index(params, out):
     Type a JPath query and the JSON data to run the query against below, then click <b>Run Query</b>.
     Or click one of the examples to the right, then click <b>Run Query</b> to run the example.<br/><br/>
     <form method="GET" action="run">
-    <b>Query:</b><br/>
+    Query:<br/>
     <textarea rows="14" cols="150" name="query">%s</textarea><br/>
-    <b>JSON data to run the query against:</b><br/>
+    JSON data to run the query against:<br/>
     <textarea rows="10" cols="150" name="data">%s</textarea></br>
     <button type="submit"><b>Run Query</b></button>
     </form>
