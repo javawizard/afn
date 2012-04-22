@@ -39,6 +39,24 @@ a
 dict in the list handed it where there's a key "p" whose value is true. :)
 """, 
             '[{"a": "b", "p": true}, {"a": "c", "p": false}, {"a": "d", "p": true}]'],
+    ["Predicate 2 (a practical use of Predicate 1)", '*[age>17]/name', """
+[
+    {
+        "name": "Alice",
+        "age": 19,
+        "flavors": ["phish food", "cookie dough", "cherry garcia"]
+    },
+    {
+        "name": "Bob",
+        "age": 22,
+        "flavors": ["chocolate", "cookie dough", "vanilla", "cookies n cream"]
+    },
+    {
+        "name": "Carol",
+        "age": 21
+    }
+]
+"""],
 ]
 
 pages = {}
