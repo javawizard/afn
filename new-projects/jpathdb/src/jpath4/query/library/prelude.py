@@ -64,7 +64,7 @@ def root(dynamic):
 
 
 def string(dynamic, value):
-    return utils.get_single(value).to_string()
+    return utils.singleton(d.StandardString(utils.get_single(value).to_string()))
 
 
 @m("get-module")

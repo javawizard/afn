@@ -1,5 +1,6 @@
 
 from jpath4.query.binders import jpath_binder, native
+from jpath4.query import utils, translate, context
 
 class Interpreter(object):
     def __init__(self):
@@ -25,6 +26,20 @@ class Interpreter(object):
 def add_default_binders(interpreter):
     interpreter.add_binder(jpath_binder.JPathBinder())
     interpreter.add_binder(native.NativeBinder())
+
+
+def query(jpath_query, json={}, vars={}, interpreter=None):
+    if interpreter is None:
+        interpreter = Interpreter()
+    module = interpreter.get_binder("jpath").create_query(jpath_query)
+    wrapped_vars = utils.singleton(translate.json_to_jpath(vars))
+    result = module.call_with_values(
+            context.DynamicContext(translate.json_to_jpath(json), 1, 1), 
+            [wrapped_vars])
+    if len(result) == 0:
+        return None
+    return translate.jpath_to_json(utils.get_single(result))
+
 
 
 

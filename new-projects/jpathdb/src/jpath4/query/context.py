@@ -1,6 +1,6 @@
 
 from copy import copy
-from jpath4.query import exceptions as e, utils
+from jpath4.query import exceptions as e, utils, data as d
 
 class Context(object):
     def new(self, **kwargs):
@@ -64,6 +64,8 @@ class DynamicContext(Context):
     _things = "context_item", "context_position", "context_size"
     
     def __init__(self, context_item, context_position, context_size):
+        if not isinstance(context_item, d.Item):
+            raise TypeError("Context item is of type " + str(type(context_item)) + " which is not an Item subclass")
         self.context_item = context_item
         self.context_position = context_position
         self.context_size = context_size
