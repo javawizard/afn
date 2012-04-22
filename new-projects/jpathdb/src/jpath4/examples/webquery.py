@@ -39,7 +39,7 @@ a
 dict in the list handed it where there's a key "p" whose value is true. :)
 """, 
             '[{"a": "b", "p": true}, {"a": "c", "p": false}, {"a": "d", "p": true}]'],
-    ["Predicate 2 (a practical use of Predicate 1)", '*[age>17]/name', """
+    ["Predicate 2 (a practical use of Predicate 1)", '*[age>=21]/name', """
 [
     {
         "name": "Alice",
