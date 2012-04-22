@@ -28,7 +28,7 @@ def add_default_binders(interpreter):
     interpreter.add_binder(native.NativeBinder())
 
 
-def query(jpath_query, json={}, vars={}, interpreter=None):
+def query(jpath_query, json={}, vars={}, interpreter=None, as_tuple=False):
     if interpreter is None:
         interpreter = Interpreter()
     module = interpreter.get_binder("jpath").create_query(jpath_query)
@@ -36,9 +36,12 @@ def query(jpath_query, json={}, vars={}, interpreter=None):
     result = module.call_with_values(
             context.DynamicContext(translate.json_to_jpath(json), 1, 1), 
             [wrapped_vars])
-    if len(result) == 0:
+    if len(result) == 0 and not as_tuple:
         return None
-    return translate.jpath_to_json(utils.get_single(result))
+    elif len(result) == 1 and not as_tuple:
+        return translate.jpath_to_json(utils.get_single(result))
+    else:
+        return tuple(translate.jpath_to_json(v) for v in result)
 
 
 
