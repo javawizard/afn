@@ -1,0 +1,89 @@
+So I saw a VHDL thingie a guy had written online that implemented a hardware BF CPU, and it made me want to figure out how to build a smallish one on a PCB, kinda like... what's it called, the Arduino Micro or something, I don't remember the full name...
+
+So let's see, how would I go about building that?
+
+Well...
+
+(Oh, and I'm not going to use another microcontroller; this is going to be built using straight ANDs, ORs, NOTs, counters, ALUs, etc.)
+
+There needs to be some memory on which the program is stored.
+
+Ideally something really simplistic, like for example where it has 32 parallel input address lines, and 8 outputs and 8 inputs, and an input and output clock that load the data from the memory at that location or store it.
+
+Fat chance of something that simple or something that parallel.
+
+Ah well, we can emulate that with a parallel-to-serial shift register and an additional clock.
+
+So we'll also need a stack chip for holding the addresses of the open brackets to jump back to when we hit a close bracket, but we can emulate that with a RAM chip and a counter if need be.
+
+We'll also need a presettable counter to hold the current position at which we're executing; presettable so that we can preset it to the matching open bracket when we hit a close bracket and need to jump back.
+
+We'll also need a counter to hold the current pointer location, but this one doesn't need to be presettable. (It might be kind of cool if it could be, though, as then we could add additional instructions that allow shifting by more than one position at a time; there could then be a normal BF to optimized BF compiler that we could use to collapse, say, >>>>>>>> into a "move right by 8 cells" instruction. A BF optimizer James Stoker's writing gave me this idea.)
+
+So...
+
+For the sake of simplicity, I'm going to have one instruction per byte. That will also allow for additional instructions, such as the above-mentioned multiple jump, to be added later, and even instructions that take up multiple bytes.
+
+And I'll probably have the instructions stored as 0b00000001, 0b00000002, 0b00000003, etc, for >, <, +, etc, instead of storing the ASCII values, for the sake of simplicity. Given that, BF code itself would be considered the assembly language for the processor, and translating that to bytecode would involve simply replacing every character with its corresponding opcode.
+
+Or I could have 0b00001xxx be x+1 repetitions of >, 0b00010xxx be x+1 repetitions of <, 0b00011xxx be x+1 repetitions of +, etc.
+
+Granted, . and , are commands that I don't imagine would be repeated, and [ and ] definitely wouldn't be repeated (it would screw up the stack logistics if they could be), so we just need repetitions of >, <, +, and -, and of those I imagine + and - would be repeated more.
+
+I'm just debating, do I want to allow 0b00000000 to be a valid opcode, or do I want to use that to indicate the end of the program? Or unprogrammed space?
+
+Nah, I think it'll be simpler if it's allowed to be an opcode, and we have a separate value for use as an end-of-program indicator.
+
+So let's assign some values to our four repeatable opcodes...
+
+< is 0b00
+> is 0b01
+- is 0b10
++ is 0b11
+
+In that way, the most significant bit is 0 for pointer location changes and 1 to data changes, and the least significant bit is 0 for down and 1 for up.
+
+So, we have 0b000nnxxx to repeat opcode n x+1 times (i.e. from 1 to 8; I might decide to do 0 to 7 for simplicity later on). Then we have 0b001nnxxx to repeat nn (x+1)*8 times. The combination of these two would allow anywhere from 1 to 64 repetitions to be collapsed into a maximum of 2 instructions; 42 repetitions of >, for example, could be collapsed into 0b00101100 0b00001001, i.e. shift right by 40 (5*8), then shift right by 2.
+
+You know what, scrap that x+1 stuff, it'll be easier if we use x instead.
+
+So then the above instructions for shifting right 42 times become 0b00101101 0b00001010.
+
+Although you know what, I'm going to skip the multiple stuff for my first iteration of the processor and add it later.
+
+So we'll just have 0b00000nnn be the plain, no-repetitions opcode version, and the first processor will only support that.
+
+And I'm thinking for now the end of the program will be 0b11111111.
+
+So 0b000000nn will be the four opcodes I mentioned above.
+
+Then...
+
+. is 0b00
+, is 0b01
+[ is 0b10
+] is 0b11
+
+and those are represented as 0b000001nn.
+
+So I was just looking up counters and found http://www.ti.com/lit/ds/symlink/sn74lv8154.pdf.
+
+It's not perfect; I would rather it either had 32 parallel outputs or an SPI interface that I could use to drive the address input of a theoretical memory device supporting SPI addresses, but I could make do with this.
+
+(And I could use some demultiplexers and parallel-to-serial shift registers to hack up a SPI interface if need be.)
+
+But that one could be used to address the RAM that the program's stored in.
+
+(Other note: it would be cool if a future version could support some form of non-volatile ram; perhaps a certain configuration setting enabled when loading a program causes the cells at a certain location to persist their contents during shutdown and restore them during startup. But I'll think about this later.)
+
+
+
+
+
+
+
+
+
+
+
+
