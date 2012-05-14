@@ -30,13 +30,13 @@ class Server(object):
     def run(self):
         while True:
             message_content, (source_host, source_port) = self.socket.recvfrom(8192)
-            print "Message is " + repr(message_content)
+            print "DNSD: Message is " + repr(message_content)
             message = dns.message.from_wire(message_content)
-            print "Request: " + repr(message)
+            print "DNSD: Request: " + repr(message)
             response = self.process_message((source_host, source_port), message)
             response_content = response.to_wire()
-            print "Response: " + repr(response)
-            print "Response is " + repr(response_content)
+            print "DNSD: Response: " + repr(response)
+            print "DNSD: Response is " + repr(response_content)
             self.socket.sendto(response_content, (source_host, source_port))
     
     def process_message(self, source, message):

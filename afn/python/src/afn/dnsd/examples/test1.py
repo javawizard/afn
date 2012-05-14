@@ -4,6 +4,7 @@ from afn.dnsd.data import Answer, A, CNAME
 
 def resolver(source, question, name):
     print (source, question, name)
+    print "Question: ", source, question, name
     if question == "A":
         return [
             Answer(name, "CNAME", 1, [
