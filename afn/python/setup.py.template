@@ -29,7 +29,7 @@ projects.
     packages=[
         # !!!PACKAGES!!!
     ],
-    modules=[
+    py_modules=[
         # !!!MODULES!!!
     ],
     package_dir={"": "src"}

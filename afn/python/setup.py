@@ -7,7 +7,7 @@
 
 from distutils.core import setup
 
-version = "0.1.2012.05.17.22.06" # !!!VERSION!!!
+version = "0.1.2012.05.17.22.08" # !!!VERSION!!!
 
 setup(
     name="afn",
@@ -57,7 +57,7 @@ projects.
         'activehomed',
         'autobus',
     ],
-    modules=[
+    py_modules=[
         'testrtkserver',
         'ravenswood',
         'utils',
