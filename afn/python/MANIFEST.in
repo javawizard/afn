@@ -1,0 +1,7 @@
+include autobus autosend autosend2 json libautobus.conf.example run run.bat run.py saytime setup.py
+include speakd speakd.conf speakd.conf.example timerd timernotify
+recursive-include glade *
+recursive-include layouts *
+recursive-include speak *
+recursive-include src *.py *.xml *.proto *.html
+recursive-include technotes *
