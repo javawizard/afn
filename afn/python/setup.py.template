@@ -2,7 +2,7 @@
 
 from distutils.core import setup
 
-version = "0.1.2012.05.17" # !!!VERSION!!!
+version = "NO VERSION" # !!!VERSION!!!
 
 setup(
     name="afn",
@@ -25,7 +25,8 @@ projects.
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Text Processing"
     ],
-    packages=["parcon", "parcon.pargen", "parcon.pargon", "parcon.railroad"]
+    packages=[
+        # !!!PACKAGES!!!
+    ]
 )
