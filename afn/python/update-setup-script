@@ -6,6 +6,7 @@ sys.path.append(__file__ + "/src")
 from afn.fileutils import File
 
 excluded_packages = ["simplejson", "nextgen", "music", "objects", "autolaunch", "interconnect"]
+excluded_modules = ["landfill"]
 
 with open("setup.py.template") as input:
     lines = list(input)
@@ -22,5 +23,13 @@ with open("setup.py", "w") as out:
                 if package_name.partition(".")[0] in excluded_packages:
                     continue
                 line += '        %r,\n' % package_name
+        elif "# !!!MDULES!!!" in line:
+            for f in File("src").list():
+                if not f.name.endswith(".py"):
+                    continue
+                module_name = f.path[len("src/"):-len(".py")]
+                if module_name in excluded_modules:
+                    continue
+                line += '        %r,\n' % module_name
         out.write(line)
 

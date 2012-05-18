@@ -7,7 +7,7 @@
 
 from distutils.core import setup
 
-version = "0.1.2012.05.17.21.57" # !!!VERSION!!!
+version = "0.1.2012.05.17.22.04" # !!!VERSION!!!
 
 setup(
     name="afn",
