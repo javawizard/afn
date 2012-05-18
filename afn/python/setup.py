@@ -7,7 +7,7 @@
 
 from distutils.core import setup
 
-version = "0.1.2012.05.17.22.04" # !!!VERSION!!!
+version = "0.1.2012.05.17.22.06" # !!!VERSION!!!
 
 setup(
     name="afn",
@@ -32,7 +32,6 @@ projects.
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     packages=[
-        # !!!PACKAGES!!!
         'traytimer',
         'uofu',
         'autobus2.landfill',
@@ -57,6 +56,39 @@ projects.
         'afntest',
         'activehomed',
         'autobus',
+    ],
+    modules=[
+        'testrtkserver',
+        'ravenswood',
+        'utils',
+        'monitord',
+        'gitwiki',
+        'flipflop',
+        'usermessaged',
+        'autosend',
+        'protocol_doc',
+        'rtkinter',
+        'simpleproto',
+        'record',
+        'monitorircbot',
+        'doorbell',
+        'timerd',
+        'librtkclient',
+        'concurrent',
+        'speakd',
+        'tkthread',
+        'autoconfigure',
+        'timernotify',
+        'svnweb',
+        'libstatmonitor',
+        'hvacd',
+        'librtkinter',
+        'keyeditor',
+        'saytime',
+        'libwparse',
+        'homed',
+        'objectivejson',
+        'libfact',
     ],
     package_dir={"": "src"}
 )

@@ -29,5 +29,8 @@ projects.
     packages=[
         # !!!PACKAGES!!!
     ],
+    modules=[
+        # !!!MODULES!!!
+    ],
     package_dir={"": "src"}
 )

@@ -18,12 +18,14 @@ with open("setup.py", "w") as out:
         if "# !!!VERSION!!!" in line:
             line = 'version = "0.1.%s" # !!!VERSION!!!\n' % time.strftime("%Y.%m.%d.%H.%M")
         elif "# !!!PACKAGES!!!" in line:
+            line = ""
             for f in File("src").recurse(lambda t: t.name == "__init__.py"):
                 package_name = f.path[len("src/"):-len("/__init__.py")].replace("/", ".")
                 if package_name.partition(".")[0] in excluded_packages:
                     continue
                 line += '        %r,\n' % package_name
-        elif "# !!!MDULES!!!" in line:
+        elif "# !!!MODULES!!!" in line:
+            line = ""
             for f in File("src").list():
                 if not f.name.endswith(".py"):
                     continue
