@@ -7,7 +7,7 @@
 
 from distutils.core import setup
 
-version = "0.1.2012.05.17.21.53" # !!!VERSION!!!
+version = "0.1.2012.05.17.21.57" # !!!VERSION!!!
 
 setup(
     name="afn",
@@ -33,29 +33,30 @@ projects.
     ],
     packages=[
         # !!!PACKAGES!!!
-        'traytimer'
-        'uofu'
-        'autobus2.landfill'
-        'autobus2.proxy'
-        'autobus2.examples'
-        'autobus2'
-        'autobus2.tools'
-        'libautobus'
-        'librtk.examples'
-        'librtk.schema'
-        'librtk'
-        'afn.ucreditu'
-        'afn.landfill'
-        'afn.dnsd.examples'
-        'afn.dnsd'
-        'afn.backports'
-        'afn'
-        'afn.utils'
-        'afn.utils.cad'
-        'afn.tools'
-        'afn.bf'
-        'afntest'
-        'activehomed'
-        'autobus'
-    ]
+        'traytimer',
+        'uofu',
+        'autobus2.landfill',
+        'autobus2.proxy',
+        'autobus2.examples',
+        'autobus2',
+        'autobus2.tools',
+        'libautobus',
+        'librtk.examples',
+        'librtk.schema',
+        'librtk',
+        'afn.ucreditu',
+        'afn.landfill',
+        'afn.dnsd.examples',
+        'afn.dnsd',
+        'afn.backports',
+        'afn',
+        'afn.utils',
+        'afn.utils.cad',
+        'afn.tools',
+        'afn.bf',
+        'afntest',
+        'activehomed',
+        'autobus',
+    ],
+    package_dir={"": "src"}
 )

@@ -28,5 +28,6 @@ projects.
     ],
     packages=[
         # !!!PACKAGES!!!
-    ]
+    ],
+    package_dir={"": "src"}
 )
