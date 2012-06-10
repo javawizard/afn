@@ -2,5 +2,5 @@ Filer is a DVCS that will be written (mainly by Alex) soonish.
 
 It's still in the "Let's figure out what the heck this will do, and if we're even going to write it or if we'll just realize that the stuff that already exists is good enough and not even worry about it" phase.
 
-
+So I just read about this vcs called Veracity that looks like it has a lot of cool features... Especially one that appears to let you apply flags to commits, such as "testing-good", "build-good", etc, which I think is /awesome/. So I'm going to take a bit and look at veracity and see what it has that filer can have too.
 
