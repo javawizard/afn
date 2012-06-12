@@ -14,3 +14,9 @@ which would cause Filer to open some sort of persistent connection to the specif
 
 That's mainly cool because 1: it gets rid of the need for people to repeatedly pull just to see if there's anything new (and I'd probably have an option for being notified of new changes without actually pulling them), and 2: it's a significant step toward allowing Filer to be used as the back-end for a future revival of OpenGroove. (OG workspaces could then use Filer to actually track their content; they would simply enable autopush and autopull and then include logic for sanely resolving merge conflicts on their own, probably by just commuting the patches into chronological order, although I could allow the user to decide... That needs more thought too.)
 
+I don't see autopush being used as much as autopull as you typically know when you're going to do a push as it's usually after a commit, but I'll allow it for the heck of it. And because it would probably be something I'd want for OG, as then changes made while offline would be autopushed when coming online, and changes received from someone else directly could be autopushed to everyone else when they become available.
+
+(And also, there should be a way for plugins to act as remotes of some sort, in the sense that OG would have some method for discovering other remotes over the local network and would want to somehow expose those to filer to allow autopush and autopull. Or maybe filer should have some mechanism for detecting other remotes on the local network. Or maybe that should be pluggable too. This needs more thought.)
+
+
+
