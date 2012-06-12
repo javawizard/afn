@@ -1,0 +1,19 @@
+# Ignore all Java class files
+\.class$
+# Ignore Python bytecode files
+\.pyc$
+# Ignore ".directory" files; these seem to be created by the Dolphin file manager to store settings about folders
+\.directory$
+^projects/jzbot2-old/storage/
+^projects/jzbot2-old/classes/
+^afn/python/uservoices/
+^afn/python/dist/
+^afn/java/javadocs/
+^afn/java/classes/
+\~$
+^afn/python/MANIFEST$
+
+# Ignore .project and .pydevproject
+/\.(pydev)?project$
+^new-projects/jpathdb/landfill/
+^afn/python/speakd.conf$
