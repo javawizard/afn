@@ -1,3 +1,5 @@
+[This is the readme for the entire AFN project. See also ../README.txt.]
+
 The AFN Project is a collection of libraries and tools initially created by Alexander Boyd and with contributions from others.
 
 It could be considered Alex's "Labs" project, the place where Alex develops various things he's not sure will ever be big enough or in wide-enough use to warrant having their own project. (Once something sees wide enough use, it gets its own project.)
