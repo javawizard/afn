@@ -4,3 +4,13 @@ It's still in the "Let's figure out what the heck this will do, and if we're eve
 
 So I just read about this vcs called Veracity that looks like it has a lot of cool features... Especially one that appears to let you apply flags to commits, such as "testing-good", "build-good", etc, which I think is /awesome/. So I'm going to take a bit and look at veracity and see what it has that filer can have too.
 
+Haven't taken a look at it yet, but will soon.
+
+So another feature idea I had for Filer that I think would be cool would be autosync. One would be able to do (and these commands are purely hypothetical at this point):
+
+filer remote --enable-autopull some-remote-name
+
+which would cause Filer to open some sort of persistent connection to the specified remote, and whenever any changes happened to that remote, they would be automatically pulled. (This would obviously require some sort of local daemon to make the connection; that bit would need more thought on how to go about doing it properly.)
+
+That's mainly cool because 1: it gets rid of the need for people to repeatedly pull just to see if there's anything new (and I'd probably have an option for being notified of new changes without actually pulling them), and 2: it's a significant step toward allowing Filer to be used as the back-end for a future revival of OpenGroove. (OG workspaces could then use Filer to actually track their content; they would simply enable autopush and autopull and then include logic for sanely resolving merge conflicts on their own, probably by just commuting the patches into chronological order, although I could allow the user to decide... That needs more thought too.)
+
