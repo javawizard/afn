@@ -1,3 +1,6 @@
+# Fileutils has been extracted into its own repository, and the version in that
+# repository (opengroove.org/hg/fileutils) should be preferred to this one. The
+# version in afn (this version) will no longer be updated.
 
 import os
 import os.path
