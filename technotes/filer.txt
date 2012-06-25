@@ -18,9 +18,9 @@ I don't see autopush being used as much as autopull as you typically know when y
 
 (And also, there should be a way for plugins to act as remotes of some sort, in the sense that OG would have some method for discovering other remotes over the local network and would want to somehow expose those to filer to allow autopush and autopull. Or maybe filer should have some mechanism for detecting other remotes on the local network. Or maybe that should be pluggable too. This needs more thought.)
 
-So I don't remember if I mentioned this but I really like Veracity's notion of stamps, and it's something I want to use. Only I'm going to allow stamps as applied to particular commits to be singed. (And also, all GPG keys used to sign commits will themselves be stored in the repository, so one can look up the details of who signed a commit. I may do away with commit-based usernames and use the name stored in the corresponding GPG key instead.)
+So I don't remember if I mentioned this but I really like Veracity's notion of stamps, and it's something I want to use. Only I'm going to allow stamps as applied to particular commits to be signed. (And also, all PGP keys used to sign commits will themselves be stored in the repository, so one can look up the details of who signed a commit. I may do away with commit-based usernames and use the name stored in the corresponding PGP key instead.)
 
-So one can say "get me all the commits in the repository stamped with tests_passed" or "get me all the commits in the repository stamped with tests_passed where said stamp was signed by 0123456789ABCDEF [the hash of a GPG key]". In other words, one should be able to address both stamps and stamps as signed by a particular GPG key as separate entities applied to a commit.
+So one can say "get me all the commits in the repository stamped with tests_passed" or "get me all the commits in the repository stamped with tests_passed where said stamp was signed by 0123456789ABCDEF [the hash of a PGP key]". In other words, one should be able to address both stamps and stamps as signed by a particular PGP key as separate entities applied to a commit.
 
 (And it should therefore be possible to stamp a commit without signing the stamp at all, and also to sign an already-existing stamp on a commit.)
 
