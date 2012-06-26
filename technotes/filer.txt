@@ -28,7 +28,7 @@ As far as I'm thinking right now, stamps can't be removed. Or they can, in the s
 
 (The whole idea, by the way, with signing stamps is that then a central continuous integration server can stamp builds that succeed and sign said stamps, thereby allowing others to verify that the commit was stamped by the continuous integration server and not by a committer hoping to get away with code that doesn't actually pass tests.)
 
-
+   ...something...
 
 
 
