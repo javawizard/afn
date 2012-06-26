@@ -28,7 +28,33 @@ As far as I'm thinking right now, stamps can't be removed. Or they can, in the s
 
 (The whole idea, by the way, with signing stamps is that then a central continuous integration server can stamp builds that succeed and sign said stamps, thereby allowing others to verify that the commit was stamped by the continuous integration server and not by a committer hoping to get away with code that doesn't actually pass tests.)
 
-   ...something...
+I'm also thinking it might be cool if stamps could have values. They could have multiple values associated with them, or no values at all. Allowing them to have multiple values associated with them would allow two things: 1, a stamp named, for example, tested-on, whose values are the various platforms or servers that the test passed on, and 2, an easy way of resolving stamp value conflicts: the stamp simply gets all of the values from both sides of the conflict.
+
+But that might be overkill for now. That sort of functionality could always be emulated using stamps such as tested-on-windows, tested-on-linux, and so on, meaning that the value could just be put as part of the stamp's name, and the same sort of behavior could still result.
+
+That, then, makes me think that maybe stamps should just be a specialization of commit signatures. And speaking of commit signatures, those are things that you can apply to commits where you say "Hey, here's a dictionary of extra information I'd like to tack onto this commit, and here's my signature of the commit's id and said extra information", and they can be applied to commits after they've already been committed, and as many as you'd like can be applied, and multiple users can apply them.
+
+The idea behind that is that then I can sign a particular commit as a commit that I approve of, or as a commit that I wrote, or something. (The latter use I might do slightly differently, though, as I'll discuss in a bit.)
+
+So in that case, stamps could simply be an extra field you place in the signature's dictionary of information, which would also allow for stamp values to be added later. (And the nice thing about that is that older filer versions without support for stamp values would still show the stamp names and would still preserve the stamp values for other, newer clients that come along and pull from them.)
+
+So yeah, I'm not going to add stamp values for now.
+
+Ok, so, the mechanism behind indicating you wrote a commit.
+
+So, I'm thinking it'd be nice to know for sure who actually committed a commit. Obviously having a signature on a commit demonstrates that you support it, or something about it, but what if two people claim to be the author of a commit that ended up being the next coolest thing or something like that?
+
+Admittedly this scenario won't happen often, but I like the idea of it being hard, if not impossible, for others to take credit for code that I wrote. Signatures solve the reverse scenario, my /not/ taking credit for code that I actually did write, but a solution is needed for the other way around.
+
+And hence my thought: have a signature specific to the commit itself.
+
+Or rather, and equivalently in result, have part of the commit's metadata be the id of the key of the person that wrote the commit, and then have the commit be signed by that key.
+
+So then two identical commits authored by different people have different hashes, and as such you can definitively tell who authored a commit by verifying its hash and then looking at the field where it gives the id (read: hash) of the key that authored it.
+
+That avoids people being able to take credit for commits that they didn't author, as they wouldn't be able to produce the corresponding key.
+
+(And then presumably the commit would also be signed by that key.)
 
 
 
