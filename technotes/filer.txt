@@ -92,6 +92,13 @@ And with renaming a file X to be Y, and another user renaming a file Z to be Y, 
 
 I need to see how git/mercurial/bazaar all behave in these situations and decide from there.
 
+Ok so, one more thing I just realized stamps could be used for is when a commit is rebased and the original history is to be preserved. I want filer to default to preserving the original history, but obviously it would clutter up the tree quite a bit if all of the rebased commits were visible after the rebasing. So my idea is that when X is rebased onto N and becomes Y, then two things: 1, Y contains an extra commit field saying "Hey, I was rebased from X", and 2, X is then stamped "filer.rebased" (and signed by the person doing the rebasing, for good measure). Commits stamped filer.rebased would then be hidden from the log by default, but there would be a way to show them, and when they're shown they'll have some sort of message saying "Hey, this was rebased".
+
+(And if I ever allow stamps to have values, the value would be the commit id of Y, so then X's log message, when X is shown, could say something like "This commit was rebased as Y", or note multiple commits if it was rebased multiple times, in line with how tag values work and such.)
+
+So yeah, I want filer's rebase command to default to preserving the original history in case you ever need it, but it would also default to applying the extra commit attribute and stamps as noted above.
+
+
 
 
 
