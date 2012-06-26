@@ -60,7 +60,19 @@ Or perhaps multiple ids could be included, if so desired, in separate fields if 
 
 So maybe the signature shouldn't be required to start, but the system would warn that the commit hasn't been signed by that key yet so you don't know that it was actually that key that produced it.
 
+That sounds fantastic.
 
+So we've got a good list of features to start with. Now some thought needs to be given to how things are stored and such.
+
+I'm thinking that commits should simply be binary blobs of data representing changes in some form or other, along with a string identifying the type of data it represents. Which doesn't make much sense, but what I mean is this: you can have filesystem-related changes (which would presumably be stored as some sort of diff), OGDB changes, JPathDB changes, and so on.
+
+Each commit, for now, contains only a single type of change. I may change this later.
+
+Commits can, of course, only be merged and based on commits of the same type.
+
+Commits of multiple types can, however, coexist inside the same repository. This would allow for a project, for example, to contain the source files in one branch and an OpenGroove workspace in another.
+
+And speaking of that, multiple, unrelated branches can coexist in the same repository as well. I need to think about whether branch names should just be strings like they are in Mercurial or whether they should be randomly-generated numbers or things like that, which might make it easier to create, for example, two OpenGroove workspaces in the same repository.
 
 
 
