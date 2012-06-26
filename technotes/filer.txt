@@ -56,5 +56,14 @@ That avoids people being able to take credit for commits that they didn't author
 
 (And then presumably the commit would also be signed by that key.)
 
+Or perhaps multiple ids could be included, if so desired, in separate fields if one wishes. That would allow for the difference between author and committer to be preserved, and then the author, once they come across their commit, can sign it.
+
+So maybe the signature shouldn't be required to start, but the system would warn that the commit hasn't been signed by that key yet so you don't know that it was actually that key that produced it.
+
+
+
+
+
+
 
 
