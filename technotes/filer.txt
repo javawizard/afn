@@ -74,6 +74,24 @@ Commits of multiple types can, however, coexist inside the same repository. This
 
 And speaking of that, multiple, unrelated branches can coexist in the same repository as well. I need to think about whether branch names should just be strings like they are in Mercurial or whether they should be randomly-generated numbers or things like that, which might make it easier to create, for example, two OpenGroove workspaces in the same repository.
 
+As far as the filesystem commit type goes, I want partial merges to be supported. A partial merge would be where only certain files or folders are merged.
+
+And I need to decide whether I want to version directories, or just files...
+
+And how to track file moves and renames...
+
+Should files get their own id that can be used to track them across renames?
+
+And should copies somehow note the id from which the file came?
+
+And what happens if two separate people both rename a file? Is it a merge conflict? How does it get displayed to the user?
+
+Same thing with deleting a file in one place, and modifying it in another...
+
+And with renaming a file X to be Y, and another user renaming a file Z to be Y, and then trying to merge...
+
+I need to see how git/mercurial/bazaar all behave in these situations and decide from there.
+
 
 
 
