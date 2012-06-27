@@ -98,6 +98,8 @@ Ok so, one more thing I just realized stamps could be used for is when a commit 
 
 So yeah, I want filer's rebase command to default to preserving the original history in case you ever need it, but it would also default to applying the extra commit attribute and stamps as noted above.
 
+(And there really needs to be some form of deduplication in place so that having the rebased commits stick around doesn't take up extra space in the repository. This needs a bit more thought, as it'd be nice if the deduplication could go above and beyond simply deduplicating identical commit patches, which wouldn't cover a lot of rebase cases as the patches could vary subtly from being commuted across the rebase target.)
+
 
 
 
