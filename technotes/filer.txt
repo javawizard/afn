@@ -100,6 +100,12 @@ So yeah, I want filer's rebase command to default to preserving the original his
 
 (And there really needs to be some form of deduplication in place so that having the rebased commits stick around doesn't take up extra space in the repository. This needs a bit more thought, as it'd be nice if the deduplication could go above and beyond simply deduplicating identical commit patches, which wouldn't cover a lot of rebase cases as the patches could vary subtly from being commuted across the rebase target.)
 
+So now I find out that PGP keys don't include information about their name, or rather, that a PGP key's id is a hash of only the public key, not the name associated with it, which completely screws up the above stuff about having a PGP key instead of a commit author name. So I need to completely rethink how I'm going to go about verifying commit authorship.
+
+Perhaps filer should have its own specific type of key, which would be implemented using RSA keys, and PGP keys can sign filer keys, and perhaps the other way around...
+
+But I would really just like to reuse PGP if I can, and not have to invent something else...
+
 
 
 
