@@ -21,7 +21,7 @@ def write_states(states, port):
     # Write the lists
     for i in range(8):
         # Compute the value corresponding to the data to write
-        value = int(s1[i]) | (int(s2[i]) << 1) | (int(s3[i]]) << 2)
+        value = int(s1[i]) | (int(s2[i]) << 1) | (int(s3[i]) << 2)
         # Write the value
         port.setData(value)
         wait()
