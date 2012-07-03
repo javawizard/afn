@@ -156,7 +156,7 @@ def parse_info_filter(args):
     return filter
 
 
-discovery_mode_header = ("Time".ljust(26) + "Event".ljust(13) + "Service ID".ljust(42)
+discovery_mode_header = ("Time".ljust(26) + "Event".ljust(13) + "Service ID".ljust(44)
         + "Host".ljust(15) + "Port".ljust(7) + "Info")
 
 def discovery_mode_listener(service_id, host, port, info, event):
@@ -167,7 +167,7 @@ def discovery_mode_listener(service_id, host, port, info, event):
         text += "REMOVED".ljust(13)
     else:
         text += "CHANGED".ljust(13)
-    text += service_id.ljust(42)
+    text += service_id.ljust(44)
     text += host.ljust(15)
     text += str(port).ljust(7)
     short_info = dict(info)
