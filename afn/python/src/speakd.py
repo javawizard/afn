@@ -289,7 +289,7 @@ class RPC(object):
     
     @synchronized(lock)
     def tts(self, *text):
-        text = " ".join(text)
+        text = " ".join([str(s) for s in text])
         self.say([TextToSpeech(text)], 0, None)
     
     @synchronized(lock)
