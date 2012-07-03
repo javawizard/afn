@@ -20,3 +20,29 @@ There would be advantages to using things such as JSON-RPC for this. Probably th
 
 Hm, let me look up some things...
 
+Ok, so, I found a lovely little library, xmlrpc.sourceforge.net, that provides a Java XML-RPC client. So what I think I'm going to do is implement sixjet to use Autobus 2, and then write a smallish tool that listens on an XML-RPC port and proxies everything over to sixjet via Autobus. Then the Java app can use that tool to communicate.
+
+So I'm split over whether to have sixjet be one or 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
