@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+name_table = {"phenoxydine": "phen ox e dine", "spiro": "spy row",
+        "koboi": "ko bee"}
+
+import sys
+
+action = sys.argv[1]
+mac = sys.argv[2]
+ip = sys.argv[3]
+host = sys.argv[4] if len(sys.argv) > 3 else "whose name is not known"
+
+def format(component):
+    if component < 20:
+        return str(component)
+    if component < 100:
+        if component % 10 == 0:
+            return str(component)
+        else:
+            return "%s %s" % (component - (component % 10), component % 10)
+    return "%s %s" % (component / 100, format(component % 100))
+
+ip_text = " dot ".join(format(int(c)) for c in ip.split("."))
+
+host = name_table[host]
+
+if action == "add":
+    print ("A device, %s, has connected to the network, and has been assigned "
+           "i p address, %s." % (host, ip_text))
+elif action == "del":
+    print ("The device, %s, which was assigned i p address, %s, has "
+            "disconnected from the network." % (host, ip_text))
+
