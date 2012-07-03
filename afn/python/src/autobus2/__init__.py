@@ -54,7 +54,7 @@ any old Autobus service on the network at random)
 
 TODO: finish this up, and go into more detail about other things like events
 and objects and multiple service proxies and individual connections and
-discoverers and publishers and such.
+discoverers and publishers and such. 
 """
 
 import sys
