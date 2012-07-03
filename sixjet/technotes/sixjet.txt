@@ -1,7 +1,16 @@
-So this is the third generation of Sixjet.
+So this is the third generation of sixjet.
+
+(I'm renaming it to sixjet, by the way. It used to be named 6jet; the change is mostly because things like Java packages and Python packages and such liked to throw fits at things that started with numbers, so it's just going to be easier if it's called sixjet.)
 
 The actual fountain (and when I speak of the fountain, I mean the one that I'm putting together) will have 16 jets as currently planned. The controller board has room for expanding this to 24 jets, and I could convert the whole thing to use the old Instant Light Show boards I made, which would allow theoretically infinite expansion (with a slowdown of about a millisecond per jet state change for every additional 300 jets added, so basically not noticeable), although it would in practice be limited to around 40 jets, as I only have 10 or so boards.
 
 (I would get others manufactured if I actually wanted to expand beyond that, though.)
 
 So...
+
+I've been thinking lately about rewriting Autobus 2 and making Autobus 3, which would be distributed but would clean up some of the messiness of Autobus 2. (Services, for example, would be written as instances of an abstract class Service, which would have methods such as call_function, get_function_list, get_function_doc, etc., or maybe get_function, which returns an instance of the abstract Function class, and there would be a class such as PythonObjectService that provides this functionality given a Python object, and things like that, and then local services and remote services could theoretically have an identical interface and subclass from the same class.)
+
+But since that would take a while, I'm going to write sixjet to use Autobus 2.
+
+So, sixjet will use Autobus 2 as its underlying protocol.
+
