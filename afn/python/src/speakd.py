@@ -17,6 +17,7 @@ from autobus2 import Bus
 from concurrent import synchronized
 from cStringIO import StringIO
 import audioop
+import subprocess
 
 lock = RLock()
 
@@ -70,6 +71,12 @@ class ScaleLevel(object):
         self.word = word
     def __repr__(self):
         return "<ScaleLevel: " + str(self.level) + " " + self.word + ">"
+
+class TextToSpeech(object):
+    def __init__(self, text):
+        self.text = text
+    def __repr__(self):
+        return "<TextToSpeech: %r>" % self.text
 
 @synchronized(lock)
 def get_next_sentence():
@@ -281,6 +288,15 @@ class RPC(object):
         self.say(new_tokens, priority, voice)
     
     @synchronized(lock)
+    def tts(self, *text):
+        text = " ".join(text)
+        self.say([TextToSpeech(text)], 0, None)
+    
+    @synchronized(lock)
+    def tts_with_priority(self, text, priority=0):
+        self.say([TextToSpeech(text)], priority, None)
+    
+    @synchronized(lock)
     def get_queue_size(self):
         """
         Returns the number of sentences currently in the queue. This does not
@@ -397,6 +413,17 @@ def main():
                     elif isinstance(item, VoiceChange):
                         print "Switching voice to " + item.voice
                         voice = voices[item.voice]
+                    elif isinstance(item, TextToSpeech):
+                        print "Saying %r with espeak..." % item.text
+                        process = subprocess.Popen(
+                                ["espeak", "-a", "11", "-s", "132", item.text],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+                        result_values = process.communicate()
+                        if process.poll():
+                            print ("ERROR: Non-zero exit code from espeak: %r"
+                                    % result_values)
+                        print "Done saying text with espeak."
                 print "Waiting..."
                 time.sleep(1)
                 print "Closing audio stream"
