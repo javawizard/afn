@@ -20,12 +20,12 @@ def format(component):
             return "%s %s" % (component - (component % 10), component % 10)
     return "%s %s" % (component / 100, format(component % 100))
 
-ip_text = " dot ".join(format(int(c)) for c in ip.split("."))
+ip_text = ", dot ".join(format(int(c)) for c in ip.split("."))
 
 host = name_table[host]
 
 if action == "add":
-    print ("A device, %s, has connected to the network, and has been assigned "
+    print ("A device, %s, has connected to the network, and has received "
            "i p address, %s." % (host, ip_text))
 elif action == "del":
     print ("The device, %s, which was assigned i p address, %s, has "
