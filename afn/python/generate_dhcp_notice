@@ -32,4 +32,7 @@ if action == "add":
 elif action == "del":
     print ("The device, %s, which was assigned i p address, %s, has "
             "disconnected from the network." % (host, ip_text))
+elif action == "old":
+    print ("The device, %s, has renewed its lease on i p address %s."
+            % (host, ip_text))
 
