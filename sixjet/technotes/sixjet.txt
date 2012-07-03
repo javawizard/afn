@@ -14,3 +14,9 @@ But since that would take a while, I'm going to write sixjet to use Autobus 2.
 
 So, sixjet will use Autobus 2 as its underlying protocol.
 
+Or at least, I think...
+
+There would be advantages to using things such as JSON-RPC for this. Probably the biggest one would be automatic Java support, as there are implementations of JSON-RPC for Java already, and I'd probably do the GUI in Java as I'm much more familiar with doing GUIs in Java than I am with doing GUIs in Python.
+
+Hm, let me look up some things...
+
