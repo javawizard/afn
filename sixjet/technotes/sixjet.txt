@@ -1,0 +1,7 @@
+So this is the third generation of Sixjet.
+
+The actual fountain (and when I speak of the fountain, I mean the one that I'm putting together) will have 16 jets as currently planned. The controller board has room for expanding this to 24 jets, and I could convert the whole thing to use the old Instant Light Show boards I made, which would allow theoretically infinite expansion (with a slowdown of about a millisecond per jet state change for every additional 300 jets added, so basically not noticeable), although it would in practice be limited to around 40 jets, as I only have 10 or so boards.
+
+(I would get others manufactured if I actually wanted to expand beyond that, though.)
+
+So...
