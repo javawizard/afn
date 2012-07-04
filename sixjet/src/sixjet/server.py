@@ -73,7 +73,7 @@ def write_jets():
     # Set strobe low
     set_parallel_data(0)
 
- 
+
 class Service(object):
     def on(self, *numbers):
         """
