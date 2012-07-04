@@ -27,7 +27,7 @@ def set_parallel_data(data):
     a number from 0 to 255, then waits 200 microseconds.
     """
     pp.setData(data)
-    time.sleep(0.000200) # 200 microseconds; increase if needed
+    sleep(0.000200) # 200 microseconds; increase if needed
 
 
 def write_jets():
