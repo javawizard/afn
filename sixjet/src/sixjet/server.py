@@ -91,6 +91,55 @@ class Service(object):
         for n in numbers:
             jet_states[n] = False
         write_jets()
+    
+    def clear(self):
+        """
+        Turns all jets off.
+        
+        There's not an equivalent of clear() that turns all jets on as this
+        is usually a bad idea due to the power it consumes. (Each valve uses
+        0.3A of power, or equivalently, 36W of power, so turning them all on at
+        once uses 4.8A or 576W of power, which is a lot.
+        """
+        for n in range(len(jet_states)):
+            jet_states[n] = 0
+        write_jets()
+    
+    def set(self, *jets):
+        """
+        Sets the first len(jets) jets to the specified states. For example,
+        set(True, True, False, True, False) turns the first two jets on, the
+        third jet off, the fourth jet on, and the fifth jet off. This would be
+        equivalent to on(0, 1, 3); off(2, 4), but it avoids writing the new
+        jet states to the controller board twice.
+        """
+        for n in range(len(jets)):
+            jet_states[n] = bool(jets[n])
+    
+    def flash(self, *jets):
+        """
+        NOT IMPLEMENTED YET.
+        
+        Turns the specified jets on, then turns them off a bit later. The delay
+        between turning the jets on and turning the jets off can be configured
+        with set_flash_delay, or a custom delay can be specified by calling
+        flash_with_delay instead.
+        """
+        raise NotImplementedError
+    
+    def set_flash_delay(self, delay):
+        """
+        TODO.
+        """
+        raise NotImplementedError
+    
+    def flash_with_delay(self, delay, *jets):
+        """
+        TODO.
+        """
+        raise NotImplementedError
+    
+    
 
 
 def main():
