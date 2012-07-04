@@ -75,7 +75,22 @@ def write_jets():
 
 
 class Service(object):
-    pass
+    def on(self, *numbers):
+        """
+        Turns the specified jets on. Calling on(2, 4, 5), for example, would
+        turn on jets 2, 4, and 5. Each jet ranges from 0 to 15.
+        """
+        for n in numbers:
+            jet_states[n] = True
+        write_jets()
+    
+    def off(self, *numbers):
+        """
+        Same as the on function, but turns the specified jets off.
+        """
+        for n in numbers:
+            jet_states[n] = False
+        write_jets()
 
 
 def main():
