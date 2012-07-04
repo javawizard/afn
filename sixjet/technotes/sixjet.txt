@@ -22,7 +22,15 @@ Hm, let me look up some things...
 
 Ok, so, I found a lovely little library, xmlrpc.sourceforge.net, that provides a Java XML-RPC client. So what I think I'm going to do is implement sixjet to use Autobus 2, and then write a smallish tool that listens on an XML-RPC port and proxies everything over to sixjet via Autobus. Then the Java app can use that tool to communicate.
 
-So I'm split over whether to have sixjet be one or 
+So I'm split over whether to have sixjet be one single thingie that's run on the server, or two thingies, one that's run on the server and allows jets to be controlled and one that runs elsewhere and coordinates turning jets on and off.
+
+The first would be better for performance's sake, as there wouldn't be any network latency to slow down jet firing when music is playing and such.
+
+The second would allow the controller to be swapped out.
+
+Maybe I should do it as the first one, but expose functions that would allow a separate controller to be written, if one wanted to.
+
+I'll thinking about it. For now, I'm going to implement the bit that allows jets to be remotely switched on and off.
 
 
 
