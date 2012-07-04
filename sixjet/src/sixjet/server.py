@@ -115,6 +115,14 @@ class Service(object):
         """
         for n in range(len(jets)):
             jet_states[n] = bool(jets[n])
+        write_jets()
+    
+    def fix(self, jet, state):
+        """
+        Sets the specified jet to the specified state.
+        """
+        jet_states[jet] = bool(state)
+        write_jets()
     
     def flash(self, *jets):
         """
