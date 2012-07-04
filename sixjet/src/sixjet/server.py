@@ -138,8 +138,6 @@ class Service(object):
         TODO.
         """
         raise NotImplementedError
-    
-    
 
 
 def main():
