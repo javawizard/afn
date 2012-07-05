@@ -27,7 +27,7 @@ def set_parallel_data(data):
     a number from 0 to 255, then waits 200 microseconds.
     """
     pp.setData(data)
-    sleep(0.000200) # 200 microseconds; increase if needed
+    sleep(0.000500) # 500 microseconds; increase if needed
 
 
 def write_jets():
@@ -102,7 +102,7 @@ class Service(object):
         once uses 4.8A or 576W of power, which is a lot.
         """
         for n in range(len(jet_states)):
-            jet_states[n] = 0
+            jet_states[n] = False
         write_jets()
     
     def set(self, *jets):
