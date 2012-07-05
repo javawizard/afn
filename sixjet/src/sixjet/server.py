@@ -92,6 +92,12 @@ class Service(object):
             jet_states[n] = False
         write_jets()
     
+    def get_states(self):
+        """
+        Returns the states of all of the jets, as a list of booleans.
+        """
+        return jet_states
+    
     def clear(self):
         """
         Turns all jets off.
