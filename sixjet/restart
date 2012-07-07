@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo hello world
+echo hello error! 1>&2
