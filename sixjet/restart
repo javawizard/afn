@@ -6,6 +6,6 @@ echo Sleeping 2 seconds...
 sleep 2
 echo Starting the server...
 cd sixjet
-python -m sixjet.server &
+PYTHONPATH=/afn/hg/afn/python/src:/afn/sixjet/sixjet/src python -m sixjet.server &
 disown $!
 echo Done!
