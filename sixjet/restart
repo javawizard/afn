@@ -10,3 +10,4 @@ PYTHONPATH=/afn/hg/afn/python/src:/afn/sixjet/sixjet/src python -m sixjet.server
 disown $!
 echo Done! About to kill self the hard way.
 kill -9 $BASHPID
+
