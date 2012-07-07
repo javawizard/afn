@@ -1,4 +1,11 @@
 #!/bin/bash
 
-echo hello world
-echo hello error! 1>&2
+echo Killing the currently-running server...
+pkill -f sixjet.server
+echo Sleeping 2 seconds...
+sleep 2
+echo Starting the server...
+cd sixjet
+python -m sixjet.server &
+disown $!
+echo Done!
