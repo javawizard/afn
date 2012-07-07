@@ -31,7 +31,7 @@ def set_parallel_data(data):
 
 
 def write_jets():
-    """
+    """ 
     Writes the jet states stored in jet_states to the parallel port.
     """
     # The sixjet board is basically made up of two 74HC595 8-bit shift
