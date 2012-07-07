@@ -11,3 +11,4 @@ disown $!
 echo Done! About to kill self the hard way.
 kill -9 $BASHPID
 
+
