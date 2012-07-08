@@ -182,6 +182,12 @@ class SixjetServer(Thread):
             for n in message["off"]:
                 self.jet_states[n] = False
             self.write_jets()
+        elif message["command"] == "clear":
+            for n in range(len(self.jet_states)):
+                self.jet_states[n] = False
+            self.write_jets()
+        else:
+            print "Invalid message: %r" % message
 
     def set_parallel_data(self, data):
         """
