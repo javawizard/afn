@@ -178,9 +178,10 @@ class SixjetServer(Thread):
     def handle_message(self, message):
         if message["command"] == "set":
             for n in message["on"]:
-                pass
+                self.jet_states[n] = True
             for n in message["off"]:
-                pass
+                self.jet_states[n] = False
+            self.write_jets()
 
     def set_parallel_data(self, data):
         """
