@@ -2,11 +2,11 @@
 from autobus2 import Bus, wait_for_interrupt
 from autobus2.net import InputThread, OutputThread
 from socket import socket as Socket
-from parallel import Parallel
 from threading import Thread
 from Queue import Queue
 import traceback
 from afn.utils import print_exceptions
+from afn.utils.partial import Partial
 
 class AutobusService(object):
     def __init__(self, server):
@@ -38,8 +38,17 @@ class SixjetServer(Thread):
         dictionary. (Keys such as type will be added automatically, but such
         keys present in service_extra will override the ones added
         automatically.)
+        
+        If write_function is None, a new parallel.Parallel instance will be
+        created, and its setData method used.
         """
         Thread.__init__(self)
+        if write_function is None:
+            import parallel
+            self._parallel = parallel.Parallel()
+            write_function = self._parallel.setData
+        else:
+            self._parallel = None 
         self.queue = Queue()
         self.shut_down = False
         self.socket = Socket()
@@ -48,6 +57,24 @@ class SixjetServer(Thread):
         self.service = self.bus.create_service(
                 {"type": "sixjet", "sixjet.native_port": port},
                 from_py_object=AutobusService(self))
+        Thread(target=self.listen_for_connections).start()
+    
+    def listen_for_connections(self):
+        # We can just infinitely loop here as run() closes the socket after
+        # the event loop quits, which will cause an exception to be thrown here
+        while True:
+            s = self.socket.accept()
+            # The connection is just a dictionary for now. We're creating it
+            # before so that we can partial it into the input thread.
+            connection = {"queue": Queue()}
+            input_thread = InputThread(s, Partial(
+                    self.remote_message_received), connection)
+            output_thread = OutputThread(socket, read_function, finished_function, shut_on_end)
+            connection.update({"in": input_thread}, socket=s, out=output_thread)
+            self.post_event({"event": "connected"})
+    
+    def remote_message_received(self, message):
+        self.post_event({"event": "message", "message": message})
     
     def run(self):
         while not self.shut_down:
@@ -92,8 +119,7 @@ class SixjetServer(Thread):
 
 
 if __name__ == "__main__":
-    p = Parallel()
-    server = SixjetServer(p.setData, 57952, {})
+    server = SixjetServer(None, 57952, {})
     server.start()
     wait_for_interrupt()
     print "Shutting down server..."
