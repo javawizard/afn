@@ -32,6 +32,27 @@ Maybe I should do it as the first one, but expose functions that would allow a s
 
 I'll thinking about it. For now, I'm going to implement the bit that allows jets to be remotely switched on and off.
 
+So I've got a basic server that implements the first component of the second idea done. I've decided, though, that I'm going to use the first idea, having everything together as one thingie.
+
+I've also decided that, for the time being, I'm going to use a native protocol instead of Autobus.
+
+The main reason being one that I think I mentioned above, that I haven't written an Autobus library for Java yet.
+
+But I'm thinking that I'll also provide access to most, if not all, protocol features via an Autobus service as well. (And I'm talking about Autobus 2, not Autobus 1, just to clarify.)
+
+So connections to the server could be made through either a native protocol or through Autobus. The one with the most up-to-date features would be the native protocol, but Autobus would have most of the features as well.
+
+(Another strong motivator for using a native protocol is that Autobus 2 doesn't yet have support for authentication; since the native protocol would, I could allow public connections to it, once I've made sure there aren't any vulnerabilities.)
+
+The native protocol would be JSON-based, and as mentioned above, would support authentication. I'd probably allow just challenge-response password authentication (server sends client a random number, client concats it with the password and sends back the hash, server computes the same hash and checks for a match) for now.
+
+(I might also allow authentication to just be disabled for now.)
+
+(Or have disabled authentication be the default.)
+
+So I've gotten eight valves put onto the valve bank so far, and all 16 relays on the controller board working. I've also got three jets and hoses hooked up and working fantastically. My family's going to be getting back from vacation in about half an hour, so I'm going to head back out and work on some more of the jets.
+
+
 
 
 
