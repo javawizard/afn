@@ -224,6 +224,9 @@ class SixjetServer(Thread):
             # Set lines A and B to the jets we're writing
             values = (DATA_A if a else 0) | (DATA_B if b else 0)
             self.set_parallel_data(values)
+            # Do it an extra time just to see if it helps some issues I've been
+            # seeing with data occasionally getting clocked in wrong
+            self.set_parallel_data(values)
             # Set clock high
             self.set_parallel_data(values | CLOCK)
             # Set clock low
