@@ -52,6 +52,12 @@ The native protocol would be JSON-based, and as mentioned above, would support a
 
 So I've gotten eight valves put onto the valve bank so far, and all 16 relays on the controller board working. I've also got three jets and hoses hooked up and working fantastically. My family's going to be getting back from vacation in about half an hour, so I'm going to head back out and work on some more of the jets.
 
+So now back to programming.
+
+I've got some native protocol stuff written, and I've decided that there are definite advantages to doing things as an Autobus service. The biggest one is that then I don't have to go rewrite all of the socket code.
+
+
+
 
 
 
