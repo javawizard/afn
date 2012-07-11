@@ -56,7 +56,15 @@ So now back to programming.
 
 I've got some native protocol stuff written, and I've decided that there are definite advantages to doing things as an Autobus service. The biggest one is that then I don't have to go rewrite all of the socket code.
 
+So now I'm thinking I might want to switch to Autobus and just have an XML-RPC bridge written in Python to allow the Java-based controller to connect.
 
+And I'm thinking I need to write a lot more stuff about the design of the server before I start work on it.
+
+I also need to think about the designer a bit.
+
+(The designer is the app that lets you make jet firing patterns, both set to music and not set to music.)
+
+              
 
 
 
