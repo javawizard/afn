@@ -184,7 +184,13 @@ I think for now I'm going to have the transition table be built by the server, b
 
 So, back from the detour.
 
+The on and off times of firings are stored as floating-point numbers corresponding to the song's measures. Removing measures from the end of a song that contain firings would cause a warning to be given. Assuming the warning was accepted, firings whose end times are after the truncation point would be truncated to the end of the song, and firings whose start times are after the truncation point would be completely deleted.
 
+I'll probably allow measures to be deleted, although maybe not at the beginning. I might also allow measures to be inserted. Inserting and deleting a measure shift all firings after that measure. Jet starts/ends that occur in the measure are truncated to the boundary between the two measures on either side of the measure that was deleted; jet starts/ends that are entirely contained within the measure are simply deleted.
+
+The grid can be displayed either to measure scale, with each measure taking up the same number of pixels, or to time scale, with each second taking up the same number of pixels. The two can be switched between as needed.
+
+Firing durations are specified in terms of measure time, i.e. 0.25 for a fourth of a measure. Firing classes are similarly specified. For now, I'm going to have the jet start time be the anchor, and adjusting a class time only adjusts the end of the firing; in the future, I may just have it so that classed firings have an anchor point, and the class specified how much time before/after that anchor point the jet starts/stops.
 
 
 
