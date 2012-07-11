@@ -150,6 +150,18 @@ Todo: see if there's anu open-source light show software, and see how it handles
 
 
 
+That's the end of the notes I wrote on my Android. In relation to the last sentence, I downloaded Light-o-Rama, which isn't open-source, but a guy a few miles away uses it to run a light show at his house around Christmas, and the software's available for free. (Except that you have to have a license to use it with an actual light controller, but that doesn't much matter to me as I just needed to play around with it to see how it works.)
+
+So, they have a rather different sort of timing mechanism: they divide the whole thing up into discrete blocks, which are either N seconds wide or can be specified as N blocks to a measure (and you input measures in much the same way I was thinking for sixjet, namely by tapping the space bar at every measure boundary while playing the song back; they're also experimenting with automatically detecting beats in the music, but I'd rather do it the manual way), and then a particular block can either be set on or off. (They have other options, like shimmer and fade, that wouldn't be needed for sixjet now, although I might add them later to allow controlling my old light show circuitry as well; light show + water show would be rather cool.)
+
+I don't like that approach as it doesn't allow for arbitrary-length timings, but it does highlight that they use a notion of measures and it works just fine for them.
+
+So I'm thinking I'll use measures, but perhaps they should be optional. Or perhaps a default measure length is chosen when creating a design, and measures can be otherwise specified later.
+
+
+
+
+
 
 
 
