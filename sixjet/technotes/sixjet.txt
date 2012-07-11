@@ -210,6 +210,8 @@ That should be it for now. I might add the ability to repeat measures later.
 
 I'm also thinking I'll use a file extension of .sixjetpattern for now. I need to go look into how to do Unix filesystem mime-type information and such, and how to name vendor-specific mime types; I may choose a mime type for this accordingly if it would be useful to. (Although Nautilus supports file association by extension too, so I could just use that for now.)
 
+TODO: Add a key for specifying an offset into the file at which music should begin playing. In the future, might be nice to allow multiple songs per file, but don't worry about this for now or it'll get too complex.
+
 
 
 
