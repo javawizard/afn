@@ -200,9 +200,13 @@ So, the file dict would then contain a key that I'm thinking would be called "fi
 
 The file dict then has another key, "classes", which is a dictionary. Its keys are the above-mentioned auto-generated class ids in string form. Its values are dicts. Each of these dicts has only one key for now, "duration", which specifies, in measure time, the duration of firings belonging to this class. (I may add additional keys to allow, for example, class information to be bound at runtime, so that the length of certain firings could be globally adjusted on the server, and all songs would be able to follow the newly-set class information, but this will come later.)
 
-The file has one last key, "measures", which is a list of floating-point numbers indicating, in seconds, the bounaries between measures in the song, in order.
+The file has another key, "measures", which is a list of floating-point numbers indicating, in seconds, the bounaries between measures in the song, in order. This could theoretically be an empty list if the song contains only one measure.
 
-That should be it for now.
+And one last key is present, "length" (TODO: use "duration" instead, for naming consistency?), which is a floating-point number that specifies, in seconds, the amount of time the pattern takes up. This must be greater than all of the measure boundaries in the "measures" key.
+
+One note: if the pattern isn't tied to a song, the "song" key wouldn't be present at all in the file dict. whether or not a pattern is tied to a song can be changed later on; pattern length can also be changed. I haven't decided how to handle length information if a pattern is tied to a song; my instinct is to allow the length to be shorter or longer, with shorter lengths causing the music to be truncated and longer lengths causing silence to be added at the end.
+
+That should be it for now. I might add the ability to repeat measures later.
 
 
 
