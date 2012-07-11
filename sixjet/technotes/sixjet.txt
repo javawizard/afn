@@ -70,7 +70,85 @@ But in the mean time... Oh, found a way to share it.
 
 So, here it is...
 
-              
+
+
+Publishes objects. One is a list of jet states. One is the songs in the queue (todo: add object change delta encoding to make changing this efficient). One is all the songs. Todo: decide how to do random patterns that happen when songs aren't playing; prehaps allow playlists, perhaps ones that shuffle their contents and repeat when nothing is scheduled.
+
+Functions for turning jets on and off and for toggling and for telling the server to flash them.
+
+Server is event-based and has a mechanism for scheduling events at times. Also allows event categories and removing events based on category. Events execute now or at a time in the future; when there are no more now events, the event queue is waited on for the nearest time-based event; events at the same time are run in the order scheduled. Flashing is done by turning on and then scheduling an event to turn off with a category of manual; switching to a song cancels all pending manual events, thus preventing flashes from screwing up the show.
+
+Server flash time is published as an object, and there are functions for upping/downing/setting this. It's therefore the same for all clients.
+
+Calling the clear method stops all manual events and probably also stops the current song; this probably stops media playback in some way and clear all related events.
+
+Playback of a song schedules an event for the first jet firing. The event sets all jets that fire then and schedules an event for the next jet state change. These all have a category used to cancel them when control is returned to manual.
+
+Music players observe objects and watch events on the server. An object specifies the current audio file; probably a hash, and then I have a server that provides files given their hash. The next few hashes would also be provided so that they can be predownloaded. An event fires every, say, five seconds to indicate where in the song the fountain is; clients that have drifted fifty ms consistently over three firings resync their audio accordingly. Maybe have this value configurable on the controller, and then it publishes it as an object and clients observe it accordingly.
+
+Possible idea: music players publish the hashes they've downloaded, and when song N is to be played, the server says that it's to be played via the now playing object, then waits until all music players have it in their list or a certain number of seconds pass before playing. Could register a future event for N seconds to start playback, and when a remote-player-updated-download-list eveny happens and all players have music downloaded, playback starts. Manual mode cancels these events too.
+
+Could also have players publish percent downloaded, and then controller reports global percent remaining before playback starts.
+
+Event system should be a separate framework, maybe in afn. It should somehow integrate with autobus, or have a @run_on_event_thread decorator.
+
+Also would be nice to announce on outside PA a few seconds before a song starts to play. Can be overridden but only by certain users. (Todo: add some sort of Autobus authentication. Maybe functions decorated such accept a session parameter, and service proxies can be told to call certain functions that modify the session on authentication. Or session is thread-local and the decoratoe gets it from the thread local and passes it in. Or something.)
+
+So, configurable delay from request to play song until actual play song, and fire event or call function or something at attempt to play and actual start of play. Can be overridden but only by certain users. Also event indicating stop playing music.
+
+Allow something where certain groups of songs are played in a random order. Allow certain songs to not have music. Have a configurable idle playlist that would probably be set to shuffle that plays, probably only during certain hours or when requested, when music isn't on. This could be idle mode. Manual mode switches to idle mode after a certain amount of inactivity. Idle playlist enabled on demand, or during certain times, or manual mode might only switch to idle mode at certain times and idle mode disables at the end of those times. Decide this later.
+
+Changes to playlists and to jet firing patterns are versioned somehow. Songs, a.k.a. jet firing patterns (todo: maybe just call these patterns), can be modified remotely without having to download any files. Media server advertizes over autobus but communicates over http. Firings can be modified while playing, and the old version will be used until it's done playing. Todo: either use mercurial for this or use a custom system. Maybe have firings updated outside the system and the path to get them from configurable, and have it be a Mercurial repository for now.
+
+Configure which playlist is the idle playlist based on time. Null playlist is allowed; does nothing.
+
+Notion of a currently-playing playlist. Perhaps playlists can be nested, i.e. one playlist refers to another. Circular references would cause playback to stop and an error to be noted. Then we have the play queue playlist, which can have other playlists added.
+
+Play queue can be modified from clients. Other playlists, unsure right now. Maybe they can and they're versioned in Mercurial.
+
+Although how does that get configured based on the current time etc?
+
+Maybe being able to change the active playlist is a good idea.
+
+Or atomically clear the play queue and add something to it.
+
+Whay happens when playlists are updated while playing?
+
+Especially the play queue...
+
+I'll come back to that. Next thing is patterns.
+
+So, they have measures. They have a thing saying at what time every measure starts. This is made by playing the song and pressing the space bar every measure.
+
+Measure timing can be scaled or re-inputted at any time.
+
+A list of measures shows on the side. A play button plays the relevant measure.
+
+The entire song shows in a scroll pane, with rulers for the jets on the left and for the measures on the top.
+
+Measures can be set to repeat N times, which logically shifts the rest of the song after it.
+
+The song can also be shifted manually.
+
+Measures don't all have to be the same length, and can be resized as needed to a particular number of seconds.
+
+Display shows firings that start before the end of the viewport and also end after the start ofnthe viewport. Others are hidden to save time while redrawing.
+
+Dragging the middle of a firing moves it; dragging up or down changes its track. Dragging right/left moves it. Overlaps are not allowed, and show right next to the would-be overlapped firing. Adjacent firings are internally merged when building the transition table, mentioned below.
+
+Dragging the sides of a firing move its start and end point.
+
+Three check boxes enable moving, changing start, and changing end, for firings that are too small to.be otherwise adjusted. A right-click menu allows adjusting the time manually.
+
+Firings can belong to a class. The class specifies the duration of the firing, either in seconds or in measure beats. Unsure of what to do if altering a class duration would cause overlaps. For classed firings, resizers are disabled.
+
+A grid, displayed in terms of fractions of a measure, can be displayed, and all firings aligned to it. Both start and end of a firing whose length is not a multiple of the grid size are snapped.
+
+Display can be scaled in terms of measures or in terms of seconds.
+
+Todo: see if there's anu open-source light show software, and see how it handles all of these issues.
+
+
 
 
 
