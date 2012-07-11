@@ -132,13 +132,13 @@ The song can also be shifted manually.
 
 Measures don't all have to be the same length, and can be resized as needed to a particular number of seconds.
 
-Display shows firings that start before the end of the viewport and also end after the start ofnthe viewport. Others are hidden to save time while redrawing.
+Display shows firings that start before the end of the viewport and also end after the start of the viewport. Others are hidden to save time while redrawing.
 
 Dragging the middle of a firing moves it; dragging up or down changes its track. Dragging right/left moves it. Overlaps are not allowed, and show right next to the would-be overlapped firing. Adjacent firings are internally merged when building the transition table, mentioned below.
 
 Dragging the sides of a firing move its start and end point.
 
-Three check boxes enable moving, changing start, and changing end, for firings that are too small to.be otherwise adjusted. A right-click menu allows adjusting the time manually.
+Three check boxes enable moving, changing start, and changing end, for firings that are too small to be otherwise adjusted. A right-click menu allows adjusting the time manually.
 
 Firings can belong to a class. The class specifies the duration of the firing, either in seconds or in measure beats. Unsure of what to do if altering a class duration would cause overlaps. For classed firings, resizers are disabled.
 
@@ -146,7 +146,7 @@ A grid, displayed in terms of fractions of a measure, can be displayed, and all 
 
 Display can be scaled in terms of measures or in terms of seconds.
 
-Todo: see if there's anu open-source light show software, and see how it handles all of these issues.
+Todo: see if there's any open-source light show software, and see how it handles all of these issues.
 
 
 
@@ -157,6 +157,34 @@ So, they have a rather different sort of timing mechanism: they divide the whole
 I don't like that approach as it doesn't allow for arbitrary-length timings, but it does highlight that they use a notion of measures and it works just fine for them.
 
 So I'm thinking I'll use measures, but perhaps they should be optional. Or perhaps a default measure length is chosen when creating a design, and measures can be otherwise specified later.
+
+So I just re-read my Android notes, and I'm thinking measures should be required. They're more or less required in Light-o-Rama after all, so I can't think of any objection to requiring them in the designer.
+
+(Also, some acronyms I'm probably going to use on occasion that are carried over from older generations of sixjet: 6jd means the sixjet designer, the thingie that I'm talking about here where you write jet firing patterns, 6jc means the sixjet controller, the app that you use to manually switch on/off jets and choose what's playing right now, 6js means the sixjet server, the daemon that runs on the machine to which a sixjet fountain is connected, and 6jm means sixjet music, the daemon that runs on all machines to which speakers are attached that are to play music.)
+
+So, we have measures, and measures are required, and we specify all timing in terms of position within whatever measure it's positioned in. I imagine measures will be resized, if ever so slightly due to a re-run of the keyboard tapping thingie, frequently enough that the resulting drift due to floating-point errors were jets to be stored in terms of absolute time would be unacceptable.
+
+So a firing's on time and off time are stored as a floating-point number, where 0 is right at the beginning of the song (i.e. 0 would always translate to 0 in absolute time when computing the transition table -- more to come on what the transition table is), 1 is the boundary between the first measure and the second measure, 2 is the boundary between the second measure and the third measure, 0.5 is half-way through the first measure, 1.75 is three-quarters through the second measure, and so on.
+
+So, I should take a detour and mention what the transition table is.
+
+The transition table is a structure. I'm still debating whether it will be built in-memory on the server when a song is to play or if the designer will build it every time the file is saved and include it with the file, or if it will be cached on the server side as a separate file with a separate format, or even if the designer will output a separate transition table file that's what's actually uploaded to the server.
+
+The transition table is simply a list of some sort specifying raw events in terms of absolute time. The events specify a list of jets and the states to which they should be set. Nothing more, nothing less. I'd imagine its Python in-memory representation would be a list [event1, event2, event3, ...] where each event is a list or a dict, whichever takes up the least amount of RAM (TODO: benchmark this to find out), that looks like [12.59725, [(1, True), (2, False), (3, True), (4, True), (5, False)]] (or the result of passing that to dict() were a dict to be used instead of a list). This event would be set to occur at 12.59725 seconds into the song, and it would turn jets 1, 3, and 4 on, and jets 2 and 5 off.
+
+Events in the transition table are strictly ordered in terms of the time at which they occur. A simple sort of the transition table would accomplish this, although it should typically be built such that it's already in sorted order after generating it.
+
+No two events occur at the exact same time; events that would are merged together.
+
+Jet on events do not occur unless the jet has been previously turned off (or hasn't been changed at all yet). In particular, overlapping firings should be converted to a transition table reentrantly: a jet on event is issued at the start of the first firing that overlaps, and a jet off event is issued at the end of the last firing that overlaps.
+
+I think for now I'm going to have the transition table be built by the server, but I'll have the function to do so in its own library so that it could be reused elsewhere.
+
+(And I might have the server expose it via Autobus, too.)
+
+So, back from the detour.
+
+
 
 
 
