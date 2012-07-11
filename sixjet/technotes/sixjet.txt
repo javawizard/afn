@@ -192,6 +192,18 @@ The grid can be displayed either to measure scale, with each measure taking up t
 
 Firing durations are specified in terms of measure time, i.e. 0.25 for a fourth of a measure. Firing classes are similarly specified. For now, I'm going to have the jet start time be the anchor, and adjusting a class time only adjusts the end of the firing; in the future, I may just have it so that classed firings have an anchor point, and the class specified how much time before/after that anchor point the jet starts/stops.
 
+I'm thinking the file format will be a JSON file. That'll allow it to be versioned relatively easily. Files will probably be saved with proper indentation and such. (If files get too big this way, I'll either store them gzipped or without line breaks and indentation, but I don't imagine space being an issue as I suspect the media files themselves will be quite a bit bigger.
+
+So, the file would be a JSON file with a key "type" whose value is "sixjet.design", a key "song" whose value is a dict containing keys "hash" and "filename", the former being the hash of the media file (which would be used by 6js and 6jm to actually play the relevant music) and the latter being the filename of the file (which would primarily be used to display to the user what song they're modifying). I might include "title", "author", "album", etc in the song dict.
+
+So, the file dict would then contain a key that I'm thinking would be called "firings", although I'm not sure about the name. Its value would be a list. Each item in the list would be a dict with keys "jet", whose value is the jet number, "start", whose value is a floating point number specifying, in measure time, the start of the firing, and "type", which is either "classed" or "single". If the firing is classed, another key, "class", would be present, whose value is the id of the class; this is a string that's automatically generated, but I haven't decided its format other than that. If the firing is single (i.e. not classed), the key "duration" would be present, which specifies how long the firing lasts for, in measure time.
+
+The file dict then has another key, "classes", which is a dictionary. Its keys are the above-mentioned auto-generated class ids in string form. Its values are dicts. Each of these dicts has only one key for now, "duration", which specifies, in measure time, the duration of firings belonging to this class. (I may add additional keys to allow, for example, class information to be bound at runtime, so that the length of certain firings could be globally adjusted on the server, and all songs would be able to follow the newly-set class information, but this will come later.)
+
+The file has one last key, "measures", which is a list of floating-point numbers indicating, in seconds, the bounaries between measures in the song, in order.
+
+That should be it for now.
+
 
 
 
