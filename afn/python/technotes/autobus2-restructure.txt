@@ -87,13 +87,15 @@ Service handles multiple listener dispatch internally; it only ever registers on
 
 So, let's go write up ServiceProvider.
 
-
-
 Well, that was simple.
 
-
-
 Oh yay! I did already write an event framework! It's afn.utils.listener.Event, and it'll work perfectly for Autobus.
+
+Shoot. I just realized that with all of this service provider stuff, I totally overlooked how Service is supposed to add synthetic functions and objects to itself to provide a list of functions, events, and objects that actually exist.
+
+But it's three in the morning, so I think I'm going to go to bed for now so that I can be up for work tomorrow.
+
+Ideas: inject the object manually, then fire the relevant listener to add the function. The problem: that doesn't allow for injecting functions because the function would delegate to the provider, which obviously wouldn't know about that function. Another idea: write a ServiceProvider that allows merging two ServiceProviders together; More complex, and maybe not the right approach, but it would work; this needs some thought. Yet another idea, very suboptimal but would work: have a single introspection service for a given Bus instance, and have that publish information about the service. I've mentioned elsewhere why I don't like this approach (and I've already partially implemented it but largely abandoned it), but it could work if I can't think of anything else to do.
 
 
 
