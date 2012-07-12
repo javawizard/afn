@@ -49,6 +49,10 @@ options.add_argument("-m", "--multiple", action="store_true", help=
 options.add_argument("-t", "--time", action="store", type=int, default=2, help=
         "Specifies the amount of time that autosend2 should try to connect to "
         "services for when -m is used. This has no effect when -m is not used.")
+options.add_argument("-a", "--all", action="store_true", help=
+        "Normally, list mode, among others, filter internal functions, such as "
+        '"autobus.get_details", that are usually supposed to stay hidden. '
+        "Specifying --all shows these hidden functions.")
 
 def main():
     args = parser.parse_args()
@@ -71,24 +75,41 @@ def main():
         else:
             mode = "list"
     
+    # Parse out the info filer from the arguments
     info_filter = parse_info_filter(args)
     
+    # Now create a bus.
     with Bus() as bus:
         if mode == "discovery":
+            # Print the discovery table header
             print discovery_mode_header
+            # Add a listener listening for services that will print out
+            # information to stdout
             bus.add_service_listener(discovery_mode_listener, info_filter=info_filter, initial=True)
+            # Wait until we're interrupted
             wait_for_interrupt()
+            # This empty print is to add a new line after the one with ^C on it
+            # so that things look a bit prettier when all of the REMOVED
+            # messages are printed.
             print 
             return
         if mode == "call":
             if not args.name:
                 print "You need to specify the name of the function to call."
                 return
-            if args.multiple:
+            if args.multiple: # Open a multiple-service proxy, with a
+                # bind_function that will call the requested function whenever
+                # it binds to a service. The advantage of doing this instead of
+                # creating the service proxy, waiting a few seconds, then
+                # calling the function on it is that the function is called
+                # nearly immediately instead of after a delay.
                 with bus.get_service_proxy(info_filter, bind_function=
                         partial(call_mode_onbind, args), multiple=True) as proxy:
+                    # Wait a few seconds before stopping the service proxy
                     time.sleep(args.time)
-            else:
+            else: # Open a single-service proxy, wait for it to bind to
+                # something, then call the function and pass the result to
+                # call_mode_print_result, which prints it out.
                 with bus.get_service_proxy(info_filter) as proxy:
                     proxy.wait_for_bind(timeout=args.time)
                     try:
@@ -97,13 +118,21 @@ def main():
                         call_mode_print_result(e)
             return
         if mode == "list":
+            # Open a service proxy
             with bus.get_service_proxy(info_filter, multiple=args.multiple) as proxy:
-                if args.multiple:
+                if args.multiple: # Wait a few seconds for the proxy to bind to
+                    # all of the matching services
                     time.sleep(args.time)
-                else:
+                else: # Wait until the proxy binds to a single matching service
                     proxy.wait_for_bind(timeout=args.time)
+                # Call the introspection function to get information about the
+                # service
                 results = proxy["autobus.get_details"]()
                 if not args.multiple:
+                    # Multiple proxies return {service_id: return_value, ...}.
+                    # Single proxies just return the value itself. This bit
+                    # translates the single-service proxy style to the
+                    # multiple-service proxy style.
                     results = {proxy.current_service_id: results}
                 if len(results) == 0:
                     print "No matching services found."
@@ -212,7 +241,7 @@ def parse_value(value):
 def filter_hidden(args, dictionary):
     new_dict = {}
     for k, v in dictionary.items():
-        if not k.startswith("autobus."):
+        if args.all or not k.startswith("autobus."):
             new_dict[k] = v
     return new_dict
 
