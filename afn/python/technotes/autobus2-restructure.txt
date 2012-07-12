@@ -1,0 +1,28 @@
+So I'm thinking about restructuring some of Autobus 2.
+
+The first bit I want to restructure is the discovery system. It knows too much about the bus at the moment; this really needs to be changed to be more along the lines of how publishers work, which is that they have essentially no knowledge of the bus. The idea is that multiple busses could use the same discoverer if that's what was desired.
+
+So I'm thinking discoverers should have methods such as add_listener and remove_listener that add and remove listeners that listen for discovery events to happen. The listener would probably just be a function for now. It would accept parameters specifying what happened and such.
+
+Adding a discoverer to a bus would cause the bus to add a function to the discoverer as a listener. Closing the bus would remove said listener.
+
+I still need to figure out how to do resource management, namely how to ensure that discoverers are properly closed when they're no longer needed. Perhaps they could have a close method; Bus objects could then have a method for adding a discoverer in such a way that it would be automatically closed when the bus itself is closed.
+
+So, the second thing I want to change is that I want services to be implemented as instances of some sort of abstract Service class. Since there's already a Service class that does other things related to services, I might call this class ServiceProvider for now.
+
+The idea would be that a ServiceProvider provides methods for asking it what functions, events, and objects it provides. It would provide functions for actually calling service functions and functions for getting an object's value. It would also provide functions for adding/removing listeners that listen for creation of functions, adding/removing listeners that listen for event firings (and probably event creations/deletions too, for the sake of publishing their information on the introspection service), and adding/removing listeners that listen for object creation/deletion/value changes. Perhaps there might just be one type of listener that's notified when any of those things happen.
+
+Then there would be an implementation of ServiceProvider that accepts a Python object and bases its information on that. The python object could expose traditional Python functions. It could also have instances of AutobusEvent or some such thing, which would be a callable that, when called, notifies its listeners that an event happened; the Python service provider would register listeners on all of the underlying object's events. (Perhaps the event framework should be written separate from Autobus, as it'd be useful elsewhere; I seem to recall I might have already written such a framework that could be used.) Instances of AutobusObject could also be present; this would be a class-level construct acting as a descriptor, under my current plans. Thus one could simply assign a value to the object's corresponding property, and everything would be notified correctly.
+
+Or even better, the Python object would be required to mix in a class that would override __getattr__ and __setattr__ and handle events, functions, and objects correctly. That would allow creation of new objects and events after the service has already been published.
+
+Then that makes me think that it might be even better to just have a mix in class that turns a plain old Python object into a service provider. The only issue is that ServiceProvider's methods would need to be named in such a way as not to conflict with methods that would be used on the actual object, which might prove difficult as that basically obviates everything not starting with an underscore.
+
+
+
+
+
+
+
+
+
