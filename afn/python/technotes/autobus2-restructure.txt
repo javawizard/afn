@@ -47,6 +47,7 @@ Listeners would have a signature listener(event, *args), where event is one of t
     OBJECT_UPDATED: An object's info dict changed. Two arguments, name and info, will be passed.
     OBJECT_REMOVED: An object was removed. One argument, name, will be passed.
     OBJECT_CHANGED: An object's value changed. Two arguments, name and value, will be passed.
+    SERVICE_UPDATED: A service's info dict changed. One argument, info, will be passed. Info is a dict {"doc": ...}. (This was added later; see a few paragraphs below.)
 
 That sounds absolutely spiffing.
 
@@ -67,6 +68,12 @@ Man, I like this a lot better than having an Autobus-managed Service class like 
 So I'm trying to decide how to obtain the service's documentation...
 
 I'm thinking that it should also be provided by the service provider, since it would typically come from the actual class's docstring, but it should be changeable, since function, event, and object docstrings can be changed as well, if the service provider wants to.
+
+So I've just added a new event, SERVICE_UPDATED. This is used to let the service know that the doc, as reported by the service provider, has changed.
+
+So when a listener is added with __autobus_listen__, the service provider should fire one SERVICE_UPDATED to specify the doc (which will default to None if SERVICE_UPDATED is never called), and one FUNCTION_ADDED, EVENT_ADDED, and OBJECT_ADDED for every object currently available on the service provider. These should be fired synchronously, before __autobus_listen__ returns.
+
+Similarly, __autobus_unlisten__ should fire FUNCTION_REMOVED, EVENT_REMOVED, and OBJECT_REMOVED to remove all functions/events/objects that the listener was previously made aware of. It doesn't need to fire SERVICE_UPDATED.
 
 
 
