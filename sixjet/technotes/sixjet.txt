@@ -204,6 +204,8 @@ The file has another key, "measures", which is a list of floating-point numbers 
 
 And one last key is present, "length" (TODO: use "duration" instead, for naming consistency?), which is a floating-point number that specifies, in seconds, the amount of time the pattern takes up. This must be greater than all of the measure boundaries in the "measures" key.
 
+Update: I'm thinking that actually, length won't be present, and instead, measures will be a list of dicts, with each dict corresponding to a measure, and each measure having a "end" key specifying where that measure ends. 
+
 One note: if the pattern isn't tied to a song, the "song" key wouldn't be present at all in the file dict. whether or not a pattern is tied to a song can be changed later on; pattern length can also be changed. I haven't decided how to handle length information if a pattern is tied to a song; my instinct is to allow the length to be shorter or longer, with shorter lengths causing the music to be truncated and longer lengths causing silence to be added at the end.
 
 That should be it for now. I might add the ability to repeat measures later.
