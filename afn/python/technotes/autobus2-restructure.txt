@@ -18,6 +18,36 @@ Or even better, the Python object would be required to mix in a class that would
 
 Then that makes me think that it might be even better to just have a mix in class that turns a plain old Python object into a service provider. The only issue is that ServiceProvider's methods would need to be named in such a way as not to conflict with methods that would be used on the actual object, which might prove difficult as that basically obviates everything not starting with an underscore.
 
+I could, of course, break python rules and start adding double underscore methods...
+
+It might be possible to have a __autobus_service__ method that returns a service provider object.
+
+But then two separate objects have to be created, one that's the actual object and one that Autobus uses as the service provider. That's something I don't particularly like.
+
+Although Python's iterator protocol has gotten away with it; you have a list, or a dict, or whatever, and then you have the iterators that iterate over it. So it might be doable.
+
+Perhaps I should come up with an interface for service providers first, and then worry about implementing one in terms of a Python object later.
+
+So, let's say we have these methods:
+
+    call_function(name, args): Calls the specified function, and returns its value.
+    add_listener(listener): Adds the specified listener to this service provider.
+    remove_listener(listener): Removes the specified listener from this service provider.
+    
+Listeners would have a signature listener(event, *args), where event is one of the following constants (which would probably be in a module such as autobus2.constants):
+    
+    FUNCTION_ADDED: A function was added. Two arguments, name and info, will be passed. Info is a dict {"doc": ..., "type": {"args": ["int", "boolean", "any", ...], "return": "none", "remainder": null}}. I'll write more about the type dict later. NOTE THAT THE DICT PASSED MUST NOT LATER BE ALTERED; functions will typically want to assemble the dict, and the dicts it contains, when issuing FUNCTION_ADDED, or use Python's copy.deepcopy function to copy everything.
+    FUNCTION_UPDATED: A function's info dict changed. Two arguments, name and info, will be passed, where info is the function's new information. The same warning present on FUNCTION_ADDED about modifications applies here.
+    FUNCTION_REMOVED: A function was removed. One argument, name, is passed.
+    EVENT_ADDED: An event was added. Two arguments, name and info, will be passed. Info is a dict {"doc": ..., "type": {"args": ["int", "boolean", "any", ...], "remainder": null}}.
+    EVENT_UPDATED: An event's info dict changed. Two arguments, name and info, will be passed.
+    EVENT_REMOVED: An event was removed. One argument, name, is passed.
+    EVENT_FIRED: An event was fired. Two arguments, name and args, are passed.
+    OBJECT_ADDED: An object was added. Three arguments, name, info, and value, will be passed. Info is a dict {"doc": ..., "type": "int"}.
+    OBJECT_UPDATED: An object's info dict changed. Two arguments, name and info, will be passed.
+    OBJECT_REMOVED: An object was removed. One argument, name, will be passed.
+    OBJECT_CHANGED: An object's value changed. Two arguments, name and value, will be passed.
+
 
 
 
