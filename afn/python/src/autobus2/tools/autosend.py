@@ -8,6 +8,13 @@ from autobus2 import Bus, wait_for_interrupt
 import autobus2
 import time
 import json
+import platform
+from afn.utils.concurrent import dump_thread_traces
+# Import signal on Linux only
+if platform.system() == "Linux":
+    import signal
+else:
+    signal = None
 
 description = """
 A command-line Autobus client.
@@ -55,6 +62,14 @@ options.add_argument("-a", "--all", action="store_true", help=
         "Specifying --all shows these hidden functions.")
 
 def main():
+    # I've been seeing a problem lately where autosend occasionally gets stuck
+    # in an infinite loop just before dying. I suspect it's due to one of
+    # Autobus's internal threads not dying properly; I'm having autosend
+    # therefore listen for SIGUSR1 on Linux and dump all thread traces when it
+    # happens. Hopefully I'll be able to get an idea of which thread's causing
+    # the issues that way.
+    if signal:
+        signal.signal(signal.SIGUSR1, dump_thread_traces)
     args = parser.parse_args()
     if args.mode is None and args.type is None:
         print "Use autosend2 --help for more information."
