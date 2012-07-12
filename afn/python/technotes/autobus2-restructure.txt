@@ -93,6 +93,10 @@ Well, that was simple.
 
 
 
+Oh yay! I did already write an event framework! It's afn.utils.listener.Event, and it'll work perfectly for Autobus.
+
+
+
 
 
 
