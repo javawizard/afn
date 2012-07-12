@@ -87,8 +87,10 @@ class InputThread(Thread):
     block after it receives a message until a non-None function is assigned to
     the function property.
     """
-    def __init__(self, socket, function, name=None):
+    def __init__(self, socket, function, name=None, daemon=False):
         Thread.__init__(self, name=name)
+        if daemon:
+            Thread.daemon(self, daemon)
         self.socket = socket
         self.generator = linesplit(socket)
         self.lock = RLock()
@@ -198,8 +200,10 @@ class OutputThread(Thread):
             pass
 
 
-def start_io_threads(socket, input_function, output_function, name=None):
-    input_thread = InputThread(socket, input_function, name="start_io_threads input thread for " + str(name))
+def start_io_threads(socket, input_function, output_function, name=None,
+        input_daemon=False):
+    input_thread = InputThread(socket, input_function, name="start_io_threads input thread for " + str(name),
+            daemon=input_daemon)
     output_thread = OutputThread(socket, output_function)
     input_thread.start()
     output_thread.start()

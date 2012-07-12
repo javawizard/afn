@@ -91,7 +91,8 @@ class Connection(common.AutoClose):
             s.settimeout(None)
             # Create the queue holding messages to be sent to the remote end
             queue = Queue()
-            input_thread, output_thread = net.start_io_threads(s, None, queue.get, name="remote.Connection %r" % self)
+            input_thread, output_thread = (
+                    net.start_io_threads(s, None, queue.get, name="remote.Connection %r" % self), input_daemon=True)
             # Create the queue that will be used to hold the response to the
             # initial bind command that we're going to send
             input_queue = Queue()
