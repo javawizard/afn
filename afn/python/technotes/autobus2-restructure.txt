@@ -75,6 +75,18 @@ So when a listener is added with __autobus_listen__, the service provider should
 
 Similarly, __autobus_unlisten__ should fire FUNCTION_REMOVED, EVENT_REMOVED, and OBJECT_REMOVED to remove all functions/events/objects that the listener was previously made aware of. It doesn't need to fire SERVICE_UPDATED.
 
+This is absolutely lovely.
+
+One note that should be obvious but is worth reiterating: a single ServiceProvider can be used with multiple services at the same time. I don't see a practical use for that right now, but I want it to be a possibility just in case.
+
+(And I'm also thinking the future Python object implementation thingie of ServiceProvider will allow both functions assigned directly to the object instance and functions defined on the object instance's class, and will expose both as functions, with the usual Python precedence (instance overrides class) applying.)
+
+So, when a Service is constructed, it sets up all its connection mumbo jumbo, then registers itself as a listener on the service provider passed to it. When changes happen, it updates things and sends out protocol messages as needed. When a remote tries to call a function, it passes the call to __autobus_call__.
+
+Service handles multiple listener dispatch internally; it only ever registers one listener using __autobus_listen__ no matter how many clients there are, or so I'm thinking right now. I might change that later if I decide to do away with the Service class altogether.
+
+So, let's go write up ServiceProvider.
+
 
 
 
