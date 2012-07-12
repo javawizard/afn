@@ -62,139 +62,126 @@ options.add_argument("-a", "--all", action="store_true", help=
         "Specifying --all shows these hidden functions.")
 
 def main():
-    try:
-        # I've been seeing a problem lately where autosend occasionally gets stuck
-        # in an infinite loop just before dying. I suspect it's due to one of
-        # Autobus's internal threads not dying properly; I'm having autosend
-        # therefore listen for SIGUSR1 on Linux and dump all thread traces when it
-        # happens. Hopefully I'll be able to get an idea of which thread's causing
-        # the issues that way.
-        if signal:
-            signal.signal(signal.SIGUSR1, dump_thread_traces)
-        args = parser.parse_args()
-        if args.mode is None and args.type is None:
-            print "Use autosend2 --help for more information."
+    args = parser.parse_args()
+    if args.mode is None and args.type is None:
+        print "Use autosend2 --help for more information."
+        return
+    if args.mode == "help":
+        print parser.format_help().replace("!!!INFO!!!", description.strip())
+        return
+    
+    mode = args.mode
+    if mode is None:
+        # Type, at least, will be present, since the "Use autosend2 --help ..."
+        # message will have stopped us if it wasn't. So basically we need to
+        # check to see if name is present, and if it is, then we call the
+        # specified function, and if it isn't, then we search for the
+        # introspection service and print a list of all supported functions.
+        if args.name is not None:
+            mode = "call"
+        else:
+            mode = "list"
+    
+    # Parse out the info filer from the arguments
+    info_filter = parse_info_filter(args)
+    
+    # Now create a bus.
+    with Bus() as bus:
+        if mode == "discovery":
+            # Print the discovery table header
+            print discovery_mode_header
+            # Add a listener listening for services that will print out
+            # information to stdout
+            bus.add_service_listener(discovery_mode_listener, info_filter=info_filter, initial=True)
+            # Wait until we're interrupted
+            wait_for_interrupt()
+            # This empty print is to add a new line after the one with ^C on it
+            # so that things look a bit prettier when all of the REMOVED
+            # messages are printed.
+            print 
             return
-        if args.mode == "help":
-            print parser.format_help().replace("!!!INFO!!!", description.strip())
+        if mode == "call":
+            if not args.name:
+                print "You need to specify the name of the function to call."
+                return
+            if args.multiple: # Open a multiple-service proxy, with a
+                # bind_function that will call the requested function whenever
+                # it binds to a service. The advantage of doing this instead of
+                # creating the service proxy, waiting a few seconds, then
+                # calling the function on it is that the function is called
+                # nearly immediately instead of after a delay.
+                with bus.get_service_proxy(info_filter, bind_function=
+                        partial(call_mode_onbind, args), multiple=True) as proxy:
+                    # Wait a few seconds before stopping the service proxy
+                    time.sleep(args.time)
+            else: # Open a single-service proxy, wait for it to bind to
+                # something, then call the function and pass the result to
+                # call_mode_print_result, which prints it out.
+                with bus.get_service_proxy(info_filter) as proxy:
+                    proxy.wait_for_bind(timeout=args.time)
+                    try:
+                        call_mode_print_result(proxy[args.name](*parse_value_list(args.values)))
+                    except Exception as e:
+                        call_mode_print_result(e)
             return
-        
-        mode = args.mode
-        if mode is None:
-            # Type, at least, will be present, since the "Use autosend2 --help ..."
-            # message will have stopped us if it wasn't. So basically we need to
-            # check to see if name is present, and if it is, then we call the
-            # specified function, and if it isn't, then we search for the
-            # introspection service and print a list of all supported functions.
-            if args.name is not None:
-                mode = "call"
-            else:
-                mode = "list"
-        
-        # Parse out the info filer from the arguments
-        info_filter = parse_info_filter(args)
-        
-        # Now create a bus.
-        with Bus() as bus:
-            if mode == "discovery":
-                # Print the discovery table header
-                print discovery_mode_header
-                # Add a listener listening for services that will print out
-                # information to stdout
-                bus.add_service_listener(discovery_mode_listener, info_filter=info_filter, initial=True)
-                # Wait until we're interrupted
-                wait_for_interrupt()
-                # This empty print is to add a new line after the one with ^C on it
-                # so that things look a bit prettier when all of the REMOVED
-                # messages are printed.
-                print 
+        if mode == "list":
+            # Open a service proxy
+            with bus.get_service_proxy(info_filter, multiple=args.multiple) as proxy:
+                if args.multiple: # Wait a few seconds for the proxy to bind to
+                    # all of the matching services
+                    time.sleep(args.time)
+                else: # Wait until the proxy binds to a single matching service
+                    proxy.wait_for_bind(timeout=args.time)
+                # Call the introspection function to get information about the
+                # service
+                results = proxy["autobus.get_details"]()
+                if not args.multiple:
+                    # Multiple proxies return {service_id: return_value, ...}.
+                    # Single proxies just return the value itself. This bit
+                    # translates the single-service proxy style to the
+                    # multiple-service proxy style.
+                    results = {proxy.current_service_id: results}
+                if len(results) == 0:
+                    print "No matching services found."
+                for i, (service_id, details) in enumerate(results.items()):
+                    if i > 0:
+                        print "#" * 70
+                    
+                    print "Service " + str(service_id) + ":"
+                    if details["doc"]:
+                        print "\n" + details["doc"]
+                    print "=" * 70
+                    functions = filter_hidden(args, details["functions"])
+                    if len(functions) == 0:
+                        print "No functions available on this service."
+                    for j, function in enumerate(functions.values()):
+                        if j > 0:
+                            print "-" * 70
+                        print "Function " + function["name"] + ":"
+                        if function["doc"]:
+                            print "\n" + function["doc"]
+                    print "=" * 70
+                    events = filter_hidden(args, details["events"])
+                    if len(events) == 0:
+                        print "No events available on this service."
+                    for j, event in enumerate(events.values()):
+                        if j > 0:
+                            print "-" * 70
+                        print "Event " + event["name"] + ":"
+                        if event["doc"]:
+                            print "\n" + event["doc"]
+                    print "=" * 70
+                    objects = filter_hidden(args, details["objects"])
+                    if len(objects) == 0:
+                        print "No objects available on this service."
+                    for j, object in enumerate(objects.values()):
+                        if j > 0:
+                            print "-" * 70
+                        print "Object " + object["name"] + ":"
+                        if object["doc"]:
+                            print "\n" + object["doc"]
                 return
-            if mode == "call":
-                if not args.name:
-                    print "You need to specify the name of the function to call."
-                    return
-                if args.multiple: # Open a multiple-service proxy, with a
-                    # bind_function that will call the requested function whenever
-                    # it binds to a service. The advantage of doing this instead of
-                    # creating the service proxy, waiting a few seconds, then
-                    # calling the function on it is that the function is called
-                    # nearly immediately instead of after a delay.
-                    with bus.get_service_proxy(info_filter, bind_function=
-                            partial(call_mode_onbind, args), multiple=True) as proxy:
-                        # Wait a few seconds before stopping the service proxy
-                        time.sleep(args.time)
-                else: # Open a single-service proxy, wait for it to bind to
-                    # something, then call the function and pass the result to
-                    # call_mode_print_result, which prints it out.
-                    with bus.get_service_proxy(info_filter) as proxy:
-                        proxy.wait_for_bind(timeout=args.time)
-                        try:
-                            call_mode_print_result(proxy[args.name](*parse_value_list(args.values)))
-                        except Exception as e:
-                            call_mode_print_result(e)
-                return
-            if mode == "list":
-                # Open a service proxy
-                with bus.get_service_proxy(info_filter, multiple=args.multiple) as proxy:
-                    if args.multiple: # Wait a few seconds for the proxy to bind to
-                        # all of the matching services
-                        time.sleep(args.time)
-                    else: # Wait until the proxy binds to a single matching service
-                        proxy.wait_for_bind(timeout=args.time)
-                    # Call the introspection function to get information about the
-                    # service
-                    results = proxy["autobus.get_details"]()
-                    if not args.multiple:
-                        # Multiple proxies return {service_id: return_value, ...}.
-                        # Single proxies just return the value itself. This bit
-                        # translates the single-service proxy style to the
-                        # multiple-service proxy style.
-                        results = {proxy.current_service_id: results}
-                    if len(results) == 0:
-                        print "No matching services found."
-                    for i, (service_id, details) in enumerate(results.items()):
-                        if i > 0:
-                            print "#" * 70
-                        
-                        print "Service " + str(service_id) + ":"
-                        if details["doc"]:
-                            print "\n" + details["doc"]
-                        print "=" * 70
-                        functions = filter_hidden(args, details["functions"])
-                        if len(functions) == 0:
-                            print "No functions available on this service."
-                        for j, function in enumerate(functions.values()):
-                            if j > 0:
-                                print "-" * 70
-                            print "Function " + function["name"] + ":"
-                            if function["doc"]:
-                                print "\n" + function["doc"]
-                        print "=" * 70
-                        events = filter_hidden(args, details["events"])
-                        if len(events) == 0:
-                            print "No events available on this service."
-                        for j, event in enumerate(events.values()):
-                            if j > 0:
-                                print "-" * 70
-                            print "Event " + event["name"] + ":"
-                            if event["doc"]:
-                                print "\n" + event["doc"]
-                        print "=" * 70
-                        objects = filter_hidden(args, details["objects"])
-                        if len(objects) == 0:
-                            print "No objects available on this service."
-                        for j, object in enumerate(objects.values()):
-                            if j > 0:
-                                print "-" * 70
-                            print "Object " + object["name"] + ":"
-                            if object["doc"]:
-                                print "\n" + object["doc"]
-                    return
-            print "Unsupported mode used: " + str(mode)
-    finally:
-        # Same reasoning as sigusr1; dump thread traces
-        time.sleep(1)
-        dump_thread_traces()
+        print "Unsupported mode used: " + str(mode)
 
 
 def parse_info_filter(args):
