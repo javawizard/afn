@@ -48,6 +48,26 @@ Listeners would have a signature listener(event, *args), where event is one of t
     OBJECT_REMOVED: An object was removed. One argument, name, will be passed.
     OBJECT_CHANGED: An object's value changed. Two arguments, name and value, will be passed.
 
+That sounds absolutely spiffing.
+
+And in fact, most of the functionality is in the form of events issued back to the listener, with only three actual methods that the service provider needs to implement. 
+
+So it might be feasible to break Python's rules and use double-underscore methods.
+
+So, how about __autobus_call__, __autobus_listen__, and __autobus_unlisten__?
+
+Then one could mix AutobusService into a Python class and get automatic __autobus_call__, __autobus_listen__, and __autobus_unlisten__ support.
+
+That would be super awesome.
+
+And then you just pass the object into create_service, and you're good to go.
+
+Man, I like this a lot better than having an Autobus-managed Service class like we've got right now. Service would still be present; it'd just be a wrapper around a ServiceProvider instance that would include information like the service'd id and info dict.
+
+So I'm trying to decide how to obtain the service's documentation...
+
+I'm thinking that it should also be provided by the service provider, since it would typically come from the actual class's docstring, but it should be changeable, since function, event, and object docstrings can be changed as well, if the service provider wants to.
+
 
 
 
