@@ -90,7 +90,7 @@ class InputThread(Thread):
     def __init__(self, socket, function, name=None, daemon=False):
         Thread.__init__(self, name=name)
         if daemon:
-            Thread.daemon(self, daemon)
+            self.daemon = True
         self.socket = socket
         self.generator = linesplit(socket)
         self.lock = RLock()
