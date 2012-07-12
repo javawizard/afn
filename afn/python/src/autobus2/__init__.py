@@ -75,13 +75,10 @@ try:
     from collections import OrderedDict as _OrderedDict
 except ImportError:
     from afn.backports.ordered_dict import OrderedDict as _OrderedDict
+from autobus2.constants import (SYNC, THREAD, ASYNC,
+        DISCOVERED, CHANGED, UNDISCOVERED)
 
-SYNC = singleton.Singleton("autobus2.SYNC")
-THREAD = singleton.Singleton("autobus2.THREAD")
-ASYNC = singleton.Singleton("autobus2.ASYNC")
-DISCOVERED = singleton.Singleton("autobus2.DISCOVERED")
-UNDISCOVERED = singleton.Singleton("autobus2.UNDISCOVERED")
-CHANGED = singleton.Singleton("autobus2.CHANGED")
+
 
 
 class DiscoveredService(object):

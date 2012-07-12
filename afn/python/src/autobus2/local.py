@@ -151,19 +151,38 @@ class LocalService(common.AutoClose):
     all of the functions needed for a particular service to be set up before
     it's published to the network.
     """
-    def __init__(self, bus, id, info, doc):
+    def __init__(self, bus, id, info, provider):
+        self.provider_event = self.provider_event # Make sure we have an
+        # identitywise-persistent bound function so that we can properly use it
+        # as a listener on the provider
         self.id = id
         self.info = info
         self.bus = bus
-        self.doc = doc
+        self.provider = provider
+        self.doc = None
+        # Register ourselves as a listener on the provider
+        provider.__autobus_listen__(self.provider_event)
+        # Not active by default. TODO: change this?
         self.active = False
         self.is_alive = True
+        # Map of function names to info dicts
         self.functions = {}
+        # Map of event names to info dicts
         self.events = {}
+        # Map of object names to info dicts
         self.objects = {}
+        # Map of object names to object values
+        self.object_values = {}
         self.event_listeners = _Multimap() # Maps event names to
         # RemoteConnection instances listening for them
-        self.object_watchers = _Multimap() # Ditto but for object watches
+        self.object_watchers = _Multimap() # Maps object names to
+        # RemoteConnection instances watching them
+    
+    # TODO: I'm writing this at 3 in the morning; make sure my head was on
+    # straight when I synchronized on bus.lock
+    @synchronized_on("bus.lock")
+    def provider_event(self, event, *args):
+        pass
     
     @synchronized_on("bus.lock")
     def activate(self):
