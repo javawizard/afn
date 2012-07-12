@@ -87,8 +87,8 @@ class InputThread(Thread):
     block after it receives a message until a non-None function is assigned to
     the function property.
     """
-    def __init__(self, socket, function):
-        Thread.__init__(self)
+    def __init__(self, socket, function, name=None):
+        Thread.__init__(self, name=name)
         self.socket = socket
         self.generator = linesplit(socket)
         self.lock = RLock()
