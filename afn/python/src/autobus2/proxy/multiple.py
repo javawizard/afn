@@ -12,7 +12,7 @@ class MultipleServiceProxy(common.AutoClose):
     def __init__(self, bus, info_filter, bind_function=None, unbind_function=None):
         self.bus = bus
         self.info_filter = info_filter
-        self.lock = RLock()
+        self.lock = self.bus.lock
         self.bind_condition = Condition(self.lock)
         self.bind_function = bind_function
         self.unbind_function = unbind_function
