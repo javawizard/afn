@@ -198,8 +198,8 @@ class OutputThread(Thread):
             pass
 
 
-def start_io_threads(socket, input_function, output_function):
-    input_thread = InputThread(socket, input_function)
+def start_io_threads(socket, input_function, output_function, name=None):
+    input_thread = InputThread(socket, input_function, name="start_io_threads input thread for " + str(name))
     output_thread = OutputThread(socket, output_function)
     input_thread.start()
     output_thread.start()

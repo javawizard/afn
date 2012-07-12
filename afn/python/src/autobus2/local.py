@@ -34,7 +34,7 @@ class RemoteConnection(object):
         self.watched_objects = set()
         self.listened_events = set()
         net.OutputThread(socket, self.queue.get).start()
-        net.InputThread(socket, self.received).start()
+        net.InputThread(socket, self.received, name="Input thread for " + repr(self)).start()
     
     def received(self, message):
         # print "Received: " + str(message)
