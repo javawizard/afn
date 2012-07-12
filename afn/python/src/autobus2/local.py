@@ -16,6 +16,7 @@ from afn.utils.concurrent import synchronized_on
 from afn.utils.multimap import Multimap as _Multimap
 import itertools
 import copy
+from abc import ABCMeta, abstractmethod
 
 class RemoteConnection(object):
     """
@@ -341,6 +342,42 @@ class LocalObject(object):
                 watcher.send(messaging.create_command("changed", True, name=self.name, value=None, event="removed"))
             with Suppress(KeyError):
                 del self.service.object_watchers[self.name]
+
+
+
+
+
+
+# New classes that will replace most of the above logic soon
+
+class ServiceProvider(object):
+    """
+    An abstract class specifying the interface that services must expose in
+    order for Autobus to be able to publish them on the network.
+    """
+    __metaclass__ = ABCMeta
+    
+    @abstractmethod
+    def __autobus_call__(self, name, args):
+        """
+        Calls the function with the specified name using the specified args,
+        which will be some sort of iterable (usually a list). This method
+        should return the return value of the function in question.
+        """
+    
+    @abstractmethod
+    def __autobus_listen__(self, listener):
+        """
+        Adds a new listener to this ServiceProvider. Listeners will be
+        explained in more detail later, but have a look at
+        technotes/autobus2-restructure.txt for more information.
+        """
+    
+    @abstractmethod
+    def __autobus_unlisten__(self, listener):
+        """
+        Removes a listener previously added with __autobus_listen__.
+        """
 
 
 
