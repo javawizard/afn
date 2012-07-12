@@ -5,6 +5,7 @@ This module contains classes and functions relating to publishing services.
 from Queue import Queue, Empty
 
 from autobus2 import net, messaging, exceptions, common
+from autobus2.get_function_doc import get_function_doc
 import autobus2
 from utils import no_exceptions
 from traceback import print_exc
@@ -218,7 +219,7 @@ class LocalService(common.AutoClose):
             value = getattr(py_object, name)
             if not callable(value):
                 continue
-            self.create_function(name, value)
+            self.create_function(name, value, get_function_doc(value))
     
     def watch_object(self, connection, name):
         self.object_watchers.add(name, connection)
