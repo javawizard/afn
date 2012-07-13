@@ -97,6 +97,8 @@ But it's three in the morning, so I think I'm going to go to bed for now so that
 
 Ideas: inject the object manually, then fire the relevant listener to add the function. The problem: that doesn't allow for injecting functions because the function would delegate to the provider, which obviously wouldn't know about that function. Another idea: write a ServiceProvider that allows merging two ServiceProviders together; More complex, and maybe not the right approach, but it would work; this needs some thought. Yet another idea, very suboptimal but would work: have a single introspection service for a given Bus instance, and have that publish information about the service. I've mentioned elsewhere why I don't like this approach (and I've already partially implemented it but largely abandoned it), but it could work if I can't think of anything else to do.
 
+So another alternative I'm thinking of is to make messages indicating function creation, removal, updating, and so on for events and objects first-class protocol messages. It would make the protocol a bit more complicated, but it would solve the entire problem.
+
 
 
 
