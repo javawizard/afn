@@ -48,3 +48,7 @@ class ClosedException(AutobusException):
     pass
 
 
+class NoSuchFunctionException(AutobusException):
+    pass
+
+

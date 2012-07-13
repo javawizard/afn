@@ -382,6 +382,10 @@ class ServiceProvider(object):
         Calls the function with the specified name using the specified args,
         which will be some sort of iterable (usually a list). This method
         should return the return value of the function in question.
+        
+        This method may be called with names of functions that do not exist;
+        an autobus2.exceptions.NoSuchFunctionException should be raised in such
+        a case.
         """
     
     @abstractmethod
