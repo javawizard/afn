@@ -4,7 +4,7 @@ This module contains classes and functions relating to publishing services.
 
 from Queue import Queue, Empty
 
-from autobus2 import net, messaging, exceptions, common
+from autobus2 import net, messaging, exceptions, common, constants
 from autobus2.get_function_doc import get_function_doc
 import autobus2
 from utils import no_exceptions
@@ -94,22 +94,44 @@ class RemoteConnection(object):
                     self.service.unlisten_for_event(self, name)
     
     def process_call(self, message):
-        function = self.service.functions.get(message["name"])
-        if not function:
-            self.send_error(message, "That function does not exist.")
-            return
+        """
+        Called to process incoming call commands.
+        """
+        name = message["name"]
         args = message["args"]
-        if function.mode == autobus2.SYNC:
-            self.send(function.call(message, args))
-        elif function.mode == autobus2.THREAD:
+        policy = self.service.provider.__autobus_policy__(name)
+        if policy == autobus2.SYNC:
+            self.send(self.call_function(message, name, args))
+        elif policy == autobus2.THREAD:
             Thread(name="autobus2.local.RemoteConnection-function-caller",
-                    target=lambda: self.send(function.call(message, args))).start()
+                    target=lambda: self.send(self.call_function(message, name, args))).start()
         else:
             self.send(messaging.create_response(message, result=None))
             Thread(name="autobus2.local.RemoteConnection-function-async-caller",
-                    target=functools.partial(function.call, message, args)).start()
+                    target=functools.partial(self.call_function, message, name, args)).start()
+    
+    def call_function(self, message, name, args):
+        """
+        Calls self.service.provider.__autobus_call__ to call the specified
+        function. A response object is then created and returned, containing an
+        appropriate response. If an exception is thrown, it is caught, and
+        an appropriate error response generated and returned.
+        
+        The message will be generated as a reply to the message passed into
+        this method.
+        """
+        try:
+            result = self.service.provider.__autobus_call__(*args)
+            return messaging.create_response(message, result=result)
+        except exceptions.NoSuchFunctionException:
+            return messaging.create_error(message, "That function (\"%s\") does not exist." % name)
+        except Exception as e:
+            return messaging.create_error(message, "Remote function threw an exception: %s: %s" % (type(e), e))
     
     def process_watch(self, message):
+        """
+        Called to process incoming watch commands.
+        """
         with self.bus.lock:
             # print "watch: ", message
             name = message["name"]
@@ -118,10 +140,7 @@ class RemoteConnection(object):
                 return
             self.watched_objects.add(name)
             self.service.watch_object(self, name)
-            if self.service.objects.get(name):
-                object_value = self.service.objects[name].value
-            else:
-                object_value = None
+            object_value = self.service.object_values.get(name, None)
             self.send(messaging.create_response(message, name=name, value=object_value))
     
     def process_listen(self, message):
@@ -182,7 +201,17 @@ class LocalService(common.AutoClose):
     # straight when I synchronized on bus.lock
     @synchronized_on("bus.lock")
     def provider_event(self, event, *args):
-        pass
+        """
+        Processes an event issued by the provider this service is observing.
+        """
+        if event is constants.OBJECT_ADDED:
+            # Object added. Notify anything listening for the object of its
+            # value.
+            name, info, value = *args
+            self.objects[name] = info
+            self.object_values[name] = value
+            for connection in self.object_watchers.get(name, []):
+                connection
     
     @synchronized_on("bus.lock")
     def activate(self):
@@ -386,6 +415,21 @@ class ServiceProvider(object):
         This method may be called with names of functions that do not exist;
         an autobus2.exceptions.NoSuchFunctionException should be raised in such
         a case.
+        """
+    
+    def __autobus_policy__(self, name):
+        """
+        Requests the calling policy that should be used for the specified
+        function. This is one of the constants SYNC, THREAD, or ASYNC defined
+        in autobus2.constants. If the function does not exist, any of these may
+        be returned; SYNC is the usual one to return in such a case, but THREAD
+        may also be used. Using ASYNC in such a case will suppress the "That
+        function does not exist" error that would otherwise result.
+        
+        The default implementation returns THREAD in all cases.
+        
+        Note that I might do away with the notion of calling policies at some
+        point, and just have THREAD be the default policy.
         """
     
     @abstractmethod
