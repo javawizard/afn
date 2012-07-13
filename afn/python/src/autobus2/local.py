@@ -14,6 +14,7 @@ import functools
 from afn.utils import Suppress
 from afn.utils.concurrent import synchronized_on
 from afn.utils.multimap import Multimap as _Multimap
+from afn.utils.listener import Event, EventTable
 import itertools
 import copy
 from abc import ABCMeta, abstractmethod
@@ -79,19 +80,32 @@ class RemoteConnection(object):
         self.send(messaging.create_error(command_or_id, reason))
 
     def close(self):
+        """
+        Forces this connection to close and disconnect its client.
+        """
         self.queue.put(None)
         net.shutdown(self.socket)
     
     def cleanup(self):
+        """
+        Cleans up this connection, removing all event listeners and object
+        watches it's registered, closing network connections, shutting down
+        threads, etc. This is used as the InputThread's cleanup function.
+        """
         with self.bus.lock:
+            # Make sure the OutputThread closes down
             self.queue.put(None)
+            # Remove ourselves from the bus's list of connections
             self.bus.bound_connections.remove(self)
+            # Shut down our socket
             net.shutdown(self.socket)
+            # If we've bound to a service, remove any object watches and event
+            # listeners we've registered
             if self.service:
                 for name in self.watched_objects:
-                    self.service.unwatch_object(self, name)
+                    self.service.object_watchers.unlisten(name, self.watched_object_changed)
                 for name in self.listened_events:
-                    self.service.unlisten_for_event(self, name)
+                    self.service.event_listeners.unlisten(name, self.listened_event_fired)
     
     def process_call(self, message):
         """
@@ -99,12 +113,19 @@ class RemoteConnection(object):
         """
         name = message["name"]
         args = message["args"]
+        # Look up the functions' policy
         policy = self.service.provider.__autobus_policy__(name)
+        # If the policy is SYNC, invoke the function and send the response
+        # synchronously
         if policy == autobus2.SYNC:
             self.send(self.call_function(message, name, args))
+        # If the policy is THREAD, invoke the function and send the
+        # response on a new thread
         elif policy == autobus2.THREAD:
             Thread(name="autobus2.local.RemoteConnection-function-caller",
                     target=lambda: self.send(self.call_function(message, name, args))).start()
+        # If the policy is ASYNC, send a null response now, then invoke the
+        # function, discarding its value, on a thread.
         else:
             self.send(messaging.create_response(message, result=None))
             Thread(name="autobus2.local.RemoteConnection-function-async-caller",
@@ -119,6 +140,11 @@ class RemoteConnection(object):
         
         The message will be generated as a reply to the message passed into
         this method.
+        
+        This method is only really used from process_call; process_call looks
+        up the method's calling policy with
+        self.service.provider.__autobus_policy__ and delegates to call_function
+        either in a thread or synchronously depending on the policy.
         """
         try:
             result = self.service.provider.__autobus_call__(*args)
@@ -135,11 +161,16 @@ class RemoteConnection(object):
         with self.bus.lock:
             # print "watch: ", message
             name = message["name"]
+            # Check to make sure we're not already watching the object
             if name in self.watched_objects:
                 self.send_error(message, "You're already watching that object.")
                 return
+            # Add the object to our internal list of objects we're watching
             self.watched_objects.add(name)
-            self.service.watch_object(self, name)
+            # Add ourselves to the service's object_watchers event table to
+            # actually receive notifications when the object changes
+            self.service.object_watchers.listen(name, self.watched_object_changed)
+            # Get the object's current value and send it to the client
             object_value = self.service.object_values.get(name, None)
             self.send(messaging.create_response(message, name=name, value=object_value))
     
@@ -151,6 +182,16 @@ class RemoteConnection(object):
     
     def process_unlisten(self, message):
         raise NotImplementedError
+    
+    def watched_object_changed(self, name, value):
+        """
+        Called when an object being watched by this connection changes. This
+        method is added to the object_watchers event table of the LocalService
+        to which this connection is bound. It is also called manually when
+        watching and unwatching an object to update the client on the object's
+        value.
+        """
+        self.send(messaging.create_command("changed", True, name=name, value=value, event="changed"))
     
     def process_ping(self, message):
         self.send(messaging.create_response(message))
@@ -192,13 +233,17 @@ class LocalService(common.AutoClose):
         self.objects = {}
         # Map of object names to object values
         self.object_values = {}
-        self.event_listeners = _Multimap() # Maps event names to
-        # RemoteConnection instances listening for them
-        self.object_watchers = _Multimap() # Maps object names to
-        # RemoteConnection instances watching them
+        # EventTable of event listeners listening for events to be fired.
+        # Listeners are of the form listener(name, args).
+        self.event_listeners = EventTable()
+        # EventTable of object watchers watching for changes to objects.
+        # Listeners are of the form listener(name, new_value).
+        self.object_watchers = EventTable()
     
     # TODO: I'm writing this at 3 in the morning; make sure my head was on
     # straight when I synchronized on bus.lock
+    # Update: Yep, it was on straight. Things would majorly break without
+    # said synchronization.
     @synchronized_on("bus.lock")
     def provider_event(self, event, *args):
         """
@@ -207,7 +252,7 @@ class LocalService(common.AutoClose):
         if event is constants.OBJECT_ADDED:
             # Object added. Notify anything listening for the object of its
             # value.
-            name, info, value = *args
+            name, info, value = args
             self.objects[name] = info
             self.object_values[name] = value
             for connection in self.object_watchers.get(name, []):
