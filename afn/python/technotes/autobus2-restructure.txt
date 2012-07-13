@@ -99,6 +99,26 @@ Ideas: inject the object manually, then fire the relevant listener to add the fu
 
 So another alternative I'm thinking of is to make messages indicating function creation, removal, updating, and so on for events and objects first-class protocol messages. It would make the protocol a bit more complicated, but it would solve the entire problem.
 
+But it would make the protocol more complicated. A lot more complicated, and that would mean the whole thing would be harder to implement. So I think I'll skip that idea.
+
+So I'm liking the idea of a separate introspection service the best, and not just because it avoids the logic needed to add additional functions to a service: it also means that, if I play my cards right, I might not have to implement any special features or special object modifications to make it work.
+
+Here's the idea: a service provider of some sort is created and installed on a bus in such a way that it is notified whenever a service appears or disappears, or is modified. It publishes the relevant objects and methods needed to expose introspection data. No services exist yet, so this can be set on the bus normally. Then a service is created, using the aforementioned service provider, and published via the bus. Publishing the service causes the introspection service provider to update its objects, which delegate straight back to the service being published. Provided the step of notifying the introspection service provider that things have changed is completed at the very end of service setup, so that the service is in a state where it can be safely modified, then this will work, and no special procedures need to be followed to set things up.
+
+Ok, I really like that. I think I'm going to run with it for now.
+
+So I think the service should publish one object per service named details.<service-id>, where <service-id> is the id of the service. The value would be the current value of the per-service autobus.details object. Another object would also be published, details, which is a map; its keys would be the ids of the services, and its values would be the relevant service objects.
+
+That sounds peachy dandy. I think I'm going to go try implementing that.
+
+Hm, quick note: I'm thinking the bridge between the bus and the introspection service provider should also be event-based, which would also allow outside code to listen on a bus for local services being published. The publishers in the discovery module could later be converted to just use that system.
+
+Either that or I could have the bus itself implement the service provider protocol, with the service it provides being the introspection service. It could then register a service on itself. That would remove one layer of event listening, which would simplify the code.
+
+I think I'll try that for now.
+
+Although I might decide to go to bed instead, as yet again it's 3:28 AM. (It's Friday, July 13, 2012, if anyone's curious. Friday the 13th...)
+
 
 
 
