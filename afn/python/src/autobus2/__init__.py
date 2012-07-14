@@ -104,7 +104,7 @@ class DiscoveredService(object):
         self.info = info
 
 
-class Bus(common.AutoClose, servicemodule.ServiceProvider):
+class Bus(common.AutoClose):
     """
     An Autobus bus. Busses manage a set of published services, and allow
     connecting to other services. A single bus listens on a single TCP
@@ -173,7 +173,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         # self._create_introspection_service()
         #
         # Register the bus as a service on itself.
-        self.create_service({"type": "autobus.details", "pid": os.getpid()}, self)
+        self.create_service({"type": "autobus.details", "pid": os.getpid()}, IntrospectionService(self))
     
     def accept_loop(self):
         """
@@ -345,13 +345,13 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         publisher.startup(self)
         # Then register all of our local services with the publisher
         for service in self.local_services.values():
-            if service.active:
-                publisher.add(service)
+            publisher.add(service)
     
     @synchronized_on("lock")
     def remove_publisher(self, publisher):
         # Check to make sure that the publisher is already installed
         if publisher not in self.publishers:
+            # TODO: Not sure why we're using __builtin__ here...
             raise __builtin__.ValueError("The specified publisher is not currently installed on this bus.")
         # Remove the publisher from our list of publishers
         self.publishers.remove(publisher)
@@ -372,6 +372,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
     def remove_discoverer(self, discoverer):
         # Check to make sure that the discoverer has already been installed
         if discoverer not in self.discoverers:
+            # TODO: Ditto from remove_publisher
             raise __builtin__.ValueError("The specified discoverer is not currently installed on this bus.")
         # Remove the discoverer from our list of discoverers, then shut it
         # down
@@ -397,6 +398,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
     @synchronized_on("lock")
     def discover(self, discoverer, host, port, service_id, info):
         # print "Discovered:", (host, port, service_id, info)
+        # Add the relevant local builtins
         info = self.set_local_info_builtins(host, port, service_id, info)
         # Check to see if the specified service has been discovered yet, and if
         # it hasn't, create an entry for it
@@ -523,30 +525,14 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
                 with print_exceptions:
                     listener(service_id, host, port, info, event)
     
-    def _create_introspection_service(self):
-        service = self.create_service({"type": "autobus"})
-        self._introspector = service
-        service.create_object("details", self._i_details_function)
-        service.activate()
-        self._i_update(None)
+
+class IntrospectionService(servicemodule.ServiceProvider):
+    def __init__(self, bus):
+        self.bus = bus
+        self.autobus_event = Event()
+        self.bus.local_services.global_watch(self)
     
-    def _i_update(self, service_id):
-        if self._introspector:
-            introspector = self._introspector
-            if introspector.objects["details"]:
-                introspector.objects["details"].changed()
-        if service_id in self.local_services:
-            service = self.local_services[service_id]
-            if "autobus.details" in service.objects:
-                service.objects["autobus.details"].changed()
-    
-    @synchronized_on("lock")
-    def _i_details_function(self):
-        services = {}
-        for id, service in self.local_services.items():
-            details = service._i_details_function()
-            services[id] = details
-        return services
+    def 
 
 
 def wait_for_interrupt():
