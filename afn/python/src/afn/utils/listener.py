@@ -205,6 +205,13 @@ class PropertyTable(MutableMapping):
         except (ValueError, KeyError):
             pass
     
+    def is_watched(self, name):
+        """
+        Returns true if any listeners are registered to listen for the specified
+        name specifically. This does not count global listeners.
+        """
+        return name in self._watch_table
+    
     def get(self, name, default=None):
         # Just return the current value
         return self._value_table.get(name, default)
