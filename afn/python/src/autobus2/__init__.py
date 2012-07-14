@@ -572,7 +572,7 @@ class _IntrospectionService(servicemodule.ServiceProvider):
             details[service_id] = service_details
             for type in ["functions", "events", "objects"]:
                 type_details = {}
-                details[type] = type_details
+                service_details[type] = type_details
                 for name, info in getattr(service, type).items():
                     type_details[name] = info
         return details
