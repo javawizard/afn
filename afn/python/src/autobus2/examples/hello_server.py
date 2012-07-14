@@ -10,5 +10,5 @@ class HelloService(PyServiceProvider):
 
 def main():
     with Bus() as bus:
-        bus.create_service({"autobus.example": "hello_server"}, HelloService())
+        bus.create_service({"type": "examples.hello"}, HelloService())
         wait_for_interrupt()

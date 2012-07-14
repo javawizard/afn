@@ -57,7 +57,7 @@ options.add_argument("-m", "--multiple", action="store_true", help=
         "first service that they can; with --multiple, they will wait up to "
         "however long is specified by -t (which defaults to 2 seconds) and "
         "try to connect to as many services as they can during that time.")
-options.add_argument("-t", "--time", action="store", type=int, default=2, help=
+options.add_argument("-t", "--time", action="store", type=float, default=2, help=
         "Specifies the amount of time that autosend2 should try to connect to "
         "services for when -m is used. This has no effect when -m is not used.")
 options.add_argument("-a", "--all", action="store_true", help=
