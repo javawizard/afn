@@ -203,20 +203,17 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
     def create_service(self, info, provider):
         """
         Creates a new service on this bus. info is the info object to use for
-        this service. active is True to publish this service immediately, False
-        to wait until the returned service's activate() method is called. If
-        active isn't specified, it defaults to False if from_object is None and
-        True if from_object is not None.
+        this service. provider is the instance of
+        autobus2.service.ServiceProvider to publish; an instance of
+        autobus2.providers.PyServiceProvider can be used to publish a simple
+        Python object as a service. (This is how I expect most services to be
+        published; writing a custom ServiceProvider subclass should rarely be
+        needed.)
         
-        The return value is an instance of local.LocalService. It has methods
-        such as create_function that allow functions, events, objects, and such
-        to be created on the service.
+        The return value is an instance of local.LocalService. You can safely
+        ignore it if you don't need it and don't plan on deleting the service
+        before you close the bus itself.
         """
-        if active is None:
-            if from_py_object is not None:
-                active = True
-            else:
-                active = False
         # Create a new id for the service
         service_id = messaging.create_service_id()
         self.set_remote_info_builtins(service_id, info)
@@ -363,6 +360,12 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         return new_info
     
     def set_remote_info_builtins(self, service_id, info):
+        """
+        Adds some values to the specified info object. The only one added right
+        now is hostname, which is the value of socket.gethostname(). I haven't
+        really standardized the list of values added here; I hope to at some
+        point, though, and have all Autobus client libraries add the same ones.
+        """
         info["hostname"] = gethostname()
     
     @synchronized_on("lock")
