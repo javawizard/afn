@@ -163,6 +163,7 @@ class PropertyTable(object):
         if name not in self._value_table:
             raise KeyError(name)
         return self._value_table[name]
+    
     __setitem__ = set
     __delitem__ = delete
 
