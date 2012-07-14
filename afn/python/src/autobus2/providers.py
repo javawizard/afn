@@ -11,6 +11,9 @@ class BaseServiceProvider(ServiceProvider):
     allows functions to be registered and unregistered, and so on for events
     and objects. It handles automatically notifying any registered listeners of
     changes that have happened.
+    
+    The attributes _functions, _events, _event_table, _objects, and
+    _object_values form part of the public interface of this class.
     """
     def __init__(self):
         self.__event = Event()
@@ -18,6 +21,8 @@ class BaseServiceProvider(ServiceProvider):
         self._functions.global_watch(self.__function_listener)
         self._events = PropertyTable()
         self._events.global_watch(self.__event_listener)
+        self._event_table = EventTable()
+        self._event_table.global_listen(self.__event_table_listener)
         self._objects = PropertyTable()
         self._objects.global_watch(self.__object_listener)
         self._object_values = PropertyTable()
@@ -54,6 +59,12 @@ class BaseServiceProvider(ServiceProvider):
         if not name in self._objects:
             return
         self.__event(constants.OBJECT_CHANGED, name, new)
+    
+    def __event_table_listener(self, *args):
+        name = args[0]
+        args = args[1:]
+        if name in self._events:
+            self.__event(constants.EVENT_FIRED, name, args)
     
     def __autobus_policy__(self, name):
         return constants.THREAD
