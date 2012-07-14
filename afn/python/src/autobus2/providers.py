@@ -3,6 +3,31 @@ from autobus2.service import ServiceProvider
 from afn.utils.listener import Event, EventTable, PropertyTable
 from autobus2 import constants
 from autobus2 import exceptions
+from abc import ABCMeta, abstractmethod
+
+class BaseServiceProvider(ServiceProvider):
+    """
+    A ServiceProvider that provides basic implementations of its methods. It
+    allows functions to be registered and unregistered, and so on for events
+    and objects. It handles automatically notifying any registered listeners of
+    changes that have happened.
+    """
+    def __init__(self):
+        self.__event = Event()
+        raise NotImplementedError
+    
+    def __autobus_policy__(self, name):
+        return constants.THREAD
+    
+    def __autobus_listen__(self, listener):
+        self.__event.listen(listener)
+    
+    def __autobus_unlisten__(self, listener):
+        self.__event.unlisten(listener)
+    
+    def _add_function(self, name, info):
+        pass
+
 
 class PyServiceProvider1(ServiceProvider):
     """
