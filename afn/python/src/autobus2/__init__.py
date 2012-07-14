@@ -68,6 +68,7 @@ from concurrent import synchronized
 import time
 from utils import no_exceptions, print_exceptions
 from afn.utils import singleton
+from afn.utils.listener import Event, EventTable, PropertyTable
 import __builtin__
 from concurrent import synchronized_on
 from afn.utils import field
@@ -138,7 +139,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         self.server.listen(100)
         self.port = self.server.getsockname()[1]
         self.lock = RLock()
-        self.local_services = {}
+        self.local_services = PropertyTable()
         self.discovered_services = {}
         self.discovery_listeners = []
         self.service_listeners = []
@@ -156,6 +157,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         # self._create_introspection_service()
         #
         # Register the bus as a service on itself.
+        self.create_service()
     
     def accept_loop(self):
         self.server.settimeout(1)

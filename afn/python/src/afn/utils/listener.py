@@ -1,6 +1,7 @@
 
 from traceback import print_exc
 from afn.utils import print_exceptions
+from collections import MutableMapping
 
 class Event(object):
     """
@@ -105,7 +106,7 @@ class Property(object):
     pass
 
 
-class PropertyTable(object):
+class PropertyTable(MutableMapping):
     def __init__(self):
         self._value_table = {} # Map of names to values
         self._watch_table = {} # Map of names to lists of watchers
@@ -166,6 +167,15 @@ class PropertyTable(object):
     
     __setitem__ = set
     __delitem__ = delete
+    
+    def __iter__(self):
+        return self._value_table.__iter__()
+    
+    def __len__(self):
+        return len(self._value_table)
+    
+    def __contains__(self, name):
+        return name in self._value_table
 
 
 
