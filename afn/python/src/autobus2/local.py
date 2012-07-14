@@ -317,6 +317,10 @@ class LocalService(common.AutoClose):
     @synchronized_on("bus.lock")
     def close(self):
         self.is_alive = False
+        # FIXME: Are we closing remote connections to this service anywhere?
+        # UPDATE: We're closing all connections in bus.close(), but it doesn't
+        # look like we close connections to a service when the service itself
+        # is closed. This needs to be fixed.
         self.bus._close_service(self)
     
     @synchronized_on("bus.lock")

@@ -148,6 +148,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         # PropertyTable whose keys are service ids and whose values are
         # instances of autobus2.local.LocalService
         self.local_services = PropertyTable()
+        self.local_services.global_watch(self.local_service_changed)
         # Map of ids of discovered services to DiscoveredService instances
         self.discovered_services = {}
         self.discovery_listeners = []
@@ -220,16 +221,18 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         # Create the actual service object
         service = local.LocalService(self, service_id, info, provider)
         # Then store the service in our services map, which will cause the
-        # service to be published through the introspection service
+        # service to be published through the introspection service and through
+        # the bus's publishers (see self.local_service_changed).
         self.local_services[service_id] = service
         return service
     
     def _close_service(self, service):
-        # The service will already be deactivated when this gets called, so we
-        # don't need to remove it from any of the publishers. So I think the
-        # only thing we need to do is remove it from our map of services.
+        # This is called from LocalService.close, which will take care of
+        # shutting down the service's connections and such. So the only thing
+        # we really need to do here is delete the service from the local_service
+        # map, which will cause self.local_service_changed to unpublish the
+        # service and remove it from the introspection service.
         del self.local_services[service.id]
-        self._i_update(service.id)
     
     @synchronized_on("lock")
     def setup_inbound_socket(self, socket):
@@ -268,6 +271,16 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         return remote.Connection(self, host, port, service_id, timeout, open_listener, close_listener, fail_listener, lock)
     
     def connect_to(self, info_filter, timeout=10, open_listener=None, close_listener=None, fail_listener=None, lock=None):
+        """
+        Locates the first service in the list of discovered services and uses
+        self.connect to connect to it. The connection is then returned.
+        
+        This function will be going away soon. Service proxies (which can be
+        obtained using self.get_service_proxy) are the replacement; a single
+        service proxy is quite similar to this method, but it can follow the
+        service across restarts of the underlying process publishing the
+        service, which this method can't.
+        """
         with self.lock:
             for service_id, d in self.discovered_services.items():
                 if filter_matches(d.info, info_filter):
@@ -276,6 +289,20 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
             raise exceptions.NoMatchingServiceException()
     
     def get_service_proxy(self, info_filter, bind_function=None, unbind_function=None, multiple=False):
+        """
+        Returns a service proxy that will connect to services matching the
+        specified info object filter. If multiple is False (the default), a
+        single service proxy will be returned. If multiple is True, a multiple
+        service proxy will be returned. See proxy.SingleServiceProxy and
+        proxy.MultipleServiceProxy for the differences between the two.
+        
+        bind_function and unbind_function are optional functions that will be
+        called when the proxy binds to and unbinds from a service,
+        respectively. Binding is where a proxy discovers a new service matching
+        its info filter and establishes a connection to it. Unbinding is where
+        the proxy disconnects from said connection, usually because the service
+        went away.
+        """
         with self.lock:
             if multiple:
                 return proxy.MultipleServiceProxy(self, info_filter, bind_function, unbind_function)
@@ -284,16 +311,24 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
     
     @synchronized_on("lock")
     def close(self):
+        """
+        Closes this bus and all services registered on it.
+        """
+        if self.closed: # Already closed
+            return
         self.closed = True
         # First we shut down all of our discoverers
         for discoverer in self.discoverers:
             discoverer.shutdown()
-        # Then we need to unpublish all of our services and shut down all
-        # of our publishers
+        # Then we need to close all of our services. Closing a service causes
+        # self._close_service to be called, which removes the service from the
+        # list of services, which causes self.local_service_changed to be
+        # called, which unpublishes the service. So we don't need to worry
+        # about unpublishing services aside from this.
+        for service_id in list(self.local_services):
+            self.local_services[service_id].close()
+        # Then we shut down all of the publishers
         for publisher in self.publishers:
-            for service in self.local_services.values():
-                if service.active:
-                    publisher.remove(service)
             publisher.shutdown()
         # Then we shut down the server socket
         net.shutdown(self.server)
@@ -302,9 +337,6 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
             with no_exceptions:
                 c.close()
         # And that's it!
-        # TODO: In the future, store some sort of closed field so that if
-        # someone tries to double-close us, we can tell and just ignore it
-        # the second time
     
     @synchronized_on("lock")
     def install_publisher(self, publisher):
