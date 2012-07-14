@@ -27,7 +27,6 @@ class BaseServiceProvider(ServiceProvider):
         self._objects.global_watch(self.__object_listener)
         self._object_values = PropertyTable()
         self._object_values.global_watch(self.__object_values_listener)
-        raise NotImplementedError
     
     def __function_listener(self, name, old, new):
         if old is not None and new is not None: # Info change
