@@ -83,7 +83,7 @@ class MultipleServiceProxy(common.AutoClose):
     @synchronized_on("lock")
     def watch_object(self, name, function):
         """
-        function -> (connection, info, value) -> None
+        function -> (connection, info, name, old, new) -> None
         """
         self.object_watchers.add(name, function)
         for info, connection in self.service_map.items():
