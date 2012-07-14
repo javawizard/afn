@@ -97,7 +97,7 @@ def main():
             print discovery_mode_header
             # Add a listener listening for services that will print out
             # information to stdout
-            bus.add_service_listener(discovery_mode_listener, info_filter=info_filter, initial=True)
+            bus.add_service_listener(partial(discovery_mode_listener, args), info_filter=info_filter, initial=True)
             # Wait until we're interrupted
             wait_for_interrupt()
             # This empty print is to add a new line after the one with ^C on it
@@ -224,7 +224,7 @@ def parse_info_filter(args):
 discovery_mode_header = ("Time".ljust(26) + "Event".ljust(13) + "Service ID".ljust(44)
         + "Host".ljust(15) + "Port".ljust(7) + "Info")
 
-def discovery_mode_listener(service_id, host, port, info, event):
+def discovery_mode_listener(args, service_id, host, port, info, event):
     # Filter out introspection services unless --all is specified
     if info.get("type", "").startswith("autobus.") and not args.all:
         return
