@@ -143,9 +143,6 @@ def main():
                 # Call the introspection function to get information about the
                 # services
                 int_results = proxy["get_details"]()
-                print "int_results"
-                print int_results
-                print
                 # int_results will be a dict whose keys are the service ids of
                 # the introspection services and whose values are dicts whose
                 # keys are the actual service ids. We need to translate this
@@ -166,9 +163,6 @@ def main():
                                         .startswith("autobus.")):
                             # It matches, so add it to the results
                             results[service_id] = service
-                print "results"
-                print results
-                print
                 # We've got the actual results. Now print a message if there
                 # weren't any.
                 if len(results) == 0:
