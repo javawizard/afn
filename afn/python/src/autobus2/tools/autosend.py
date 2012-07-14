@@ -40,7 +40,10 @@ add_mode("-d", "--discovery", const="discovery",
 add_mode("-l", "--list", const="list",
         help="List mode. In this mode, autosend2 prints out information about "
         "all matching services, including their documentation and a list of "
-        "all functions, events, etc on the service and their documentation.")
+        "all functions, events, etc on the service and their documentation. "
+        "Due to the mechanism used to look up details of the services on the "
+        "network, this option currently implies --multiple. This may be "
+        "changed later.")
 add_mode("-?", "--help", const="help",
         help="Show this help message")
 
@@ -139,45 +142,59 @@ def main():
                 time.sleep(args.time)
                 # Call the introspection function to get information about the
                 # services
-                results = proxy["get_details"]()
-                if len(results) == 0:
-                    print "No matching services found."
+                int_results = proxy["get_details"]()
+                # int_results will be a dict whose keys are the service ids of
+                # the introspection services and whose values are dicts whose
+                # keys are the actual service ids. We need to translate this
+                # into results, which is simply a dict whose keys are service
+                # ids and whose values are services. We also need to strip out
+                # entries whose info objects don't match what we're looking for.
+                results = {}
+                # Iterate over the introspection services
+                for _, services_dict in int_results.items():
+                    # Iterate over the services this introspector knows about
+                    for service_id, service in services_dict.items():
+                        # See if the service matches our filter
+                        if filter_matches(service["info"], info_filter):
+                            # It does, so add it to the results
+                            results[service_id] = service
+                # Now iterate over the actual results.
                 for i, (service_id, details) in enumerate(results.items()):
                     if i > 0:
                         print "#" * 70
                     
                     print "Service " + str(service_id) + ":"
-                    if details["doc"]:
+                    if details.get("doc", None):
                         print "\n" + details["doc"]
                     print "=" * 70
                     functions = filter_hidden(args, details["functions"])
                     if len(functions) == 0:
                         print "No functions available on this service."
-                    for j, function in enumerate(functions.values()):
+                    for j, (name, function) in enumerate(functions.items()):
                         if j > 0:
                             print "-" * 70
-                        print "Function " + function["name"] + ":"
-                        if function["doc"]:
+                        print "Function " + name + ":"
+                        if function.get("doc", None):
                             print "\n" + function["doc"]
                     print "=" * 70
                     events = filter_hidden(args, details["events"])
                     if len(events) == 0:
                         print "No events available on this service."
-                    for j, event in enumerate(events.values()):
+                    for j, (name, event) in enumerate(events.items()):
                         if j > 0:
                             print "-" * 70
-                        print "Event " + event["name"] + ":"
-                        if event["doc"]:
+                        print "Event " + name + ":"
+                        if event.get("doc"):
                             print "\n" + event["doc"]
                     print "=" * 70
                     objects = filter_hidden(args, details["objects"])
                     if len(objects) == 0:
                         print "No objects available on this service."
-                    for j, object in enumerate(objects.values()):
+                    for j, (name, object) in enumerate(objects.items()):
                         if j > 0:
                             print "-" * 70
-                        print "Object " + object["name"] + ":"
-                        if object["doc"]:
+                        print "Object " + name + ":"
+                        if object.get("doc"):
                             print "\n" + object["doc"]
                 return
         print "Unsupported mode used: " + str(mode)
