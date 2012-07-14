@@ -1,7 +1,7 @@
 
-from autobus2.local import ServiceProvider
+from autobus2.service import ServiceProvider
 
-class PyServiceProvider(object):
+class PyServiceProvider(ServiceProvider):
     """
     A class that can be either extended or used as-is. It exposes all
     functions, both ones defined on subclasses of this class and ones assigned
@@ -35,6 +35,14 @@ class PyServiceProvider(object):
     Note that functions, events, and objects whose names start with an
     underscore will not be published. This can be used to maintain internal
     variables that should not be published as objects.
+    
+    TODO: Decide whether all fields should be published or just those marked
+    with a certain class-level descriptor. Said descriptor could then be used
+    to specify the object's documentation. The same should be thought about for
+    events.
     """
+
+
+    
 
 
