@@ -148,7 +148,7 @@ class RemoteConnection(object):
         either in a thread or synchronously depending on the policy.
         """
         try:
-            result = self.service.provider.__autobus_call__(*args)
+            result = self.service.provider.__autobus_call__(name, args)
             return messaging.create_response(message, result=result)
         except exceptions.NoSuchFunctionException:
             return messaging.create_error(message, "That function (\"%s\") does not exist." % name)
