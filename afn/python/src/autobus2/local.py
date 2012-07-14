@@ -218,8 +218,10 @@ class LocalService(common.AutoClose):
         self.bus = bus
         self.provider = provider
         self.doc = None
-        # Not active by default. TODO: change this?
-        self.active = False
+        # TODO: The notion of a service being active has been done away with.
+        # Make sure this isn't used anywhere else, then remove it.
+        self.active = True
+        # True if the service is alive, False if it's been closed
         self.is_alive = True
         # Map of function names to info dicts. This is a property table to
         # allow the Autobus introspection service to watch it for changes to

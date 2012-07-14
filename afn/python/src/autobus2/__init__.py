@@ -570,6 +570,7 @@ class _IntrospectionService(servicemodule.ServiceProvider):
         for service_id, service in self.bus.local_services.items():
             service_details = {}
             details[service_id] = service_details
+            service_details["info"] = service.info
             for type in ["functions", "events", "objects"]:
                 type_details = {}
                 service_details[type] = type_details
