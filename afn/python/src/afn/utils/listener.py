@@ -124,7 +124,18 @@ class PropertyTable(MutableMapping):
     """
     Watchers are of the form function(name, old, new).
     """
-    def __init__(self):
+    def __init__(self, start_watching=None, stop_watching=None):
+        """
+        Creates a new PropertyTable.
+        
+        start_watching and stop_watching are two optional functions that are
+        of the form function(name). They will be called when the first listener
+        listening on an object explicitly by name is added, and when the last
+        listener is removed, respectively. Listeners added with global_watch
+        and global_unwatch do not cause these functions to be called.
+        """
+        self._start_watching = start_watching
+        self._stop_watching = stop_watching
         self._value_table = {} # Map of names to values
         self._watch_table = {} # Map of names to lists of watchers
         self._global_watch_table = []
@@ -135,8 +146,12 @@ class PropertyTable(MutableMapping):
         specified key changes.
         """
         # Create a list in the watch table if we don't already have one
-        if name not in self._watch_table:
+        if name not in self._watch_table: # No watching listeners yet
+            # Create a new list for the watchers
             self._watch_table[name] = []
+            if self._start_watching: # Notify the start_watching function
+                with print_exceptions:
+                    self._start_watching(name)
         # If we're already watching the property, just return
         if function in self._watch_table[name]:
             return
@@ -180,8 +195,13 @@ class PropertyTable(MutableMapping):
         # the last watcher on the property
         try:
             self._watch_table[name].remove(function)
-            if not self._watch_table[name]:
+            if not self._watch_table[name]: # Last listener on this object
                 del self._watch_table[name]
+                # Notify the stop_watching function
+                if self._stop_watching:
+                    with print_exceptions:
+                        self._stop_watching(name)
+                
         except (ValueError, KeyError):
             pass
     
