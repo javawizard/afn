@@ -525,6 +525,18 @@ class Bus(common.AutoClose):
                 with print_exceptions:
                     listener(service_id, host, port, info, event)
     
+    def local_service_changed(self, service_id, old, new):
+        """
+        Called (by the local_services property table) when services come and go.
+        All we really need to do is publish/unpublish the service.
+        """
+        if old:
+            for publisher in self.publishers:
+                publisher.remove(old)
+        if new:
+            for publisher in self.publishers:
+                publisher.add(new)
+    
 
 class _IntrospectionService(servicemodule.ServiceProvider):
     def __init__(self, bus):

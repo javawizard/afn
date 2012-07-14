@@ -1,7 +1,8 @@
 
 from autobus2.service import ServiceProvider
+from afn.utils.listener import Event, EventTable, PropertyTable
 
-class PyServiceProvider(ServiceProvider):
+class PyServiceProvider1(ServiceProvider):
     """
     A class that can be either extended or used as-is. It exposes all
     functions, both ones defined on subclasses of this class and ones assigned
@@ -41,6 +42,10 @@ class PyServiceProvider(ServiceProvider):
     to specify the object's documentation. The same should be thought about for
     events.
     """
+    
+    def __init__(self):
+        self.__event = 
+    
 
 
     
