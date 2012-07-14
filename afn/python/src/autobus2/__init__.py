@@ -72,6 +72,7 @@ from afn.utils.listener import Event, EventTable, PropertyTable
 import __builtin__
 from concurrent import synchronized_on
 from afn.utils import field
+import os
 try:
     from collections import OrderedDict as _OrderedDict
 except ImportError:
@@ -129,22 +130,36 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         and autobus2.discovery.BroadcastDiscoverer. Others might be added in
         the future.
         """
+        # Number of times this bus has been __enter__'d. Allows it to be used
+        # as a re-entrant context manager.
         self.context_enters = 0
         if port is None:
             port = 0
-        self._introspector = None
+        # True once close() has been called
         self.closed = False
+        # The TCP server that will listen for connections
         self.server = Socket()
         self.server.bind(("", port))
+        # TODO: make the backlog configurable
         self.server.listen(100)
         self.port = self.server.getsockname()[1]
+        # Lock that nearly everything bus-related locks on
         self.lock = RLock()
+        # PropertyTable whose keys are service ids and whose values are
+        # instances of autobus2.local.LocalService
         self.local_services = PropertyTable()
+        # Map of ids of discovered services to DiscoveredService instances
         self.discovered_services = {}
         self.discovery_listeners = []
+        # List of (filter, function) tuples, where filter is an info object
+        # filter and function is a function to be notified when a matching
+        # service is created or deleted
         self.service_listeners = []
+        # Set of RemoteConnection instances that have been bound to a service
         self.bound_connections = set()
+        # Set of discoverers registered on this bus
         self.discoverers = set()
+        # Set of publishers registered on this bus
         self.publishers = set()
         if default_discoverers:
             self.install_discoverer(discovery.BroadcastDiscoverer())
@@ -157,9 +172,12 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         # self._create_introspection_service()
         #
         # Register the bus as a service on itself.
-        self.create_service()
+        self.create_service({"type": "autobus.details", "pid": os.getpid()}, self)
     
     def accept_loop(self):
+        """
+        Called on a new thread to accept socket connections to this bus.
+        """
         self.server.settimeout(1)
         while not self.closed:
             try:
@@ -182,7 +200,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
                 return
     
     @synchronized_on("lock")
-    def create_service(self, info, active=None, from_py_object=None, doc=""):
+    def create_service(self, info, provider):
         """
         Creates a new service on this bus. info is the info object to use for
         this service. active is True to publish this service immediately, False
