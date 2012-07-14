@@ -149,6 +149,20 @@ class PyServiceProvider(BaseServiceProvider):
             raise exceptions.NoSuchFunctionException("%s exists but is not a function" % name)
         return function(*args)
 
+# TODO: These should be descriptors used as class attributes that store things
+# in some sort of _pyservice_events and _pyservice_objects dict or something,
+# and then override accessing them to update the internal object/event
+# dictionaries accordingly. (Or they could just use those dicts to store
+# values and such, and not even need internal storage dicts. That's rather
+# brilliant.) They should accept documentation strings, and since descriptors,
+# as far as I've worked out, can't tell what variable they've been assigned
+# into, they'll probably need parameters specifying their name, unless I have
+# PyServiceProvider's __init__ scan the class's attributes and let the
+# descriptors know what their names are. Or I could use a metaclass and have it
+# do the scanning when it's initialized, but I'd really like to avoid using
+# metaclasses if I don't absolutely have to.
+
+
 
 class PyEvent(object):
     pass
