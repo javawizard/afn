@@ -218,16 +218,10 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         service_id = messaging.create_service_id()
         self.set_remote_info_builtins(service_id, info)
         # Create the actual service object
-        service = local.LocalService(self, service_id, info, doc)
-        # Then store the service in our services map
+        service = local.LocalService(self, service_id, info, provider)
+        # Then store the service in our services map, which will cause the
+        # service to be published through the introspection service
         self.local_services[service_id] = service
-        if from_py_object is not None:
-            service.use_py_object(from_py_object)
-        service._add_introspection()
-        # If the service is to be immediately activated it, then we should
-        # do so
-        if active:
-            service.activate()
         return service
     
     def _close_service(self, service):
