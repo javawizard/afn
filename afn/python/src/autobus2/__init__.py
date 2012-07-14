@@ -173,7 +173,7 @@ class Bus(common.AutoClose):
         # self._create_introspection_service()
         #
         # Register the bus as a service on itself.
-        self.create_service({"type": "autobus.details", "pid": os.getpid()}, IntrospectionService(self))
+        self.create_service({"type": "autobus.details", "pid": os.getpid()}, _IntrospectionService(self))
     
     def accept_loop(self):
         """
@@ -526,7 +526,7 @@ class Bus(common.AutoClose):
                     listener(service_id, host, port, info, event)
     
 
-class IntrospectionService(servicemodule.ServiceProvider):
+class _IntrospectionService(servicemodule.ServiceProvider):
     def __init__(self, bus):
         self.bus = bus
         self.details = {}
