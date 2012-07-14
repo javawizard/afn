@@ -24,7 +24,7 @@ def main():
             vbox.add(label)
             label.show()
             w.show()
-            def listener(connection, info, value):
+            def listener(connection, info, name, old_value, value):
                 service_id = connection.service_id
                 if value is None:
                     if service_id in online_monitors:
