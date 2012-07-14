@@ -188,7 +188,7 @@ class RemoteConnection(object):
     def process_unlisten(self, message):
         raise NotImplementedError
     
-    def watched_object_changed(self, event, name, value):
+    def watched_object_changed(self, name, old, new):
         """
         Called when an object being watched by this connection changes. This
         method is added to the object_values property table of the LocalService
@@ -196,7 +196,7 @@ class RemoteConnection(object):
         calling this when the object appears or disappears or when we start
         watching or stop watching the object.
         """
-        self.send(messaging.create_command("changed", True, name=name, value=value))
+        self.send(messaging.create_command("changed", True, name=name, value=new))
     
     def process_ping(self, message):
         self.send(messaging.create_response(message))
