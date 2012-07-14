@@ -158,6 +158,13 @@ class PropertyTable(object):
         for watcher in self._watch_table.get(name, []):
             with print_exceptions:
                 watcher(None)
+    
+    def __getitem__(self, name):
+        if name not in self._value_table:
+            raise KeyError(name)
+        return self._value_table[name]
+    __setitem__ = set
+    __delitem__ = delete
 
 
 
