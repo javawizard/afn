@@ -22,6 +22,10 @@ def create_command(command, send_as_notice=False, **kwargs):
     result.update(kwargs)
     return result
 
+command = create_command
+
+def notice(command, **kwargs):
+    return create_command(command, True, **kwargs)
 
 def create_response(command_or_id, **kwargs):
     if isinstance(command_or_id, dict) and command_or_id.get("_type") == 3:
@@ -31,6 +35,8 @@ def create_response(command_or_id, **kwargs):
               else command_or_id["_id"], "_type": 2}
     result.update(kwargs)
     return result
+
+response = create_response
 
 
 def create_error(command_or_id, reason):

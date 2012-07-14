@@ -59,6 +59,9 @@ class Connection(common.AutoClose):
         if lock is None:
             lock = RLock() # TODO: use the bus's lock instead, or are we good
             # to use our own lock?
+            # FIXME: Actually, I just realized that might fix an exception I
+            # noted yesterday occurs relating to connections. This needs to be
+            # investigated more.
         self.lock = lock
         # A condition that's notified whenever a connection attempt finishes,
         # whether or not it was successful.
@@ -86,8 +89,8 @@ class Connection(common.AutoClose):
         # connection to the remote server, watched_names() is called to get a
         # list of names being watched; watches are then sent for these names.
         # NOTE: This property table MUST ONLY BE MODIFIED while synchronized on
-        # bus.lock; if this isn't the case, things will break.
-        self.objects = PropertyTable()
+        # the connection lock; if this isn't the case, things will break.
+        self.objects = PropertyTable(self._start_watching, self._stop_watching)
 #        net.OutputThread(socket, self.queue.get).start()
 #        net.InputThread(socket, self.received, self.cleanup).start()
         # We query here so that an invalid service id will cause an exception
@@ -215,8 +218,13 @@ class Connection(common.AutoClose):
         """
         self.connect_attempts += 1
         self.connect_condition.notify_all()
-        for name in self.object_watchers:
-            self.send_watch(name)
+        # Send a watch command for all objects currently being watched in the
+        # property table. The server will send changed notices on receiving our
+        # watch request, so we don't need to worry about separately updating
+        # the object's values.
+        for name in self.objects.watched_names():
+            self.send(messaging.notice("watch", name=name))
+        # Notify the open listener, if one exists
         with print_exceptions:
             if self.open_listener:
                 self.open_listener(self)
@@ -236,7 +244,7 @@ class Connection(common.AutoClose):
     
     def cleanup(self):
         with self.lock:
-            if self.socket:
+            if self.socket:madison boyd
                 net.shutdown(self.socket)
                 self.queue.put(None)
             self.is_connected = False
@@ -372,6 +380,12 @@ class Connection(common.AutoClose):
     def __getitem__(self, name):
         return Function(self, name)
     
+    def _start_watching(self, name):
+        raise NotImplementedError
+    
+    def _stop_watching(self, name):
+        raise NotImplementedError
+    
     @synchronized_on("lock")
     def watch_object(self, name, function):
         watchers = self.object_watchers.get(name)
@@ -394,12 +408,6 @@ class Connection(common.AutoClose):
             del self.watchers[name]
             if self.is_connected:
                 self.send_unwatch(name)
-    
-    def send_watch(self, name):
-        self.send_async(messaging.create_command("watch", name=name), self.process_changed)
-    
-    def send_unwatch(self, name):
-        self.send_async(messaging.create_command("unwatch", name=name), self.process_changed)
     
     def process_changed(self, message):
         if isinstance(message, exceptions.ConnectionLostException):
