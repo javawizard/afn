@@ -147,6 +147,14 @@ class PyServiceProvider(BaseServiceProvider):
         if not callable(function):
             raise exceptions.NoSuchFunctionException("%s exists but is not a function" % name)
         return function(*args)
+
+
+class PyEvent(object):
+    pass
+
+
+class PyObject(object):
+    pass
     
     
 
