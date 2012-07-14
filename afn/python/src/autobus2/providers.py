@@ -166,7 +166,30 @@ class PyServiceProvider(BaseServiceProvider):
 
 
 class PyEvent(object):
-    def __init__(self, name, doc):
+    """
+    An event descriptor. Instances of this class can be used as descriptors on
+    subclasses of PyServiceProvider to indicate an event field. The
+    corresponding properties available on instances are read-only functions;
+    calling them fires the event. For example:
+    
+    class MyService(PyServiceProvider):
+        some_event = PyEvent("some_event", "This is a test event.")
+        other_event = PyEvent("other_event", "This is another event.")
+        ...other functions, events, and objects...
+    service = MyService()
+    ...publish service using autobus2.Bus.create_service...
+    service.some_event("first arg", "second arg", "third arg")
+    service.other_event("first arg", "second arg", "third arg")
+    """
+    def __init__(self, name, doc=None):
+        """
+        Creates a new PyEvent. name is the name of the attribute to which the
+        PyEvent instance will be assigned. (This is needed as Python doesn't
+        provide a simple way to find out what attribute a descriptor has been
+        assigned to short of iterating over all of the class's attributes, and
+        that would make performance dismal.) doc is the documentation for the
+        event.
+        """
         self.name = name
         self.doc = doc
     
@@ -174,6 +197,16 @@ class PyEvent(object):
         return Partial(self._fire_event, instance)
     
     def _fire_event(*args):
+        """
+        Fires the event. The first argument is obviously self. The second
+        argument is the instance of PyServiceProvider on which the event is to
+        be fired. The remaining arguments are the arguments to pass to the
+        event.
+        
+        This is primarily used by __get__; an instance of this method, wrapped
+        in a Partial instance to partial in the PyServiceEvent, is returned
+        from __get__.
+        """
         self = args[0]
         instance = args[1]
         args = args[2:]
@@ -185,7 +218,7 @@ class PyEvent(object):
 
 
 class PyObject(object):
-    def __init__(self, name, doc):
+    def __init__(self, name, doc=None):
         self.name = name
         self.doc = doc
     
