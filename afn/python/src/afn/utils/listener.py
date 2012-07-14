@@ -67,6 +67,7 @@ class EventTable(object):
     """
     def __init__(self):
         self._table = {}
+        self._global_table = []
     
     def listen(self, name, function):
         """
@@ -88,6 +89,17 @@ class EventTable(object):
                 del self._table[name]
         except (ValueError, KeyError):
             pass
+
+    def global_listen(self, function):
+        if function in self._global_table:
+            return
+        self._global_table.append(function)
+    
+    def global_unlisten(self, function):
+        try:
+            self._global_table.remove(function)
+        except ValueError:
+            pass
     
     def __call__(self, *args, **kwargs):
         """
@@ -99,7 +111,7 @@ class EventTable(object):
             raise Exception("EventTable instances must be called with at least "
                     "one argument, the name of the event to fire.")
         name = args[0]
-        for listener in self._table.get(name, []):
+        for listener in self._table.get(name, []) + self._global_table:
             with print_exceptions:
                 listener(*args, **kwargs)
 
