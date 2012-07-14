@@ -59,12 +59,13 @@ class Connection(common.AutoClose):
             lock = RLock() # TODO: use the bus's lock instead, or are we good
             # to use our own lock?
         self.lock = lock
-        # A condition that's notified whenever this connection successfully
-        # connects and completes the handshake
+        # A condition that's notified whenever a connection attempt finishes,
+        # whether or not it was successful.
         self.connect_condition = Condition(self.lock)
-        # The number of attempts we've made to connect since the last successful
-        # connection. A failed handshake (which is typically due to the remote
-        # service no longer existing) is treated as a failed connection attempt.
+        # The number of attempts we've made to connect since this connection
+        # was created, whether or not said attempts fail or succeed. This is
+        # used mainly by wait_for_connect to detect if we've already attempted
+        # to connect yet.
         self.connect_attempts = 0
         # Listeners that are notified when a socket connects and the handshake
         # completes, when the socket disconnects, and when an attempt to connect
@@ -165,21 +166,35 @@ class Connection(common.AutoClose):
                     net.shutdown(s)
                     input_thread.function = lambda *args: None
                     return
+                # Handshake completed; assign to socket
                 self.socket = s
                 self.is_connected = True
+                # Assign this connection's queue
                 self.queue = queue
+                # Switch the input thread's function to self.received
                 input_thread.function = self.received
+                # Send initial messages and such
                 self._on_connection_succeeded()
-                # FIXME: send initial messages here, once we have any to send
             return
     
     def sleep_while_alive(self, amount):
+        """
+        Checks every second, for up to amount seconds, to see if this
+        connection is alive. This method returns once the connection has been
+        closed or the specified number of seconds are up.
+        """
         while amount > 0 and self.is_alive:
             time.sleep(amount%1.0)
             amount -= 1
     
     @synchronized_on("lock")
     def _on_connection_failed(self):
+        """
+        Called from the connect thread (_connect) when a connection attempt
+        fails. This increments connection_attempts, notifies the connect
+        condition, and calls the fail listener, if one was specified when
+        constructing this connection.
+        """
         self.connect_attempts += 1
         self.connect_condition.notify_all()
         with print_exceptions:
@@ -188,6 +203,13 @@ class Connection(common.AutoClose):
     
     @synchronized_on("lock")
     def _on_connection_succeeded(self):
+        """
+        Called from the connect thread (_connect) when a connection attempt
+        succeeds. This increments connect_attempts, notifies the connect
+        condition, sends a watch message for all objects in
+        self.object_watchers, and calls the open listener, if one was specified
+        when constructing this connection.
+        """
         self.connect_attempts += 1
         self.connect_condition.notify_all()
         for name in self.object_watchers:
@@ -274,6 +296,15 @@ class Connection(common.AutoClose):
                 self.send(message)
     
     def query(self, message, timeout=30):
+        """
+        Sends the specified message, then blocks until a response is received
+        or the specified timeout has elapsed. This works by creating a queue,
+        sending the message with send_async(message, queue.put), then waiting
+        on the queue for 30 seconds. If nothing was placed on the queue after
+        that many seconds, the query is canceled (via cancel_query) and a
+        TimeoutException is raised. If a response that was an Exception
+        instance was received, it is raised. Otherwise, the result is returned.
+        """
         q = Queue()
         self.send_async(message, q.put)
         try:
@@ -287,6 +318,12 @@ class Connection(common.AutoClose):
             return response
     
     def cancel_query(self, id, call=True):
+        """
+        Cancels the query corresponding to the specified id. If call is True
+        (the default), the corresponding function will receive an instance of
+        QueryCanceledException. If no such query exists, this function does
+        nothing.
+        """
         with self.lock:
             with Suppress(KeyError): # In case the query has already finished
                 function = self.query_map[id]
@@ -297,6 +334,12 @@ class Connection(common.AutoClose):
     
     @synchronized_on("lock")
     def received(self, message):
+        """
+        Called by the connection's input thread when a message has been
+        received. This function is in charge of dispatching the message to any
+        send_async functions waiting for a response, and otherwise processing
+        the message.
+        """
         # print "Received: " + str(message)
         if message is None: # The input thread calls this function with None as
             # the argument when the socket closes
