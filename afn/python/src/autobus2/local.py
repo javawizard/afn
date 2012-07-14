@@ -104,9 +104,9 @@ class RemoteConnection(object):
             # listeners we've registered
             if self.service:
                 for name in self.watched_objects:
-                    self.service.object_values.unwatch(name, Partial(self.watched_object_changed, name))
+                    self.service.object_values.unwatch(name, self.watched_object_changed)
                 for name in self.listened_events:
-                    self.service.event_listeners.unlisten(name, Partial(self.listened_event_fired, name))
+                    self.service.event_listeners.unlisten(name, self.listened_event_fired)
     
     def process_call(self, message):
         """
@@ -177,7 +177,7 @@ class RemoteConnection(object):
             # to deal with this in the future needs to be better thought out.
             # (Perhaps not including the value in the response sent above and
             # just relying on the notification is the way to go.)
-            self.service.object_watchers.listen(name, Partial(self.watched_object_changed, name))
+            self.service.object_values.watch(name, self.watched_object_changed)
     
     def process_listen(self, message):
         raise NotImplementedError
@@ -188,7 +188,7 @@ class RemoteConnection(object):
     def process_unlisten(self, message):
         raise NotImplementedError
     
-    def watched_object_changed(self, name, value):
+    def watched_object_changed(self, event, name, value):
         """
         Called when an object being watched by this connection changes. This
         method is added to the object_values property table of the LocalService

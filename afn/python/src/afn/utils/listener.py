@@ -74,7 +74,8 @@ class EventTable(object):
     
     def listen(self, name, function):
         """
-        Adds a function, listening on the event with the specified name.
+        Adds a function, listening on the event with the specified name. The
+        syntax of the function should be function(name, *args).
         """
         if name not in self._table:
             self._table = []
@@ -95,13 +96,13 @@ class EventTable(object):
     def __call__(self, *args, **kwargs):
         """
         Fires all listeners registered to the event named by the first argument,
-        passing in all remaining arguments and all keyword arguments.
+        passing in all arguments, including the first. I might change this later
+        to not pass in the name as well.
         """
         if len(args) < 1:
             raise Exception("EventTable instances must be called with at least "
                     "one argument, the name of the event to fire.")
         name = args[0]
-        args = args[1:]
         for listener in self._table.get(name, []):
             with print_exceptions:
                 listener(*args, **kwargs)
