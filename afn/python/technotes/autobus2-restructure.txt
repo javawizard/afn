@@ -117,7 +117,25 @@ Either that or I could have the bus itself implement the service provider protoc
 
 I think I'll try that for now.
 
-Although I might decide to go to bed instead, as yet again it's 3:28 AM. (It's Friday, July 13, 2012, if anyone's curious. Friday the 13th...)
+Although I might decide to go to bed instead, as yet again it's 3:28 AM. (It's the early morning of Friday, July 13, 2012, if anyone's curious. Friday the 13th...)
+
+So I got everything working, and it works wonderfully. Except I'm sporadically having this exception:
+
+Exception in thread autobus2.remote.Connection._connect-initial:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 552, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 505, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/home/jcp/workspace/afn/afn/python/src/autobus2/remote.py", line 91, in _connect
+    s.settimeout(None)
+  File "/usr/lib/python2.7/socket.py", line 224, in meth
+    return getattr(self._sock,name)(*args)
+  File "/usr/lib/python2.7/socket.py", line 170, in _dummy
+    raise error(EBADF, 'Bad file descriptor')
+error: [Errno 9] Bad file descriptor
+
+which occurs when I use autosend with a rather small timeout in list mode. But I don't usually do that, so I'm not hugely worried. And it's in a separate thread, and appears to only happen at shutdown time, so it's not an issue I'm going to worry about for now.
 
 
 
