@@ -4,6 +4,7 @@ from afn.utils.listener import Event, EventTable, PropertyTable
 from autobus2 import constants
 from autobus2 import exceptions
 from abc import ABCMeta, abstractmethod
+from afn.utils.partial import Partial
 
 class BaseServiceProvider(ServiceProvider):
     """
@@ -165,11 +166,34 @@ class PyServiceProvider(BaseServiceProvider):
 
 
 class PyEvent(object):
-    pass
+    def __init__(self, name, doc):
+        self.name = name
+        self.doc = doc
+    
+    def __get__(self, instance, cls=None):
+        return Partial(self._fire_event, instance)
+    
+    def _fire_event(*args):
+        self = args[0]
+        instance = args[1]
+        args = args[2:]
+        instance._event_table(self.name, args)
+    
+    def __set__(self, instance, value):
+        # TODO: would AttributeError be more appropriate?
+        raise TypeError("Can't modify event %r.s" % (instance, self.name))
 
 
 class PyObject(object):
-    pass
+    def __init__(self, name, doc):
+        self.name = name
+        self.doc = doc
+    
+    def __get__(self, instance, cls=None):
+        return instance._object_values[self.name]
+    
+    def __set__(self, instance, value):
+        instance._object_values[self.name] = value
     
     
 
