@@ -225,6 +225,9 @@ discovery_mode_header = ("Time".ljust(26) + "Event".ljust(13) + "Service ID".lju
         + "Host".ljust(15) + "Port".ljust(7) + "Info")
 
 def discovery_mode_listener(service_id, host, port, info, event):
+    # Filter out introspection services unless --all is specified
+    if info.get("type", "").startswith("autobus.") and not args.all:
+        return
     text = time.ctime(time.time()).ljust(26)
     if event is autobus2.DISCOVERED:
         text += "DISCOVERED".ljust(13)
