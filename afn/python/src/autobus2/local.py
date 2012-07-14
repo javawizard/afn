@@ -14,7 +14,8 @@ import functools
 from afn.utils import Suppress
 from afn.utils.concurrent import synchronized_on
 from afn.utils.multimap import Multimap as _Multimap
-from afn.utils.listener import Event, EventTable
+from afn.utils.listener import Event, EventTable, PropertyTable
+from afn.utils.partial import Partial
 import itertools
 import copy
 from abc import ABCMeta, abstractmethod
@@ -103,9 +104,9 @@ class RemoteConnection(object):
             # listeners we've registered
             if self.service:
                 for name in self.watched_objects:
-                    self.service.object_watchers.unlisten(name, self.watched_object_changed)
+                    self.service.object_values.unwatch(name, Partial(self.watched_object_changed, name))
                 for name in self.listened_events:
-                    self.service.event_listeners.unlisten(name, self.listened_event_fired)
+                    self.service.event_listeners.unlisten(name, Partial(self.listened_event_fired, name))
     
     def process_call(self, message):
         """
@@ -167,12 +168,16 @@ class RemoteConnection(object):
                 return
             # Add the object to our internal list of objects we're watching
             self.watched_objects.add(name)
-            # Add ourselves to the service's object_watchers event table to
-            # actually receive notifications when the object changes
-            self.service.object_watchers.listen(name, self.watched_object_changed)
-            # Get the object's current value and send it to the client
+            # Send a response including the object's current value
             object_value = self.service.object_values.get(name, None)
             self.send(messaging.create_response(message, name=name, value=object_value))
+            # Add ourselves to the service's object_values property table to
+            # be notified when things actually change. This cause a duplicate
+            # notification of the object's value to be sent to the client; how
+            # to deal with this in the future needs to be better thought out.
+            # (Perhaps not including the value in the response sent above and
+            # just relying on the notification is the way to go.)
+            self.service.object_watchers.listen(name, Partial(self.watched_object_changed, name))
     
     def process_listen(self, message):
         raise NotImplementedError
@@ -186,12 +191,12 @@ class RemoteConnection(object):
     def watched_object_changed(self, name, value):
         """
         Called when an object being watched by this connection changes. This
-        method is added to the object_watchers event table of the LocalService
-        to which this connection is bound. It is also called manually when
-        watching and unwatching an object to update the client on the object's
-        value.
+        method is added to the object_values property table of the LocalService
+        to which this connection is bound. The property table will take care of
+        calling this when the object appears or disappears or when we start
+        watching or stop watching the object.
         """
-        self.send(messaging.create_command("changed", True, name=name, value=value, event="changed"))
+        self.send(messaging.create_command("changed", True, name=name, value=value))
     
     def process_ping(self, message):
         self.send(messaging.create_response(message))
@@ -231,14 +236,13 @@ class LocalService(common.AutoClose):
         self.events = {}
         # Map of object names to info dicts
         self.objects = {}
-        # Map of object names to object values
-        self.object_values = {}
+        # Map of object names to object values. This is what's used to detect
+        # changed objects from RemoteConnection instances.
+        self.object_values = PropertyTable()
         # EventTable of event listeners listening for events to be fired.
-        # Listeners are of the form listener(name, args).
+        # Listeners are of the form listener(args), i.e. the arguments are
+        # passed as a sequence, not expanded.
         self.event_listeners = EventTable()
-        # EventTable of object watchers watching for changes to objects.
-        # Listeners are of the form listener(name, new_value).
-        self.object_watchers = EventTable()
     
     # TODO: I'm writing this at 3 in the morning; make sure my head was on
     # straight when I synchronized on bus.lock
