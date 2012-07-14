@@ -180,13 +180,47 @@ class RemoteConnection(object):
             self.service.object_values.watch(name, self.watched_object_changed)
     
     def process_listen(self, message):
-        raise NotImplementedError
+        with self.bus.lock:
+            name = message["name"]
+            # Check to make sure we're not already listening for this event
+            if name in self.listened_events:
+                self.send_error(message, "You're already listening for that event.")
+                return
+            # Add the event to our internal list of events we're listening for
+            self.listened_events.add(name)
+            # Send a response. Unlike object watches, we don't need to include
+            # anything in the response. We probably don't even need to include
+            # the name, but why not.
+            self.send(messaging.create_response(message, name=name))
+            # Add ourselves to the underlying service's event table to be
+            # notified when the event is actually fired by the service
+            self.service.event_listeners.listen(name, self.listened_event_fired)
     
     def process_unwatch(self, message):
-        raise NotImplementedError
+        with self.bus.lock:
+            name = message["name"]
+            # Check to make sure we're actually watching this object
+            if name not in self.watched_objects:
+                self.send_error(message, "You're not watching that object.")
+                return
+            # Remove our listener on our service's property table, which will
+            # cause an object change to be issued to the client, changing the
+            # value to None. This should be fine.
+            self.service.object_values.unwatch(name, self.watched_object_changed)
+            # And now remove the object from our list of watched objects.
+            self.watched_objects.remove(name)
     
     def process_unlisten(self, message):
-        raise NotImplementedError
+        with self.bus.lock:
+            name = message["name"]
+            # Check to make sure we're actually listening for this event
+            if name not in self.listened_events:
+                self.send_error(message, "You're not listening for that event.")
+                return
+            # Remove our listener on our service's event table
+            self.service.event_listeners.unlisten(name, self.listened_event_fired)
+            # And now remove the event from our list of listened events.
+            self.listened_events.remove(name)
     
     def watched_object_changed(self, name, old, new):
         """
@@ -197,6 +231,15 @@ class RemoteConnection(object):
         watching or stop watching the object.
         """
         self.send(messaging.create_command("changed", True, name=name, value=new))
+    
+    def listened_event_fired(self, name, args):
+        """
+        Called when an event being listened for by this connection fires. This
+        method is added to the event_listeners event table of the LocalService
+        to which this connection is bound. LocalService takes care of notifying
+        event_listeners whenever the event fires.
+        """
+        self.send(messaging.create_command("fired", True, name=name, args=args))
     
     def process_ping(self, message):
         self.send(messaging.create_response(message))
