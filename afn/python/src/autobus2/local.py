@@ -218,8 +218,6 @@ class LocalService(common.AutoClose):
         self.bus = bus
         self.provider = provider
         self.doc = None
-        # Register ourselves as a listener on the provider
-        provider.__autobus_listen__(self.provider_event)
         # Not active by default. TODO: change this?
         self.active = False
         self.is_alive = True
@@ -238,6 +236,11 @@ class LocalService(common.AutoClose):
         # Listeners are of the form listener(args), i.e. the arguments are
         # passed as a sequence, not expanded.
         self.event_listeners = EventTable()
+        # Register ourselves as a listener on the provider. Note that this
+        # step must be done last as it will cause things to be added to
+        # self.objects etc if the provider in question already has things
+        # provided on it.
+        provider.__autobus_listen__(self.provider_event)
     
     # TODO: I'm writing this at 3 in the morning; make sure my head was on
     # straight when I synchronized on bus.lock
