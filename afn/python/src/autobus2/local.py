@@ -259,8 +259,13 @@ class LocalService(common.AutoClose):
             # Object added. Store the object's info and update the property
             # table holding its value.
             name, info, value = args
+            # If the value isn't jsonable, print an error and rewrite it to null
+            if not net.is_jsonable(value):
+                print "ERROR: Value %r for object %r in %r is not jsonable." % (
+                        value, name, self)
             self.objects[name] = info
-            self.object_values[name] = value
+            # Deep copy it so that changes won't propagate
+            self.object_values[name] = copy.deepcopy(value)
         elif event is constants.OBJECT_UPDATED:
             # Object's info object updated. Store the new info object.
             name, info = args
@@ -268,7 +273,12 @@ class LocalService(common.AutoClose):
         elif event is constants.OBJECT_CHANGED:
             # Object's value changed. Store the new value.
             name, value = args
-            self.object_values[name] = value
+            # If the value isn't jsonable, print an error and rewrite it to null
+            if not net.is_jsonable(value):
+                print "ERROR: Value %r for object %r in %r is not jsonable." % (
+                        value, name, self)
+            # Deep copy it so that changes won't propagate
+            self.object_values[name] = copy.deepcopy(value)
         elif event is constants.OBJECT_REMOVED:
             # Object removed. Delete the info object and the value.
             name, = args
@@ -299,11 +309,25 @@ class LocalService(common.AutoClose):
             name, info = args
             self.functions[name] = info
         elif event is constants.FUNCTION_REMOVED:
+            # Function removed. Remove the info object.
             name, = args
             del self.functions[name]
+        elif event is constants.SERVICE_CHANGED:
+            # Service changed. We're ignoring this for now as I'm not yet
+            # having service information actually published; I'll add that
+            # later.
+            pass
+        else:
+            print "Invalid event %s received from service provider %s" % (
+                    event, self.provider)
     
     @synchronized_on("bus.lock")
     def activate(self):
+        """
+        Activates this service. Services that are not active are not published
+        to the bus's publishers; they can still be connected to by a client
+        that knows the service's host, port, and service id.
+        """
         if self.active: # Already active
             return
         if not self.is_alive:
@@ -330,50 +354,6 @@ class LocalService(common.AutoClose):
         self.deactivate()
         self.bus._close_service(self)
     
-    def create_function(self, name, function, mode=None, doc=""):
-        with self.bus.lock:
-            if mode is None:
-                mode = autobus2.THREAD
-            function = LocalFunction(self, name, function, mode, doc)
-            self.functions[name] = function
-            self.bus._i_update(self.id)
-    
-    def create_event(self):
-        raise NotImplementedError
-    
-    def create_object(self, name, value, doc=""):
-        with self.bus.lock:
-            object = LocalObject(self, name, value, doc)
-            self.objects[name] = object
-            object.notify_created()
-            self.bus._i_update(self.id)
-            return object
-    
-    @synchronized_on("bus.lock")
-    def use_py_object(self, py_object):
-        for name in dir(py_object):
-            if name.startswith("_"):
-                continue
-            value = getattr(py_object, name)
-            if not callable(value):
-                continue
-            self.create_function(name, value, get_function_doc(value))
-    
-    def watch_object(self, connection, name):
-        self.object_watchers.add(name, connection)
-    
-    def unwatch_object(self, connection, name):
-        self.object_watchers.remove(name, connection)
-    
-    def _add_introspection(self):
-        self.create_object("autobus.details",
-                self._i_details_function, "Provides information about the "
-                "various functions, objects, and such provided by this interface")
-        # Creating this function will cause the above object to update, so we
-        # don't need to manually update it.
-        self.create_function("autobus.get_details", self._i_details_function,
-                doc="Returns the current value of the autobus.details object.")
-    
     @synchronized_on("bus.lock")
     def _i_details_function(self):
         details = {}   
@@ -396,89 +376,6 @@ class LocalService(common.AutoClose):
         return details
 
 
-class LocalFunction(object):
-    def __init__(self, service, name, function, mode, doc):
-        if mode not in (autobus2.SYNC, autobus2.ASYNC, autobus2.THREAD):
-            raise ValueError("Invalid mode: " + str(mode))
-        self.service = service
-        self.name = name
-        self.function = function
-        self.mode = mode
-        self.doc = doc
-    
-    def call(self, message, args):
-        """
-        Calls this function and returns a response for the specified message,
-        which should be a call command.
-        """
-        try:
-            result = self.function(*args)
-            return messaging.create_response(message, result=result)
-        except Exception as e:
-            return messaging.create_error(message, "Remote function threw an exception: %s: %s" % (type(e), e))
-
-
-class LocalEvent(object):
-    pass
-
-
-class LocalObject(object):
-    def __init__(self, service, name, value, doc):
-        self._value = value
-        net.ensure_jsonable(self.get_value())
-        self.service = service
-        self.name = name
-        self.doc = doc
-    
-    @property
-    def value(self):
-        return self.get_value()
-    
-    @value.setter
-    def value(self, new_value):
-        self.set_value(new_value)
-    
-    def get_value(self):
-        if callable(self._value):
-            value = self._value()
-        else:
-            value = self._value
-        return copy.copy(value) # TODO: do we need to copy the value when
-        # returning it here? We might only need to copy it when originally
-        # setting it...
-    
-    def set_value(self, value):
-        net.ensure_jsonable(value() if callable(value) else value)
-        if not callable(value):
-            value = copy.copy(value) # Make a copy so that modifications to the
-            # original object don't affect us
-        with self.service.bus.lock:
-            self._value = value
-            new_value = self.get_value()
-            for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=new_value, event="changed"))
-    
-    def changed(self):
-        """
-        Causes this object to act as if its value had changed. This is really
-        only useful when this object's value has been set to a function; this
-        indicates that the return value of the function has changed.
-        """
-        with self.service.bus.lock:
-            self.set_value(self._value)
-    
-    def notify_created(self):
-        with self.service.bus.lock:
-            for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=self.get_value(), event="created"))
-    
-    def remove(self):
-        with self.service.bus.lock:
-            del self.service.objects[self.name]
-            for watcher in self.service.object_watchers.get(self.name, []):
-                watcher.send(messaging.create_command("changed", True, name=self.name, value=None, event="removed"))
-            with Suppress(KeyError):
-                del self.service.object_watchers[self.name]
 
 
 

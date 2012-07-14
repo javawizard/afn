@@ -237,6 +237,14 @@ def ensure_jsonable(value):
         raise exceptions.InvalidValueException()
 
 
+def is_jsonable(value):
+    try:
+        json.dumps(value)
+        return True
+    except:
+        return False
+
+
 
 
 
