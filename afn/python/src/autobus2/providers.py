@@ -88,7 +88,7 @@ class BaseServiceProvider(ServiceProvider):
             listener(constants.OBJECT_REMOVED, name)
 
 
-class PyServiceProvider1(ServiceProvider):
+class PyServiceProvider(BaseServiceProvider):
     """
     A class that can be either extended or used as-is. It exposes all
     functions, both ones defined on subclasses of this class and ones assigned
@@ -130,24 +130,29 @@ class PyServiceProvider1(ServiceProvider):
     """
     
     def __init__(self):
-        self.__event = Event()
-    
-    def __autobus_policy__(self, name):
-        return constants.SYNC
-    
-    def __autobus_listen__(self, listener):
-        self.__event.listen(listener)
-    
-    def __autobus_unlisten(self, listener):
-        self.__event.unlisten(listener)
+        BaseServiceProvider.__init__(self)
+        for attr in dir(self):
+            if attr.startswith("_"):
+                continue
+            if callable(attr):
+                self._functions[attr] = getattr(self, attr)
     
     def __autobus_call__(self, name, args):
         if name.startswith("_"): # Don't allow functions whose names start
             # with underscores to be called remotely
-            raise exceptions.NoSuchFunctionException(name)
+            raise exceptions.NoSuchFunctionException("%s starts with an underscore" % name)
+        try:
+            function = getattr(self, name, None)
+        except AttributeError:
+            raise exceptions.NoSuchFunctionException("%s does not exist" % name)
+        if not callable(function):
+            raise exceptions.NoSuchFunctionException("%s exists but is not a function" % name)
+        return function(*args)
+    
     
 
 
-    
+
+
 
 
