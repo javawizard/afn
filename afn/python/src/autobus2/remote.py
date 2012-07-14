@@ -233,32 +233,45 @@ class Connection(common.AutoClose):
         with self.lock:
             if not self.is_alive: # Already closed
                 return
-            if self.socket:
+            if self.socket: # Shut down the socket, if it exists
                 self.queue.put(None)
                 net.shutdown(self.socket)
                 self.socket = None
-            if self.would_be_socket:
+            if self.would_be_socket: # Shut down the would-be socket, if one
+                # exists
                 net.shutdown(self.would_be_socket)
             self.is_connected = False
             self.is_alive = False
     
     def cleanup(self):
+        """
+        Called by the... either the InputThread or the OutputThread, I'm
+        forgetting which... after a successful connection attempt is being
+        terminated. This can therefore be called multiple times, once for each
+        successful connection attempt.
+        """
         with self.lock:
-            if self.socket:madison boyd
+            # Shut down the current socket
+            if self.socket:
                 net.shutdown(self.socket)
+                # Shut down the output queue
                 self.queue.put(None)
             self.is_connected = False
+            # Notify all outstanding queries that the connection has been lost
             for f in self.query_map.copy().itervalues():
                 with print_exceptions:
                     f(exceptions.ConnectionLostException())
+            # Then clear all outstanding queries
             self.query_map.clear()
-            for watchers in self.object_watchers.values():
-                for watcher in watchers:
-                    with print_exceptions:
-                        watcher(None)
+            # And then clear all known object values
+            self.objects.clear()
+            # Call the close listener, if one was specified when constructing
+            # this connection
             with print_exceptions:
                 if self.close_listener:
                     self.close_listener(self)
+            # If the connection hasn't been closed, start a thread attempting
+            # to reconnect
             if self.is_alive:
                 Thread(name="autobus2.remote.Connection._connect-reconnect", target=self._connect).start()
     
@@ -353,19 +366,25 @@ class Connection(common.AutoClose):
         """
         # print "Received: " + str(message)
         if message is None: # The input thread calls this function with None as
-            # the argument when the socket closes
+            # the argument when the socket closes, so we take the opportunity
+            # to clean everything up.
             self.cleanup()
             return
-        if message["_type"] == 2: # response
+        if message["_type"] == 2: # Response to a command we presumably sent
+            # with query, so look up the function waiting for the response, if
+            # one exists, and call it.
             f = self.query_map.get(message["_id"], None)
             if f:
+                # There was a function, so remove it from the map of functions
+                # waiting for responses
                 del self.query_map[message["_id"]]
                 with print_exceptions:
-                    if message.get("_error"):
+                    if message.get("_error"): # Error happened, so call the
+                        # function with an exception
                         f(exceptions.CommandErrorException(message["_error"]["text"]))
-                    else:
+                    else: # Response was successful; pass it into the function
                         f(message)
-        if message["_type"] in [1, 3]:
+        if message["_type"] in [1, 3]: # Command or notification
             # TODO: consider merging this part of this class with
             # local.RemoteConnection since it's substantially the same. Maybe
             # even consider having the command/response system be its own layer
@@ -378,47 +397,76 @@ class Connection(common.AutoClose):
             processor(message)
     
     def __getitem__(self, name):
+        # Just return the function for now
         return Function(self, name)
     
     def _start_watching(self, name):
-        raise NotImplementedError
+        """
+        Called when the first listener for a particular named object is added
+        to the objects property table. This just sends a watch command if we're
+        connected.
+        """
+        with self.lock:
+            if self.is_connected:
+                self.send(messaging.notice("watch", name=name))
     
     def _stop_watching(self, name):
-        raise NotImplementedError
+        """
+        Called when the last listener for a particular named object is removed
+        from the objects property table. This just sends an unwatch command if
+        we're connected.
+        """
+        with self.lock:
+            if self.is_connected:
+                self.send(messaging.notice("unwatch", name=name))
     
     @synchronized_on("lock")
     def watch_object(self, name, function):
-        watchers = self.object_watchers.get(name)
-        if watchers is None:
-            watchers = []
-            self.object_watchers[name] = watchers
-            if self.is_connected:
-                self.send_watch(name)
-        watchers.append(function)
-        with print_exceptions:
-            function(self.object_values.get(name))
+        """
+        Watches the object with the specified name. When changes to the object
+        happen, the specified function will be called. Its signature is
+        function(name, old, new), where name is the name of the object (the
+        same name passed into this method), old is the old value of the object,
+        and new is the new value of the object.
+        
+        This method can be called at any time (regardless of whether the
+        connection is currently connected), and it can be called multiple times.
+        When a connection is disconnected, or when the corresponding object
+        doesn't actually exist, the object's value will appear to be None.
+        
+        Note that when the function is called, it will be called synchronously
+        on the connection thread. It must therefore return quickly, or spawn a
+        thread if a longer task needs to be completed.
+        """
+        self.objects.watch(name, function)
     
     @synchronized_on("lock")
     def unwatch_object(self, name, function):
-        watchers = self.object_watchers[name]
-        watchers.remove(function)
-        with print_exceptions:
-            function(None)
-        if watchers == []:
-            del self.watchers[name]
-            if self.is_connected:
-                self.send_unwatch(name)
-    
+        """
+        Removes the watch on the specified object. The specified function will
+        be synchronously called with None as the new value of the object.
+        
+        If multiple watches were placed on the same object, the other watches
+        will continue to function correctly.
+        """
+        self.objects.unwatch(name, function)
+            
     def process_changed(self, message):
+        """
+        Called when a message was received from the server indicating that a
+        particular object changed. This sets the object's new value into the
+        objects property table; the property table will take care of notifying
+        watchers added with watch_object.
+        """
         if isinstance(message, exceptions.ConnectionLostException):
             return
         name = message["name"]
         value = message["value"]
         if value is None:
             with Suppress(KeyError):
-                del self.object_values[name]
-        for watcher in self.object_watchers.get(name, []):
-            watcher(message["value"])
+                del self.objects[name]
+        else:
+            self.objects[name] = value
     
     def __str__(self):
         return "<%s to %s:%s service_id=%s is_connected=%s is_alive=%s>" % (
@@ -531,7 +579,7 @@ class Function(object):
             # Make sure all the arguments can be converted into JSON correctly
             net.ensure_jsonable(args)
             # Create the command to call the function
-            command = messaging.create_command("call", name=self.name, args=list(args))
+            command = messaging.command("call", name=self.name, args=list(args))
             if callback is autobus2.SYNC: # Synchronous call, so we query for the
                 # command
                 return self.connection.query(command, timeout)["result"]
@@ -544,6 +592,7 @@ class Function(object):
                         callback(response["result"])
                     else: # Exception while processing
                         callback(response)
+                # Then we send with the wrapper
                 self.connection.send_async(command, wrapper)
     
     def __str__(self):
