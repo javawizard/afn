@@ -14,19 +14,67 @@ class BaseServiceProvider(ServiceProvider):
     """
     def __init__(self):
         self.__event = Event()
+        self._functions = PropertyTable()
+        self._functions.global_watch(self.__function_listener)
+        self._events = PropertyTable()
+        self._events.global_watch(self.__event_listener)
+        self._objects = PropertyTable()
+        self._objects.global_watch(self.__object_listener)
+        self._object_values = PropertyTable()
+        self._object_values.global_watch(self.__object_values_listener)
         raise NotImplementedError
+    
+    def __function_listener(self, name, old, new):
+        if old is not None and new is not None: # Info change
+            self.__event(constants.FUNCTION_UPDATED, name, new)
+        elif old is not None: # Function was removed
+            self.__event(constants.FUNCTION_REMOVED, name)
+        elif new is not None: # Function was added
+            self.__event(constants.FUNCTION_ADDED, name, new)
+    
+    def __event_listener(self, name, old, new):
+        if old is not None and new is not None: # Info change
+            self.__event(constants.EVENT_UPDATED, name, new)
+        elif old is not None: # Event was removed
+            self.__event(constants.EVENT_REMOVED, name)
+        elif new is not None: # Event was added
+            self.__event(constants.EVENT_ADDED, name, new)
+    
+    def __object_listener(self, name, old, new):
+        if old is not None and new is not None: # Info change
+            self.__event(constants.OBJECT_UPDATED, name, new)
+        elif old is not None: # Object was removed
+            self.__event(constants.OBJECT_REMOVED, name)
+        elif new is not None: # Object was added
+            self.__event(constants.OBJECT_ADDED, name, new, self._object_values.get(name, None))
+    
+    def __object_values_listener(self, name, old, new):
+        # Only issue object change notifications if the object actually exists
+        # in our _objects property table
+        if not name in self._objects:
+            return
+        self.__event(constants.OBJECT_CHANGED, name, new)
     
     def __autobus_policy__(self, name):
         return constants.THREAD
     
     def __autobus_listen__(self, listener):
+        for name, info in self._functions.items():
+            listener(constants.FUNCTION_ADDED, name, info)
+        for name, info in self._events.items():
+            listener(constants.EVENT_ADDED, name, info)
+        for name, info in self._objects.items():
+            listener(constants.OBJECT_ADDED, name, info, self._object_values.get(name, None))
         self.__event.listen(listener)
     
     def __autobus_unlisten__(self, listener):
         self.__event.unlisten(listener)
-    
-    def _add_function(self, name, info):
-        pass
+        for name in self._functions:
+            listener(constants.FUNCTION_REMOVED, name)
+        for name in self._events:
+            listener(constants.EVENT_REMOVED, name)
+        for name in self._objects:
+            listener(constants.OBJECT_REMOVED, name)
 
 
 class PyServiceProvider1(ServiceProvider):
