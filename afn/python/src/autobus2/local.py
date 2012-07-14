@@ -261,6 +261,46 @@ class LocalService(common.AutoClose):
             name, info, value = args
             self.objects[name] = info
             self.object_values[name] = value
+        elif event is constants.OBJECT_UPDATED:
+            # Object's info object updated. Store the new info object.
+            name, info = args
+            self.objects[name] = info
+        elif event is constants.OBJECT_CHANGED:
+            # Object's value changed. Store the new value.
+            name, value = args
+            self.object_values[name] = value
+        elif event is constants.OBJECT_REMOVED:
+            # Object removed. Delete the info object and the value.
+            name, = args
+            del self.objects[name]
+            del self.object_values[name]
+        elif event is constants.EVENT_ADDED:
+            # Event added. Store the event's info object.
+            name, info = args
+            self.events[name] = info
+        elif event is constants.EVENT_UPDATED:
+            # Event's info object changed. Store the new info object.
+            name, info = args
+            self.events[name] = info
+        elif event is constants.EVENT_FIRED:
+            # Event fired. Notify the event's listeners.
+            name, event_args = args
+            self.event_listeners(name, event_args)
+        elif event is constants.EVENT_REMOVED:
+            # Event removed. Remove the event's info object.
+            name, = args
+            del self.events[name]
+        elif event is constants.FUNCTION_ADDED:
+            # Function added. Store the function's info object.
+            name, info = args
+            self.functions[name] = info
+        elif event is constants.FUNCTION_UPDATED:
+            # Function's info object updated. Update the info object.
+            name, info = args
+            self.functions[name] = info
+        elif event is constants.FUNCTION_REMOVED:
+            name, = args
+            del self.functions[name]
     
     @synchronized_on("bus.lock")
     def activate(self):
