@@ -154,9 +154,14 @@ def main():
                 for _, services_dict in int_results.items():
                     # Iterate over the services this introspector knows about
                     for service_id, service in services_dict.items():
-                        # See if the service matches our filter
-                        if filter_matches(service["info"], info_filter):
-                            # It does, so add it to the results
+                        # See if the service matches our filter, and see if
+                        # we've either specified --all or this service isn't
+                        # an introspection service
+                        if filter_matches(service["info"], info_filter
+                                ) and (args.all or not service["info"]
+                                        .get("type", "")
+                                        .startswith("autobus.")):
+                            # It matches, so add it to the results
                             results[service_id] = service
                 # Now iterate over the actual results.
                 for i, (service_id, details) in enumerate(results.items()):
