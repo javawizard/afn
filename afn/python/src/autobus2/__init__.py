@@ -532,7 +532,7 @@ class IntrospectionService(servicemodule.ServiceProvider):
         self.autobus_event = Event()
         self.bus.local_services.global_watch(self.local_service_changed)
     
-    def local_service_changed(self, id, service):
+    def local_service_changed(self, event, service_id, service):
         
 
 

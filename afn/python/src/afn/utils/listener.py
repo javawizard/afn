@@ -7,6 +7,7 @@ from afn.utils.singleton import Singleton
 ADDED = Singleton("afn.utils.listener.ADDED")
 CHANGED = Singleton("afn.utils.listener.CHANGED")
 REMOVED = Singleton("afn.utils.listener.REMOVED")
+INITIAL = Singleton("afn.utils.listener.INITIAL")
 
 class Event(object):
     """
@@ -113,6 +114,9 @@ class Property(object):
 
 
 class PropertyTable(MutableMapping):
+    """
+    Watchers are of the form function(event, name, old, new).
+    """
     def __init__(self):
         self._value_table = {} # Map of names to values
         self._watch_table = {} # Map of names to lists of watchers
