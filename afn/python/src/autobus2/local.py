@@ -253,7 +253,7 @@ class LocalService(common.AutoClose):
         """
         Processes an event issued by the provider this service is observing.
         """
-        print "Provider event: %s: %s" % event, args
+        print "Provider event: %s: %s" % (event, args)
         if event is constants.OBJECT_ADDED:
             # Object added. Store the object's info and update the property
             # table holding its value.
