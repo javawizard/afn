@@ -1,5 +1,6 @@
 
 from traceback import print_exc
+from afn.utils import print_exceptions
 
 class Event(object):
     """
@@ -46,10 +47,8 @@ class Event(object):
         (including keyword arguments) will be passed to all of the listeners.
         """
         for listener in self._listeners[:]: # Clone in case someone modifies us
-            try:
+            with print_exceptions:
                 listener(*args, **kwargs)
-            except:
-                print_exc()
 
 
 class EventTable(object):
@@ -98,10 +97,67 @@ class EventTable(object):
         name = args[0]
         args = args[1:]
         for listener in self._table.get(name, []):
-            try:
+            with print_exceptions:
                 listener(*args, **kwargs)
-            except:
-                print_exc()
+
+
+class Property(object):
+    pass
+
+
+class PropertyTable(object):
+    def __init__(self):
+        self._value_table = {} # Map of names to values
+        self._watch_table = {} # Map of names to lists of watchers
+    
+    def watch(self, name, function, initial=True):
+        # Create a list in the watch table if we don't already have one
+        if name not in self._watch_table:
+            self._watch_table[name] = []
+        # If we're already watching the property, just return
+        if function in self._watch_table[name]:
+            return
+        # Add the function to the list of watchers
+        self._watch_table[name].append(function)
+        # If initial is True, pass the property's current value to the function
+        if initial:
+            function(self._value_table.get(name, None))
+    
+    def unwatch(self, name, function, initial=True):
+        # If we're present in the watchers for this property and initial is
+        # True, call the function
+        if (initial
+                and name in self._watch_table
+                and function in self._watch_table[name]):
+            function(None)
+        # Try to remove the watcher, and remove the list of watchers if it was
+        # the last watcher on the property
+        try:
+            self._watch_table[name].remove(function)
+            if not self._watch_table[name]:
+                del self._watch_table[name]
+        except (ValueError, KeyError):
+            pass
+    
+    def get(self, name, default=None):
+        # Just return the current value
+        return self._value_table.get(name, default)
+    
+    def set(self, name, value):
+        # Update the stored value
+        self._value_table[name] = value
+        # Notify all watchers on this property that it's changed
+        for watcher in self._watch_table.get(name, []):
+            with print_exceptions:
+                watcher(value)
+    
+    def delete(self, name):
+        # Delete the stored value
+        del self._value_table[name]
+        # Notify all watchers on this property that it's been deleted
+        for watcher in self._watch_table.get(name, []):
+            with print_exceptions:
+                watcher(None)
 
 
 
