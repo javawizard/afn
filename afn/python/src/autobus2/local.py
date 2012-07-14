@@ -254,13 +254,11 @@ class LocalService(common.AutoClose):
         Processes an event issued by the provider this service is observing.
         """
         if event is constants.OBJECT_ADDED:
-            # Object added. Notify anything listening for the object of its
-            # value.
+            # Object added. Store the object's info and update the property
+            # table holding its value.
             name, info, value = args
             self.objects[name] = info
             self.object_values[name] = value
-            for connection in self.object_watchers.get(name, []):
-                connection
     
     @synchronized_on("bus.lock")
     def activate(self):
