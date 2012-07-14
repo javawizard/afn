@@ -59,7 +59,7 @@ discoverers and publishers and such.
 
 import sys
 from traceback import print_exc
-from autobus2 import net, discovery, local, remote, exceptions, messaging, common, proxy, service as servicemodule
+from autobus2 import net, discovery, local, remote, exceptions, messaging, common, proxy, service as servicemodule, constants
 from autobus2.filter import filter_matches, ANY, NOT_PRESENT
 from threading import Thread, RLock
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout, gethostname
@@ -529,23 +529,59 @@ class Bus(common.AutoClose):
 class IntrospectionService(servicemodule.ServiceProvider):
     def __init__(self, bus):
         self.bus = bus
+        self.details = {}
         self.autobus_event = Event()
         self.bus.local_services.global_watch(self.local_service_changed)
     
     def local_service_changed(self, service_id, old, new):
-        pass
+        if old:
+            old.functions.global_unwatch(self.local_service_component_changed)
+            old.events.global_unwatch(self.local_service_component_changed)
+            old.objects.global_unwatch(self.local_service_component_changed)
+        if new:
+            new.functions.global_watch(self.local_service_component_changed)
+            new.events.global_watch(self.local_service_component_changed)
+            new.objects.global_watch(self.local_service_component_changed)
+        self.rebuild_details()
+    
+    def local_service_component_changed(self, name, old, new):
+        self.rebuild_details()
+    
+    def rebuild_details(self):
+        self.details = self.create_details()
+        self.autobus_event(constants.OBJECT_CHANGED, "details", self.details)
+    
+    def create_details(self):
+        # TODO: Consider having this whole thing cached, and only update the
+        # relevant portions of it when services come and go
+        details = {}
+        for service_id, service in self.bus.local_services.items():
+            service_details = {}
+            details[service_id] = service_details
+            for type in ["functions", "events", "objects"]:
+                type_details = {}
+                details[type] = type_details
+                for name, info in getattr(service, type).items():
+                    type_details[name] = info
+        return details
     
     def __autobus_call__(self, name, args):
-        pass
+        if name == "get_details":
+            return self.details
+        raise exceptions.NoSuchFunctionException(name)
     
     def __autobus_policy__(self, name):
         return SYNC
     
     def __autobus_listen__(self, listener):
+        listener(constants.OBJECT_ADDED, "details", {}, self.details)
+        listener(constants.FUNCTION_ADDED, "get_details", {})
         self.autobus_event.listen(listener)
     
-    def __autobus_unlisten(self, listener):
+    def __autobus_unlisten__(self, listener):
         self.autobus_event.unlisten(listener)
+        listener(constants.OBJECT_REMOVED, "details")
+        listener(constants.FUNCTION_REMOVED, "get_details")
 
 
 def wait_for_interrupt():
