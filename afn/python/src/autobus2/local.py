@@ -230,12 +230,14 @@ class LocalService(common.AutoClose):
         # Not active by default. TODO: change this?
         self.active = False
         self.is_alive = True
-        # Map of function names to info dicts
-        self.functions = {}
-        # Map of event names to info dicts
-        self.events = {}
-        # Map of object names to info dicts
-        self.objects = {}
+        # Map of function names to info dicts. This is a property table to
+        # allow the Autobus introspection service to watch it for changes to
+        # the functions provided by this service.
+        self.functions = PropertyTable()
+        # Ditto, but for events
+        self.events = PropertyTable()
+        # Ditto, but for objects
+        self.objects = PropertyTable()
         # Map of object names to object values. This is what's used to detect
         # changed objects from RemoteConnection instances.
         self.object_values = PropertyTable()
