@@ -2,6 +2,11 @@
 from traceback import print_exc
 from afn.utils import print_exceptions
 from collections import MutableMapping
+from afn.utils.singleton import Singleton
+
+ADDED = Singleton("afn.utils.listener.ADDED")
+CHANGED = Singleton("afn.utils.listener.CHANGED")
+REMOVED = Singleton("afn.utils.listener.REMOVED")
 
 class Event(object):
     """
@@ -127,22 +132,25 @@ class PropertyTable(MutableMapping):
         self._watch_table[name].append(function)
         # If initial is True, pass the property's current value to the function
         if initial:
-            function(self._value_table.get(name, None))
+            function(ADDED, name, self._value_table.get(name, None))
     
     def global_watch(self, function, initial=True):
+        """
+        Global watchers are of the form function(event, name, value).
+        """
         if function in self._global_watch_table:
             return
         self._global_watch_table.append(function)
         if initial:
             for name in self._value_table:
                 with print_exceptions:
-                    function(name, self._value_table[name])
+                    function(ADDED, name, self._value_table[name])
     
     def global_unwatch(self, function, initial=True):
         if initial and function in self._global_watch_table:
             for name in self._value_table:
                 with print_exceptions:
-                        function(name, None)
+                        function(REMOVED, name, None)
         try:
             self._global_watch_table.remove(function)
         except ValueError:
@@ -155,7 +163,7 @@ class PropertyTable(MutableMapping):
                 and name in self._watch_table
                 and function in self._watch_table[name]):
             with print_exceptions:
-                function(None)
+                function(REMOVED, name, None)
         # Try to remove the watcher, and remove the list of watchers if it was
         # the last watcher on the property
         try:
@@ -171,15 +179,18 @@ class PropertyTable(MutableMapping):
     
     def set(self, name, value):
         # Update the stored value
+        added = True
+        if name in self._value_table:
+            added = False
         self._value_table[name] = value
         # Notify all watchers on this property that it's changed
         for watcher in self._watch_table.get(name, []):
             with print_exceptions:
-                watcher(value)
+                watcher(ADDED if added else CHANGED, name, value)
         # Notify all global watchers that this property has changed
         for watcher in self._global_watch_table:
             with print_exceptions:
-                watcher(name, value)
+                watcher(ADDED if added else CHANGED, name, value)
     
     def delete(self, name):
         # Delete the stored value
@@ -187,11 +198,11 @@ class PropertyTable(MutableMapping):
         # Notify all watchers on this property that it's been deleted
         for watcher in self._watch_table.get(name, []):
             with print_exceptions:
-                watcher(None)
+                watcher(REMOVED, name, None)
         # Notify all global watcher that this propert has been deleted
         for watcher in self._global_watch_table:
             with print_exceptions:
-                watcher(name, None)
+                watcher(REMOVED, name, None)
     
     def __getitem__(self, name):
         if name not in self._value_table:

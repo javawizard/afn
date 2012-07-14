@@ -530,9 +530,10 @@ class IntrospectionService(servicemodule.ServiceProvider):
     def __init__(self, bus):
         self.bus = bus
         self.autobus_event = Event()
-        self.bus.local_services.global_watch(self)
+        self.bus.local_services.global_watch(self.local_service_changed)
     
-    def 
+    def local_service_changed(self, id, service):
+        
 
 
 def wait_for_interrupt():
