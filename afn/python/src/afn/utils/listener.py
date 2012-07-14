@@ -212,6 +212,12 @@ class PropertyTable(MutableMapping):
         """
         return name in self._watch_table
     
+    def watched_names(self):
+        """
+        Returns a list of names being watched.
+        """
+        return list(self._watch_table.keys())
+    
     def get(self, name, default=None):
         # Just return the current value
         return self._value_table.get(name, default)

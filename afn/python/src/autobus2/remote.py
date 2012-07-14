@@ -15,6 +15,7 @@ from concurrent import synchronized_on
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout
 from afn.utils import full_name
 from afn.utils.multimap import Multimap
+from afn.utils.listener import EventTable, PropertyTable
 
 
 class Connection(common.AutoClose):
@@ -78,13 +79,15 @@ class Connection(common.AutoClose):
         self.is_connected = False
         # True if this connection has not yet been closed.
         self.is_alive = True
-        # Map of object names to lists of functions that should be called when
-        # the object's value changes. TODO: change this to be an instance of
-        # afn.utils.listener.PropertyTable and update all corresponding
-        # object-watching code to use PropertyTable's listener signature
-        self.object_watchers = {}
-        # Map of object names to their currently-known values
-        self.object_values = {}
+        # PropertyTable mapping object names to their current values. The
+        # functions self._start_watching and self._stop_watching are set as the
+        # start watching/stop watching functions; these will send messages, if
+        # the connection is connected, watching and unwatching the object. On
+        # connection to the remote server, watched_names() is called to get a
+        # list of names being watched; watches are then sent for these names.
+        # NOTE: This property table MUST ONLY BE MODIFIED while synchronized on
+        # bus.lock; if this isn't the case, things will break.
+        self.objects = PropertyTable()
 #        net.OutputThread(socket, self.queue.get).start()
 #        net.InputThread(socket, self.received, self.cleanup).start()
         # We query here so that an invalid service id will cause an exception
