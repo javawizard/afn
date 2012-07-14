@@ -370,27 +370,7 @@ class LocalService(common.AutoClose):
         # look like we close connections to a service when the service itself
         # is closed. This needs to be fixed.
         self.bus._close_service(self)
-    
-    @synchronized_on("bus.lock")
-    def _i_details_function(self):
-        details = {}   
-        details["id"] = self.id         
-        details["active"] = self.active
-        details["doc"] = self.doc
-        details["info"] = self.info
-        functions = {}
-        events = {}
-        objects = {}
-        details["functions"] = functions
-        details["events"] = events
-        details["objects"] = objects
-        for name, function in self.functions.items():
-            functions[name] = {"name": name, "info": function}
-        for name, event in self.events.items():
-            events[name] = {"name": name, "info": event}
-        for name, object in self.objects.items():
-            objects[name] = {"name": name, "info": object}
-        return details
+
 
 
 
