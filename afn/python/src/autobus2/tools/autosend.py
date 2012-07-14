@@ -5,6 +5,7 @@ except ImportError:
     from afn.backports import argparse
 from functools import partial
 from autobus2 import Bus, wait_for_interrupt
+from autobus2.filter import filter_matches
 import autobus2
 import time
 import json
@@ -57,9 +58,10 @@ options.add_argument("-t", "--time", action="store", type=int, default=2, help=
         "Specifies the amount of time that autosend2 should try to connect to "
         "services for when -m is used. This has no effect when -m is not used.")
 options.add_argument("-a", "--all", action="store_true", help=
-        "Normally, list mode, among others, filter internal functions, such as "
-        '"autobus.get_details", that are usually supposed to stay hidden. '
-        "Specifying --all shows these hidden functions.")
+        "Normally, various autosend modes filter functions, events, objects, "
+        "and services that are internal to Autobus's functionality. Specifying "
+        "--all shows all functions/events/objects/services, even those that "
+        "would be hidden by default.")
 
 def main():
     args = parser.parse_args()
@@ -125,22 +127,19 @@ def main():
                         call_mode_print_result(e)
             return
         if mode == "list":
-            # Open a service proxy
-            with bus.get_service_proxy(info_filter, multiple=args.multiple) as proxy:
-                if args.multiple: # Wait a few seconds for the proxy to bind to
-                    # all of the matching services
-                    time.sleep(args.time)
-                else: # Wait until the proxy binds to a single matching service
-                    proxy.wait_for_bind(timeout=args.time)
+            # Open a service proxy on the available introspection services.
+            # Note that we use a multiple service proxy here regardless of
+            # what the user requested as we've no guarantee that the first
+            # introspection service discovered will provide a service matching
+            # the requested criteria. TODO: Perhaps consider watching the proxy
+            # in the future if a single-service lookup has been requested to
+            # immediately return once a suitable service is found.
+            with bus.get_service_proxy({"type": "autobus.details"}, multiple=True) as proxy:
+                # Wait a few seconds for the proxy to bind
+                time.sleep(args.time)
                 # Call the introspection function to get information about the
-                # service
-                results = proxy["autobus.get_details"]()
-                if not args.multiple:
-                    # Multiple proxies return {service_id: return_value, ...}.
-                    # Single proxies just return the value itself. This bit
-                    # translates the single-service proxy style to the
-                    # multiple-service proxy style.
-                    results = {proxy.current_service_id: results}
+                # services
+                results = proxy["get_details"]()
                 if len(results) == 0:
                     print "No matching services found."
                 for i, (service_id, details) in enumerate(results.items()):
