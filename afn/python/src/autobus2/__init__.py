@@ -59,7 +59,7 @@ discoverers and publishers and such.
 
 import sys
 from traceback import print_exc
-from autobus2 import net, discovery, local, remote, exceptions, messaging, common, proxy
+from autobus2 import net, discovery, local, remote, exceptions, messaging, common, proxy, service as servicemodule
 from autobus2.filter import filter_matches, ANY, NOT_PRESENT
 from threading import Thread, RLock
 from socket import socket as Socket, error as SocketError, timeout as SocketTimeout, gethostname
@@ -102,13 +102,31 @@ class DiscoveredService(object):
         self.info = info
 
 
-class Bus(common.AutoClose):
+class Bus(common.AutoClose, servicemodule.ServiceProvider):
+    """
+    An Autobus bus. Busses manage a set of published services, and allow
+    connecting to other services. A single bus listens on a single TCP
+    port and multiplexes all published services over it.
+    
+    Bus is a subclass of ServiceProvider; the service it provides is a service
+    exposing information about what other services, events, functions, and
+    objects are present. (This service is more commonly known as the
+    introspection service.) You normally won't have to know this; instances of
+    Bus register themselves as services with themselves, so you don't need to
+    do anything to make the introspection service work.
+    """
     def __init__(self, default_discoverers=True, default_publishers=True,
                  port=None):
         """
         Creates a new bus. The bus will listen on the specified port; if none
         is specified (which is the usual case), a port will be chosen from the
         ports not currently in use on this computer.
+        
+        If default_discoverers is True (the default), a default set of
+        discoverers will be installed, and likewise for default_publishers.
+        Right now, this simply installs a autobus2.discovery.BroadcastPublisher
+        and autobus2.discovery.BroadcastDiscoverer. Others might be added in
+        the future.
         """
         self.context_enters = 0
         if port is None:
