@@ -185,7 +185,7 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
                 socket = self.server.accept()[0]
                 self.setup_inbound_socket(socket)
             except SocketTimeout: # This happens when we time out, which is
-                # normal. The 4-second timeout is to fix what appears to be a
+                # normal. The 1-second timeout is to fix what appears to be a
                 # bug with Windows not properly throwing an exception from
                 # accept when another thread closes the socket.
                 pass
