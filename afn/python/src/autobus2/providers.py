@@ -1,6 +1,7 @@
 
 from autobus2.service import ServiceProvider
 from afn.utils.listener import Event, EventTable, PropertyTable
+from autobus2 import constants
 
 class PyServiceProvider1(ServiceProvider):
     """
@@ -44,7 +45,10 @@ class PyServiceProvider1(ServiceProvider):
     """
     
     def __init__(self):
-        self.__event = 
+        self.__event = Event()
+    
+    def __autobus_policy__(self, name):
+        return constants.SYNC
     
 
 
