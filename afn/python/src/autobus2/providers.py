@@ -134,7 +134,7 @@ class PyServiceProvider(BaseServiceProvider):
             if attr.startswith("_"):
                 continue
             if callable(attr):
-                self._functions[attr] = getattr(self, attr)
+                self._functions[attr] = {}
     
     def __autobus_call__(self, name, args):
         if name.startswith("_"): # Don't allow functions whose names start
