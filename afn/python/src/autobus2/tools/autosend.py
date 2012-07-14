@@ -143,6 +143,9 @@ def main():
                 # Call the introspection function to get information about the
                 # services
                 int_results = proxy["get_details"]()
+                print "int_results"
+                print int_results
+                print
                 # int_results will be a dict whose keys are the service ids of
                 # the introspection services and whose values are dicts whose
                 # keys are the actual service ids. We need to translate this
@@ -163,12 +166,15 @@ def main():
                                         .startswith("autobus.")):
                             # It matches, so add it to the results
                             results[service_id] = service
+                print "results"
+                print results
+                print
                 # We've got the actual results. Now print a message if there
                 # weren't any.
                 if len(results) == 0:
                     print "No matching services available."
                 # If there were results, print them.
-                for i, (service_id, details) in enumerate(results.items()):
+                for i, (service_id, service) in enumerate(results.items()):
                     if i > 0:
                         print "#" * 70
                     
@@ -177,10 +183,10 @@ def main():
                             service["info"].get("hostname", "<unknown>"),
                             service_id,
                             service["info"])
-                    if details.get("doc", None):
-                        print "\n" + details["doc"]
+                    if service.get("doc", None):
+                        print "\n" + service["doc"]
                     print "=" * 70
-                    functions = filter_hidden(args, details["functions"])
+                    functions = filter_hidden(args, service["functions"])
                     if len(functions) == 0:
                         print "No functions available on this service."
                     for j, (name, function) in enumerate(functions.items()):
@@ -190,7 +196,7 @@ def main():
                         if function.get("doc", None):
                             print "\n" + function["doc"]
                     print "=" * 70
-                    events = filter_hidden(args, details["events"])
+                    events = filter_hidden(args, service["events"])
                     if len(events) == 0:
                         print "No events available on this service."
                     for j, (name, event) in enumerate(events.items()):
@@ -200,7 +206,7 @@ def main():
                         if event.get("doc"):
                             print "\n" + event["doc"]
                     print "=" * 70
-                    objects = filter_hidden(args, details["objects"])
+                    objects = filter_hidden(args, service["objects"])
                     if len(objects) == 0:
                         print "No objects available on this service."
                     for j, (name, object) in enumerate(objects.items()):
