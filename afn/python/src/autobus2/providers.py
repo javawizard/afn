@@ -69,8 +69,6 @@ class BaseServiceProvider(ServiceProvider):
         return constants.THREAD
     
     def __autobus_listen__(self, listener):
-        print "Attaching %r" % listener
-        print "Functions/events/objects: %r, %r, %r" % (self._functions.items(), self._events.items(), self._objects.items())
         for name, info in self._functions.items():
             listener(constants.FUNCTION_ADDED, name, info)
         for name, info in self._events.items():
@@ -133,12 +131,10 @@ class PyServiceProvider(BaseServiceProvider):
     def __init__(self):
         BaseServiceProvider.__init__(self)
         for attr in dir(self):
-            print "Scanning %r" % attr
             if attr.startswith("_"):
                 continue
             value = getattr(self, attr)
             if callable(value):
-                print "Adding function %r" % attr
                 self._functions[attr] = {}
     
     def __autobus_call__(self, name, args):
