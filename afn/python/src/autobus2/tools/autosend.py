@@ -163,7 +163,11 @@ def main():
                                         .startswith("autobus.")):
                             # It matches, so add it to the results
                             results[service_id] = service
-                # Now iterate over the actual results.
+                # We've got the actual results. Now print a message if there
+                # weren't any.
+                if len(results) == 0:
+                    print "No matching services available."
+                # If there were results, print them.
                 for i, (service_id, details) in enumerate(results.items()):
                     if i > 0:
                         print "#" * 70
