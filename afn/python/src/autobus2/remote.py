@@ -32,26 +32,57 @@ class Connection(common.AutoClose):
         This constructor sets up everything and then sends an initial message
         to the remote socket indicating what service is to be connected to.
         """
+        # Incremented on __enter__, decremented on __exit__. Allows Connection
+        # instances to be re-entrant context managers.
         self.context_enters = 0
         self.bus = bus
+        # The socket the connection is connected on. This only gets assigned
+        # once the connection has successfully bound to the remote service.
         self.socket = None
+        # The socket that's currently being connected. This is assigned when
+        # a connection has been established but the handshake hasn't yet
+        # finished.
         self.would_be_socket = None
+        # The host, port, and service id to connect to
         self.host = host
         self.port = port
         self.service_id = service_id
+        # The queue of messages to send to the remote socket
         self.queue = None
+        # A map of outstanding queries. When a message is sent that requires a
+        # synchronous response, a function, usually another queue's put
+        # function, is added to this map with its key being the message's id.
+        # Responses targeted to the specified message id will be passed to the
+        # function in question.
         self.query_map = {}
         if lock is None:
-            lock = RLock()
+            lock = RLock() # TODO: use the bus's lock instead, or are we good
+            # to use our own lock?
         self.lock = lock
+        # A condition that's notified whenever this connection successfully
+        # connects and completes the handshake
         self.connect_condition = Condition(self.lock)
+        # The number of attempts we've made to connect since the last successful
+        # connection. A failed handshake (which is typically due to the remote
+        # service no longer existing) is treated as a failed connection attempt.
         self.connect_attempts = 0
+        # Listeners that are notified when a socket connects and the handshake
+        # completes, when the socket disconnects, and when an attempt to connect
+        # and handshake fails, respectively.
         self.open_listener = open_listener
         self.close_listener = close_listener
         self.fail_listener = fail_listener
+        # True if this connection is connected and has handshaked, false if it
+        # has not.
         self.is_connected = False
+        # True if this connection has not yet been closed.
         self.is_alive = True
+        # Map of object names to lists of functions that should be called when
+        # the object's value changes. TODO: change this to be an instance of
+        # afn.utils.listener.PropertyTable and update all corresponding
+        # object-watching code to use PropertyTable's listener signature
         self.object_watchers = {}
+        # Map of object names to their currently-known values
         self.object_values = {}
 #        net.OutputThread(socket, self.queue.get).start()
 #        net.InputThread(socket, self.received, self.cleanup).start()
