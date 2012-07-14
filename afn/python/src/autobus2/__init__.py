@@ -154,6 +154,8 @@ class Bus(common.AutoClose, servicemodule.ServiceProvider):
         # happen if I have per-service introspection functions and objects, so
         # I'm disabling the bus-wide introspection service.
         # self._create_introspection_service()
+        #
+        # Register the bus as a service on itself.
     
     def accept_loop(self):
         self.server.settimeout(1)

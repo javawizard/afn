@@ -205,16 +205,9 @@ class RemoteConnection(object):
 class LocalService(common.AutoClose):
     """
     A service created locally and published to remote clients. This is the
-    class of objects returned from bus.create_service().
-    
-    The various create_* functions can be called on LocalService instances to
-    create functions, events, and objects that are published remotely.
-    
-    The function activate() can be called for services created by
-    bus.create_service(..., active=False). This causes the service to become
-    active. Inactive services are hidden from the outside world; this allows
-    all of the functions needed for a particular service to be set up before
-    it's published to the network.
+    class of objects returned from bus.create_service(). You'll typically want
+    to call bus.create_service() instead of constructing instances of this
+    class yourself.
     """
     def __init__(self, bus, id, info, provider):
         self.provider_event = self.provider_event # Make sure we have an
@@ -322,36 +315,8 @@ class LocalService(common.AutoClose):
                     event, self.provider)
     
     @synchronized_on("bus.lock")
-    def activate(self):
-        """
-        Activates this service. Services that are not active are not published
-        to the bus's publishers; they can still be connected to by a client
-        that knows the service's host, port, and service id.
-        """
-        if self.active: # Already active
-            return
-        if not self.is_alive:
-            raise exceptions.ClosedException("This LocalService has been closed.")
-        self.active = True
-        self.bus._i_update(self.id)
-        for publisher in self.bus.publishers:
-            publisher.add(self)
-    
-    @synchronized_on("bus.lock")
-    def deactivate(self):
-        if not self.active: # Not active
-            return
-        if not self.is_alive:
-            return
-        self.active = False
-        for publisher in self.bus.publishers:
-            publisher.remove(self)
-        self.bus._i_update(self.id)
-    
-    @synchronized_on("bus.lock")
     def close(self):
         self.is_alive = False
-        self.deactivate()
         self.bus._close_service(self)
     
     @synchronized_on("bus.lock")
