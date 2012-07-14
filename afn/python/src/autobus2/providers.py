@@ -134,6 +134,27 @@ class PyServiceProvider(BaseServiceProvider):
         for attr in dir(self):
             if attr.startswith("_"):
                 continue
+            # See if the attribute is a PyEvent or PyObject descriptor
+            class_value = getattr(type(self), attr, None)
+            if isinstance(class_value, PyEvent):
+                # Event descriptor; add it to the events table. Check to make
+                # sure the correct name was assigned to the descriptor.
+                if class_value.name != attr:
+                    raise Exception("Mismatched event descriptor %r with "
+                            "reported name %r but actual name %r on %r" % (
+                                    class_value, class_value.name, attr, self))
+                self._events[attr] = {"doc": class_value.doc}
+                continue
+            if isinstance(class_value, PyObject):
+                # Object descriptor; add it to the objects table. Check to make
+                # sure the correct name was assigned to the descriptor.
+                if class_value.name != attr:
+                    raise Exception("Mismatched object descriptor %r with "
+                            "reported name %r but actual name %r on %r" % (
+                                    class_value, class_value.name, attr, self))
+                self._objects[attr] = {"doc": class_value.doc}
+            # Wasn't an event descriptor or an object descriptor. Check to see
+            # if it's a function.
             value = getattr(self, attr)
             if callable(value):
                 self._functions[attr] = {}
@@ -194,9 +215,14 @@ class PyEvent(object):
         self.doc = doc
     
     def __get__(self, instance, cls=None):
-        return Partial(self._fire_event, instance)
+        """
+        Returns afn.utils.partial.Partial(self.fire_event, instance). The
+        resulting Partial instance, when called, will call fire_event, which
+        will cause the event to be fired.
+        """
+        return Partial(self.fire_event, instance)
     
-    def _fire_event(*args):
+    def fire_event(*args):
         """
         Fires the event. The first argument is obviously self. The second
         argument is the instance of PyServiceProvider on which the event is to
@@ -213,19 +239,43 @@ class PyEvent(object):
         instance._event_table(self.name, args)
     
     def __set__(self, instance, value):
+        """
+        Throws an exception (a TypeError right now; I may change this to an
+        AttributeError or another type of exception later). Event descriptors
+        can't be written; to fire the event, get its value and call it instead.
+        (See __get__ and fire_event for more information.)
+        """
         # TODO: would AttributeError be more appropriate?
         raise TypeError("Can't modify event %r.s" % (instance, self.name))
 
 
 class PyObject(object):
+    """
+    Same as PyEvent, but creates an object. To set the object's value or get
+    its current value, simply set or get the corresponding instance attribute.
+    This attribute will default to None if it has not yet been assigned.
+    """
     def __init__(self, name, doc=None):
+        """
+        Creates a new PyObject descriptor. Name is the name of the attribute
+        to which this descriptor will be assigned; see PyEvent.__init__ for why
+        this is needed. doc is the documentation for this object.
+        """
         self.name = name
         self.doc = doc
     
     def __get__(self, instance, cls=None):
-        return instance._object_values[self.name]
+        """
+        Returns the value of this object on the specified instance. This
+        pretty much delegates straight to instance._object_values[self.name].
+        """
+        return instance._object_values.get(self.name, None)
     
     def __set__(self, instance, value):
+        """
+        Sets the value of this object on the specified instance. This pretty
+        much delegates straight to instance._object_values[self.name] = value.
+        """
         instance._object_values[self.name] = value
     
     
