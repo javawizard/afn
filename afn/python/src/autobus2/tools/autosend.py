@@ -163,7 +163,11 @@ def main():
                     if i > 0:
                         print "#" * 70
                     
-                    print "Service " + str(service_id) + ":"
+                    print "Service %s on %s (%s) -- %r:" % (
+                            service["info"].get("type", "<unknown>"), 
+                            service["info"].get("hostname", "<unknown>"),
+                            service_id,
+                            service["info"])
                     if details.get("doc", None):
                         print "\n" + details["doc"]
                     print "=" * 70
