@@ -2,6 +2,7 @@
 from autobus2.service import ServiceProvider
 from afn.utils.listener import Event, EventTable, PropertyTable
 from autobus2 import constants
+from autobus2 import exceptions
 
 class PyServiceProvider1(ServiceProvider):
     """
@@ -49,6 +50,17 @@ class PyServiceProvider1(ServiceProvider):
     
     def __autobus_policy__(self, name):
         return constants.SYNC
+    
+    def __autobus_listen__(self, listener):
+        self.__event.listen(listener)
+    
+    def __autobus_unlisten(self, listener):
+        self.__event.unlisten(listener)
+    
+    def __autobus_call__(self, name, args):
+        if name.startswith("_"): # Don't allow functions whose names start
+            # with underscores to be called remotely
+            raise exceptions.NoSuchFunctionException(name)
     
 
 
