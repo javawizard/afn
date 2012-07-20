@@ -22,7 +22,7 @@ class EventLoop(Thread):
         # Dict of scheduled times to (function, [category1, ...]) tuples
         self._scheduled = sorteddict()
         # Dict of category names to set([time1, time2, ...]) of the times
-        # in _scheduled (as its keys) being used
+        # in _scheduled
         self._categories = {}
     
     def run(self, function):
@@ -31,8 +31,13 @@ class EventLoop(Thread):
     def run_external(self, function):
         pass
     
-    def schedule(self, function, time):
-        pass
+    def schedule(self, function, time, *categories):
+        while time in self._scheduled:
+            # TODO: Is there a better way to do this? Perhaps store a
+            # (time, sequence_number) tuple instead of just time as the key
+            time += 0.000001
+        self._scheduled[time] = (function, categories)
+        # TODO: Add categories to the category map
     
     def schedule_external(self, function, time):
         pass
