@@ -214,6 +214,26 @@ I'm also thinking I'll use a file extension of .sixjetpattern for now. I need to
 
 TODO: Add a key for specifying an offset into the file at which music should begin playing. In the future, might be nice to allow multiple songs per file, but don't worry about this for now or it'll get too complex.
 
+So I've done a lot of rewriting of Autobus to make it work better with sixjet.
+
+And it's looking like sixjet's going to have a lot of dependencies on afn, both autobus and other utilities. (I'm writing afn.utils.eventloop specifically for sixjet to use.)
+
+And that's making me think that, for now, I should merge sixjet into afn. I made the directory structure particularly amenable to this, given that there's only two directories, and both have sixjet-related names, in the root of the sixjet repository.
+
+And I'm planning on writing Filer soon (which I may also merge into afn for now), and Filer will provide support for pulling/merging/pushing only particular directory subsets (I've mentioned this a bit on filer's technotes, but more or less the whole ability to push/pull/merge at the subdirectory level will make subrepos unnecessary, as you just pull from the relevant subrepo and merge into the parent repo at a particular child path... You might be able to achieve something similar with Mercurial first-class renames, but I've yet to test that, and at any rate, it's not promoted as an actual solution to the subrepo problem... And I know it's not possible to pull a set of changes but only pull those related to a particular subdirectory, as that'd make the history disjointed, whereas Filer will allow that with no problem by having subdirs have their own line of history, so to speak, and parent dirs simply indicate in a commit that the commit also contains a particular subdir commit... Sort of like subversion, only distributed, and actually workable. But I digress), so I can put everything in afn for now and then split it into separate repos later. Or not split it, and tell people to just pull the dir they want.
+
+(That would mean I'd probably want to reorganize afn to have one top-level directory per separate project, but that could come later.)
+
+So yeah, I think I'm going to merge sixjet into afn after this commit.
+
+And for the record, the current repo that this is in is the sixjet repo, which contains only three folders, sixjet, sixjet-java, and old-6jet-code, is, at present, located at http://hg.opengroove.org/sixjet, or ssh://opengroove.org//v/hg/sixjet, or ssh://koboi.afn//afn/sixjet, or ssh://koboi.int.opengroove.org//afn/sixjet.
+
+So yeah, after this commit I'll be pulling everything into afn for now.
+
+And actually, I think it's rather justified, given the afn project's purpose, namely as a labs project, and sixjet really isn't big enough that having it be its own separate project is worthwhile.
+
+(I may do the same with Parcon at some point in the future. Then it could be separately cloned once I migrate everything to Filer, as Parcon follows the same directory structure, namely that there's only one directory at the top level, parcon, and the Java version of Parcon is already in afn.) 
+
 
 
 
