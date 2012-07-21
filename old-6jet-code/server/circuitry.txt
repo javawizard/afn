@@ -1,0 +1,27 @@
+The circuitry behind 6jet will need to contain shift registers, since there aren't enough output pins on the parallel port to control all of the jets like there were on the older version of 6jet (the one I made back when I was like 10 years old) that only had 11 jets. The new 6jet system will have a total of 18 jets.
+
+I should probably mention why the name "6jet". This seems somewhat of a misnomer, since 6jet actually has 16 jets. The name stems from the very first version of 6jet, which I built when I was 9 years old. This version had 6 jets arranged in a hexagon. The jets were 6 drip line nozzles (meant for converting from a hose to a 1/4 inch drip line, but they worked great as nozzles), attached to 6 hoses. These were taped to some wooden stands, made out of 3 2-by-2's bolted together in the center so they could rotate about each other. All of the hoses ran to a bank of 6 rain-bird sprinkler valves arranged side-by-side. I got these from my grandpa, Bill Boyd, when he got rid of a ton of sprinkler stuff. These, by the way, have had the fastest switching time of any sprinkler valve I've seen yet, at somewhere around 50 to 100 milliseconds. They were unbeatable fot the system. Anyway, I added 5 more jets the next year, 4 in a square pattern inside the hexagon, and one in the center. The name, however, was hard-coded all throughout 6jet's software, so I just left it as it was.
+
+So anyway, back to the circuitry. the old 11-jet-containing 6jet system had one jet per output pin on the parallel port (with appropriate relays, buffers, and such). The new system, however, has more jets than can fit on the parallel port. My idea is to have 3 8-bit shift registers. I believe I have some in my room that are of the 74HC series, which means that their outputs should be able to power the 20 milliamp reed relays I had planned on using without problems. I'll have to look at those, though, before I can draw any clear conclusions. UPDATE: These are 74HC595s, which will work as shift registers but can't drive the relays. I have some 74HC126 tri-state buffers, however, that can provide enough current.
+
+Anyway, the data pins of each of these shift registers will be hooked to data pins 1, 2, and 3 (physical pins 2, 3, and 4) of the parallel port. The shift registers' clock pin will be connected to data pin 4 (physical pin 5) of the parallel port. The shift registers' strobe pin will be connected to data pin 5 (physical pin 6) of the parallel port. Pin 6 (physical pin 7) will connect to a power supply shutoff switch (probably itself connected to a reed relay, UPDATE: connected through a tri-state buffer to a reed relay to a larger contact relay) that will allow for powering down the circuit board when not in use. This pin will also have a weak pullup (which I think the parallel port already has; if it's the other way around then I'll do it the other way around), so that if the board gets disconnected from the computer or the computer shuts down, the circuitry, and all jets, will automatically power off. 
+
+8 bits will be used on each of two shift registers to control the 16 valves. One additional pin will be used to control a 120-volt relay that powers the 24-volt power supply, so that this power supply can be powered down, independant of the controller board, to save power when not in use. [UPDATE: this is actually connected directly to the parallel port, as described in the paragraph above.] This leaves 8 extra pins, plus 16 potential others (since I could add two more shift registers on without having to chain them together, something I'd like to avoid due to its inherent slowdown of output speed). A few of these might be used to control existing sprinkler system valves. These would be represented as additional jets, and would be controlled by a dpdt relay that either connects the sprinkler valve to the 24-volt power supply or connects the sprinkler valve to the actual sprinkler system. That way, yard sprinklers can contribute to 6jet music too.
+
+I'm also thinking of having some led display on the outside of the house. I don't yet know what that will be, although I could use one of those 4-digit displays I have lying around. 
+
+Each jet has a 5 volt reed relay dedicated to it. These reed relays will either be powered directly by the shift registers (which, by the way, I think were either 74HC125's or 74HC126's, [UPDATE: they were 74HC595s; the tri-state buffers I'll use to power stuff are 74HC126s]), or by a series of tri-state buffers (which function solely as buffers and not as tri-state devices; I just have an excess of tri-state buffers that I could use) if the shift registers won't be able to output enough power to drive all of the reed relays connected to them at once. [UPDATE: they can't, so I'll need the tri-state buffers. See above paragraphs.]
+
+
+
+
+
+
+
+
+
+
+
+
+
+

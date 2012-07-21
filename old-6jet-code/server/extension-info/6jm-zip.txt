@@ -1,0 +1,7 @@
+A 6jet music file. This contains exactly three files:
+
+pattern.6jf.txt
+pattern.6jp.jso
+ABC.XYZ
+
+ABC.XYZ can be named anything, but it must be in a format playable by the java sound library. Essentially, whatever file is present besides the 6jf and 6jp files is used as the music file, and there can only be one of them. This file can, however, be omitted, in which case the pattern will play without music accompanying it.

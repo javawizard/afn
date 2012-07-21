@@ -1,0 +1,11 @@
+There are a few date formats used by 6jet. These all have a name (like the short format or the chat format), and are represented in this file in java's SimpleDateFormat notation. I might change this to printf notation in the future, since this is easier to process (using String.format instead of new SimpleDateFormat().format). 
+
+Anyways, here they are, along with a short note on their intended uses.
+
+
+
+chat format
+
+This format is used for chat messages within the ui.
+
+M/dd h:mm:ss

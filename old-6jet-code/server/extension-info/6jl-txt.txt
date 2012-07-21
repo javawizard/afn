@@ -1,0 +1,15 @@
+A 6jet playlist file.
+
+A 6jet playlist file's name is the name of the playlist (plus .6jl.txt). 
+
+Each line within the playlist starts with a unique number, which identifies that particular line. This number is used in commands sent to the server from controllers to indicate which line to perform a particular action on. Currently, this number is obtained from System.currentTimeMillis() at the time that the line was added, plus 5 random digits.
+
+UPDATE: words in a line are separated by the pipe character, not a space. This makes parsing easier, since pipe characters can't appear in music file names.
+
+The next word in the line is either "music" or "delay". In the future, a line will also be allowed to be "playlist", which includes another playlist, but this is not allowed right now.
+
+If it is music, then the rest of the line is the name of a music file to play, mius the .6jm.zip extension. This music file must be present on the server side.
+
+If it is delay, then the rest of the line is the number of milliseconds to delay for.
+
+In the future, this word will be allowed to be "playlist". If it is playlist, then the rest of the line is the name of a playlist, minus the file extension, of a playlist to play. This playlist will be played, and then control will return to this playlist.

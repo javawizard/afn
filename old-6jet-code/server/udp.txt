@@ -1,0 +1,13 @@
+This is an idea I just had for speeding up communications.
+
+One problem that I've been having that I wasn't expecting is that tcp packets are being buffered up to about one half of a second, even when flush is called on the socket output stream. I've verified that this is an issue with sockets, not with object output stream or some other facility that I'm using along the way. This causes some small ui problems.
+
+My idea for a solution to this is that each end of communication listens over udp too. When a packet is to be sent by the packet spooler, it is sent over udp and then over tcp. The receiving ends, then, maintain a list of the last three or so packet ids received, and disregard any packets that arrive twice. This would occur when a packet goes through on udp and then arrives over tcp.
+
+So here's how I think it should be implemented. This adds another two threads per client, but it would be worth it if it speeds things up like I think it will.
+
+The main controller handler thread is modified to be a processing-only thread after the initial login information is received. When a username and password are successfully received from the tcp object input stream, a token (in the form of a long) is generated and added to the login response, and  a new thread that processes tcp packets is started. This thread reads off tcp packets and puts them in a blocking queue. The connectio handler thread then goes to reading from this queue, and processing each packet in it. 
+
+The server then has one global udp thread, which listens for packets on the udp socket. When it receives one, it creates an object input stream and reads off the username via methods on the data input interface. It then reads off the user token as a long. It then goes and finds the connector for that username, and validates that the token is the correct one. This makes sure that the client that connected over tcp is the one sending the udp packet. Then it reads off the packet, using the readObject method. It then looks at the packet's id and makes sure that the packet's id isn't in the received list. It then adds it to the received list and adds the packet to the queue that the connection handler processes packets from.
+
+The client side is a bit different. It only validates the server based on its ip address. Then it checks in the list of packet ids received to make sure that the packet hasn't been received yet. It then adds the packet's id to the received list and sends the packet off for processing. This is true for both the tcp side and the udp side, and one thread is started for each.

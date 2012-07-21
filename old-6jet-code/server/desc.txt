@@ -1,0 +1,5 @@
+The 6jet server project holds the 6jet server program, which is started on the computer that has the actual 6jet fountain connected to it. All other 6jet programs connect to it.
+
+6jet server listens on port 56538 for connections from 6jet controller, port 56537 for connections from 6jet music, port 56536 for connections from 6jet music and 6jet controller to download music files, and port 56535 for connections from 6jet controller to upload music files. 56536 is an http port, and the music files are all located under the "/music" folder, with their names being exactly equal to the .6jm.zip file. Each connection comes with a username and a password, which is authenticated.
+
+6jet server stores the master copy of all music files (.6jm.zip files) in the system. 6jet controllers upload these to the server, and then download them to actually use them. 6jet music boxes download 6jet music files when they first need to play them. Every time after that, they verify the file's MD5 checksum, and download the file again as needed.

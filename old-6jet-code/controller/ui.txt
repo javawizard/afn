@@ -1,0 +1,33 @@
+6jet controller has to acomplish these tasks, using its ui:
+
+allow manual control of each individual jet (when music playback is not in progress on the server)
+
+allow music compiled with 6jet designer to be uploaded
+
+allow music on the server to be played back, and current jet info shown during playback (possibly the same component as is used for manual control)
+
+allow running special tests (such as powering the power supply relay while disconnecting individual relays to test for relay faults)
+
+allow viewing a list of music boxes and other controllers
+
+potentially allow scheduling of music
+
+
+
+When 6jet controller is started, it asks for the server to connect to. I'm thinking that 192.168.1.61 will be built into the list, but a user can enter a different server as well. It also asks for a username and a password. It then connects (over plain sockets; I'm not going to worry about ssl right now) to the server, and authenticates. If it's successful, it shows the main screen. This contains a diagram of all jets, in some image format. This is at the top of the window. At the bottom is a horizontally-split pane, which contains a list of music on the server on the left side (along with some sort of "upload" and "delete" buttons), and playback controls on the right side. If playback is not in progress, then jets within the jet status image can be clicked to toggle the state of those jets. At the top of the screen are some controls for this, which are remembered by the server on a per-user basis: a "fixed-length" checkbox, a "time" text field next to it, and a "toggle" checkbox next to it. time is only relevant if fixed-length is checked, and this will cause a jet to fire only for that amount of time if it is clicked, and then it will turn off. If this is not checked, then the jet will fire for as long as the mouse is held down. The toggle checkbox overrides both of those, and makes it so that clicking on a jet will toggle its state (on or off).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

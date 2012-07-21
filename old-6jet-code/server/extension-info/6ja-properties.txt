@@ -1,0 +1,1 @@
+These files are authentication files. Property names are usernames, and property values are SHA-512 encoded passwords. The server holds two of these: one for controllers and one for music boxes (controllers.6ja.properties and musicboxes.6ja.properties)

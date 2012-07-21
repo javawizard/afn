@@ -1,0 +1,7 @@
+The jet editor component is a jcomponent. It has no layout. It adds a number of mark components to itself. 
+
+The editor maintins a list of Channels internally. These are initially provided to it when it is constructed. It also is told how long (in milliseconds) the whole thing is.
+
+There is a method that gets rid of all marks and rebuilds them, using the current zoom level. 
+
+When a mark is resized (by dragging within 4px of either side of it)

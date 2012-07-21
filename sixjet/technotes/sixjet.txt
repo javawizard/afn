@@ -1,0 +1,263 @@
+So this is the third generation of sixjet.
+
+(I'm renaming it to sixjet, by the way. It used to be named 6jet; the change is mostly because things like Java packages and Python packages and such liked to throw fits at things that started with numbers, so it's just going to be easier if it's called sixjet.)
+
+The actual fountain (and when I speak of the fountain, I mean the one that I'm putting together) will have 16 jets as currently planned. The controller board has room for expanding this to 24 jets, and I could convert the whole thing to use the old Instant Light Show boards I made, which would allow theoretically infinite expansion (with a slowdown of about a millisecond per jet state change for every additional 300 jets added, so basically not noticeable), although it would in practice be limited to around 40 jets, as I only have 10 or so boards.
+
+(I would get others manufactured if I actually wanted to expand beyond that, though.)
+
+So...
+
+I've been thinking lately about rewriting Autobus 2 and making Autobus 3, which would be distributed but would clean up some of the messiness of Autobus 2. (Services, for example, would be written as instances of an abstract class Service, which would have methods such as call_function, get_function_list, get_function_doc, etc., or maybe get_function, which returns an instance of the abstract Function class, and there would be a class such as PythonObjectService that provides this functionality given a Python object, and things like that, and then local services and remote services could theoretically have an identical interface and subclass from the same class.)
+
+But since that would take a while, I'm going to write sixjet to use Autobus 2.
+
+So, sixjet will use Autobus 2 as its underlying protocol.
+
+Or at least, I think...
+
+There would be advantages to using things such as JSON-RPC for this. Probably the biggest one would be automatic Java support, as there are implementations of JSON-RPC for Java already, and I'd probably do the GUI in Java as I'm much more familiar with doing GUIs in Java than I am with doing GUIs in Python.
+
+Hm, let me look up some things...
+
+Ok, so, I found a lovely little library, xmlrpc.sourceforge.net, that provides a Java XML-RPC client. So what I think I'm going to do is implement sixjet to use Autobus 2, and then write a smallish tool that listens on an XML-RPC port and proxies everything over to sixjet via Autobus. Then the Java app can use that tool to communicate.
+
+So I'm split over whether to have sixjet be one single thingie that's run on the server, or two thingies, one that's run on the server and allows jets to be controlled and one that runs elsewhere and coordinates turning jets on and off.
+
+The first would be better for performance's sake, as there wouldn't be any network latency to slow down jet firing when music is playing and such.
+
+The second would allow the controller to be swapped out.
+
+Maybe I should do it as the first one, but expose functions that would allow a separate controller to be written, if one wanted to.
+
+I'll thinking about it. For now, I'm going to implement the bit that allows jets to be remotely switched on and off.
+
+So I've got a basic server that implements the first component of the second idea done. I've decided, though, that I'm going to use the first idea, having everything together as one thingie.
+
+I've also decided that, for the time being, I'm going to use a native protocol instead of Autobus.
+
+The main reason being one that I think I mentioned above, that I haven't written an Autobus library for Java yet.
+
+But I'm thinking that I'll also provide access to most, if not all, protocol features via an Autobus service as well. (And I'm talking about Autobus 2, not Autobus 1, just to clarify.)
+
+So connections to the server could be made through either a native protocol or through Autobus. The one with the most up-to-date features would be the native protocol, but Autobus would have most of the features as well.
+
+(Another strong motivator for using a native protocol is that Autobus 2 doesn't yet have support for authentication; since the native protocol would, I could allow public connections to it, once I've made sure there aren't any vulnerabilities.)
+
+The native protocol would be JSON-based, and as mentioned above, would support authentication. I'd probably allow just challenge-response password authentication (server sends client a random number, client concats it with the password and sends back the hash, server computes the same hash and checks for a match) for now.
+
+(I might also allow authentication to just be disabled for now.)
+
+(Or have disabled authentication be the default.)
+
+So I've gotten eight valves put onto the valve bank so far, and all 16 relays on the controller board working. I've also got three jets and hoses hooked up and working fantastically. My family's going to be getting back from vacation in about half an hour, so I'm going to head back out and work on some more of the jets.
+
+So now back to programming.
+
+I've got some native protocol stuff written, and I've decided that there are definite advantages to doing things as an Autobus service. The biggest one is that then I don't have to go rewrite all of the socket code.
+
+So now I'm thinking I might want to switch to Autobus and just have an XML-RPC bridge written in Python to allow the Java-based controller to connect.
+
+And I'm thinking I need to write a lot more stuff about the design of the server before I start work on it.
+
+I also need to think about the designer a bit.
+
+(The designer is the app that lets you make jet firing patterns, both set to music and not set to music.)
+
+Ok so, I wrote some notes about the designer down on my Android that I need to figure out how to copy here...
+
+But in the mean time... Oh, found a way to share it.
+
+So, here it is...
+
+
+
+Publishes objects. One is a list of jet states. One is the songs in the queue (todo: add object change delta encoding to make changing this efficient). One is all the songs. Todo: decide how to do random patterns that happen when songs aren't playing; prehaps allow playlists, perhaps ones that shuffle their contents and repeat when nothing is scheduled.
+
+Functions for turning jets on and off and for toggling and for telling the server to flash them.
+
+Server is event-based and has a mechanism for scheduling events at times. Also allows event categories and removing events based on category. Events execute now or at a time in the future; when there are no more now events, the event queue is waited on for the nearest time-based event; events at the same time are run in the order scheduled. Flashing is done by turning on and then scheduling an event to turn off with a category of manual; switching to a song cancels all pending manual events, thus preventing flashes from screwing up the show.
+
+Server flash time is published as an object, and there are functions for upping/downing/setting this. It's therefore the same for all clients.
+
+Calling the clear method stops all manual events and probably also stops the current song; this probably stops media playback in some way and clear all related events.
+
+Playback of a song schedules an event for the first jet firing. The event sets all jets that fire then and schedules an event for the next jet state change. These all have a category used to cancel them when control is returned to manual.
+
+Music players observe objects and watch events on the server. An object specifies the current audio file; probably a hash, and then I have a server that provides files given their hash. The next few hashes would also be provided so that they can be predownloaded. An event fires every, say, five seconds to indicate where in the song the fountain is; clients that have drifted fifty ms consistently over three firings resync their audio accordingly. Maybe have this value configurable on the controller, and then it publishes it as an object and clients observe it accordingly.
+
+Possible idea: music players publish the hashes they've downloaded, and when song N is to be played, the server says that it's to be played via the now playing object, then waits until all music players have it in their list or a certain number of seconds pass before playing. Could register a future event for N seconds to start playback, and when a remote-player-updated-download-list eveny happens and all players have music downloaded, playback starts. Manual mode cancels these events too.
+
+Could also have players publish percent downloaded, and then controller reports global percent remaining before playback starts.
+
+Event system should be a separate framework, maybe in afn. It should somehow integrate with autobus, or have a @run_on_event_thread decorator.
+
+Also would be nice to announce on outside PA a few seconds before a song starts to play. Can be overridden but only by certain users. (Todo: add some sort of Autobus authentication. Maybe functions decorated such accept a session parameter, and service proxies can be told to call certain functions that modify the session on authentication. Or session is thread-local and the decoratoe gets it from the thread local and passes it in. Or something.)
+
+So, configurable delay from request to play song until actual play song, and fire event or call function or something at attempt to play and actual start of play. Can be overridden but only by certain users. Also event indicating stop playing music.
+
+Allow something where certain groups of songs are played in a random order. Allow certain songs to not have music. Have a configurable idle playlist that would probably be set to shuffle that plays, probably only during certain hours or when requested, when music isn't on. This could be idle mode. Manual mode switches to idle mode after a certain amount of inactivity. Idle playlist enabled on demand, or during certain times, or manual mode might only switch to idle mode at certain times and idle mode disables at the end of those times. Decide this later.
+
+Changes to playlists and to jet firing patterns are versioned somehow. Songs, a.k.a. jet firing patterns (todo: maybe just call these patterns), can be modified remotely without having to download any files. Media server advertizes over autobus but communicates over http. Firings can be modified while playing, and the old version will be used until it's done playing. Todo: either use mercurial for this or use a custom system. Maybe have firings updated outside the system and the path to get them from configurable, and have it be a Mercurial repository for now.
+
+Configure which playlist is the idle playlist based on time. Null playlist is allowed; does nothing.
+
+Notion of a currently-playing playlist. Perhaps playlists can be nested, i.e. one playlist refers to another. Circular references would cause playback to stop and an error to be noted. Then we have the play queue playlist, which can have other playlists added.
+
+Play queue can be modified from clients. Other playlists, unsure right now. Maybe they can and they're versioned in Mercurial.
+
+Although how does that get configured based on the current time etc?
+
+Maybe being able to change the active playlist is a good idea.
+
+Or atomically clear the play queue and add something to it.
+
+Whay happens when playlists are updated while playing?
+
+Especially the play queue...
+
+I'll come back to that. Next thing is patterns.
+
+So, they have measures. They have a thing saying at what time every measure starts. This is made by playing the song and pressing the space bar every measure.
+
+Measure timing can be scaled or re-inputted at any time.
+
+A list of measures shows on the side. A play button plays the relevant measure.
+
+The entire song shows in a scroll pane, with rulers for the jets on the left and for the measures on the top.
+
+Measures can be set to repeat N times, which logically shifts the rest of the song after it.
+
+The song can also be shifted manually.
+
+Measures don't all have to be the same length, and can be resized as needed to a particular number of seconds.
+
+Display shows firings that start before the end of the viewport and also end after the start of the viewport. Others are hidden to save time while redrawing.
+
+Dragging the middle of a firing moves it; dragging up or down changes its track. Dragging right/left moves it. Overlaps are not allowed, and show right next to the would-be overlapped firing. Adjacent firings are internally merged when building the transition table, mentioned below.
+
+Dragging the sides of a firing move its start and end point.
+
+Three check boxes enable moving, changing start, and changing end, for firings that are too small to be otherwise adjusted. A right-click menu allows adjusting the time manually.
+
+Firings can belong to a class. The class specifies the duration of the firing, either in seconds or in measure beats. Unsure of what to do if altering a class duration would cause overlaps. For classed firings, resizers are disabled.
+
+A grid, displayed in terms of fractions of a measure, can be displayed, and all firings aligned to it. Both start and end of a firing whose length is not a multiple of the grid size are snapped.
+
+Display can be scaled in terms of measures or in terms of seconds.
+
+Todo: see if there's any open-source light show software, and see how it handles all of these issues.
+
+
+
+That's the end of the notes I wrote on my Android. In relation to the last sentence, I downloaded Light-o-Rama, which isn't open-source, but a guy a few miles away uses it to run a light show at his house around Christmas, and the software's available for free. (Except that you have to have a license to use it with an actual light controller, but that doesn't much matter to me as I just needed to play around with it to see how it works.)
+
+So, they have a rather different sort of timing mechanism: they divide the whole thing up into discrete blocks, which are either N seconds wide or can be specified as N blocks to a measure (and you input measures in much the same way I was thinking for sixjet, namely by tapping the space bar at every measure boundary while playing the song back; they're also experimenting with automatically detecting beats in the music, but I'd rather do it the manual way), and then a particular block can either be set on or off. (They have other options, like shimmer and fade, that wouldn't be needed for sixjet now, although I might add them later to allow controlling my old light show circuitry as well; light show + water show would be rather cool.)
+
+I don't like that approach as it doesn't allow for arbitrary-length timings, but it does highlight that they use a notion of measures and it works just fine for them.
+
+So I'm thinking I'll use measures, but perhaps they should be optional. Or perhaps a default measure length is chosen when creating a design, and measures can be otherwise specified later.
+
+So I just re-read my Android notes, and I'm thinking measures should be required. They're more or less required in Light-o-Rama after all, so I can't think of any objection to requiring them in the designer.
+
+(Also, some acronyms I'm probably going to use on occasion that are carried over from older generations of sixjet: 6jd means the sixjet designer, the thingie that I'm talking about here where you write jet firing patterns, 6jc means the sixjet controller, the app that you use to manually switch on/off jets and choose what's playing right now, 6js means the sixjet server, the daemon that runs on the machine to which a sixjet fountain is connected, and 6jm means sixjet music, the daemon that runs on all machines to which speakers are attached that are to play music.)
+
+So, we have measures, and measures are required, and we specify all timing in terms of position within whatever measure it's positioned in. I imagine measures will be resized, if ever so slightly due to a re-run of the keyboard tapping thingie, frequently enough that the resulting drift due to floating-point errors were jets to be stored in terms of absolute time would be unacceptable.
+
+So a firing's on time and off time are stored as a floating-point number, where 0 is right at the beginning of the song (i.e. 0 would always translate to 0 in absolute time when computing the transition table -- more to come on what the transition table is), 1 is the boundary between the first measure and the second measure, 2 is the boundary between the second measure and the third measure, 0.5 is half-way through the first measure, 1.75 is three-quarters through the second measure, and so on.
+
+So, I should take a detour and mention what the transition table is.
+
+The transition table is a structure. I'm still debating whether it will be built in-memory on the server when a song is to play or if the designer will build it every time the file is saved and include it with the file, or if it will be cached on the server side as a separate file with a separate format, or even if the designer will output a separate transition table file that's what's actually uploaded to the server.
+
+The transition table is simply a list of some sort specifying raw events in terms of absolute time. The events specify a list of jets and the states to which they should be set. Nothing more, nothing less. I'd imagine its Python in-memory representation would be a list [event1, event2, event3, ...] where each event is a list or a dict, whichever takes up the least amount of RAM (TODO: benchmark this to find out), that looks like [12.59725, [(1, True), (2, False), (3, True), (4, True), (5, False)]] (or the result of passing that to dict() were a dict to be used instead of a list). This event would be set to occur at 12.59725 seconds into the song, and it would turn jets 1, 3, and 4 on, and jets 2 and 5 off.
+
+Events in the transition table are strictly ordered in terms of the time at which they occur. A simple sort of the transition table would accomplish this, although it should typically be built such that it's already in sorted order after generating it.
+
+No two events occur at the exact same time; events that would are merged together.
+
+Jet on events do not occur unless the jet has been previously turned off (or hasn't been changed at all yet). In particular, overlapping firings should be converted to a transition table reentrantly: a jet on event is issued at the start of the first firing that overlaps, and a jet off event is issued at the end of the last firing that overlaps.
+
+I think for now I'm going to have the transition table be built by the server, but I'll have the function to do so in its own library so that it could be reused elsewhere.
+
+(And I might have the server expose it via Autobus, too.)
+
+So, back from the detour.
+
+The on and off times of firings are stored as floating-point numbers corresponding to the song's measures. Removing measures from the end of a song that contain firings would cause a warning to be given. Assuming the warning was accepted, firings whose end times are after the truncation point would be truncated to the end of the song, and firings whose start times are after the truncation point would be completely deleted.
+
+I'll probably allow measures to be deleted, although maybe not at the beginning. I might also allow measures to be inserted. Inserting and deleting a measure shift all firings after that measure. Jet starts/ends that occur in the measure are truncated to the boundary between the two measures on either side of the measure that was deleted; jet starts/ends that are entirely contained within the measure are simply deleted.
+
+The grid can be displayed either to measure scale, with each measure taking up the same number of pixels, or to time scale, with each second taking up the same number of pixels. The two can be switched between as needed.
+
+Firing durations are specified in terms of measure time, i.e. 0.25 for a fourth of a measure. Firing classes are similarly specified. For now, I'm going to have the jet start time be the anchor, and adjusting a class time only adjusts the end of the firing; in the future, I may just have it so that classed firings have an anchor point, and the class specified how much time before/after that anchor point the jet starts/stops.
+
+I'm thinking the file format will be a JSON file. That'll allow it to be versioned relatively easily. Files will probably be saved with proper indentation and such. (If files get too big this way, I'll either store them gzipped or without line breaks and indentation, but I don't imagine space being an issue as I suspect the media files themselves will be quite a bit bigger.
+
+So, the file would be a JSON file with a key "type" whose value is "sixjet.design", a key "song" whose value is a dict containing keys "hash" and "filename", the former being the hash of the media file (which would be used by 6js and 6jm to actually play the relevant music) and the latter being the filename of the file (which would primarily be used to display to the user what song they're modifying). I might include "title", "author", "album", etc in the song dict.
+
+So, the file dict would then contain a key that I'm thinking would be called "firings", although I'm not sure about the name. Its value would be a list. Each item in the list would be a dict with keys "jet", whose value is the jet number, "start", whose value is a floating point number specifying, in measure time, the start of the firing, and "type", which is either "classed" or "single". If the firing is classed, another key, "class", would be present, whose value is the id of the class; this is a string that's automatically generated, but I haven't decided its format other than that. If the firing is single (i.e. not classed), the key "duration" would be present, which specifies how long the firing lasts for, in measure time.
+
+The file dict then has another key, "classes", which is a dictionary. Its keys are the above-mentioned auto-generated class ids in string form. Its values are dicts. Each of these dicts has only one key for now, "duration", which specifies, in measure time, the duration of firings belonging to this class. (I may add additional keys to allow, for example, class information to be bound at runtime, so that the length of certain firings could be globally adjusted on the server, and all songs would be able to follow the newly-set class information, but this will come later.)
+
+The file has another key, "measures", which is a list of floating-point numbers indicating, in seconds, the bounaries between measures in the song, in order. This could theoretically be an empty list if the song contains only one measure.
+
+And one last key is present, "length" (TODO: use "duration" instead, for naming consistency?), which is a floating-point number that specifies, in seconds, the amount of time the pattern takes up. This must be greater than all of the measure boundaries in the "measures" key.
+
+Update: I'm thinking that actually, length won't be present, and instead, measures will be a list of dicts, with each dict corresponding to a measure, and each measure having a "end" key specifying where that measure ends. 
+
+One note: if the pattern isn't tied to a song, the "song" key wouldn't be present at all in the file dict. whether or not a pattern is tied to a song can be changed later on; pattern length can also be changed. I haven't decided how to handle length information if a pattern is tied to a song; my instinct is to allow the length to be shorter or longer, with shorter lengths causing the music to be truncated and longer lengths causing silence to be added at the end.
+
+That should be it for now. I might add the ability to repeat measures later.
+
+I'm also thinking I'll use a file extension of .sixjetpattern for now. I need to go look into how to do Unix filesystem mime-type information and such, and how to name vendor-specific mime types; I may choose a mime type for this accordingly if it would be useful to. (Although Nautilus supports file association by extension too, so I could just use that for now.)
+
+TODO: Add a key for specifying an offset into the file at which music should begin playing. In the future, might be nice to allow multiple songs per file, but don't worry about this for now or it'll get too complex.
+
+So I've done a lot of rewriting of Autobus to make it work better with sixjet.
+
+And it's looking like sixjet's going to have a lot of dependencies on afn, both autobus and other utilities. (I'm writing afn.utils.eventloop specifically for sixjet to use.)
+
+And that's making me think that, for now, I should merge sixjet into afn. I made the directory structure particularly amenable to this, given that there's only two directories, and both have sixjet-related names, in the root of the sixjet repository.
+
+And I'm planning on writing Filer soon (which I may also merge into afn for now), and Filer will provide support for pulling/merging/pushing only particular directory subsets (I've mentioned this a bit on filer's technotes, but more or less the whole ability to push/pull/merge at the subdirectory level will make subrepos unnecessary, as you just pull from the relevant subrepo and merge into the parent repo at a particular child path... You might be able to achieve something similar with Mercurial first-class renames, but I've yet to test that, and at any rate, it's not promoted as an actual solution to the subrepo problem... And I know it's not possible to pull a set of changes but only pull those related to a particular subdirectory, as that'd make the history disjointed, whereas Filer will allow that with no problem by having subdirs have their own line of history, so to speak, and parent dirs simply indicate in a commit that the commit also contains a particular subdir commit... Sort of like subversion, only distributed, and actually workable. But I digress), so I can put everything in afn for now and then split it into separate repos later. Or not split it, and tell people to just pull the dir they want.
+
+(That would mean I'd probably want to reorganize afn to have one top-level directory per separate project, but that could come later.)
+
+So yeah, I think I'm going to merge sixjet into afn after this commit.
+
+And for the record, the current repo that this is in is the sixjet repo, which contains only three folders, sixjet, sixjet-java, and old-6jet-code, is, at present, located at http://hg.opengroove.org/sixjet, or ssh://opengroove.org//v/hg/sixjet, or ssh://koboi.afn//afn/sixjet, or ssh://koboi.int.opengroove.org//afn/sixjet.
+
+So yeah, after this commit I'll be pulling everything into afn for now.
+
+And actually, I think it's rather justified, given the afn project's purpose, namely as a labs project, and sixjet really isn't big enough that having it be its own separate project is worthwhile.
+
+(I may do the same with Parcon at some point in the future. Then it could be separately cloned once I migrate everything to Filer, as Parcon follows the same directory structure, namely that there's only one directory at the top level, parcon, and the Java version of Parcon is already in afn.) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+echo Killing the currently-running server...
+pkill -f sixjet.server
+echo Sleeping 2 seconds...
+sleep 2
+echo Starting the server...
+cd sixjet
+PYTHONPATH=/afn/hg/afn/python/src:/afn/sixjet/sixjet/src nohup python -m sixjet.server >/dev/null 2>/dev/null &
+disown $!
+echo Done! About to kill self the hard way.
+kill -9 $BASHPID
+
+

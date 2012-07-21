@@ -1,0 +1,13 @@
+A 6jet descriptor file. This describes to the server, and to the controller and designer, how many jets there are in the fountain, and what positions they are physically located at (on an xy grid that can be used for the manual jet control frame in 6jet controller). The server requires this when starting, the controller automatically downloads it from the server, and the designer requires it when creating a new music file (the controller can export it, which is the main method of getting it into the designer).
+
+The first line contains two numbers (separated by a space). The first is the width of the xy grid on which the jets are placed, and the second is the height.
+
+Every line thereafter starts with either the word "jet" or the word "text".
+
+If the line starts with jet, then the second token in the line (tokens are separated by spaces) is the number of the jet. There should be no more than 1 jet with any given number. This number is what is passed to the controller board when controlling the jet.
+
+The next two tokens are the xy position of the jet on the grid.
+
+The next token is the number 1 to invert the jet's output when sending to the controller board, and 0 to not invert the jet's output when sending to the controller board. This can be used if the jet's electronic wiring is run through an inverter.
+
+If the line starts with text instead of jet, then the next two tokens are the xy position to place the text at. The rest of the line is some text. This text will be drawn at that position when the jet grid is rendered. This might be useful to label certain jets, or to label compass directions.
