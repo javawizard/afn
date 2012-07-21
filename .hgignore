@@ -17,3 +17,6 @@
 /\.(pydev)?project$
 ^new-projects/jpathdb/landfill/
 ^afn/python/speakd.conf$
+/\.classpath$
+/\.settings/.*$
+/\.~.*$
