@@ -1,0 +1,11 @@
+So I'm writing afn.utils.eventloop, which will be an event loop that can run stuff.
+
+It'll be kind of like a mix of Java's whole AWT event system and Java's ScheduledThreadPoolExecutor.
+
+Basically, an event loop is an instance of Thread. It can be run either as a traditional thread, or you can call its _thread_run method explicitly to process events on a thread of your choosing.
+
+Events can be scheduled to run immediately by calling run(some_function). This can be called from any thread (including the event thread). Events will be run in the order that they're scheduled.
+
+Events can also be scheduled to run at particular times. Scheduled events will be run at the time they're scheduled, and two events scheduled at the same time will be run in the order that they're scheduled. The order of events scheduled to run at a particular time and events scheduled for immediate execution relative to each other is undefined; I'm thinking for now that immediate events will be prioritized over scheduled events to avoid a situation where so many events are scheduled that the event queue is saturated and immediate events attempting to cancel the flood of scheduled events can't get through.
+
+ 
