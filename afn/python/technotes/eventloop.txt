@@ -8,4 +8,7 @@ Events can be scheduled to run immediately by calling run(some_function). This c
 
 Events can also be scheduled to run at particular times. Scheduled events will be run at the time they're scheduled, and two events scheduled at the same time will be run in the order that they're scheduled. The order of events scheduled to run at a particular time and events scheduled for immediate execution relative to each other is undefined; I'm thinking for now that immediate events will be prioritized over scheduled events to avoid a situation where so many events are scheduled that the event queue is saturated and immediate events attempting to cancel the flood of scheduled events can't get through.
 
- 
+So, I was planning on using a blist instance (see http://pypi.python.org/pypi/blist) to maintain the order of scheduled events, but I've just got another brilliant idea that I could use: I could use an OrderedDict, and use a binary search to find the location in the dict at which to insert a particular scheduled event. I'm not sure if Python's built-in OrderedDict class supports insertion at arbitrary indexes, but I'm using a backported OrderedDict for Python 2.6 compatibility, so I could always modify it to allow insertion at arbitrary indexes.
+
+The only problem is that if it's implemented using a traditional list, things will be slow. But I'll run with that for now, as I don't expect more than, say, 20 events to be scheduled at a time, and I just ran some benchmarks and removing an item from the beginning of a list with 10,000 items in it only takes about 15 microseconds (about 150 microseconds for a list of 100,000 items, which is consistent with linear time complexity), which is perfectly acceptable for now.
+
