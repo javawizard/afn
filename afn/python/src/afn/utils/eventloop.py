@@ -64,11 +64,17 @@ class EventLoop(Thread):
         throws an exception if it doesn't return self.
         """
         if current_thread() is not self:
-            raise Ex
+            raise NotOnEventThread(event_thread=self,
+                                   call_thread=current_thread())
 
 
 class EventLoopException(SemanticException):
-    _format
+    pass
+
+
+class NotOnEventThread(EventLoopException):
+    _format = ("This function can only be called on the event thread "
+            "(%(event_thread)r), not on the thread %(call_thread)r.")
 
 
 
