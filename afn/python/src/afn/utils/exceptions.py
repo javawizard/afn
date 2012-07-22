@@ -36,6 +36,9 @@ class SemanticException(Exception):
         self._values = kwargs
         for k, v in kwargs.items():
             setattr(self, k, v)
+        # Try to format immediately so that if keyword arguments necessary to
+        # the format string are missing, the error will show up immediately
+        self._format % self._values
     
     def __repr__(self):
         return "%s.%s(%s)" % (
@@ -46,6 +49,7 @@ class SemanticException(Exception):
     
     def __str__(self):
         return self._format % self._values
+
 
 
 

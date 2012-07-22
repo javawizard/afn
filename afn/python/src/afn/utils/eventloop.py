@@ -8,6 +8,7 @@ pip install blist.
 from threading import Thread, RLock, current_thread
 from Queue import Queue
 from bisect import insort
+from afn.utils.exceptions import SemanticException
 
 
 class EventLoop(Thread):
@@ -62,7 +63,12 @@ class EventLoop(Thread):
         event thread. This more or less checks threading.current_thread(), and
         throws an exception if it doesn't return self.
         """
+        if current_thread() is not self:
+            raise Ex
 
+
+class EventLoopException(SemanticException):
+    _format
 
 
 
