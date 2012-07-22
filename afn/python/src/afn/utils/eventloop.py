@@ -186,6 +186,23 @@ class EventLoop(Thread):
         self.run(stop)
 
 
+def on(name):
+    """
+    Similar to EventLoop.on, but different in the same way that
+    afn.utils.concurrent.synchronized_on is different from
+    afn.utils.concurrent.synchronized.
+    """
+    def decorator(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            self, args = args[0], args[1:]
+            loop = getattr(self, name)
+            loop.run(Partial(function, *args, **kwargs))
+            return None
+        return wrapper
+    return decorator
+
+
 class EventLoopException(SemanticException):
     pass
 
