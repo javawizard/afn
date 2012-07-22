@@ -106,6 +106,10 @@ Perhaps filer should have its own specific type of key, which would be implement
 
 But I would really just like to reuse PGP if I can, and not have to invent something else...
 
+So I'm merging filer into AFN for now, for the same reason Sixjet was merged into AFN, namely that I don't want to separate it until it's a big enough project, and when that happens, I can convert AFN to be a filer repository and then just check out the relevant subpath.
+
+So changes will appear at http://hg.opengroove.org/afn for now.
+
 
 
 
