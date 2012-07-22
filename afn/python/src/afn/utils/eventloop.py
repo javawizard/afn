@@ -198,7 +198,7 @@ def on(name):
             self, args = args[0], args[1:]
             loop = self
             for n in name.split("."):
-                loop = getattr(loop, name)
+                loop = getattr(loop, n)
             loop.run(Partial(function, *args, **kwargs))
             return None
         return wrapper
