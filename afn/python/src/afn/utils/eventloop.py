@@ -5,13 +5,9 @@ The blist module must be installed for this to work. It can be obtained with
 pip install blist.
 """
 
-try:
-    from blist import sorteddict
-except ImportError:
-    print "You don't appear to have the blist module installed. You can"
-    print "install it with pip install blist."
-from threading import Thread, RLock
+from threading import Thread, RLock, current_thread
 from Queue import Queue
+from bisect import insort
 
 
 class EventLoop(Thread):
@@ -19,10 +15,18 @@ class EventLoop(Thread):
         Thread.__init__(self, target=self._thread_run)
         self._lock = RLock()
         self._queue = Queue()
-        # Dict of scheduled times to (function, [category1, ...]) tuples
-        self._scheduled = sorteddict()
-        # Dict of category names to set([time1, time2, ...]) of the times
-        # in _scheduled
+        # Sequence number that increments whenever a scheduled event is added
+        self._sequence = 1
+        # Dict of (time, sequence) to (function, (category1, ...))
+        self._scheduled = {}
+        # List of (time, sequence) in order. Order is maintained by using
+        # Python's bisect module; performance is therefore O(n), but my
+        # benchmarks have shown removing the first item in a 10,000-item list
+        # to take about 15 microseconds, which is acceptable performance for
+        # now.
+        self._order = []
+        # Dict of category names to set([(time1, sequence1), ...]) of the times
+        # and sequences in _scheduled
         self._categories = {}
     
     def run(self, function):
@@ -32,18 +36,32 @@ class EventLoop(Thread):
         pass
     
     def schedule(self, function, time, *categories):
-        while time in self._scheduled:
-            # TODO: Is there a better way to do this? Perhaps store a
-            # (time, sequence_number) tuple instead of just time as the key
-            time += 0.000001
-        self._scheduled[time] = (function, categories)
-        # TODO: Add categories to the category map
+        # Before we start, make sure we're actually running on the event thread.
+        self.ensure_event_thread()
+        # First, create a new sequence for this event
+        sequence = self._sequence
+        self._sequence += 1
+        # Then create an id, which is (time, sequence)
+        id = time, sequence
+        # Then add the event to the _scheduled map, including the function and
+        # the event's categories
+        self._scheduled[id] = function, categories
+        # And then add it to the order list, putting in the correct order with
+        # insort (which is a Godsend, by the way).
+        insort(self._order, id)
     
     def schedule_external(self, function, time):
         pass
     
     def _thread_run(self):
         pass
+    
+    def ensure_event_thread(self):
+        """
+        Raises an exception if this method is called on a thread other than the
+        event thread. This more or less checks threading.current_thread(), and
+        throws an exception if it doesn't return self.
+        """
 
 
 

@@ -12,3 +12,31 @@ So, I was planning on using a blist instance (see http://pypi.python.org/pypi/bl
 
 The only problem is that if it's implemented using a traditional list, things will be slow. But I'll run with that for now, as I don't expect more than, say, 20 events to be scheduled at a time, and I just ran some benchmarks and removing an item from the beginning of a list with 10,000 items in it only takes about 15 microseconds (about 150 microseconds for a list of 100,000 items, which is consistent with linear time complexity), which is perfectly acceptable for now.
 
+Oh damn, apparently OrderedDict uses a linked list, which explains how it's still able to have O(1) performance for removing items at arbitrary positions. So there's that idea out the window.
+
+What I could do is use a binary search on a traditional list and insert the scheduled time into there. Then I'd have a traditional dict that maps scheduled times to their functions and categories under which they were scheduled, and another dict that maps categories to lists of times scheduled for those categories.
+
+Actually, I think I'm going to use a (time, sequence) tuple as the key for events. Time is the time.time() value at which the event should be run; sequence is an integer indicating the ordering that the event was scheduled using; this starts out at 1 when an EventLoop is first created, and increments for every event scheduled.
+
+You know what, I'm just going to use blist for now. I'll worry about using a solution not dependent on external tools later.
+
+So then we have our dictionary that maps categories to lists of scheduled thingies that use those categories.
+
+(Actually, you know what, scratch that, about blist, I'm just going to use lists for now, and nuts to the bad performance, cause it's not that bad, as mentioned above.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
