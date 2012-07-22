@@ -150,8 +150,8 @@ class RemoteConnection(object):
         try:
             result = self.service.provider.__autobus_call__(name, args)
             return messaging.create_response(message, result=result)
-        except exceptions.NoSuchFunctionException:
-            return messaging.create_error(message, "That function (\"%s\") does not exist." % name)
+        except exceptions.NoSuchFunctionException as e:
+            return messaging.create_error(message, "No such function: " + str(e))
         except Exception as e:
             return messaging.create_error(message, "Remote function threw an exception: %s: %s" % (type(e), e))
     

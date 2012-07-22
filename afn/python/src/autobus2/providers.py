@@ -5,6 +5,7 @@ from autobus2 import constants
 from autobus2 import exceptions
 from abc import ABCMeta, abstractmethod
 from afn.utils.partial import Partial
+from functools import wraps
 
 class BaseServiceProvider(ServiceProvider):
     """
@@ -90,51 +91,22 @@ class BaseServiceProvider(ServiceProvider):
 
 class PyServiceProvider(BaseServiceProvider):
     """
-    A class that can be either extended or used as-is. It exposes all
-    functions, both ones defined on subclasses of this class and ones assigned
-    as the values of fields of instances of this class or its subclasses, as
-    Autobus functions, all instances of afn.utils.listener.Event as events, and
-    both fields assigned in the usual manner and fields whose values are
-    instances of afn.utils.listener.Property  as Autobus objects.
-    
-    Thus one could construct a minimal service provider providing a single
-    function thus:
-    
-    class Example(PyServiceProvider):
-        def greet(self, name):
-            return "Hello, %s!" % name
-    
-    And one could define a service provider using functions, events, and
-    objects this:
-    
-    class Message(PyServiceProvider):
-        def__init__(self):
-            self.current_message = None
-            self.message_changed = Event()
-            
-        def set_message(message):
-            self.current_message = message
-            self.message_changed(message)
-    
-    This provider would provide a function set_message, an event
-    message_changed, and an object current_message.
-    
-    Note that functions, events, and objects whose names start with an
-    underscore will not be published. This can be used to maintain internal
-    variables that should not be published as objects.
-    
-    TODO: Decide whether all fields should be published or just those marked
-    with a certain class-level descriptor. Said descriptor could then be used
-    to specify the object's documentation. The same should be thought about for
-    events.
+    TODO: The documentation for this class needs to be rewritten as its
+    functionality has changed quite a bit.
     """
     
-    def __init__(self):
+    def __init__(self, only_decorated=False):
         BaseServiceProvider.__init__(self)
+        # only_decorated means only publish functions decorated with the
+        # publish function, which sets _autobus_publish to True
+        self.only_decorated = only_decorated
+        # Check all of our attributes
         for attr in dir(self):
-            if attr.startswith("_"):
+            if attr.startswith("_"): # Skip underscore attributes
                 continue
-            # See if the attribute is a PyEvent or PyObject descriptor
+            # See if the attribute is a PyEvent or PyObject descriptor. We have
+            # to check on the class for this as the instance will just return
+            # the descriptor's value.
             class_value = getattr(type(self), attr, None)
             if isinstance(class_value, PyEvent):
                 # Event descriptor; add it to the events table. Check to make
@@ -153,10 +125,14 @@ class PyServiceProvider(BaseServiceProvider):
                             "reported name %r but actual name %r on %r" % (
                                     class_value, class_value.name, attr, self))
                 self._objects[attr] = {"doc": class_value.doc}
+                continue
             # Wasn't an event descriptor or an object descriptor. Check to see
             # if it's a function.
             value = getattr(self, attr)
-            if callable(value):
+            # If it's a function, and it's either got _autobus_publish or we're
+            # not just publishing decoreated functions, add it to the function
+            # table.
+            if callable(value) and (getattr(value, "_autobus_publish", False) or not only_decorated):
                 self._functions[attr] = {}
     
     def __autobus_call__(self, name, args):
@@ -164,8 +140,15 @@ class PyServiceProvider(BaseServiceProvider):
             # with underscores to be called remotely
             raise exceptions.NoSuchFunctionException("%s starts with an underscore" % name)
         try:
+            # Make sure the function's in our function table; this will raise a
+            # KeyError if it's not. We do this to prevent calling functions
+            # that aren't marked _autobus_publish on services set to only
+            # publish decorated functions.
+            self._functions[name]
+            # Now make sure we've got an attribute for the function so that we
+            # can actually call it.
             function = getattr(self, name, None)
-        except AttributeError:
+        except (AttributeError, KeyError):
             raise exceptions.NoSuchFunctionException("%s does not exist" % name)
         if not callable(function):
             raise exceptions.NoSuchFunctionException("%s exists but is not a function" % name)
@@ -184,6 +167,11 @@ class PyServiceProvider(BaseServiceProvider):
 # do the scanning when it's initialized, but I'd really like to avoid using
 # metaclasses if I don't absolutely have to.
 
+
+
+def publish(function):
+    function._autobus_publish = True
+    return function
 
 
 class PyEvent(object):
