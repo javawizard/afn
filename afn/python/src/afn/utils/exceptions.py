@@ -1,5 +1,5 @@
 
-class SemanticExceptionMixin(object):
+class SemanticException(Exception):
     """
     A mixin that can be used to turn an exception into a semantic exception.
     Semantic exceptions expect an attribute (usually defined as the class
@@ -11,7 +11,7 @@ class SemanticExceptionMixin(object):
     
     An example will probably make things easier to understand:
     
-    >>> class TestException(SemanticExceptionMixin, Exception):
+    >>> class TestException(SemanticException):
     ...     _format = "The %(thing)s messed up with a %(reason)s."
     ... 
     >>> e = TestException(thing='foo', reason='bar')
@@ -25,6 +25,12 @@ class SemanticExceptionMixin(object):
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     __main__.TestException: The foo messed up with a bar.
+    
+    SemanticException subclasses Exception. If you want to subclass a different
+    exception (say, ValueError), just subclass from both SemanticException and
+    the exception type of your choice. It's usually a good idea to put
+    SemanticException before the actual exception class so that it gets put
+    first in the method resolution order.
     """
     def __init__(self, **kwargs):
         self._values = kwargs
