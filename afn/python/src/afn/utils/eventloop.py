@@ -11,6 +11,8 @@ from bisect import insort
 from afn.utils.exceptions import SemanticException
 from afn.utils import Suppress, print_exceptions
 import time
+import functools
+from afn.utils.partial import Partial
 
 
 class EventLoop(Thread):
@@ -35,7 +37,37 @@ class EventLoop(Thread):
         self._categories = {}
     
     def run(self, function):
+        """
+        Adds the specified function to the event queue. It will be run as soon
+        as all events scheduled before it have finished running.
+        """
         self._queue.put(function)
+    
+    def on(self, function):
+        """
+        A function decorator that causes any invocations of the decorated
+        function to be run on this event loop. The function call will return
+        None, and the actual function will be scheduled to run.
+        
+        This can be used thus:
+        
+        loop = EventLoop()
+        @loop.on
+        def test(arg1, arg2, ...):
+            ...do something with arg1, arg2, etc...
+        
+        From there on out, any calls to test will return None, and the function
+        will be scheduled to execute on the specified event loop.
+        """
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            # Schedule the function to be called with the specified args on the
+            # event loop
+            self.run(Partial(function, *args, **kwargs))
+            # Then we just drop off the end of the function to return None.
+        # Return the wrapper that will cause the function to be run on the
+        # event loop.
+        return wrapper
     
     def schedule(self, function, time, *categories):
         # Before we start, make sure we're actually running on the event thread.
