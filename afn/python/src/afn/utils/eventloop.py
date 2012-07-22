@@ -6,9 +6,11 @@ pip install blist.
 """
 
 from threading import Thread, RLock, current_thread
-from Queue import Queue
+from Queue import Queue, Empty
 from bisect import insort
 from afn.utils.exceptions import SemanticException
+from afn.utils import Suppress, print_exceptions
+import time
 
 
 class EventLoop(Thread):
@@ -16,6 +18,8 @@ class EventLoop(Thread):
         Thread.__init__(self, target=self._thread_run)
         self._lock = RLock()
         self._queue = Queue()
+        # This is set to False to shut down the event loop.
+        self.alive = True
         # Sequence number that increments whenever a scheduled event is added
         self._sequence = 1
         # Dict of (time, sequence) to (function, (category1, ...))
@@ -50,12 +54,75 @@ class EventLoop(Thread):
         # And then add it to the order list, putting in the correct order with
         # insort (which is a Godsend, by the way).
         insort(self._order, id)
+        # Last of all, we add the id to the relevant categories.
+        for category in categories:
+            self._categories.setdefault(category, []).append(category)
+        # And we're done!
+    
+    def cancel(self, *categories):
+        """
+        Cancels all scheduled events registered under any of the specified
+        categories.
+        """
+        self.ensure_event_thread()
+        # Look up the relevant categories and remove their entries from the
+        # category dictionary
+        ids = set()
+        for category in categories:
+            ids |= set(self._categories.get(category, []))
+            with Suppress(KeyError):
+                del self._categories[category]
+        # We've nixed the categories, and we've got the ids. Now remove the ids
+        # from _order and _scheduled.
+        for id in ids:
+            del self._scheduled[id]
+            self._order.remove(id)
     
     def schedule_external(self, function, time):
-        pass
+        raise NotImplementedError
     
     def _thread_run(self):
-        pass
+        while self.alive:
+            # See if there are any scheduled events past due
+            if self._order and self._order[0][0] < time.time():
+                # There is a scheduled event past due
+                id = self._order[0]
+                function, categories = self._scheduled[id]
+                # Remove the event from _order and _scheduled
+                del self._scheduled[id]
+                self._order.remove(id)
+                # Remove the event from its categories
+                for category in categories:
+                    self._categories[category].remove(id)
+                    # If there aren't any more events with that category,
+                    # remove the category.
+                    if not self._categories[category]:
+                        del self._categories[category]
+                # Then run the event.
+                with print_exceptions:
+                    function()
+            # We've either run a scheduled event or we haven't. Now we check to
+            # see if there are any more scheduled events, and we calculate the
+            # timeout to be the time until the next scheduled event is to run.
+            if self._order:
+                # Use max to ensure we sleep 0 seconds if the next event is
+                # due in the past
+                timeout = max(0, self._order[0][0] - time.time())
+            else: # No scheduled events, so wait indefinitely
+                timeout = None
+            # Now wait for an immediate event to come through, or at most the
+            # number of seconds until the next scheduled event.
+            try:
+                # Block if timeout is None or a positive number; don't block
+                # if timeout is 0, as that means we've got a paste-due event.
+                # I've no clue why Queue.get actually takes a block parameter,
+                # as timeout=0 would suffice to indicate non-blocking behavior.
+                function = self._queue.get(timeout != 0, timeout)
+                # We got a function, so run it.
+                with print_exceptions:
+                    function()
+            except Empty: # Timeout happened, so we just return
+                pass
     
     def ensure_event_thread(self):
         """
