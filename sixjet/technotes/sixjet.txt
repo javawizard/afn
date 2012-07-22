@@ -236,6 +236,11 @@ And actually, I think it's rather justified, given the afn project's purpose, na
 
 
 
+So I think I mentioned this before, but I'm redoing this to just use Autobus. And I've decided I'm going to use an event loop, which I've just written, as afn.utils.eventloop.
+
+So I think I'm going to try writing server3 as an event loop thingie.
+
+Or maybe I'll just modify server2.
 
 
 
