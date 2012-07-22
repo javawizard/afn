@@ -5,7 +5,7 @@ from socket import socket as Socket
 from threading import Thread
 from Queue import Queue
 import traceback
-from afn.utils import print_exceptions
+from afn.utils import eventloop, print_exceptions
 from afn.utils.partial import Partial
 from time import sleep
 
@@ -72,11 +72,10 @@ class SixjetServer(Thread):
     typically pass an instance of parallel.Parallel's setData method, but any
     function accepting an integer will do.
     """
-    def __init__(self, write_function, port, bus, service_extra={}):
+    def __init__(self, write_function, bus, service_extra={}):
         """
         Creates a new sixjet server. write_function is the function to use to
-        write data to the parallel port. port is the port on which the native
-        protocol listener should listen. service_extra is an optionally-empty
+        write data to the parallel port. service_extra is an optionally-empty
         set of values that will be added to the Autobus 2's service info
         dictionary. (Keys such as type will be added automatically, but such
         keys present in service_extra will override the ones added
@@ -101,12 +100,8 @@ class SixjetServer(Thread):
             write_function = self._parallel.setData
         else:
             self._parallel = None
-        # The event queue. Events can be pushed from any thread, but can only
-        # be read and processed from the SixjetServer's run method.
-        self.queue = Queue()
-        # The list of remote native-protocol connections. This must only be
-        # read and modified from the event thread.
-        self.connections = []
+        # The event loop used by this server.
+        self.loop = EventLoop()
         # The current states of all of the jets. This must only be read and
         # modified from the event thread.
         self.jet_states = [False] * 16
@@ -114,9 +109,6 @@ class SixjetServer(Thread):
         # stop() should be called, which will post an event that sets this to
         # True.
         self.shut_down = False
-        # The server socket listening on the native protocol port
-        self.socket = Socket()
-        self.socket.bind(("", port))
         # The Autobus service we're publishing
         self.service = self.bus.create_service(
                 {"type": "sixjet", "sixjet.native_port": port},
