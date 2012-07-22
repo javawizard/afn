@@ -196,7 +196,9 @@ def on(name):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
             self, args = args[0], args[1:]
-            loop = getattr(self, name)
+            loop = self
+            for n in name.split("."):
+                loop = getattr(loop, name)
             loop.run(Partial(function, *args, **kwargs))
             return None
         return wrapper
