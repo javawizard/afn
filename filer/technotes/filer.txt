@@ -1,0 +1,118 @@
+Filer is a DVCS that will be written (mainly by Alex) soonish.
+
+It's still in the "Let's figure out what the heck this will do, and if we're even going to write it or if we'll just realize that the stuff that already exists is good enough and not even worry about it" phase.
+
+So I just read about this vcs called Veracity that looks like it has a lot of cool features... Especially one that appears to let you apply flags to commits, such as "testing-good", "build-good", etc, which I think is /awesome/. So I'm going to take a bit and look at veracity and see what it has that filer can have too.
+
+Haven't taken a look at it yet, but will soon.
+
+So another feature idea I had for Filer that I think would be cool would be autosync. One would be able to do (and these commands are purely hypothetical at this point):
+
+filer remote --enable-autopull some-remote-name
+
+which would cause Filer to open some sort of persistent connection to the specified remote, and whenever any changes happened to that remote, they would be automatically pulled. (This would obviously require some sort of local daemon to make the connection; that bit would need more thought on how to go about doing it properly.)
+
+That's mainly cool because 1: it gets rid of the need for people to repeatedly pull just to see if there's anything new (and I'd probably have an option for being notified of new changes without actually pulling them), and 2: it's a significant step toward allowing Filer to be used as the back-end for a future revival of OpenGroove. (OG workspaces could then use Filer to actually track their content; they would simply enable autopush and autopull and then include logic for sanely resolving merge conflicts on their own, probably by just commuting the patches into chronological order, although I could allow the user to decide... That needs more thought too.)
+
+I don't see autopush being used as much as autopull as you typically know when you're going to do a push as it's usually after a commit, but I'll allow it for the heck of it. And because it would probably be something I'd want for OG, as then changes made while offline would be autopushed when coming online, and changes received from someone else directly could be autopushed to everyone else when they become available.
+
+(And also, there should be a way for plugins to act as remotes of some sort, in the sense that OG would have some method for discovering other remotes over the local network and would want to somehow expose those to filer to allow autopush and autopull. Or maybe filer should have some mechanism for detecting other remotes on the local network. Or maybe that should be pluggable too. This needs more thought.)
+
+So I don't remember if I mentioned this but I really like Veracity's notion of stamps, and it's something I want to use. Only I'm going to allow stamps as applied to particular commits to be signed. (And also, all PGP keys used to sign commits will themselves be stored in the repository, so one can look up the details of who signed a commit. I may do away with commit-based usernames and use the name stored in the corresponding PGP key instead.)
+
+So one can say "get me all the commits in the repository stamped with tests_passed" or "get me all the commits in the repository stamped with tests_passed where said stamp was signed by 0123456789ABCDEF [the hash of a PGP key]". In other words, one should be able to address both stamps and stamps as signed by a particular PGP key as separate entities applied to a commit.
+
+(And it should therefore be possible to stamp a commit without signing the stamp at all, and also to sign an already-existing stamp on a commit.)
+
+As far as I'm thinking right now, stamps can't be removed. Or they can, in the same way that commits can be removed: if they're already been pushed elsewhere, they'll likely show right back up when you pull.
+
+(The whole idea, by the way, with signing stamps is that then a central continuous integration server can stamp builds that succeed and sign said stamps, thereby allowing others to verify that the commit was stamped by the continuous integration server and not by a committer hoping to get away with code that doesn't actually pass tests.)
+
+I'm also thinking it might be cool if stamps could have values. They could have multiple values associated with them, or no values at all. Allowing them to have multiple values associated with them would allow two things: 1, a stamp named, for example, tested-on, whose values are the various platforms or servers that the test passed on, and 2, an easy way of resolving stamp value conflicts: the stamp simply gets all of the values from both sides of the conflict.
+
+But that might be overkill for now. That sort of functionality could always be emulated using stamps such as tested-on-windows, tested-on-linux, and so on, meaning that the value could just be put as part of the stamp's name, and the same sort of behavior could still result.
+
+That, then, makes me think that maybe stamps should just be a specialization of commit signatures. And speaking of commit signatures, those are things that you can apply to commits where you say "Hey, here's a dictionary of extra information I'd like to tack onto this commit, and here's my signature of the commit's id and said extra information", and they can be applied to commits after they've already been committed, and as many as you'd like can be applied, and multiple users can apply them.
+
+The idea behind that is that then I can sign a particular commit as a commit that I approve of, or as a commit that I wrote, or something. (The latter use I might do slightly differently, though, as I'll discuss in a bit.)
+
+So in that case, stamps could simply be an extra field you place in the signature's dictionary of information, which would also allow for stamp values to be added later. (And the nice thing about that is that older filer versions without support for stamp values would still show the stamp names and would still preserve the stamp values for other, newer clients that come along and pull from them.)
+
+So yeah, I'm not going to add stamp values for now.
+
+Ok, so, the mechanism behind indicating you wrote a commit.
+
+So, I'm thinking it'd be nice to know for sure who actually committed a commit. Obviously having a signature on a commit demonstrates that you support it, or something about it, but what if two people claim to be the author of a commit that ended up being the next coolest thing or something like that?
+
+Admittedly this scenario won't happen often, but I like the idea of it being hard, if not impossible, for others to take credit for code that I wrote. Signatures solve the reverse scenario, my /not/ taking credit for code that I actually did write, but a solution is needed for the other way around.
+
+And hence my thought: have a signature specific to the commit itself.
+
+Or rather, and equivalently in result, have part of the commit's metadata be the id of the key of the person that wrote the commit, and then have the commit be signed by that key.
+
+So then two identical commits authored by different people have different hashes, and as such you can definitively tell who authored a commit by verifying its hash and then looking at the field where it gives the id (read: hash) of the key that authored it.
+
+That avoids people being able to take credit for commits that they didn't author, as they wouldn't be able to produce the corresponding key.
+
+(And then presumably the commit would also be signed by that key.)
+
+Or perhaps multiple ids could be included, if so desired, in separate fields if one wishes. That would allow for the difference between author and committer to be preserved, and then the author, once they come across their commit, can sign it.
+
+So maybe the signature shouldn't be required to start, but the system would warn that the commit hasn't been signed by that key yet so you don't know that it was actually that key that produced it.
+
+That sounds fantastic.
+
+So we've got a good list of features to start with. Now some thought needs to be given to how things are stored and such.
+
+I'm thinking that commits should simply be binary blobs of data representing changes in some form or other, along with a string identifying the type of data it represents. Which doesn't make much sense, but what I mean is this: you can have filesystem-related changes (which would presumably be stored as some sort of diff), OGDB changes, JPathDB changes, and so on.
+
+Each commit, for now, contains only a single type of change. I may change this later.
+
+Commits can, of course, only be merged and based on commits of the same type.
+
+Commits of multiple types can, however, coexist inside the same repository. This would allow for a project, for example, to contain the source files in one branch and an OpenGroove workspace in another.
+
+And speaking of that, multiple, unrelated branches can coexist in the same repository as well. I need to think about whether branch names should just be strings like they are in Mercurial or whether they should be randomly-generated numbers or things like that, which might make it easier to create, for example, two OpenGroove workspaces in the same repository.
+
+As far as the filesystem commit type goes, I want partial merges to be supported. A partial merge would be where only certain files or folders are merged.
+
+And I need to decide whether I want to version directories, or just files...
+
+And how to track file moves and renames...
+
+Should files get their own id that can be used to track them across renames?
+
+And should copies somehow note the id from which the file came?
+
+And what happens if two separate people both rename a file? Is it a merge conflict? How does it get displayed to the user?
+
+Same thing with deleting a file in one place, and modifying it in another...
+
+And with renaming a file X to be Y, and another user renaming a file Z to be Y, and then trying to merge...
+
+I need to see how git/mercurial/bazaar all behave in these situations and decide from there.
+
+Ok so, one more thing I just realized stamps could be used for is when a commit is rebased and the original history is to be preserved. I want filer to default to preserving the original history, but obviously it would clutter up the tree quite a bit if all of the rebased commits were visible after the rebasing. So my idea is that when X is rebased onto N and becomes Y, then two things: 1, Y contains an extra commit field saying "Hey, I was rebased from X", and 2, X is then stamped "filer.rebased" (and signed by the person doing the rebasing, for good measure). Commits stamped filer.rebased would then be hidden from the log by default, but there would be a way to show them, and when they're shown they'll have some sort of message saying "Hey, this was rebased".
+
+(And if I ever allow stamps to have values, the value would be the commit id of Y, so then X's log message, when X is shown, could say something like "This commit was rebased as Y", or note multiple commits if it was rebased multiple times, in line with how tag values work and such.)
+
+So yeah, I want filer's rebase command to default to preserving the original history in case you ever need it, but it would also default to applying the extra commit attribute and stamps as noted above.
+
+(And there really needs to be some form of deduplication in place so that having the rebased commits stick around doesn't take up extra space in the repository. This needs a bit more thought, as it'd be nice if the deduplication could go above and beyond simply deduplicating identical commit patches, which wouldn't cover a lot of rebase cases as the patches could vary subtly from being commuted across the rebase target.)
+
+So now I find out that PGP keys don't include information about their name, or rather, that a PGP key's id is a hash of only the public key, not the name associated with it, which completely screws up the above stuff about having a PGP key instead of a commit author name. So I need to completely rethink how I'm going to go about verifying commit authorship.
+
+Perhaps filer should have its own specific type of key, which would be implemented using RSA keys, and PGP keys can sign filer keys, and perhaps the other way around...
+
+But I would really just like to reuse PGP if I can, and not have to invent something else...
+
+So I'm merging filer into AFN for now, for the same reason Sixjet was merged into AFN, namely that I don't want to separate it until it's a big enough project, and when that happens, I can convert AFN to be a filer repository and then just check out the relevant subpath.
+
+So changes will appear at http://hg.opengroove.org/afn for now.
+
+
+
+
+
+
+
