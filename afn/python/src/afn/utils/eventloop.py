@@ -37,9 +37,6 @@ class EventLoop(Thread):
     def run(self, function):
         self._queue.put(function)
     
-    def run_external(self, function):
-        pass
-    
     def schedule(self, function, time, *categories):
         # Before we start, make sure we're actually running on the event thread.
         self.ensure_event_thread()
@@ -77,9 +74,6 @@ class EventLoop(Thread):
         for id in ids:
             del self._scheduled[id]
             self._order.remove(id)
-    
-    def schedule_external(self, function, time):
-        raise NotImplementedError
     
     def _thread_run(self):
         while self.alive:
@@ -133,6 +127,18 @@ class EventLoop(Thread):
         if current_thread() is not self:
             raise NotOnEventThread(event_thread=self,
                                    call_thread=current_thread())
+    
+    def shutdown(self):
+        """
+        Adds an event to the event queue that will shut down the event loop
+        when it runs. This can be called from any thread.
+        
+        If you want to immediately stop the event queue from a function running
+        on the event queue itself, use self.alive = False instead.
+        """
+        def stop():
+            self.alive = False
+        self.run(stop)
 
 
 class EventLoopException(SemanticException):
