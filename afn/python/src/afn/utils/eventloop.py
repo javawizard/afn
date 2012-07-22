@@ -70,6 +70,19 @@ class EventLoop(Thread):
         return wrapper
     
     def schedule(self, function, time, *categories):
+        """
+        Schedules the specified function to be called on the event thread at
+        the specified time, which is in the format returned by time.time().
+        The scheduled event will be assigned to the specified categories, which
+        can be any hashable objects; cancel() can later be used to cancel all
+        scheduled events in a particular category.
+        
+        The whole concept of categories was created for sixjet. When a jet is
+        flashed, the jet is turned on and a scheduled event is set to turn off
+        the jet some time later. The event has a certain category marking it as
+        a manual control event; if a song is later started, all manual events
+        are canceled, preventing manual events from screwing up the song.
+        """
         # Before we start, make sure we're actually running on the event thread.
         self.ensure_event_thread()
         # First, create a new sequence for this event
