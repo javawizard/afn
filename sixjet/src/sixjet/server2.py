@@ -1,5 +1,6 @@
 
 from autobus2 import Bus, wait_for_interrupt
+from autobus2.providers import PyServiceProvider, PyEvent, PyObject, publish
 from autobus2.net import InputThread, OutputThread
 from socket import socket as Socket
 from threading import Thread
@@ -7,7 +8,13 @@ from Queue import Queue
 import traceback
 from afn.utils import eventloop, print_exceptions
 from afn.utils.partial import Partial
+from afn.utils.singleton import Singleton
+from afn.backports.argparse import ArgumentParser
 from time import sleep
+from time import time as current_time
+import sys
+
+MANUAL = Singleton("sixjet.server2.MANUAL")
 
 # TODO: The number of jets and the number of lines and such are hard-coded
 # throughout this module. Ideally they should be made into adjustable
@@ -26,45 +33,7 @@ CLOCK = 0x08
 STROBE = 0x10
 
 
-class AutobusService(object):
-    def __init__(self, server):
-        self._server = server
-    
-    def on(self, *jets):
-        self._server.post_event({"event": "message", "message":
-                {"command": "set", "on": jets}})
-    
-    def off(self, *jets):
-        self._server.post_event({"event": "message", "message":
-                {"command": "set", "off": jets}})
-
-
-class Connection(object):
-    """
-    A remote native-protocol connection.
-    """
-    def __init__(self, server, socket):
-        self.server = server
-        self.socket = socket
-        self.queue = Queue()
-        self.input_thread = InputThread(socket, self.message_received)
-        self.output_thread = OutputThread(socket, self.queue.get)
-    
-    def start(self):
-        self.input_thread.start()
-        self.output_thread.start()
-    
-    def message_received(self, message):
-        if message is None:
-            self.server.post_event({"event": "disconnected",
-                    "connection": self})
-        self.server.remote_message_received(self, message)
-    
-    def send(self, message):
-        self.queue.put(message)
-
-
-class SixjetServer(Thread):
+class SixjetServer(PyServiceProvider):
     """
     A sixjet server. Server instances listen on both a specified port for
     native sixjet commands and on an Autobus 2 service. They are created with
@@ -72,6 +41,10 @@ class SixjetServer(Thread):
     typically pass an instance of parallel.Parallel's setData method, but any
     function accepting an integer will do.
     """
+    flash_time = PyObject("flash_time", "The time that jets will stay on when "
+            "flashed with the flash method, in seconds. This can be set with "
+            "set_flash_time.")
+    
     def __init__(self, write_function, bus, service_extra={}):
         """
         Creates a new sixjet server. write_function is the function to use to
@@ -93,7 +66,8 @@ class SixjetServer(Thread):
         If write_function is None, a new parallel.Parallel instance will be
         created, and its setData method used.
         """
-        Thread.__init__(self)
+        service_extra = service_extra.copy()
+        service_extra.update(type="sixjet")
         if write_function is None:
             import parallel
             self._parallel = parallel.Parallel()
@@ -101,7 +75,7 @@ class SixjetServer(Thread):
         else:
             self._parallel = None
         # The event loop used by this server.
-        self.loop = EventLoop()
+        self.loop = eventloop.EventLoop()
         # The current states of all of the jets. This must only be read and
         # modified from the event thread.
         self.jet_states = [False] * 16
@@ -109,83 +83,23 @@ class SixjetServer(Thread):
         # stop() should be called, which will post an event that sets this to
         # True.
         self.shut_down = False
-        # The Autobus service we're publishing
-        self.service = self.bus.create_service(
-                {"type": "sixjet", "sixjet.native_port": port},
-                from_py_object=AutobusService(self))
+        self.service = self.bus.create_service(service_extra, self)
     
-    def listen_for_connections(self):
-        # We can just infinitely loop here as run() closes the socket after
-        # the event loop quits, which will cause an exception to be thrown here
-        while True:
-            s = self.socket.accept()
-            # The connection is just a dictionary for now. We're creating it
-            # before so that we can partial it into the input thread.
-            connection = Connection(self, s)
-            self.post_event({"event": "connected", "connection": connection})
-            connection.start()
-    
-    def remote_message_received(self, connection, message):
-        self.post_event({"event": "message", "message": message})
-    
-    def run(self):
-        # Start a socket listening for connections
-        Thread(target=self.listen_for_connections).start()
-        # Read events and process them in a loop.
-        while not self.shut_down:
-            # TODO: add support for scheduled tasks here, or use separate
-            # threads to post events when they happen. The latter would offer
-            # a better guarantee that events will be processed when they happen
-            # due to Python's sleep-waiting whenever using get with a timeout
-            # (which is due to attempting to wait on a condition with a timeout
-            # doing the aforementioned).
-            event = self.queue.get()
-            try:
-                self.handle_event(event)
-            except:
-                traceback.print_exc()
-            finally:
-                self.queue.task_done()
-        with print_exceptions:
-            self.socket.close()
+    def start(self):
+        self.loop.start()
     
     def stop(self):
-        self.post_event({"event": "stop"})
+        self.loop.shutdown()
     
-    def post_event(self, event):
-        self.queue.put(event)
-    
-    def handle_event(self, event):
-        if event["event"] == "message":
-            self.handle_message(event["message"])
-        elif event["event"] == "stop":
-            self.shut_down = True
-        elif event["event"] == "connected":
-            self.connections.append(event["connection"])
-        elif event["event"] == "disconnected":
-            self.connections.remove(event["connection"])
-        else:
-            print "Warning: unrecognized event type: %r" % event
-    
-    def handle_message(self, message):
-        if message["command"] == "set":
-            for n in message["on"]:
-                self.jet_states[n] = True
-            for n in message["off"]:
-                self.jet_states[n] = False
-            self.write_jets()
-        elif message["command"] == "clear":
-            for n in range(len(self.jet_states)):
-                self.jet_states[n] = False
-            self.write_jets()
-        else:
-            print "Invalid message: %r" % message
+    def join(self):
+        self.loop.join()
 
     def set_parallel_data(self, data):
         """
         Sets the parallel port's data pins to the specified state, which should be
         a number from 0 to 255, then waits a bit.
         """
+        self.loop.ensure_event_thread()
         self.write_function(data)
         sleep(0.0032) # 3.2 milliseconds; increase if needed
     
@@ -193,6 +107,7 @@ class SixjetServer(Thread):
         """ 
         Writes the jet states stored in jet_states to the parallel port.
         """
+        self.loop.ensure_event_thread()
         # The sixjet board is basically made up of two 74HC595 8-bit shift
         # registers. For those not familiar with shift registers, they're basically
         # a queue of bits; new bits can be pushed in at one end, and when the queue
@@ -234,15 +149,93 @@ class SixjetServer(Thread):
         self.set_parallel_data(STROBE)
         # Set strobe low
         self.set_parallel_data(0)
+    
+    # And now for the functions that are published via Autobus.
+    
+    @publish
+    @eventloop.on("server.loop")
+    def on(self, *jets):
+        """
+        Turns the specified jets on.
+        """
+        for n in jets:
+            # Cancel all manual scheduled events for this jet
+            self.loop.cancel((MANUAL, n))
+            # Turn the jet on
+            self.jet_states[n] = True
+        # Write the new states to the parallel port
+        self.write_jets()
+    
+    @publish
+    @eventloop.on("server.loop")
+    def off(self, *jets):
+        """
+        Turns the specified jets off.
+        """
+        for n in jets:
+            # Cancel all manual scheduled events for this jet
+            self.loop.cancel((MANUAL, n))
+            # Turn the jet off
+            self.jet_states[n] = False
+        # Write the new states to the parallel port
+        self.write_jets()
+    
+    @publish
+    @eventloop.on("server.loop")
+    def flash(self, *jets):
+        """
+        Turns the specified jets on, then turns them off after the number of
+        seconds specified by the flash_time object on this service. The flash
+        time can be adjusted by calling set_flash_time or update_flash_time.
+        I'll probably add a mechanism later for specifying a custom flash time
+        when calling flash.
+        """
+        # Figure out what time the jets should turn off
+        off_time = current_time() + self.flash_time
+        for n in jets:
+            # Cancel all manual scheduled events for this jet
+            self.loop.cancel((MANUAL, n))
+            # Turn the jet on
+            self.jet_states[n] = True
+            # Schedule an event to turn this jet off. We assign it the
+            # categories MANUAL and (MANUAL, n); the former is used to cancel
+            # all manual events when switching to automatic mode, and the
+            # latter is used by other calls to flash (and calls to on/off) to
+            # cancel other flash-related events for the jet. 
+            self.loop.schedule(Partial(self.off, n), off_time,
+                    MANUAL, (MANUAL, n))
+        # Write the new states to the parallel port
+        self.write_jets()
+    
+    @publish
+    @eventloop.on("server.loop")
+    def set_flash_time(self, new_time):
+        """
+        Sets the flash time to the specified number of seconds, which can be a
+        floating-point number.
+        """
+        self.flash_time = new_time
+    
+    @publish
+    @eventloop.on("server.loop")
+    def update_flash_time(self, delta):
+        """
+        Adds the specified number of seconds to the current flash time. This
+        can be negative to subtract from the current flash time.
+        """
+        self.flash_time += delta
 
 
 if __name__ == "__main__":
-    server = SixjetServer(None, 57952, {})
-    server.start()
-    wait_for_interrupt()
-    print "Shutting down server..."
-    server.stop()
-    server.join()
+    sys.argv
+    with Bus() as bus:
+        server = SixjetServer(None, bus)
+        server.start()
+        wait_for_interrupt()
+        print "Shutting down server..."
+        server.stop()
+        server.join()
+        print "Shutting down bus..."
     print "Server has shut down."
 
 
