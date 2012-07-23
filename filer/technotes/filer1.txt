@@ -46,6 +46,14 @@ Actually, I'm going to start writing the commands, and see where things go from 
 
 
 
+So, creating a file is {"type": "file", "contents": base64 data}.
+Updating a file with a diff is {"type": "file", "diff": base64 binary diff in bsdiff4 format}.
+Creating a folder is {"type": "folder", "children": {"childname1": "childrev1", "childname2": "childrev2", ...}.
+Updating a folder is {"type": "folder", "children": {"newchild": "rev", "changedchild": "rev", "deletedchild": null}.
+All of those dicts have four additional keys, namely message, date, user, and parent. Parent is null if there is no parent (for example, a revision that creates a new file has no parent, although the revision adding it to its parent folder would if the folder already existed). message is the commit message. date is the commit date in time.time() format. user is the name of the user that made the commit (usually something like "Alexander Boyd <alex@opengroove.org").
+
+
+
 
 
 
