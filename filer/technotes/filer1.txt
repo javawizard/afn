@@ -1,0 +1,55 @@
+So I'm going to write a smallish, working Filer, which I'm calling Filer 1, which will basically just demonstrate the whole notion mentioned in filer-notes-to-james.txt that I'm thinking of.
+
+It'll use a SQLite database to store stuff.
+
+I'm thinking there'll be a table, revisions, which basically has two columns, hash and data.
+
+hash is the hash of the revision.
+
+data is the revision's data.
+
+A revision's data will, for now, just be a json object, with keys sorted so as to produce a consistent hash.
+
+It'll be in the standard representation, with a space after the ":" and "," characters. I'll probably change that later.
+
+Actually, there'll be a third column, number, which is the revision's number. Each subsequent revision gets a new number.
+
+Both hash and number will be unique and will have corresponding unique indexes.
+
+So, the things we can do to files are create them with certain initial contents and change them by supplying a textual diff to apply to them. I'm actually thinking there won't be a delete operation for now, since one can delete a file simply by removing it from its parent directory.
+
+So, the things we can do with directories are create them with a certain set of files (which would just be a dict whose keys are filenames and whose values are hashes representing those files, or folders if they're subfolders) and modify them to have a new set of files (which would be done by specifying a new dict; items in the dict but not in the folder are added, items in the dict and in the folder are modified, and items in the dict with a value of None are removed).
+
+And then each commit json object should have a message attribute and a date attribute, which specify the commit message and the date on which the commit was made. I'll probably rework how those are actually stored later, but this'll do for now.
+
+So then we have working copies, which are just checkouts of a particular revision. Committing a new revision on a working copy commits new revisions on all of the relevant files and folders and then updates the file in the working copy that indicates what revision it's got checked out to point to the new revision.
+
+So working copies and repositories are two separate things, although they can exist in the same location: a repository is a folder with a .filerdata file in it that's the aforementioned SQLite database, and a working copy is a directory tree with a .filerversion and a .filersource in it, the former of which contains the id of the current revision and the latter of which contains the path to the repository directory (the one containing .filerdata), which can be . to specify the current directory.
+
+I'm thinking if a repository-related command is run on a working directory, it'll just use the repository that the working directory came from.
+
+So, commands I'm going to implement for now:
+
+filer checkout: Checks out a particular revision to a particular working copy. Right now, the revision has to be a folder; it should be easy enough to allow it to be a file in the future, although then I'd need to figure out how to indicate which revision it came from. (Internally, there'll be a function that works on both folders and files; this'll be run to check out the whole thing, and then .filerversion and .filersource written separately.)
+
+filer commit: Commits all changes in the current working directory. Right now this'll add all new files, modify all existing files, and remove all removed files, and same with folders. File/folder removal is simply a matter of removing the file from the parent folder.
+
+filer log: Prints a log of all revisions in the repository. This will print all revisions right now; in the future, I'll probably have it print only revisions that are parents or descendants of the working copy revision, such that running log on a working copy's root will produce roughly the same log that would be seen from, say, Mercurial or Git.
+
+So I think that's good for now. I'll obviously need to add additional commands later to merge/rename/copy things, but I'll worry about that then.
+
+So, there's going to be a module in filer1 called repository that knows how to read/write a repository. It'll have a class, Repository, that opens the SQLite database and stores a reference to it. It'll have methods for getting a list of all revisions, getting a particular revision, writing a new revision, and such. In the future, it'll have methods for getting revisions that are parents or descendants of a particular revision, pushing, pulling, etc.
+
+Then there's going to be a module in filer1 called working that knows how to read/write a working copy. More thought about how exactly to create a WorkingCopy needs to be done.
+
+Actually, I'm going to start writing the commands, and see where things go from there.
+
+
+
+
+
+
+
+
+
+
