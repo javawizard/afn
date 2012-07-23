@@ -1,6 +1,8 @@
 
 from filer1.commands.command import Command
+from filer1.repository import Repository, init_repository
 from afn.utils.partial import Partial
+from afn.fileutils import File
 
 commands = {}
 # Convoluted bit of magic: after this line, command(x)(y) is the same as
@@ -13,9 +15,29 @@ command = Partial(Partial, commands.__setitem__)
 
 # And now for the actual commands.
 
+@command("init")
+class Init(Command):
+    def update_parser(self, parser):
+        parser.add_argument("-d", "--repository")
+    
+    def run(self, args):
+        init_repository(File(args.repository))
+
+
 @command("checkout")
 class Checkout(Command):
-    pass
+    def update_parser(self, parser):
+        parser.add_argument("-d", "--repository")
+        parser.add_argument("-w", "--working")
+        parser.add_argument("-r", "--revision", default=None)
+    
+    def run(self, args):
+        repository = Repository(File(args.repository))
+        working = File(args.working)
+        revision = args.revision
+        if working.child(".filerfrom").exists:
+            raise Exception("That working directory already exists.")
+        working
 
 
 @command("commit")
