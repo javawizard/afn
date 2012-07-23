@@ -9,6 +9,7 @@ def init_repository(folder):
     db_file = folder.child(".filerdata")
     if db_file.exists:
         raise Exception("There's already a filer repository at that location.")
+    folder.mkdirs(True)
     # Don't use transactions for now. This is a bad idea and needs to be fixed
     # in the future.
     db = sqlite3.connect(db_file.native_path, isolation_level=None)
@@ -56,6 +57,10 @@ class Repository(object):
             c.execute("insert into revisions (hash, data) values (?, ?)",
                     hash, data)
             return hash, c.lastrowid
+    
+    def export(self, revision, target):
+        data = get_revision(revision)
+        
             
 
 

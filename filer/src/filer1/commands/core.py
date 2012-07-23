@@ -32,12 +32,20 @@ class Checkout(Command):
         parser.add_argument("-r", "--revision", default=None)
     
     def run(self, args):
-        repository = Repository(File(args.repository))
-        working = File(args.working)
+        repository_folder = File(args.repository)
+        repository = Repository(repository_folder)
+        working_folder = File(args.working)
         revision = args.revision
-        if working.child(".filerfrom").exists:
+        if working_folder.child(".filerfrom").exists:
             raise Exception("That working directory already exists.")
-        working
+        working_folder.mkdirs()
+        if repository_folder == working_folder:
+            working_folder.child(".filerfrom").write(".")
+        else:
+            working_folder.child(".filerfrom").write(repository_folder.native_path)
+        if revision:
+            working_folder.child(".filercurrent").write(revision)
+        repository.export(revision, working_folder)
 
 
 @command("commit")
