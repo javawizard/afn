@@ -210,6 +210,19 @@ class Repository(object):
             # as a file inside the working directory, and then have
             # commit_changes return it or something instead of the hash. Needs
             # a bit more thought.
+            # We could always have old_rev (and the return value from
+            # commit_changes) be a {"rev": ..., "children": {"child1":
+            # {"rev": ..., ...}, ...}} dict. The children key would be null for
+            # files, and would map child names to dicts of the same format for
+            # folders. That'd let us know what the old revision is, and we can
+            # return new versions of the dict whenever we have to commit a file
+            # or a folder because of changes. Then we just commit all of the
+            # files/folders inside a file/folder, and if any of the dicts we
+            # get out are different, we add a change, with the old value being
+            # the old dict's rev key and the new value being the new dict's rev
+            # key, or null for either of those that didn't exist.
+            # TODO: Still need to think about how to handle deleted
+            # files/folders properly.
             raise NotImplementedError
             
 
