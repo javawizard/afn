@@ -174,13 +174,11 @@ class Repository(object):
         else:
             raise exceptions.InvalidType(type=data["type"])
     
-    def commit_changes(self, old_rev, old_target, new_target):
+    def commit_changes(self, old_revspec, old_target, new_target):
         """
         Creates a new revision by comparing old_target, which should be at the
-        revision old_rev, with new_target. The hash will be returned.
+        revspec old_spec, with new_target. The new revspec will be returned.
         """
-        # Get the old revision's data
-        old_rev_data = self.get_revision(old_rev)
         # See if we're a file or a folder. Switching types won't be supported
         # right now, but should probably be implemented as a delete+create
         # later on.
@@ -192,14 +190,14 @@ class Repository(object):
             # to this level, as files are deleted by removing them from their
             # parent directory, not by marking the file itself as deleted
             if old_contents == new_contents:
-                # The file hasn't changed, so return the current revision.
-                return old_rev
+                # The file hasn't changed, so return the current revspec.
+                return old_revspec
             else:
                 # The file's changed; write a new revision for the file, and
-                # return the new revision's hash.
-                return self.create_revision({"type": "file",
-                                             "old": old_contents,
-                                             "new": new_contents)
+                # return the new revspec.
+                return {"rev": self.create_revision({"type": "file",
+                                                     "old": old_contents,
+                                                     "new": new_contents)}
         else:
             # It's a folder. TODO: How do we go about doing this? We need to
             # keep track somewhere which revisions each child file is currently
