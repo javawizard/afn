@@ -217,6 +217,10 @@ class SixjetServer(PyServiceProvider):
         self.flash_time = new_time
     
     @publish
+    def get_flash_time(self):
+        return self.flash_time
+    
+    @publish
     @eventloop.on("server.loop")
     def update_flash_time(self, delta):
         """
