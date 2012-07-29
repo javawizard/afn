@@ -77,7 +77,6 @@ class SixjetServer(PyServiceProvider):
         # True.
         self.shut_down = False
         self.service = self.bus.create_service(service_extra, self)
-        self.loop.start()
         # Flush the jets to turn all of them off, but do it on the event loop
         self.loop.run(Partial(self.flush))
     
