@@ -1,5 +1,6 @@
 
 from sixjet.backends import Backend
+import time
 
 default_map = """
      a         b
@@ -15,8 +16,18 @@ f                   c
 
 
 class ConsoleBackend(object):
-    def __init__(self, jet_count):
-        self.states = [False] * jet_count
+    def __init__(self, map, on="^", off="."):
+        self.map = map
+        self.on = on
+        self.off = off
+    
+    def write(self, states):
+        text = self.map
+        for i, state in enumerate(states):
+            text = text.replace("abcdefghijklmnop"[i],
+                    self.on if state else self.off)
+        print time.ctime()
+        print text
 
 
 
