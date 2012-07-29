@@ -16,7 +16,7 @@ f                   c
 
 
 class ConsoleBackend(object):
-    def __init__(self, map, on="^", off="."):
+    def __init__(self, map=default_map, on="^", off="."):
         self.map = map
         self.on = on
         self.off = off

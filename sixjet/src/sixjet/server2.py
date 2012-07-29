@@ -64,9 +64,11 @@ class SixjetServer(PyServiceProvider):
         
         and things will work.
         """
+        PyServiceProvider.__init__(self)
         service_extra = service_extra.copy()
         service_extra.update(type="sixjet")
         self.backend = backend
+        self.bus = bus
         # The event loop used by this server.
         self.loop = eventloop.EventLoop()
         # The current states of all of the jets. This must only be read and
@@ -78,7 +80,7 @@ class SixjetServer(PyServiceProvider):
         self.shut_down = False
         self.service = self.bus.create_service(service_extra, self)
         # Flush the jets to turn all of them off, but do it on the event loop
-        self.loop.run(Partial(self.flush))
+        self.loop.queue(Partial(self.flush))
     
     def start(self):
         self.loop.start()
