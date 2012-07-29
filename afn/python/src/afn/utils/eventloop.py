@@ -36,7 +36,7 @@ class EventLoop(Thread):
         # and sequences in _scheduled
         self._categories = {}
     
-    def run(self, function):
+    def queue(self, function):
         """
         Adds the specified function to the event queue. It will be run as soon
         as all events scheduled before it have finished running.
@@ -63,7 +63,7 @@ class EventLoop(Thread):
         def wrapper(*args, **kwargs):
             # Schedule the function to be called with the specified args on the
             # event loop
-            self.run(Partial(function, *args, **kwargs))
+            self.queue(Partial(function, *args, **kwargs))
             # Then we just drop off the end of the function to return None.
         # Return the wrapper that will cause the function to be run on the
         # event loop.
@@ -183,7 +183,7 @@ class EventLoop(Thread):
         """
         def stop():
             self.alive = False
-        self.run(stop)
+        self.queue(stop)
 
 
 def on(name):
@@ -199,7 +199,7 @@ def on(name):
             loop = self
             for n in name.split("."):
                 loop = getattr(loop, n)
-            loop.run(Partial(function, *args, **kwargs))
+            loop.queue(Partial(function, self, *args, **kwargs))
             return None
         return wrapper
     return decorator
