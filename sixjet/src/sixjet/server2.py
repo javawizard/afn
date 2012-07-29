@@ -13,6 +13,7 @@ from afn.backports.argparse import ArgumentParser
 from time import sleep
 from time import time as current_time
 import sys
+from sixjet.backends.console import ConsoleBackend
 
 MANUAL = Singleton("sixjet.server2.MANUAL")
 
@@ -175,7 +176,7 @@ class SixjetServer(PyServiceProvider):
 if __name__ == "__main__":
     sys.argv
     with Bus() as bus:
-        server = SixjetServer(None, bus)
+        server = SixjetServer(ConsoleBackend(), bus)
         server.start()
         wait_for_interrupt()
         print "Shutting down server..."
