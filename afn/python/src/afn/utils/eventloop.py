@@ -98,7 +98,7 @@ class EventLoop(Thread):
         insort(self._order, id)
         # Last of all, we add the id to the relevant categories.
         for category in categories:
-            self._categories.setdefault(category, []).append(category)
+            self._categories.setdefault(category, []).append(id)
         # And we're done!
     
     def cancel(self, *categories):
