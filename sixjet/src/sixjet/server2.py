@@ -64,7 +64,7 @@ class SixjetServer(PyServiceProvider):
         
         and things will work.
         """
-        PyServiceProvider.__init__(self)
+        PyServiceProvider.__init__(self, True)
         service_extra = service_extra.copy()
         service_extra.update(type="sixjet")
         self.backend = backend
