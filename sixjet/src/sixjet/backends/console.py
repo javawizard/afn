@@ -2,15 +2,15 @@
 from sixjet.backends import Backend
 
 default_map = """
-    a         b
-         g
+     a         b
+          g
 
-   l   m   n   h
-f                 c
-   k   p   o   i
+    l   m   n   h
+f                   c
+    k   p   o   i
 
-         j
-    e         d
+          j
+     e         d
 """
 
 
