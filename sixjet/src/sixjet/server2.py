@@ -97,7 +97,7 @@ class SixjetServer(PyServiceProvider):
     # And now for the functions that are published via Autobus.
     
     @publish
-    @eventloop.on("server.loop")
+    @eventloop.on("loop")
     def on(self, *jets):
         """
         Turns the specified jets on.
@@ -111,7 +111,7 @@ class SixjetServer(PyServiceProvider):
         self.flush()
     
     @publish
-    @eventloop.on("server.loop")
+    @eventloop.on("loop")
     def off(self, *jets):
         """
         Turns the specified jets off.
@@ -125,7 +125,7 @@ class SixjetServer(PyServiceProvider):
         self.flush()
     
     @publish
-    @eventloop.on("server.loop")
+    @eventloop.on("loop")
     def flash(self, *jets):
         """
         Turns the specified jets on, then turns them off after the number of
@@ -152,7 +152,7 @@ class SixjetServer(PyServiceProvider):
         self.flush()
     
     @publish
-    @eventloop.on("server.loop")
+    @eventloop.on("loop")
     def set_flash_time(self, new_time):
         """
         Sets the flash time to the specified number of seconds, which can be a
@@ -165,7 +165,7 @@ class SixjetServer(PyServiceProvider):
         return self.flash_time
     
     @publish
-    @eventloop.on("server.loop")
+    @eventloop.on("loop")
     def update_flash_time(self, delta):
         """
         Adds the specified number of seconds to the current flash time. This
