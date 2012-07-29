@@ -82,7 +82,7 @@ class SixjetServer(PyServiceProvider):
         # Flush the jets to turn all of them off, but do it on the event loop
         self.loop.queue(Partial(self.flush))
         # Set a default flash time
-        self.flash_time = 0.2
+        self.flash_time = 0.25
     
     def start(self):
         self.loop.start()
