@@ -45,10 +45,10 @@ class SixjetServer(PyServiceProvider):
             "flashed with the flash method, in seconds. This can be set with "
             "set_flash_time.")
     
-    def __init__(self, write_function, bus, service_extra={}):
+    def __init__(self, backend, bus, service_extra={}):
         """
-        Creates a new sixjet server. write_function is the function to use to
-        write data to the parallel port. service_extra is an optionally-empty
+        Creates a new sixjet server. backend is the instance of backends.Backend
+        that will be used to write jets. service_extra is an optionally-empty
         set of values that will be added to the Autobus 2's service info
         dictionary. (Keys such as type will be added automatically, but such
         keys present in service_extra will override the ones added
@@ -62,28 +62,23 @@ class SixjetServer(PyServiceProvider):
             ...
         
         and things will work.
-        
-        If write_function is None, a new parallel.Parallel instance will be
-        created, and its setData method used.
         """
         service_extra = service_extra.copy()
         service_extra.update(type="sixjet")
-        if write_function is None:
-            import parallel
-            self._parallel = parallel.Parallel()
-            write_function = self._parallel.setData
-        else:
-            self._parallel = None
+        self.backend = backend
         # The event loop used by this server.
         self.loop = eventloop.EventLoop()
         # The current states of all of the jets. This must only be read and
         # modified from the event thread.
-        self.jet_states = [False] * 16
+        self.states = [False] * 16
         # True to shut down the server. This shouldn't be modified; instead,
         # stop() should be called, which will post an event that sets this to
         # True.
         self.shut_down = False
         self.service = self.bus.create_service(service_extra, self)
+        self.loop.start()
+        # Flush the jets to turn all of them off, but do it on the event loop
+        self.loop.run(Partial(self.flush))
     
     def start(self):
         self.loop.start()
@@ -93,62 +88,9 @@ class SixjetServer(PyServiceProvider):
     
     def join(self):
         self.loop.join()
-
-    def set_parallel_data(self, data):
-        """
-        Sets the parallel port's data pins to the specified state, which should be
-        a number from 0 to 255, then waits a bit.
-        """
-        self.loop.ensure_event_thread()
-        self.write_function(data)
-        sleep(0.0032) # 3.2 milliseconds; increase if needed
     
-    def write_jets(self):
-        """ 
-        Writes the jet states stored in jet_states to the parallel port.
-        """
-        self.loop.ensure_event_thread()
-        # The sixjet board is basically made up of two 74HC595 8-bit shift
-        # registers. For those not familiar with shift registers, they're basically
-        # a queue of bits; new bits can be pushed in at one end, and when the queue
-        # is full, old bits will be dropped from the other end. They can then be
-        # instructed to take the bits currently in the queue and set 8 of their
-        # pins to those values. They're perfect for controlling things like banks
-        # of relays from the parallel port.
-        # To push a bit into the queue, you set the shift register's DATA pin to
-        # 0 if you want to push a 0 and 1 if you want to push a 1. Then you set the
-        # CLOCK pin high and then back low.
-        # To have the shift register take the bits in the queue and set its eight
-        # output pins to their values, you set the shift register's STROBE pin high
-        # and then low.
-        # On the 74HC595 shift register, pin 11 is CLOCK, pin 12 is STORBE, and pin
-        # 15 is DATA. Googling "74HC595 datasheet" will pull up a map of which pin
-        # numbers are which physical pins on the 74HC595.
-        # The sixjet board has two shift registers that each control a bank of 8
-        # relays. The module constants DATA_A and DATA_B correspond to the data
-        # pins of each of these shift registers. CLOCK and STROBE are connected to
-        # both shift registers' clock and strobe pins.
-        # So, to write out the data... 
-        # Clear the parallel port
-        self.set_parallel_data(0)
-        # Iterate over all the jets in reverse order. We reverse the ordering here
-        # since the first bit written out will end up shifted to the last position
-        # in the shift register, so we want to write the last bit first.
-        for a, b in reversed(zip(self.jet_states[0:8], self.jet_states[8:16])):
-            # Set lines A and B to the jets we're writing
-            values = (DATA_A if a else 0) | (DATA_B if b else 0)
-            self.set_parallel_data(values)
-            # Do it an extra time just to see if it helps some issues I've been
-            # seeing with data occasionally getting clocked in wrong
-            self.set_parallel_data(values)
-            # Set clock high
-            self.set_parallel_data(values | CLOCK)
-            # Set clock low
-            self.set_parallel_data(values)
-        # Set strobe high
-        self.set_parallel_data(STROBE)
-        # Set strobe low
-        self.set_parallel_data(0)
+    def flush(self):
+        self.backend.write(self.states)
     
     # And now for the functions that are published via Autobus.
     
@@ -162,9 +104,9 @@ class SixjetServer(PyServiceProvider):
             # Cancel all manual scheduled events for this jet
             self.loop.cancel((MANUAL, n))
             # Turn the jet on
-            self.jet_states[n] = True
+            self.states[n] = True
         # Write the new states to the parallel port
-        self.write_jets()
+        self.flush()
     
     @publish
     @eventloop.on("server.loop")
@@ -176,9 +118,9 @@ class SixjetServer(PyServiceProvider):
             # Cancel all manual scheduled events for this jet
             self.loop.cancel((MANUAL, n))
             # Turn the jet off
-            self.jet_states[n] = False
+            self.states[n] = False
         # Write the new states to the parallel port
-        self.write_jets()
+        self.flush()
     
     @publish
     @eventloop.on("server.loop")
@@ -196,7 +138,7 @@ class SixjetServer(PyServiceProvider):
             # Cancel all manual scheduled events for this jet
             self.loop.cancel((MANUAL, n))
             # Turn the jet on
-            self.jet_states[n] = True
+            self.states[n] = True
             # Schedule an event to turn this jet off. We assign it the
             # categories MANUAL and (MANUAL, n); the former is used to cancel
             # all manual events when switching to automatic mode, and the
@@ -205,7 +147,7 @@ class SixjetServer(PyServiceProvider):
             self.loop.schedule(Partial(self.off, n), off_time,
                     MANUAL, (MANUAL, n))
         # Write the new states to the parallel port
-        self.write_jets()
+        self.flush()
     
     @publish
     @eventloop.on("server.loop")
