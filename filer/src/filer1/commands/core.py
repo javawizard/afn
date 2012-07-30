@@ -22,6 +22,7 @@ class Init(Command):
     
     def run(self, args):
         init_repository(File(args.repository))
+        print "Repository created at %s." % args.repository
 
 
 @command("checkout")
@@ -36,16 +37,48 @@ class Checkout(Command):
         repository = Repository(repository_folder)
         working_folder = File(args.working)
         revision = args.revision
+        # We don't support updating existing working directories right now.
+        # TODO: This needs to be fixed.
         if working_folder.child(".filerfrom").exists:
-            raise Exception("That working directory already exists.")
-        working_folder.mkdirs()
+            raise Exception("That working directory already exists. Updating "
+                            "an already-existing working directory isn't "
+                            "supported right now; this is a rather large issue "
+                            "that will be fixed soon. For now, delete the "
+                            "working directory and then try the checkout again.")
+        # Make sure the revision in question actually exists, and make sure it's
+        # a folder revision. If it's a file, things will mess up big time.
+        if repository.get_revision(revision)["type"] != "file":
+            raise Exception("That revision is a file. Only folders can be "
+                            "checked out to a working copy right now. This is "
+                            "mostly because I haven't decided how individual "
+                            "file revisions should be properly checked out; if "
+                            "you have any suggestions, let me know "
+                            "(alex@opengroove.org).")
+        # Create the working folder if it doesn't exist
+        working_folder.mkdirs(silent=True)
+        # If it's the same dir as the repository folder, use "." as the path to
+        # make it possible to just pick up the repository, contents and all, and
+        # drop it somewhere else, which wouldn't be possible if we used an
+        # absolute path here
         if repository_folder == working_folder:
             working_folder.child(".filerfrom").write(".")
+        # If it's a different folder, use an absolute path to the repository.
+        # TODO: Add a command-line switch to choose whether this is an absolute
+        # path or whether this is a relative path. And perhaps consider adding
+        # a switch that instructs the whole thing to not even store a path to
+        # the repository; the --repository flag would then have to be given to
+        # every command run on this working folder that needs access to the
+        # repository. (There could be potential use cases for this, but as I
+        # have yet to think of any, I won't be implementing it right now.)
         else:
             working_folder.child(".filerfrom").write(repository_folder.native_path)
+        # See if we're supposed to checkout a revision. There's not much point
+        # not specifying a revision as working folders can't be updated after
+        # being created right now (see a few comments above), but there will be
+        # once I fix that issue.
         if revision:
             working_folder.child(".filercurrent").write(revision)
-        repository.export(revision, working_folder)
+            repository.update_to(working_folder, revision)
 
 
 @command("commit")

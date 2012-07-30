@@ -6,6 +6,19 @@ import hashlib
 from filer1 import exceptions
 import json
 
+def delete(target):
+    """
+    Deletes the specified file or folder. This mainly exists due to a limitation
+    of fileutils, namely that two separate methods are used to delete folders
+    and files; I intend to change fileutils to have the same method be used for
+    both, at which point this function will become obsolete.
+    """
+    if target.is_folder:
+        target.delete_folder(True)
+    else:
+        target.delete()
+
+
 def init_repository(folder):
     # TODO: Consider using a neo4j repository for the prototype. It'd make a
     # lot of stuff simpler and would do away with pretty much all of the
@@ -117,11 +130,14 @@ class Repository(object):
         specifies the revision that target is currently at (or None if target
         doesn't yet exist).
         """
-        # If new_rev is None, delete target.
+        # If new_rev is None, just delete target, or clear it if it's a
+        # directory (see a few comments below for why we do that).
         if new_rev is None:
-            if target.is_folder:
-                target.delete_folder(True)
-            else:
+            if target.is_folder: # Folder, so clear it
+                for f in target.list():
+                    if not f.name.startswith("."):
+                        delete(f)
+            else: # File, so delete it
                 target.delete()
             return
         # new_rev isn't None, so we need to update to it. First we need to get
@@ -133,10 +149,20 @@ class Repository(object):
         # deleting things; I've written stuff down on why I kept things as two
         # separate methods, but I've decided I want them together, as it'll get
         # rid of a bunch of if/else statements like I've got here.
-        if target.is_folder:
-            target.delete_folder(True)
-        else:
-            target.delete()
+        # Update: if the revision's a folder and target is already a folder,
+        # just delete its contents instead, avoiding files that start with dots.
+        # This is to avoid trampling on a working directory's .filerfrom and
+        # .filerparents special files. (self.commit_changes also refuses to
+        # commit files that start with a dot, so this won't lose us anything.)
+        if target.exists:
+            if target.is_folder and data["type"] == "folder":
+                # It's a folder, and our new revision is also a folder, so
+                # delete its contents that don't start with dots
+                for f in target.list():
+                    if not f.name.startswith("."):
+                        delete(f)
+            else:
+            delete(target)
         # Now we check to see if we're dealing with a file or a folder.
         if data["type"] == "folder":
             # It's a folder, so we need to create a new folder for it.
