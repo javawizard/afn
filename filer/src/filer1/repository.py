@@ -7,6 +7,10 @@ from filer1 import exceptions
 import json
 
 def init_repository(folder):
+    # TODO: Consider using a neo4j repository for the prototype. It'd make a
+    # lot of stuff simpler and would do away with pretty much all of the
+    # maintenance folders (numbers, numbersbyrev, changeparents,
+    # changechildren, dirparents, and dirchildren).
     folder = File(folder)
     filer_dir = folder.child(".filer")
     if filer_dir.exists:
@@ -31,20 +35,23 @@ class Repository(object):
         self.numbers = self.filer_dir.child("numbers")
         self.numbers.mkdirs(True)
         self.numbersbyrev = self.filer_dir.child("numbersbyrev")
-        self.numbersbyrev.mkdirs(True)s
-        # File names are revision hashes, and their contents are their parent
-        # revision hash. This is only one revision right now; in the future,
-        # when merges are supported, this will be a newline-separated list of
-        # parent revisions.
+        self.numbersbyrev.mkdirs(True)
+        # File names are revision hashes, and their contents are JSON lists of
+        # their parent revisions.
         self.changeparents = self.filer_dir.child("changeparents")
         self.changeparents.mkdirs(True)
         # File names are revision hashes, and their contents are
-        # newline-separated lists of child revisions
+        # JSON lists of child revisions.
         self.changechildren = self.filer_dir.child("changechildren")
         self.changechildren.mkdirs(True)
-        # Likewise, but for dirlines instead of changelines
+        # File names are revision hashes, and their contents are JSON lists of
+        # all commits that include this file or folder.
         self.dirparents = self.filer_dir.child("dirparents")
         self.dirparents.mkdirs(True)
+        # File names are revision hashes, and their contents are JSON lists of
+        # all commits that the revision in question includes. For files, this
+        # will be an empty list, since files don't include anything; for
+        # folders, this will be the list of revisions of the folder's children.
         self.dirchildren = self.filer_dir.child("dirchildren")
         self.dirchildren.mkdirs(True)
     
@@ -56,12 +63,14 @@ class Repository(object):
         
         The return value is a JSON object corresponding to the revision.
         
-        Note that short revision numbers must still be given as strings.
+        Note that short revision numbers must still be given as strings. Bad
+        things (exceptions mainly) will happen if ints are passed in instead.
         """
-        if self.revisions.child(id).exists:
+        if self.revisions.child(id).exists: # Revision with the same hash exists
             return json.loads(self.revisions.child(id).read())
-        if self.numbers.child(id).exists:
+        if self.numbers.child(id).exists: # Revision with that number exists
             return json.loads(self.revisions.child(self.numbers.child(id).read()).read())
+        raise Exception("The revision %r does not exist." % id)
     
     def create_revision(self, data):
         """
@@ -80,15 +89,19 @@ class Repository(object):
         number = 1
         while self.numbers.child(str(number)).exists:
             number += 1
+        # Add an entry into numbers for this number
         self.numbers.child(str(number)).write(hash)
+        # Add a reverse entry into numbersbyrev
         self.numbersbyrev.child(hash).write(str(number))
-        # If we've got a parent, write a changeparents file for our revision
-        # indicating our parent and write a changechildren file for the parent
-        # indicating we're one of its children. This will need to be changed
-        # when commits are allowed to have multiple parents.
-        if data["parent"]:
-            self.changeparents.child(hash).write(self["parent"])
-            self.changechildren.child(self["parent"]).append(hash + "\n")
+        # Write our list of parents to a changeparents file created for us
+        self.changeparents.child(hash).write(json.dumps(data["parents"])
+        # Write an empty changechildren file for ourselves
+        self.changechildren.child(hash).write(json.dumps([]))
+        # Iterate over our parents and write ourselves into their respective
+        # changechildren files
+        for p in data["parents"]:
+            f = self.changechildren.child(p)
+            f.write(json.dumps(json.loads(f.read()) + [hash]))
         # TODO: write stuff to dirparents and dirchildren
         return hash
     
@@ -96,83 +109,47 @@ class Repository(object):
         """
         Updates target, which should currently be at the revision named by
         old_rev (which can be null if target does not currently exist), to the
-        specified revision. old_rev must be an ancestor of new_rev; going
-        backward in history is not currently supported. old_rev can, of course,
-        be None, and new_rev can be None to delete the relevant file/folder
+        revision specified by new_rev.
+        
+        The logic for this is quite simplified at the moment as file contents
+        are stored inside each revision; this is obviously quite prototypical
+        and will be changed to use just diffs and history walking later on.
+        
+        Actually, because history walking isn't used right now, old_rev is
+        entirely ignored, so it can be anything right now.
+        
+        new_rev can, of course, be None to just delete the specified target
         instead.
         """
-        # This is a bit of a complicated process. What we have to do is
-        # repeatedly check the changeparents dir to walk back from new_rev
-        # until we hit old_rev, or if old_rev is None, until we hit a revision
-        # with no parent. Then we use update_single_to to apply all of the
-        # changes. The exception is, of course, if new_rev is None, in which
-        # case we just delete target.
+        # If new_rev is None, delete target.
         if new_rev is None:
             if target.is_folder:
                 target.delete_folder(True)
             else:
                 target.delete()
             return
-        # The chain of revisions to apply
-        chain = []
-        # The current revision we're looking at
-        current = revision
-        while current != source:
-            if current is None: # We went too far: we hit a revision with no
-            # parents but we didn't find the one we were looking for
-                raise Exception(target, old_rev, new_rev, chain)
-            # Everything seems to have gone ok, so we can proceed.
-            # Add the current revision to the list of revisions to jump to
-            chain.append(current)
-            # Look up this revision's parent
-            parent_file = self.changeparents.child(current)
-            # If it exists, mark it as the new current revision.
-            if parent_file.exists:
-                current = parent_file.read()
-            # If it doesn't exist, we've hit the end of the line, so we write
-            # down None.
-            else:
-                current = None
-        # We now have the chain of revisions to follow, so follow it.
-        for r in chain:
-            self.update_single_to(r, target)
-        # And that's it!
-        # TODO: Add support to this method for updating to any revision,
-        # regardless of whether it's an ancestor or a descendent or a cousin.
-        # Updating to revisions unrelated to this one probably won't be
-        # supported. (I define related to mean that the revisions are either
-        # ancestor/descendent or cousins, cousins meaning that they share a
-        # common ancestor.)
-    
-    def update_single_to(self, revision, target):
-        """
-        Updates target, which should currently be checked out to the specified
-        revision's parent (or should not exist, if the specified revision has
-        no parent), to the specified revision.
-        """
-        # Get the revision's data
-        data = self.get_revision(revision)
-        # Get the parent revision's data, if the parent exists
-        parent_data = None
-        if data["parent"]:
-            parent_data = self.get_revision(data["parent"])
-        if data["type"] == "folder":
-            # It's a folder, so create a folder for it, if one doesn't exist
-            target.mkdir(silent=True)
-            # Iterate through the children that changed this revision and
-            # update each of them. update_to will take care of adding new
-            # children and deleting ones that were removed.
-            for name, (old_rev, new_rev) in data["children"].items():
-                    self.update_to(target.child(name), old_rev, new_rev)
-        elif data["type"] == "file":
-            # It's a file. Right now we'll have two entires in data, old and
-            # new, which are base64-encoded versions of the file; old will be
-            # None if the file didn't exist. In the future, we'll have some sort
-            # of diff stored. I just need to find a binary diff algorithm that
-            # supports three-way diffs and is reversible first.
-            target.write(data["new"])
+        # new_rev isn't None, so we need to update to it. First we need to get
+        # the relevant revision's data.
+        data = self.get_revision(new_rev)
+        # Then we delete the target so that we can start off with a clean slate.
+        # Obviously we need to do something a bit better once we get past the
+        # prototype stage. TODO: Modify fileutils to just use one function for
+        # deleting things; I've written stuff down on why I kept things as two
+        # separate methods, but I've decided I want them together, as it'll get
+        # rid of a bunch of if/else statements like I've got here.
+        if target.is_folder:
+            target.delete_folder(True)
         else:
-            raise exceptions.InvalidType(type=data["type"])
+            target.delete()
+        # Now we check to see if we're dealing with a file or a folder.
+        if data["type"] == "folder":
+            # It's a folder, so we need to create a new folder for it.
+            target.mkdir()
+            # Now we go iterate through the folder's children and update each
+            # of them.
+            for name, rev in data["children"]:
+                # As mentioned in the 
+                self.update_to(
     
     def commit_changes(self, old_revspec, old_target, new_target):
         """
