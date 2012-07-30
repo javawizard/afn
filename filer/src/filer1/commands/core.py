@@ -50,7 +50,7 @@ class Checkout(Command):
         # a folder revision. If it's a file, things will mess up big time.
         # Obviously we don't check anything if we weren't requested to actually
         # check out a revision.
-        if revision is not None and repository.get_revision(revision)["type"] != "file":
+        if revision is not None and repository.get_revision(revision)["type"] != "folder":
             raise Exception("That revision is a file. Only folders can be "
                             "checked out to a working copy right now. This is "
                             "mostly because I haven't decided how individual "
