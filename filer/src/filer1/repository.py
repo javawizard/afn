@@ -190,7 +190,7 @@ class Repository(object):
                     if not f.name.startswith("."):
                         delete(f)
             else:
-            delete(target)
+                delete(target)
         # Now we check to see if we're dealing with a file or a folder.
         if data["type"] == "folder":
             # It's a folder, so we need to create a new folder for it.
