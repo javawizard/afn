@@ -81,10 +81,48 @@ def _wrap(function):
         # arguments and make sure we've got the right types.
         for index, (param, param_type) in enumerate(zip(args, params)):
             if not isinstance(param, param_type):
+                # Wrong type; raise an exception indicating so. TODO: Might
+                # want to create a subclass of SemanticException and TypeError
+                # specific to this error.
                 raise TypeError("Argument %s to %r was supposed to be of type "
                         "%r but the value %r was received instead" % 
                         (index + len(initial), function, param_type, param))
-        return function(*args, **kwargs)
+        # All positional arguments (that were specified) have been checked for
+        # correct type. Now check to see if remainder was specified, and check
+        # the remaining arguments if it was.
+        if "remainder" in simplestatic:
+            # Remainder was specified, so check any additional arguments above
+            # and beyond those mentioned in params to make sure they're of the
+            # requested type.
+            for index, a in enumerate(args[len(params):], len(initial) + len(params)):
+                if not isinstance(a, simplestatic["remainder"]):
+                    # Wrong type; raise an exception indicating so.
+                    raise TypeError("Variadic argument %s to %r was supposed "
+                            "to be of type %r but the value %r was received "
+                            "instead" %
+                            (index, function, simplestatic["remainder"], a))
+        # There aren't any additional arguments or they all passed type
+        # checking. We should be good to run the function now.
+        result = function(*(initial + args), **kwargs)
+        # Now we check to see if we're supposed to typecheck the result.
+        if "returns" in simplestatic:
+            # We're supposed to typecheck the result. First we'll see if the
+            # result is supposed to be None but isn't.
+            if simplestatic["returns"] is None and result is not None:
+                # Result is supposed to be None but it isn't. Throw an
+                # appropriate exception.
+                raise TypeError("Result of function %r was supposed to be "
+                        "None but was %r instead" %
+                        (function, result))
+            # Now we check to see if the result is supposed to be of a
+            # particular type but isn't.
+            elif not isinstance(result, simplestatic["returns"]):
+                # Result wasn't of the correct type
+                raise TypeError("Result of function %r was supposed to be of "
+                        "type %r but the value %r was returned instead" %
+                        (function, simplestatic["returns"], result))
+        # Function passed type validation, so return it.
+        return result
     wrapper.simplestatic = simplestatic
     return wrapper
 
