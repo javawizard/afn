@@ -99,9 +99,10 @@ class Commit(Command):
         # revision on the current working directory (which we figure out by
         # jumping parents until we find .filerfrom) and then updating
         # .filerparents to contain the new revision.
-        working_folder = File(args.working)
-        if working_folder is None:
+        if args.working is None:
             working_folder = detect_working(File("."))
+        else:
+            working_folder = File(args.working)
         if working_folder is None:
             raise Exception("You're not inside a working folder right now, "
                             "and you didn't specify --working.")
@@ -114,7 +115,7 @@ class Commit(Command):
         # Then update .filerparents to point to the new revision
         working_folder.child(".filerparents").write(json.dumps([hash]))
         # And last of all, we print out a message about the commit.
-        print "Committed revision %s." % hash
+        print "Committed revision %s:%s." % (repository.number_for_rev(hash), hash)
 
 
 @command("log")
@@ -125,7 +126,7 @@ class Log(Command):
     def run(self, args):
         repository_folder = File(args.repository)
         repository = Repository(repository_folder)
-        for number, hash, data in repository.revision_iterator():
+        for number, hash, data_str, data in repository.revision_iterator():
             print
             print "Revision %s:%s:" % (number, hash)
             print "    Type:    %s" % data["type"]

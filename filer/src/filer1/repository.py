@@ -54,7 +54,7 @@ def init_repository(folder):
 
 
 class Repository(object):
-    def __init__(self, folder, debug=False):
+    def __init__(self, folder, debug=True):
         self.debug = debug
         self.folder = File(folder)
         self.filer_dir = self.folder.child(".filer")
@@ -231,6 +231,10 @@ class Repository(object):
                 return self.create_revision({"type": "file",
                                              "parents": parent_revs,
                                              "contents": target.read()})
+            else:
+                # The file hasn't changed and we've got only one revision.
+                # Return it as-is.
+                return parent_revs[0]
         else:
             # It's a folder. First thing we do is create revisions for all of
             # our children.
@@ -281,15 +285,17 @@ class Repository(object):
     
     def revision_iterator(self):
         """
-        A generator that returns a (number, hash, data) tuple for all of the
-        revisions in this repository. number will be a string.
+        A generator that returns a (number, hash, data_str, data) tuple for all
+        of the revisions in this repository. number will be a string.
         """
         current_number = 1
         while self.numbers.child(str(current_number)).exists:
             # We've still got a revision, so yield it
             hash = self.numbers.child(str(current_number)).read()
-            data = self.revisions.child(hash).read()
-            yield str(current_number), hash, data
+            data_str = self.revisions.child(hash).read()
+            data = json.loads(data_str)
+            yield str(current_number), hash, data_str, data
+            current_number += 1
     
     def number_for_rev(self, hash):
         return self.numbersbyrev.child(hash).read()
