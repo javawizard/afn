@@ -194,7 +194,7 @@ class Repository(object):
         # Now we check to see if we're dealing with a file or a folder.
         if data["type"] == "folder":
             # It's a folder, so we need to create a new folder for it.
-            target.mkdir()
+            target.mkdir(silent=True)
             # Now we go iterate through the folder's children and update each
             # of them.
             for name, rev in data["children"]:
