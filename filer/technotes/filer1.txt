@@ -54,6 +54,14 @@ All of those dicts have four additional keys, namely message, date, user, and pa
 
 
 
+Ok, screw it, I'm having rather large issues with how to properly update a file to a particular revision. So for this prototypical Filer, I'm going to have file-related commits have their attribute "contents" always be present and always contain the file's current contents. And folders will just have their children attribute list all of their current children. Then in the future I can have a folder have a diff attribute which stores the dict showing what's changed.
+
+I think that'll work for now. And if it doesn't, I can have the diff key on folders be what's changed, and then have a diff key on files which contains two keys, old and new, the former of which is a reverse diff going back to the parent and the latter of which is a forward diff as usual. Not sure how I'd handle multiple parents yet.
+
+So yeah, I'm going to go change everything to just use that for now.
+
+
+
 
 
 
