@@ -209,6 +209,18 @@ class Repository(object):
             # our children.
             child_revs = {}
             for child in target.list():
+                # If the child's name starts with a dot, skip it for now. This
+                # is to prevent working folder special files (.filerfrom and
+                # .filerparents in particular) from being committed. TODO: work
+                # out a better way to deal with this in the future, but make
+                # sure to account for when a person creates a file that
+                # collides with one of these special files in the repository's
+                # history. Perhaps just issue a message saying that the commit
+                # can't be properly checked out and should be exported instead;
+                # exporting would just be a checkout without creating any
+                # special files.
+                if child.name.startswith("."):
+                    continue                
                 # We'll build up a list of parent revisions for this child by
                 # scanning our own parent revisions and seeing which of them
                 # have the file in question present.

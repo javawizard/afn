@@ -72,10 +72,9 @@ class Checkout(Command):
         # have yet to think of any, I won't be implementing it right now.)
         else:
             working_folder.child(".filerfrom").write(repository_folder.native_path)
-        # See if we're supposed to checkout a revision. There's not much point
-        # not specifying a revision as working folders can't be updated after
-        # being created right now (see a few comments above), but there will be
-        # once I fix that issue.
+        # See if we're supposed to checkout a revision. Since existing working
+        # folders can't be updated to new revisions, the only real point to
+        # this is to 
         if revision:
             working_folder.child(".filercurrent").write(revision)
             repository.update_to(working_folder, revision)
