@@ -126,7 +126,7 @@ class Repository(object):
         # Add a reverse entry into numbersbyrev
         self.numbersbyrev.child(hash).write(str(number))
         # Write our list of parents to a changeparents file created for us
-        self.changeparents.child(hash).write(json.dumps(data["parents"])
+        self.changeparents.child(hash).write(json.dumps(data["parents"]))
         # Write an empty changechildren file for ourselves
         self.changechildren.child(hash).write(json.dumps([]))
         # Iterate over our parents and write ourselves into their respective
