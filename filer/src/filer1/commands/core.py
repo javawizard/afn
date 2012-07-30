@@ -101,7 +101,7 @@ class Commit(Command):
         # .filerparents to contain the new revision.
         working_folder = args.working
         if working_folder is None:
-            working_folder = detect_working()
+            working_folder = detect_working(File("."))
         if working_folder is None:
             raise Exception("You're not inside a working folder right now, "
                             "and you didn't specify --working.")
