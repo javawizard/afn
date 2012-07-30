@@ -43,12 +43,27 @@ def _wrap(function):
     typically used for variable argument functions. returns is a type to apply
     to the return value of a function; this can be None to indicate that the
     function does not return a value.
+    
+    Two additional keys can be present:
+    
+    required: This is the number of arguments that are required.
+    
+    offset: This is the number of arguments at the beginning of the function
+    that should be completely ignored. They will be essentially removed from
+    the argument list before type checking and added back afterward. This can
+    be used to skip the self argument passed to class methods; @method is an
+    alternate spelling of @offset(1).
+    
     """
     if hasattr(function, "simplestatic"):
         return function
     simplestatic = {}
     @wraps(function)
     def wrapper(*args, **kwargs):
+        # Remove the number of arguments specified by offset before doing
+        # anything else
+        offset = simplestatic.get("offset", 0)
+        initial, args = args[:offset], args[offset:]
         # Get the parameter list
         params = simplestatic.get("params", [])
         # Make sure we've got enough parameters. If required isn't specified,
@@ -57,9 +72,18 @@ def _wrap(function):
         # are required; the only problem with this is that if other decorators
         # are used on the function, we won't be able to get a proper idea of
         # what arguments are required.
-        required = simplestatic.get("required", len(params))
+        required = simplestatic.get("required", 0)
         if len(args) < required:
-            
+            # Not enough arguments were specified
+            raise TypeError("%r requires %s arguments but only got %s" %
+                    (function, required + offset, len(args) + len(initial)))
+        # We've got enough arguments. Now pair up the parameters and the
+        # arguments and make sure we've got the right types.
+        for index, (param, param_type) in enumerate(zip(args, params)):
+            if not isinstance(param, param_type):
+                raise TypeError("Argument %s to %r was supposed to be of type "
+                        "%r but the value %r was received instead" % 
+                        (index + len(initial), function, param_type, param))
         return function(*args, **kwargs)
     wrapper.simplestatic = simplestatic
     return wrapper
@@ -115,6 +139,27 @@ def remainder(t):
         wrapper.simplestatic["remainder"] = t
         return wrapper
     return decorator
+
+
+def offset(number):
+    """
+    Specifies the number of arguments at the beginning of the function to
+    ignore while typechecking.
+    """
+    def decorator(function):
+        wrapper = _wrap(function)
+        wrapper.simplestatic["offset"] = number
+        return wrapper
+    return decorator
+
+
+def method(function):
+    """
+    An alternate spelling of @offset(1).
+    """
+    wrapper = _wrap(function)
+    wrapper.simplestatic["offset"] = 1
+    return wrapper
 
 
 
