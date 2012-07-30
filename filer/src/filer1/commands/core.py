@@ -19,7 +19,7 @@ command = Partial(Partial, commands.__setitem__)
 @command("init")
 class Init(Command):
     def update_parser(self, parser):
-        parser.add_argument("-d", "--repository")
+        parser.add_argument("-d", "--repository", required=True)
     
     def run(self, args):
         init_repository(File(args.repository))
@@ -29,8 +29,8 @@ class Init(Command):
 @command("checkout")
 class Checkout(Command):
     def update_parser(self, parser):
-        parser.add_argument("-d", "--repository")
-        parser.add_argument("-w", "--working")
+        parser.add_argument("-d", "--repository", required=True)
+        parser.add_argument("-w", "--working", required=True)
         parser.add_argument("-r", "--revision", default=None)
     
     def run(self, args):
@@ -120,7 +120,7 @@ class Commit(Command):
 @command("log")
 class Log(Command):
     def update_parser(self, parser):
-        parser.add_argument("-d", "--repository")
+        parser.add_argument("-d", "--repository", required=True)
     
     def run(self, args):
         repository_folder = File(args.repository)
