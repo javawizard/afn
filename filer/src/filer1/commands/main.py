@@ -11,9 +11,10 @@ def main():
         print "More usage information will be coming soon."
         print "Or you can read through filer's source; see"
         print "http://hg.opengroove.org/afn/file/default/filer to read it."
+        return
     command_name = sys.argv[1]
     try:
-        command = commands[command_name]
+        command = commands[command_name]()
     except KeyError:
         print "The command %r does not exist." % command
         print "Valid commands are %r" % commands.keys()
