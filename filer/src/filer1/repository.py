@@ -59,7 +59,7 @@ class Repository(object):
         self.folder = File(folder)
         self.filer_dir = self.folder.child(".filer")
         if not self.filer_dir.exists:
-            raise Exception("There isn't a repository at %s." % folder.native_path)
+            raise Exception("There isn't a repository at %s." % folder.path)
         self.revisions = self.filer_dir.child("revisions")
         self.revisions.mkdirs(True)
         self.numbers = self.filer_dir.child("numbers")

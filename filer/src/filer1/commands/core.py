@@ -74,7 +74,7 @@ class Checkout(Command):
         # repository. (There could be potential use cases for this, but as I
         # have yet to think of any, I won't be implementing it right now.)
         else:
-            working_folder.child(".filerfrom").write(repository_folder.native_path)
+            working_folder.child(".filerfrom").write(repository_folder.path)
         # See if we're supposed to checkout a revision. Since existing working
         # folders can't be updated to new revisions, the only real point to
         # this is to 
