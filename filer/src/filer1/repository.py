@@ -219,7 +219,7 @@ class Repository(object):
         # See if we're a file or a folder. Switching types won't be supported
         # right now, but should probably be implemented as a delete+create
         # later on.
-        if old_target.is_file:
+        if target.is_file:
             # It's a file. Check to see if we've got either 2 or more parents,
             # zero parents, or the file's contents are different than its
             # single parent revision's contents.
