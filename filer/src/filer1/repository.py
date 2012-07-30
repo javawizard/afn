@@ -105,21 +105,17 @@ class Repository(object):
         # TODO: write stuff to dirparents and dirchildren
         return hash
     
-    def update_to(self, target, old_rev, new_rev):
+    def update_to(self, target, new_rev):
         """
-        Updates target, which should currently be at the revision named by
-        old_rev (which can be null if target does not currently exist), to the
-        revision specified by new_rev.
+        Updates target to the revision specified by new_rev, or deletes target
+        if new_rev is None.
         
         The logic for this is quite simplified at the moment as file contents
         are stored inside each revision; this is obviously quite prototypical
         and will be changed to use just diffs and history walking later on.
-        
-        Actually, because history walking isn't used right now, old_rev is
-        entirely ignored, so it can be anything right now.
-        
-        new_rev can, of course, be None to just delete the specified target
-        instead.
+        When said changes are made, an old_rev parameter will be required that
+        specifies the revision that target is currently at (or None if target
+        doesn't yet exist).
         """
         # If new_rev is None, delete target.
         if new_rev is None:
@@ -148,57 +144,75 @@ class Repository(object):
             # Now we go iterate through the folder's children and update each
             # of them.
             for name, rev in data["children"]:
-                # As mentioned in the 
-                self.update_to(
+                self.update_to(target.child(name), rev)
+            # And that's it for folders.
+        elif data["type"] == "file":
+            # It's a file, so we just write its contents.
+            target.write(data["contents"].decode("base64"))
+        # That's pretty much it for updating right now.
     
-    def commit_changes(self, old_revspec, old_target, new_target):
+    def commit_changes(self, parent_revs, target):
         """
-        Creates a new revision by comparing old_target, which should be at the
-        revspec old_spec, with new_target. The new revspec will be returned.
+        Creates a new revision with the specified parents for the specified
+        target file or folder. Note that if there is only one revision in
+        parent_revs and its contents are the same as target's contents, the
+        revision present in parent_revs will be returned as-is.
+        
+        Note that switching types isn't supported right now; if target is a
+        file in one of its parent revisions but is a folder now, or vice versa,
+        bad things will happen.
         """
         # See if we're a file or a folder. Switching types won't be supported
         # right now, but should probably be implemented as a delete+create
         # later on.
         if old_target.is_file:
-            # It's a file. Check to see if the new contents are different from
-            # the old contents.
-            old_contents = old_target.read() if old_target.exists else None
-            new_contents = new_target.read() # File removal shouldn't ever get
-            # to this level, as files are deleted by removing them from their
-            # parent directory, not by marking the file itself as deleted
-            if old_contents == new_contents:
-                # The file hasn't changed, so return the current revspec.
-                return old_revspec
-            else:
-                # The file's changed; write a new revision for the file, and
-                # return the new revspec.
-                return {"rev": self.create_revision({"type": "file",
-                                                     "old": old_contents,
-                                                     "new": new_contents)}
+            # It's a file. Check to see if we've got either 2 or more parents,
+            # zero parents, or the file's contents are different than its
+            # single parent revision's contents.
+            if (len(parent_revs) > 1 or
+                len(parent_revs) < 1 or
+                self.get_revision(parent_revs[0])["contents"] != target.read()):
+                # The file's changed, or we've got more or less than just one
+                # parent; create a new revision for the file and return it.
+                return self.create_revision({"type": "file",
+                                             "parents": parent_revs,
+                                             "contents": target.read()
+                                                         .encode("base64")})
         else:
-            # It's a folder. TODO: How do we go about doing this? We need to
-            # keep track somewhere which revisions each child file is currently
-            # at so that we can pass them into commit_changes as old_rev, and
-            # so that we can see if the file's changed revisions as reported by
-            # commit_changes. How this is stored needs to be thought out a bit
-            # more; perhaps store a JSON dict of folder/file current revisions
-            # as a file inside the working directory, and then have
-            # commit_changes return it or something instead of the hash. Needs
-            # a bit more thought.
-            # We could always have old_rev (and the return value from
-            # commit_changes) be a {"rev": ..., "children": {"child1":
-            # {"rev": ..., ...}, ...}} dict. The children key would be null for
-            # files, and would map child names to dicts of the same format for
-            # folders. That'd let us know what the old revision is, and we can
-            # return new versions of the dict whenever we have to commit a file
-            # or a folder because of changes. Then we just commit all of the
-            # files/folders inside a file/folder, and if any of the dicts we
-            # get out are different, we add a change, with the old value being
-            # the old dict's rev key and the new value being the new dict's rev
-            # key, or null for either of those that didn't exist.
-            # TODO: Still need to think about how to handle deleted
-            # files/folders properly.
-            raise NotImplementedError
+            # It's a folder. First thing we do is create revisions for all of
+            # our children.
+            child_revs = {}
+            for child in target.list():
+                # We'll build up a list of parent revisions for this child by
+                # scanning our own parent revisions and seeing which of them
+                # have the file in question present.
+                child_parents = []
+                for p in parent_revs:
+                    # Get this parent revision's data
+                    parent_data = self.get_revision(p)
+                    # Check to see if this parent revision has the child we're
+                    # looking at
+                    if child.name in parent_data["children"]:
+                        # This child's present in the parent we're looking at;
+                        # add its listed revision as a parent.
+                        child_parents.append(parent_data["children"][child.name])
+                # We've got a list of parents for this child; now we create a
+                # revision for the child and store it in child_revs.
+                child_revs[child.name] = self.commit_changes(child_parents, child)
+            # We've got a dictionary of child revisions. Now we check to see if
+            # we've got exactly one parent, and it has the exact same revisions
+            # we do; if that's the case, we just return that parent's revision
+            # as-is.
+            if (len(parent_revs) == 1 and
+                self.get_revision(parent_revs[0])["children"] == child_revs):
+                # Same child revs, so we return the parent revision.
+                return parent_revs[0]
+            else:
+                # Different child revs, so we create a new revision for this
+                # folder and return it.
+                return self.create_revision({"type": "folder",
+                                             "parents": parent_revs,
+                                             "children": child_revs})
             
 
 
