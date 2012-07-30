@@ -49,6 +49,17 @@ def _wrap(function):
     simplestatic = {}
     @wraps(function)
     def wrapper(*args, **kwargs):
+        # Get the parameter list
+        params = simplestatic.get("params", [])
+        # Make sure we've got enough parameters. If required isn't specified,
+        # we're not going to require any parameters. In the future, we might
+        # want to introspect the function's default arguments to see how many
+        # are required; the only problem with this is that if other decorators
+        # are used on the function, we won't be able to get a proper idea of
+        # what arguments are required.
+        required = simplestatic.get("required", len(params))
+        if len(args) < required:
+            
         return function(*args, **kwargs)
     wrapper.simplestatic = simplestatic
     return wrapper
@@ -61,6 +72,14 @@ def params(*p):
     def decorator(function):
         wrapper = _wrap(function)
         wrapper.simplestatic["params"] = p
+        return wrapper
+    return decorator
+
+
+def required(number):
+    def decorator(function):
+        wrapper = _wrap(function)
+        wrapper.simplestatic["required"] = number
         return wrapper
     return decorator
 
