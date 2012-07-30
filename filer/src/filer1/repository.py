@@ -200,7 +200,7 @@ class Repository(object):
             target.mkdir(silent=True)
             # Now we go iterate through the folder's children and update each
             # of them.
-            for name, rev in data["children"]:
+            for name, rev in data["children"].items():
                 self.update_to(target.child(name), rev)
             # And that's it for folders.
         elif data["type"] == "file":
