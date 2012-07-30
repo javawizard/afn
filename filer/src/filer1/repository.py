@@ -159,7 +159,10 @@ class Repository(object):
         doesn't yet exist).
         """
         # If new_rev is None, just delete target, or clear it if it's a
-        # directory (see a few comments below for why we do that).
+        # directory (see a few comments below for why we do that). FIXME: We
+        # might want to consider deleting it unless it's got a .filerfrom or
+        # something like that to avoid it being sporadically recreated on the
+        # next commit because it didn't actually go away.
         if new_rev is None:
             if target.is_folder: # Folder, so clear it
                 for f in target.list():
