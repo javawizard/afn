@@ -139,6 +139,32 @@ which occurs when I use autosend with a rather small timeout in list mode. But I
 
 
 
+So all the stuff above worked out spectacularly, and now I'm trying to figure out static typing.
+
+So I mentioned some type dicts above. I'm thinking those will have four keys:
+
+    params: This will be a list of dicts, with each dict representing a 
+    parameter. These dicts will have two keys, type and name. I'm thinking
+    valid values for the type key for now will be "number", "boolean",
+    "string", "list", "map", and "any". Type parameters won't be supported yet,
+    meaning that for now you can't specify what, exactly, is in a particular
+    list or map; I may add support later. "any" means that any value can be
+    used.
+    
+    remainder: This will be either null if the function does not accept an
+    unlimited number of arguments, or a dict in the form of params (i.e. with
+    two keys, type and name) if the function accepts an unlimited number of
+    arguments. This type will be matched against all of the extra arguments.
+    
+    required: A number between 0 and the length of params specifying how many
+    of those parameters are actually required. All parameters after are
+    optional and can be omitted.
+    
+    returns: Either null if the function doesn't return a value or one of the
+    type strings mentioned above that specifies the return value of a function.
+
+
+
 
 
 

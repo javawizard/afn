@@ -37,10 +37,12 @@ def _wrap(function):
     
     Wrappers have an attribute named simplestatic whose value is a dictionary;
     this dictionary can be modified to alter the type-validating behavior of
-    the wrapper. Three keys can be present; params, remainder, and return.
+    the wrapper. Three keys can be present; params, remainder, and returns.
     params is a list (or other sequence) of types to validate each parameter
     against. remainder is a type to apply to any additional parameters; this is
-    typically used for variable argument functions.
+    typically used for variable argument functions. returns is a type to apply
+    to the return value of a function; this can be None to indicate that the
+    function does not return a value.
     """
     if hasattr(function, "simplestatic"):
         return function
@@ -50,6 +52,50 @@ def _wrap(function):
         return function(*args, **kwargs)
     wrapper.simplestatic = simplestatic
     return wrapper
+
+
+def params(*p):
+    """
+    Specifies the types of the parameters that the function accepts.
+    """
+    def decorator(function):
+        wrapper = _wrap(function)
+        wrapper.simplestatic["params"] = p
+        return wrapper
+    return decorator
+
+
+def returns(t):
+    """
+    Specifies the type that the function returns. Note that if the function
+    always returns None, @void should be used instead of @returns(NoneType).
+    """
+    def decorator(function):
+        wrapper = _wrap(function)
+        wrapper.simplestatic["returns"] = t
+        return wrapper
+    return decorator
+
+
+def void(function):
+    """
+    Specifies that the function has no return value. Functions decorated with
+    @void must always return None.
+    """
+    wrapper = _wrap(function)
+    wrapper.simplestatic["returns"] = None
+    return wrapper
+
+
+def remainder(t):
+    """
+    Specifies the type of the arguments not specified by @params.
+    """
+    def decorator(function):
+        wrapper = _wrap(function)
+        wrapper.simplestatic["remainder"] = t
+        return wrapper
+    return decorator
 
 
 
