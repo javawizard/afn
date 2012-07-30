@@ -1,8 +1,9 @@
 
 from filer1.commands.command import Command
-from filer1.repository import Repository, init_repository
+from filer1.repository import Repository, init_repository, detect_working
 from afn.utils.partial import Partial
 from afn.fileutils import File
+import json
 
 commands = {}
 # Convoluted bit of magic: after this line, command(x)(y) is the same as
@@ -47,7 +48,9 @@ class Checkout(Command):
                             "working directory and then try the checkout again.")
         # Make sure the revision in question actually exists, and make sure it's
         # a folder revision. If it's a file, things will mess up big time.
-        if repository.get_revision(revision)["type"] != "file":
+        # Obviously we don't check anything if we weren't requested to actually
+        # check out a revision.
+        if revision is not None and repository.get_revision(revision)["type"] != "file":
             raise Exception("That revision is a file. Only folders can be "
                             "checked out to a working copy right now. This is "
                             "mostly because I haven't decided how individual "
@@ -76,18 +79,58 @@ class Checkout(Command):
         # folders can't be updated to new revisions, the only real point to
         # this is to 
         if revision:
-            working_folder.child(".filercurrent").write(revision)
+            # Yep, we're supposed to check out a revision. Write the requested
+            # revision's hash to .filerparents and check out the revision.
+            working_folder.child(".filerparents").write(json.dumps([revision]))
             repository.update_to(working_folder, revision)
+        else:
+            # Nope, no revision to check out to. Write an empty list to
+            # .filerparents.
+            working_folder.child(".filerparents").write(json.dumps([]))
 
 
 @command("commit")
 class Commit(Command):
-    pass
+    def update_parser(self, parser):
+        parser.add_argument("-w", "--working", default=None)
+
+    def run(self, args):
+        # This is basically as simple as asking the repository to commit a new
+        # revision on the current working directory (which we figure out by
+        # jumping parents until we find .filerfrom) and then updating
+        # .filerparents to contain the new revision.
+        working_folder = args.working
+        if working_folder is None:
+            working_folder = detect_working()
+        if working_folder is None:
+            raise Exception("You're not inside a working folder right now, "
+                            "and you didn't specify --working.")
+        repository_folder = File(working_folder.child(".filerfrom").read())
+        repository = Repository(repository_folder)
+        # We've got the repository. Now we go read the list of parents to use.
+        parents = json.loads(working_folder.child(".filerparents").read())
+        # Then we create the new revision
+        hash = repository.commit_changes(parents, working_folder)
+        # Then update .filerparents to point to the new revision
+        working_folder.child(".filerparents").write(json.dumps([hash]))
+        # And last of all, we print out a message about the commit.
+        print "Committed revision %s" % hash
 
 
 @command("log")
 class Log(Command):
-    pass
+    def update_parser(self, parser):
+        parser.add_argument("-d", "--repository")
+    
+    def run(self, args):
+        repository_folder = File(args.repository)
+        repository = Repository(repository_folder)
+        for number, hash, data in repository.revision_iterator():
+            print
+            print "Revision %s:%s:" % (number, hash)
+            print "    Type:    %s" % data["type"]
+            for parent in data["parents"]:
+                print "    Parent:  %s:%s" % (repository.number_for_rev(parent), parent)
 
 # Delete the command decorator since we don't need it anymore
 del command

@@ -19,6 +19,20 @@ def delete(target):
         target.delete()
 
 
+def detect_working(target):
+    """
+    Finds the current working directory by jumping parents until we arrive at
+    the parent that contains a .filerfrom file. The folder containing said file
+    is then returned. If no such folder is found before we hit the directory
+    root, None is returned.
+    """
+    while not target.child(".filerfrom").exists:
+        target = target.parent
+        if target is None:
+            return None
+    return target
+
+
 def init_repository(folder):
     # TODO: Consider using a neo4j repository for the prototype. It'd make a
     # lot of stuff simpler and would do away with pretty much all of the
@@ -40,9 +54,12 @@ def init_repository(folder):
 
 
 class Repository(object):
-    def __init__(self, folder):
+    def __init__(self, folder, debug=False):
+        self.debug = debug
         self.folder = File(folder)
         self.filer_dir = self.folder.child(".filer")
+        if not self.filer_dir.exists:
+            raise Exception("There isn't a repository at %s." % folder.native_path)
         self.revisions = self.filer_dir.child("revisions")
         self.revisions.mkdirs(True)
         self.numbers = self.filer_dir.child("numbers")
@@ -96,6 +113,8 @@ class Repository(object):
         text_data = json.dumps(data, sort_keys=True)
         hash = hashlib.sha1(text_data).hexdigest()
         self.revisions.child(hash).write(text_data)
+        if self.debug:
+            print "Wrote revision %s" % hash
         # TODO: Implement a better algorithm for searching for the next number;
         # perhaps start at 0 and double until an unused number N is hit, then
         # do a binary search from 0 to N for the lowest unused number
@@ -115,7 +134,16 @@ class Repository(object):
         for p in data["parents"]:
             f = self.changechildren.child(p)
             f.write(json.dumps(json.loads(f.read()) + [hash]))
-        # TODO: write stuff to dirparents and dirchildren
+        # If we're a file, write an empty dirchildren entry
+        if data["type"] == "file":
+            self.dirchildren.child(hash).write(json.dumps([]))
+        # If we're a folder, write a list of all of the hashes in our
+        # "children" dict to our dirchildren entry
+        elif data["type"] == "folder":
+            self.dirchildren.child(hash).write(json.dumps(data["children"].values()))
+        # TODO: write an empty dirparents for ourselves, then go through our
+        # children (the ones written to our dirchildren) and add ourselves to
+        # their dirparents entry
         return hash
     
     def update_to(self, target, new_rev):
@@ -174,7 +202,7 @@ class Repository(object):
             # And that's it for folders.
         elif data["type"] == "file":
             # It's a file, so we just write its contents.
-            target.write(data["contents"].decode("base64"))
+            target.write(data["contents"])
         # That's pretty much it for updating right now.
     
     def commit_changes(self, parent_revs, target):
@@ -202,8 +230,7 @@ class Repository(object):
                 # parent; create a new revision for the file and return it.
                 return self.create_revision({"type": "file",
                                              "parents": parent_revs,
-                                             "contents": target.read()
-                                                         .encode("base64")})
+                                             "contents": target.read()})
         else:
             # It's a folder. First thing we do is create revisions for all of
             # our children.
@@ -251,7 +278,21 @@ class Repository(object):
                 return self.create_revision({"type": "folder",
                                              "parents": parent_revs,
                                              "children": child_revs})
-            
+    
+    def revision_iterator(self):
+        """
+        A generator that returns a (number, hash, data) tuple for all of the
+        revisions in this repository. number will be a string.
+        """
+        current_number = 1
+        while self.numbers.child(str(current_number)).exists:
+            # We've still got a revision, so yield it
+            hash = self.numbers.child(str(current_number)).read()
+            data = self.revisions.child(hash).read()
+            yield str(current_number), hash, data
+    
+    def number_for_rev(self, hash):
+        return self.numbersbyrev.child(hash).read()
 
 
 
