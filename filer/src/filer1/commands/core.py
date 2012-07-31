@@ -5,6 +5,7 @@ from filer1.repository import (Repository, init_repository,
 from afn.utils.partial import Partial
 from afn.fileutils import File
 import json
+import time
 
 commands = {}
 # Convoluted bit of magic: after this line, command(x)(y) is the same as
@@ -105,6 +106,7 @@ class Checkout(Command):
 class Commit(Command):
     def update_parser(self, parser):
         parser.add_argument("-w", "--working", default=None)
+        parser.add_argument("-m", "--message", required=True)
 
     def run(self, args):
         # This is basically as simple as asking the repository to commit a new
@@ -122,8 +124,10 @@ class Commit(Command):
         repository = Repository(repository_folder)
         # We've got the repository. Now we go read the list of parents to use.
         parents = json.loads(working_folder.child(".filerparents").read())
+        # Then we write down the date and commit message
+        info = {"date": time.time(), "message": args.message)        
         # Then we create the new revision
-        hash = repository.commit_changes(parents, working_folder)
+        hash = repository.commit_changes(parents, working_folder, info)
         # Then update .filerparents to point to the new revision
         working_folder.child(".filerparents").write(json.dumps([hash]))
         # And last of all, we print out a message about the commit.
@@ -148,11 +152,13 @@ class Log(Command):
         for number, hash, data_str, data in repository.revision_iterator():
             print
             print "Revision %s:%s:" % (number, hash)
+            print "    Date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
             print "    Type:           %s" % data["type"]
             for cparent in data["parents"]:
                 print "    Change Parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
             for dparent in repository.get_dirparents(hash):
                 print "    Dir Parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
+            print "    Message:        %s" % data.get("info", {}).get("message", {})
 
 # Delete the command decorator since we don't need it anymore
 del command

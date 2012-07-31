@@ -236,7 +236,7 @@ class Repository(object):
             target.write(data["contents"])
         # That's pretty much it for updating right now.
     
-    def commit_changes(self, parent_revs, target):
+    def commit_changes(self, parent_revs, target, info):
         """
         Creates a new revision with the specified parents for the specified
         target file or folder. Note that if there is only one revision in
@@ -260,6 +260,7 @@ class Repository(object):
                 # The file's changed, or we've got more or less than just one
                 # parent; create a new revision for the file and return it.
                 return self.create_revision({"type": "file",
+                                             "info": info,
                                              "parents": parent_revs,
                                              "contents": target.read()})
             else:
@@ -311,6 +312,7 @@ class Repository(object):
                 # Different child revs, so we create a new revision for this
                 # folder and return it.
                 return self.create_revision({"type": "folder",
+                                             "info": info,
                                              "parents": parent_revs,
                                              "children": child_revs})
     
