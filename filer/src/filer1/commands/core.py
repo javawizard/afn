@@ -149,8 +149,8 @@ class Log(Command):
                                 "folder) right now and you didn't specify "
                                 "--repository.")
         repository = Repository(repository_folder)
+        print
         for number, hash, data_str, data in repository.revision_iterator():
-            print
             print "Revision %s:%s:" % (number, hash)
             print "    Date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
             print "    Type:           %s" % data["type"]
@@ -159,6 +159,7 @@ class Log(Command):
             for dparent in repository.get_dirparents(hash):
                 print "    Dir Parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
             print "    Message:        %s" % data.get("info", {}).get("message", "")
+            print
 
 # Delete the command decorator since we don't need it anymore
 del command

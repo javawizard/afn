@@ -236,7 +236,7 @@ class Repository(object):
             target.write(data["contents"])
         # That's pretty much it for updating right now.
     
-    def commit_changes(self, parent_revs, target, info):
+    def commit_changes(self, parent_revs, target, info, current_name=None):
         """
         Creates a new revision with the specified parents for the specified
         target file or folder. Note that if there is only one revision in
@@ -261,6 +261,7 @@ class Repository(object):
                 # parent; create a new revision for the file and return it.
                 return self.create_revision({"type": "file",
                                              "info": info,
+                                             "current_name": current_name,
                                              "parents": parent_revs,
                                              "contents": target.read()})
             else:
@@ -299,7 +300,7 @@ class Repository(object):
                         child_parents.append(parent_data["children"][child.name])
                 # We've got a list of parents for this child; now we create a
                 # revision for the child and store it in child_revs.
-                child_revs[child.name] = self.commit_changes(child_parents, child)
+                child_revs[child.name] = self.commit_changes(child_parents, child, info, child.name)
             # We've got a dictionary of child revisions. Now we check to see if
             # we've got exactly one parent, and it has the exact same revisions
             # we do; if that's the case, we just return that parent's revision
@@ -313,6 +314,7 @@ class Repository(object):
                 # folder and return it.
                 return self.create_revision({"type": "folder",
                                              "info": info,
+                                             "current_name": current_name,
                                              "parents": parent_revs,
                                              "children": child_revs})
     
