@@ -148,7 +148,7 @@ class Log(Command):
         for number, hash, data_str, data in repository.revision_iterator():
             print
             print "Revision %s:%s:" % (number, hash)
-            print "    Type:    %s" % data["type"]
+            print "    Type:           %s" % data["type"]
             for cparent in data["parents"]:
                 print "    Change Parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
             for dparent in repository.get_dirparents(hash):
