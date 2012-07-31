@@ -168,7 +168,7 @@ class Log(Command):
 class Push(Command):
     def update_parser(self, parser):
         parser.add_argument("-d", "--repository", required=False)
-        parser.add_argument("target", required=True)
+        parser.add_argument("target")
     
     def run(self, args):
         if args.repository:
@@ -181,7 +181,7 @@ class Push(Command):
                                 "--repository.")
         local_repository = Repository(repository_folder)
         remote_repository = Repository(File(args.target))
-        # This is a rather unintuitive way to do the thing, but we're just
+        # This is a rather unintuitive way to do things, but we're just
         # going to iterate through all revisions in local_repository and check
         # to see if they're present in remote_repository, and if they're not,
         # add them.

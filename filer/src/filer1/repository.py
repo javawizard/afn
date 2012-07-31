@@ -141,9 +141,8 @@ class Repository(object):
         if isinstance(data, dict):
             text_data = json.dumps(data, sort_keys=True)
         else:
-            # Make sure we can read it properly
-            json.loads(data)
             text_data = data
+            data = json.loads(data)
         hash = hashlib.sha1(text_data).hexdigest()
         self.revisions.child(hash).write(text_data)
         if self.debug:
