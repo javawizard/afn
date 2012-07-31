@@ -152,15 +152,15 @@ class Log(Command):
         print
         for number, hash, data_str, data in repository.revision_iterator():
             print "Revision %s:%s:" % (number, hash)
-            print "    Date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
-            print "    Type:           %s" % data["type"]
+            print "    date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
+            print "    type:           %s" % data["type"]
             if data.get("current_name"):
-                print "    Committed As:   %s" % data["current_name"]
+                print "    committed as:   %s" % data["current_name"]
             for cparent in data["parents"]:
-                print "    Change Parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
+                print "    change parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
             for dparent in repository.get_dirparents(hash):
-                print "    Dir Parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
-            print "    Message:        %s" % data.get("info", {}).get("message", "")
+                print "    dir parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
+            print "    message:        %s" % data.get("info", {}).get("message", "")
             print
 
 # Delete the command decorator since we don't need it anymore
