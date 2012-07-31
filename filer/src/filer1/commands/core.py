@@ -1,6 +1,7 @@
 
 from filer1.commands.command import Command
-from filer1.repository import Repository, init_repository, detect_working
+from filer1.repository import (Repository, init_repository,
+                               detect_working, detect_repository)
 from afn.utils.partial import Partial
 from afn.fileutils import File
 import json
@@ -29,14 +30,25 @@ class Init(Command):
 @command("checkout")
 class Checkout(Command):
     def update_parser(self, parser):
-        parser.add_argument("-d", "--repository", required=True)
-        parser.add_argument("-w", "--working", required=True)
+        parser.add_argument("-d", "--repository", required=False)
+        parser.add_argument("-w", "--working", required=False)
         parser.add_argument("-r", "--revision", default=None)
     
     def run(self, args):
-        repository_folder = File(args.repository)
+        if not args.repository: # --repository not specified; try to detect it
+            repository_folder = detect_repository(File())
+            if not repository_folder:
+                raise Exception("You're not inside a repository (or an already "
+                                "existing working folder) right now, and you "
+                                "didn't specify --repository.")
+        else:
+            repository_folder = File(args.repository)
         repository = Repository(repository_folder)
-        working_folder = File(args.working)
+        if args.working:
+            working_folder = File(args.working)
+        else:
+            print "Using the repository directory as the working directory"
+            working_folder = repository_folder
         revision = args.revision
         # We don't support updating existing working directories right now.
         # TODO: This needs to be fixed.
@@ -121,10 +133,17 @@ class Commit(Command):
 @command("log")
 class Log(Command):
     def update_parser(self, parser):
-        parser.add_argument("-d", "--repository", required=True)
+        parser.add_argument("-d", "--repository", required=False)
     
     def run(self, args):
-        repository_folder = File(args.repository)
+        if args.repository:
+            repository_folder = File(args.repository)
+        else:
+            repository_folder = detect_repository(File())
+            if not repository_folder:
+                raise Exception("You're not in a repository (or a working "
+                                "folder) right now and you didn't specify "
+                                "--repository.")
         repository = Repository(repository_folder)
         for number, hash, data_str, data in repository.revision_iterator():
             print
