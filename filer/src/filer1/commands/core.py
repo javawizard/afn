@@ -154,6 +154,8 @@ class Log(Command):
             print "Revision %s:%s:" % (number, hash)
             print "    Date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
             print "    Type:           %s" % data["type"]
+            if data.get("current_name"):
+                print "    Committed As:   %s" % data["current_name"]
             for cparent in data["parents"]:
                 print "    Change Parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
             for dparent in repository.get_dirparents(hash):
