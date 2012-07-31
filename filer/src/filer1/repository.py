@@ -164,9 +164,14 @@ class Repository(object):
         # "children" dict to our dirchildren entry
         elif data["type"] == "folder":
             self.dirchildren.child(hash).write(json.dumps(data["children"].values()))
-        # TODO: write an empty dirparents for ourselves, then go through our
-        # children (the ones written to our dirchildren) and add ourselves to
-        # their dirparents entry
+        # Write an empty dirparents file for ourselves
+        self.dirparents.child(hash).write(json.dumps([]))
+        # If we're a folder, iterate over our children and write ourselves into
+        # their respective dirparents files
+        if data["type"] == "folder":
+            for c in data["children"].values():
+                f = self.dirparents.child(c)
+                f.write(json.dumps(json.loads(f.read()) + [hash]))
         return hash
     
     def update_to(self, target, new_rev):
@@ -325,6 +330,9 @@ class Repository(object):
     
     def number_for_rev(self, hash):
         return self.numbersbyrev.child(hash).read()
+    
+    def get_dirparents(self, hash):
+        return json.loads(self.dirparents.child(hash).read())
 
 
 

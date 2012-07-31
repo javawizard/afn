@@ -149,8 +149,10 @@ class Log(Command):
             print
             print "Revision %s:%s:" % (number, hash)
             print "    Type:    %s" % data["type"]
-            for parent in data["parents"]:
-                print "    Parent:  %s:%s" % (repository.number_for_rev(parent), parent)
+            for cparent in data["parents"]:
+                print "    Change Parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
+            for dparent in repository.get_dirparents(hash):
+                print "    Dir Parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
 
 # Delete the command decorator since we don't need it anymore
 del command
