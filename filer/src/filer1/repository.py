@@ -33,6 +33,29 @@ def detect_working(target):
     return target
 
 
+def detect_repository(target):
+    """
+    Finds the current repository by jumping parents until we arrive at the
+    parent that contains a .filer directory. The folder containing said 
+    directory is then returned. If no such folder is found before we hit the
+    directory root, detect_working is used to see if we're in a working folder,
+    and if we are, its .filerfrom is used. Otherwise, None is returned.
+    """
+    current = target
+    while not current.child(".filer").exists:
+        current = current.parent
+        if current is None:
+            break
+    if current: # Found a folder with a .filer in it; return it
+        return current
+    # Didn't find a .filer, so scan for a working copy
+    working = detect_working(target)
+    if working: # Found a working copy; use its .filerfrom
+        return File(working.child(".filerfrom").read())
+    # Didn't find a working copy; return None
+    return None
+
+
 def init_repository(folder):
     # TODO: Consider using a neo4j repository for the prototype. It'd make a
     # lot of stuff simpler and would do away with pretty much all of the
