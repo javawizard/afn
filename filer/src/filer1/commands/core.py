@@ -158,7 +158,7 @@ class Log(Command):
                 print "    Change Parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
             for dparent in repository.get_dirparents(hash):
                 print "    Dir Parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
-            print "    Message:        %s" % data.get("info", {}).get("message", {})
+            print "    Message:        %s" % data.get("info", {}).get("message", "")
 
 # Delete the command decorator since we don't need it anymore
 del command
