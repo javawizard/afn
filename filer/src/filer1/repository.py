@@ -6,6 +6,9 @@ import hashlib
 from filer1 import exceptions
 import json
 
+global_debug = False
+
+
 def delete(target):
     """
     Deletes the specified file or folder. This mainly exists due to a limitation
@@ -77,7 +80,9 @@ def init_repository(folder):
 
 
 class Repository(object):
-    def __init__(self, folder, debug=True):
+    def __init__(self, folder, debug=None):
+        if debug is None:
+            debug = global_debug
         self.debug = debug
         self.folder = File(folder)
         self.filer_dir = self.folder.child(".filer")

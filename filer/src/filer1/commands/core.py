@@ -185,12 +185,17 @@ class Push(Command):
         # going to iterate through all revisions in local_repository and check
         # to see if they're present in remote_repository, and if they're not,
         # add them.
+        changes_pushed = 0
         for number, hash, data_str, data in local_repository.revision_iterator():
             if not remote_repository.has_revision(hash):
+                changes_pushed += 1
                 # Revision is not present, so create it
                 print "Pushing revision %s:%s" % (number, hash)
                 remote_repository.create_revision(data_str)
-        print "Pushed to %s." % args.target
+        if changes_pushed:
+            print "Pushed %s change%s to %s." % (changes_pushed, "s" if changes_pushed > 1 else "", args.target)
+        else:
+            print "Remote repository is already up to date."
 
 # Delete the command decorator since we don't need it anymore
 del command

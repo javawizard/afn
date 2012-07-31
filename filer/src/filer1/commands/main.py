@@ -3,6 +3,7 @@ import sys
 import os
 from afn.backports.argparse import ArgumentParser
 from filer1.commands.core import commands
+from filer1 import repository
 
 
 def main():
@@ -20,8 +21,11 @@ def main():
         print "Valid commands are %r" % commands.keys()
         sys.exit(1)
     parser = ArgumentParser()
+    parser.add_argument("--debug", default=False, action="store_true")
     command.update_parser(parser)
     args = parser.parse_args(sys.argv[2:])
+    if args.debug:
+        repository.global_debug = True
     command.run(args)
 
 
