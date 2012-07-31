@@ -132,8 +132,18 @@ class Repository(object):
         
         Entries in changeparents, changechildren, dirparents, and dirchildren
         will be created for this new revision.
+        
+        Update: data can be a string, in which case it will be checked to
+        ensure it can be decoded as JSON properly, and the used as-is. This is
+        so that platforms that encode JSON slightly differently won't cause
+        hash mismatches due to decoding and re-encoding.
         """
-        text_data = json.dumps(data, sort_keys=True)
+        if isinstance(data, dict):
+            text_data = json.dumps(data, sort_keys=True)
+        else:
+            # Make sure we can read it properly
+            json.loads(data)
+            text_data = data
         hash = hashlib.sha1(text_data).hexdigest()
         self.revisions.child(hash).write(text_data)
         if self.debug:
@@ -337,6 +347,9 @@ class Repository(object):
     
     def get_dirparents(self, hash):
         return json.loads(self.dirparents.child(hash).read())
+    
+    def has_revision(self, hash):
+        return self.revisions.child(hash).exists
 
 
 

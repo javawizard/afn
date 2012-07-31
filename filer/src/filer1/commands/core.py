@@ -163,6 +163,35 @@ class Log(Command):
             print "    message:        %s" % data.get("info", {}).get("message", "")
             print
 
+
+@command("push")
+class Push(Command):
+    def update_parser(self, parser):
+        parser.add_argument("-d", "--repository", required=False)
+        parser.add_argument("target", required=True)
+    
+    def run(self, args):
+        if args.repository:
+            repository_folder = File(args.repository)
+        else:
+            repository_folder = detect_repository(File())
+            if not repository_folder:
+                raise Exception("You're not in a repository (or a working "
+                                "folder) right now and you didn't specify "
+                                "--repository.")
+        local_repository = Repository(repository_folder)
+        remote_repository = Repository(File(args.target))
+        # This is a rather unintuitive way to do the thing, but we're just
+        # going to iterate through all revisions in local_repository and check
+        # to see if they're present in remote_repository, and if they're not,
+        # add them.
+        for number, hash, data_str, data in local_repository.revision_iterator():
+            if not remote_repository.has_revision(hash):
+                # Revision is not present, so create it
+                print "Pushing revision %s:%s" % (number, hash)
+                remote_repository.create_revision(data_str)
+        print "Pushed to %s." % args.target
+
 # Delete the command decorator since we don't need it anymore
 del command
 
