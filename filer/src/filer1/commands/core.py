@@ -125,7 +125,7 @@ class Commit(Command):
         # We've got the repository. Now we go read the list of parents to use.
         parents = json.loads(working_folder.child(".filerparents").read())
         # Then we write down the date and commit message
-        info = {"date": time.time(), "message": args.message)        
+        info = {"date": time.time(), "message": args.message}
         # Then we create the new revision
         hash = repository.commit_changes(parents, working_folder, info)
         # Then update .filerparents to point to the new revision
