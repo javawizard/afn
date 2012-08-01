@@ -88,6 +88,8 @@ So I need to think about this a bit when it's morning.
 
 (On seconds thought, no, the first-parent-gets-special-treatment thing is something I'm not willing to accept. So other ideas need to be thought of.)
 
+(On third thought, this is a /prototype/, for gosh sakes. I need to keep that in mind. So I think I'll use the first-parent-gets-special-treatment model for now, and change it before I actually make a production release of Filer.)
+
 
 
 
