@@ -62,6 +62,23 @@ So yeah, I'm going to go change everything to just use that for now.
 
 
 
+So things have worked marvelously, and I think I'm going to do two things now.
+
+First is I'm going to change commit and update to work with revsets, meaning that update produces a dict of the revision that the updated folder is at along with the revisions its child folders, and their child folders etc are at, and commit takes this list and uses it as the list of parents to use. (So it'll be a list of parents, which will obviously have only one parent when the list updates, and then this'll be stored by the update command and more parents will be added as merges happen.)
+
+After I do that, I'm going to change everything to use diffs again. But I'll be doing updating a bit differently, so that it actually performs well, and can't be messed up by particular pathological cases that the old change-based update code could. Non-fast-forward updates should be able to be performed in O(n*k) worst-case time, where n is the number of revisions in the repository and k is the average depth of the tree. (And since k will typically be small, worst-case performance is linear.) The previous update algorithm had worst-case performance of O(n**k), where ** is exponentation; this obviously was quite bad.
+
+The reason for the performance issue was that the old update algorithm would update the checked-out directory one revision forward, then recursively update its children. Then it would update the checked-out directory one more revision forward and update its children, and so on. The problem was, of course, that if every file in every child revision contained a non-fast-forward revision change, then every single revision advancement of the parent caused an entire re-update of every child. And if those children had the same issue, then every single advancement of every child caused an entire update for their children, thus blowing the whole thing up and resulting in exponential time complexity.
+
+The new algorithm will do things differently: instead of advancing the parent one revision at a time and then updating all child revisions, which is rather needless as those child revisions will probably just be blown away by the next parent update step, the parent directory is completely updated to its target revision, and then every one of its child revisions is then completely updated to the target revision now specified by the parent, and so on. Thus every child can have a maximum of one entire repository pass as every child will be requested to change revisions only once by the parent. The worst-case time complexity is therefore O(n*k), which is linear since k is typically small in comparison to n.
+ 
+Note that some shortcuts will be used: if the current revision of a particular thing is an ancestor of the revision to update to, the update will just proceed from that revision; otherwise it will proceed from the target revision's root parent. This will only follow the first parent revision for now; obviously this is suboptimal, but it's how Mercurial does it so I think I can get away with it for now. (And this resolves the issue of which root to use when a thing has multiple roots; the one obtained by always following the first parent will be used.)
+
+(Note that this also means that a merge needs to contain diffs between the target and each of its parents, so that one can go from any of the parents to the child and vice versa. I'd like to either find or write an octopus merge algorithm, one that can store the whole combination of differences against all of the parents as a single thing. But that's not high priority for now.)
+
+So yeah, let's go convert things to use revstates (the thingies that say the current set of parents for a thing and all of its children) and diffs.
+
+
 
 
 
