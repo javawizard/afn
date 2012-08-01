@@ -250,24 +250,55 @@ class Repository(object):
             target.write(data["contents"])
         # That's pretty much it for updating right now.
     
-    def commit_changes(self, parent_revs, target, info, current_name=None):
+    def commit_changes(self, revstate, parent_files, new_file, info, current_name=None):
         """
-        Creates a new revision with the specified parents for the specified
-        target file or folder. Note that if there is only one revision in
-        parent_revs and its contents are the same as target's contents, the
-        revision present in parent_revs will be returned as-is.
+        Creates a new revision with the specified revstate as parents. There
+        should be one item in old_targets per item in revstate["revs"], i.e.
+        one old target for every parent revision; the differences between these
+        and new_target will be used as the revision to commit.
+        
+        If the specified revstate indicates only one parent for the current
+        revision and the old target and new_target are the same, the passed-in
+        revstate will be returned as-is. Otherwise, a new revstate built up
+        from the newly-created revision and all of its dirchild revisions
+        created for it will be returned.
         
         Note that switching types isn't supported right now; if target is a
         file in one of its parent revisions but is a folder now, or vice versa,
         bad things will happen.
+        
+        To commit a revision creating a file or folder that doesn't yet exist
+        in the repository, simply pass in an empty list for old_targets and an
+        empty revstate (i.e. {"revs": [], "children": {}}). Thus a minimal
+        example of putting new content into a repository would be:
+        
+        from filer1.repository import Repository
+        from afn.fileutils import File
+        repo = Repository(File("path/to/repository/folder"))
+        new_revstate = repo.commit_changes({"revs": [], "children": {}}, [],
+                                           folder_to_commit, {"date":
+                                           1234567890, "message":
+                                           "adding some new files"})
         """
-        # See if we're a file or a folder. Switching types won't be supported
-        # right now, but should probably be implemented as a delete+create
-        # later on.
-        if target.is_file:
-            # It's a file. Check to see if we've got either 2 or more parents,
-            # zero parents, or the file's contents are different than its
-            # single parent revision's contents.
+        # Make sure the old targets and the new target are all of the same type
+        for index, old in enumerate(old_targets):
+            if old.is_file != new_target.is_file:
+            # Trying to switch types; raise an exception about it
+                raise Exception("New data to commit is a %s but parent %s is "
+                        "a %s" % (["folder", "file"][new_target.is_file],
+                                  revstate["parents"][index],
+                                  ["folder", "file"][old.is_file]))
+        # They're the same type. Now see if we're a file or a folder.
+        if new_target.is_file:
+            # It's a file. Check to see if we've got exactly one parent and the
+            # file's old contents are the same as its new contents.
+            if len(old_targets) == 1 and old_target.read() == new_target.read():
+                # Only one revision and the contents are the same; return the
+                # revstate as-is
+                return revstate
+            else:
+                # Multiple parents or different contents (or the file hasn't
+                # been created yet), so let's go make a diff against 
             if (len(parent_revs) > 1 or
                 len(parent_revs) < 1 or
                 self.get_revision(parent_revs[0])["contents"] != target.read()):
