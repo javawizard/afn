@@ -78,6 +78,16 @@ Note that some shortcuts will be used: if the current revision of a particular t
 
 So yeah, let's go convert things to use revstates (the thingies that say the current set of parents for a thing and all of its children) and diffs.
 
+So I just realized I've designed myself into a corner again. My idea was that multiple old copies of files are stored for when there are multiple parents, but then I realized that the fact that merges in child paths can happen means that the revstate needs to be capable of expressing multiple, independent revstates for each parent. In other words, a single revstate has not only one child revstate for each child file, but a child revstate for each combination of a child file and a revision, since they could be different.
+
+Which is getting complicated and might require storing more data than I want to.
+
+So I need to think about this a bit when it's morning.
+
+(Possible solution: only store a diff against the first parent, which would mean we'd only have the revstate track the first parent's information. The downside is that this gives special treatment to the first parent of a revision, which is something I'd like to avoid, except where it's used purely as a shortcut (as it is in the updating logic; I expect to get rid of the special treatment for first parents there once I work out how to do a decent shortest-path algorithm that can traverse multiple parents). But it might be something to consider at least for the time being.)
+
+(On seconds thought, no, the first-parent-gets-special-treatment thing is something I'm not willing to accept. So other ideas need to be thought of.)
+
 
 
 
