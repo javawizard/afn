@@ -90,6 +90,25 @@ So I need to think about this a bit when it's morning.
 
 (On third thought, this is a /prototype/, for gosh sakes. I need to keep that in mind. So I think I'll use the first-parent-gets-special-treatment model for now, and change it before I actually make a production release of Filer.)
 
+Actually no, I've got a better idea: have a cache stored... hm, not sure where this should be stored... thinking having it be in the working copy for now, and maybe integrate it into the repository in the future.
+
+So, the general idea is that we keep a cache of revisions at a certain location. Then Filer can be asked to provide the content of a file at a revision, and it would look up said content in the cache, or create a new entry and update it accordingly.
+
+So at that point, a checkout would just get the relevant items from the cache and copy them into the working copy location.
+
+Then we'd need to figure out how to decide when to evict items from the cache and which items to evict.
+
+Perhaps we should just have a filer compact command that, among other things, evicts everything from the cache. It could take command-line flags specifying what to compact (I would plan on the compact command doing more than just cache eviction; it would probably pack multiple revisions into single files to save on space, similar to git, and so on), and there would be flags to tell the compact command not to evict the cache, or to evict specific revisions, or to evict any revision not in a working copy's revstate.
+
+Then that begs the question of how updates to existing working copies should be performed in the presence of a cache. It could be done one of two ways: 1, a shared function is used to update any given file or folder, which would then be used separately on the cache and on the working copy to make updates as needed; or 2, updates are made only to the cache, and updating a working copy involves creating new cached items for every member of the working copy that's changed and then copying them straight into the working copy.
+
+My gut instinct is to go with #2, for two reasons: 1, it avoids code re-use, and 2, it reduces the number of operations that have to be performed if a single revision is present multiple times in the dirtree. (Such an occurrence would likely be rare, but I can foresee some instances in which it would be useful, such as the current symlinking I have of some bits of Java code in AFN to allow a few classes to be used in multiple locations.) The series of updates would be performed once on the cached file or folder, and then the file or folder would be copied to each of the relevant locations.
+
+That solution, of course, would only maintain its efficiency as long as the mechanism for adding items to the cache is smart enough to search for ancestor revisions already in the cache and update from them instead of starting anew from one of the revison's roots. This shouldn't be too hard, as it'd pretty much be a matter of using the first-parent-gets-special-treatment-right-now algorithm I mentioned several paragraphs back for updating, with a check at each revision to see if that particular revision is already present in the cache.
+
+One important note: the cache should not store all of a revision's ancestors just because the revision itself was requested. In other words, the cache must not use itself to cache intermediate revisions, for the simple reason that this would blow up the user's disk space were a revision with 100,000 ancestors to be loaded into the cache.
+
+
 
 
 
