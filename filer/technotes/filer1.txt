@@ -116,6 +116,10 @@ On the other hand, such an approach would have cross platform compatibility prob
 
 So perhaps I should settle on an alternate scheme for now. I could always have folders be files whose contents are JSON dicts of their contents. Or I could have them be actual folders whose files' contents are the revisions they point to, but that'd use up inodes fairly fast if a lot of content was cached, so probably not the best idea.
 
+I just thought of another idea, though, that could work, and would solve a lot of issues: use git's object store as filer's storage backend to start with. If I'm reading the documentation on git correctly, its object store performs deduplication for you, so you literally could (and, if I'm still reading this correctly, git does) store all of the files' contents verbatim along with each revision, and git will deduplicate them away for you.
+
+And that would be excellent, as it would obviate the need for the whole cache thing in the first place.
+
 
 
 
