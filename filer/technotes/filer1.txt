@@ -120,6 +120,12 @@ I just thought of another idea, though, that could work, and would solve a lot o
 
 And that would be excellent, as it would obviate the need for the whole cache thing in the first place.
 
+But I think I'm going to go with my own cache-based system for now, for two main reasons. The first is that I really don't want people to think Filer is a sort of front end to git, or that it's based on git; I want it to be distinctly its own system. The second is that I'm not sure yet if I want things to just disappear when they're no longer referenced; I expect Filer will have a similar model to git in this regard, but I don't want to decide for sure just yet.
+
+I would still like to look for a deduplicating database somewhere, however. That'd allow commits to just be stored as their entire contents as they are right now.
+
+Or maybe rsync could help...
+
 
 
 
