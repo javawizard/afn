@@ -126,6 +126,26 @@ I would still like to look for a deduplicating database somewhere, however. That
 
 Or maybe rsync could help...
 
+Actually no, I just found libgit2, and pygit2, and they look somewhat interesting. I'm still worried about using them because of the filer-is-a-ripoff-of-git issue, but then again, they both look quite promising.
+
+There is, of course, one slight issue, and that is that trees don't have the ability to store extra data like commit info. Commits have to be stored as separate objects, which is something I'd really prefer not to have to do.
+
+Man, if only git exposed trees as commits themselves, it'd basically be Filer. And if only I knew enough about git's file format to be able to write my own deduplicating data store, I could just do that.
+
+Maybe I should...
+
+Or maybe I should write an interface (a Python abstract class, more accurately) for interacting with a deduplicating data store, and then have the first implementation of that be based on libgit2. Then, once I work out how to actually write a deduplicating data store, I could go swap out my own implementation.
+
+So it'd more or less expose trees and blobs. I don't know how I'd handle commits yet; I might have a single commit be a tree with entries for the commit's message, data, and so on, and an entry for the commit's contents, which is a tree for a folder or a blob for a file.
+
+That'd work nicely.
+
+So now I need to go check libgit2 and pygit2 and make sure it's properly deduplicating things like I've read it does. As long as it does that, I should be good to go.
+
+I do need to figure out how commits are referenced in order to stay alive, though. I'm not yet sure if I'd want to leave the task of cleaning out unreferenced commits to the data store (in which case the libgit2-based data store might be able to use libgit2 to do it) or have Filer do it itself; arguments for the latter are that I'm still not yet sure if I want to use the same model as git for storing commit references.
+
+If I did decide to go with the latter, data store would be expected to persist all things put in them; the libgit2 implementation could possibly do that by having one ref (in the git sense, although I'm still not yet sure how to do that with libgit2) per commit. I would need to make sure that this wouldn't be too expensive, though. Or if there's a way to disable garbage collection of things in libgit2, that could possibly be used as well.
+
 
 
 
