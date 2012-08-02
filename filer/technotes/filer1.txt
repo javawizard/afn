@@ -108,6 +108,14 @@ That solution, of course, would only maintain its efficiency as long as the mech
 
 One important note: the cache should not store all of a revision's ancestors just because the revision itself was requested. In other words, the cache must not use itself to cache intermediate revisions, for the simple reason that this would blow up the user's disk space were a revision with 100,000 ancestors to be loaded into the cache.
 
+So, I'm thinking that for now, files should just be stored as themselves in the cache.
+
+How to store folders is, of course, another question. It would be rather neat to store them as folders containing symlinks for each child file/folder pointing to the corresponding cached revisions; if any of the revisions weren't cached, the relevant symlink would simply show up as broken. That would allow a revision whose dirchildren are also cached to actually be browsed inside the cache folder, and, indeed, a checkout of the revision to be made simply by copying the revision's cache folder, dereferencing symlinks in the process (which cp --dereference will do).
+
+On the other hand, such an approach would have cross platform compatibility problems, as Windows doesn't allow non-administrators to create symlinks. (I've really no idea their rationale for this decision, but it's Windows, so go figure.)
+
+So perhaps I should settle on an alternate scheme for now. I could always have folders be files whose contents are JSON dicts of their contents. Or I could have them be actual folders whose files' contents are the revisions they point to, but that'd use up inodes fairly fast if a lot of content was cached, so probably not the best idea.
+
 
 
 
