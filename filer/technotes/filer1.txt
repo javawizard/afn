@@ -160,7 +160,13 @@ You know what, this is a prototype; I'm not going to worry about stamps or any o
 
 So I'm going to take a look at git's format for storing trees and commits...
 
+So it looks like the format of a tree is "tree", then the size of the tree object (not sure what encoding they use for the size, but it looks variable-width), then \x00, then one entry for each file, where an entry is the file's access code as six ASCII characters (e.g. 100644), the file-name terminated with \x00, and 20 bytes specifying the SHA1 of the blob or tree holding the file/folder's contents.
 
+Simple enough. Not very extensible though.
+
+Files appear to just store their contents as-is.
+
+As for commits...
 
 
 
