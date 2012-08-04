@@ -156,6 +156,12 @@ I'm also toying with the idea of having the abstract backing store class provide
 
 That, though, would need some thought as to how things like stamps would be stored. Should the backing store know how to store these? Or should that be the responsibility of something else? And how should those be transfered between clients? (A future question to think about: how does one go about pushing stamps that a remote doesn't have without asking the remote about whether it has every single stamp the local end knows about?)
 
+You know what, this is a prototype; I'm not going to worry about stamps or any of that fancy stuff for now. Let's just store revisions, revisions, and more revisions.
+
+So I'm going to take a look at git's format for storing trees and commits...
+
+
+
 
 
 
