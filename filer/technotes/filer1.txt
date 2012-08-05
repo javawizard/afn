@@ -148,6 +148,18 @@ If I did decide to go with the latter, data store would be expected to persist a
 
 
 
+So I wrote a ton of changes to this file on my laptop but forgot to push them to phenoxydine. Basic summary of the changes I made are: let's make an abstract class for specifying data storage mechanisms, maybe use libgit2 as an underlying store but not as the default one, write one that stores revisions in their entirety and one that stores them as deltas of their previous revisions, and one that uses the same algorithm as git does for its pack files. And then let's write our own binary JSON format and Python library for it that 1: is canonical, meaning the same JSON encodes the same way always (needed for creating revision hashes), 2: can store binary data, which ordinary JSON can't, and 3: doesn't read binary data into memory unless it's smaller than a certain size, and instead exposes it as a Python file-like object.
+
+And I was discussing the format for how various types are encoded.
+
+So, binary data is encoded as an eight-byte sequence specifying the length of the binary data, followed by that many bytes.
+
+Actually, I might want to change this to have every type encode its length in some form or other so that even dictionaries' values can be lazily loaded into memory. Although maybe this is overkill for now and I should just worry about that later, and load everything except actual binary data into memory for now. I'll decide later.
+
+(The length thing would also allow a dictionary to be requested as a stream of keys and values, which would avoid loading it into memory all at once as well. Might be useful for when lots of file are stored in folders, if that ever happens.)
+
+
+
 
 
 
