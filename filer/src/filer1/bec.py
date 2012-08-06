@@ -13,13 +13,13 @@ import struct
 
 JSON_TYPES = (int, long, float, basestring, bool, type(None), Sequence, Mapping)
 
-_DICT = 1
-_LIST = 2
-_STRING = 3
-_BYTES = 4
-_NUMBER = 5
-_BOOL = 6
-_NULL = 7
+_DICT = "\x01"
+_LIST = "\x02"
+_STRING = "\x03"
+_BYTES = "\x04"
+_NUMBER = "\x05"
+_BOOL = "\x06"
+_NULL = "\x07"
 
 
 class BECStream(object):
