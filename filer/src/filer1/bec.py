@@ -167,10 +167,27 @@ def load_value(file):
         raise exceptions.InvalidTypeCode(type=value_type)
 
 
-def dump(value, file):
+def dump_value(value, file):
     """
     Writes the specified value to the specified BEC file-like object.
     """
+    if value is None:
+        file.write(_NULL)
+        file.write(struct.pack("q", 0))
+    elif isinstance(value, bool):
+        file.write(_BOOL)
+        file.write(struct.pack("q", 1))
+        file.write("\x01" if value else "\x00")
+    elif isinstance(value, (int, long, float)):
+        file.write(_NUMBER)
+        file.write(struct.pack("q", 8))
+        file.write(struct.pack("d", value))
+    elif isinstance(value, basestring) or hasattr(value, "read"):
+        # Wrap it in a stream if it's not one already. BECDict values will
+        # always be passed in as streams but 
+        if isinstance(value, basestring):
+            value = StringIO(value)
+        
 
 
 
