@@ -196,8 +196,8 @@ def dump_value(value, file):
         # Then write out the keys and the values
         for k in keys:
             v = value[k]
-            dump_value(k)
-            dump_value(v)
+            dump_value(k, file)
+            dump_value(v, file)
         # Then write the length back out as with lists and files
         length = file.tell() - length_pos - 8
         file.seek(length_pos)
