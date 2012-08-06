@@ -209,7 +209,7 @@ Values are encoded first with a single byte indicating the type of the value, as
     \x05 indicates a boolean.
     \x06 indicates a null value.
 
-The length of the corresponding value then follows. This length is stored as a variable-length integer, encoded as follows: the integer is divided into groups of seven bits, with zeros added to the left to pad the integer out to seven bits. One byte for each group of seven bits is then written, most significant set of bits first; each of these bytes has the relevant seven bits as its least significant bits, and all but the last of these bytes have a 1 as the most significant bit; the last byte has a 0. (An integer can then be read back in by reading subsequent bytes until one is encountered which has a 0 as its most significant bit; the lower seven bits of all bytes read are then concatenated to reconstruct the original integer.)
+The length of the corresponding value then follows. This length is stored as eight bytes. The value should be less than 2**(63-1), the maximum value for an eight-byte signed integer, to allow libraries to use either a signed encoding or an unsigned encoding with the same result. This allows for values up to 8 EiB in length, and I don't think I can even comprehend the money needed to buy (or make) that much storage. So we should be fine.
 
 The encoding of each of these values follows. They are as specifies:
 
