@@ -7,14 +7,15 @@ class Store(object):
     @abstractmethod
     def store(self, data):
         """
-        Stores the specified BEC value in this store. The hash of the data, as
-        a hexidecimal string, will be returned.
+        Stores the specified commit, which is a BEC object, in this store. The
+        BEC object in question must form a valid Filer commit; in particular,
+        the store is permitted to rely on special keys like "parents" being
+        present, and is free to throw an exception if they're not.
         """
     
     @abstractmethod
     def get(self, hash):
         """
-        Returns the BEC object with the specified hash previously stored in
-        this store, or throws an exceptions.NoSuchObject if no such object has
-        been added to this store.
+        Returns the commit with the specified hash, or throws an
+        exceptions.NoSuchObject if the commit in question does not exist.
         """
