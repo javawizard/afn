@@ -19,3 +19,10 @@ class Store(object):
         Returns the commit with the specified hash, or throws an
         exceptions.NoSuchObject if the commit in question does not exist.
         """
+    
+    @abstractmethod
+    def has(self, hash):
+        """
+        Returns true if the specified hash has been stored in this store, false
+        if it hasn't.
+        """

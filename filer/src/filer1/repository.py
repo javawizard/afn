@@ -305,19 +305,21 @@ class Repository(object):
         while self.numbers.child(str(current_number)).exists:
             # We've still got a revision, so yield it
             hash = self.numbers.child(str(current_number)).read()
-            data_str = self.revisions.child(hash).read()
-            data = bec.loads(data_str)
-            yield str(current_number), hash, data_str, data
+            data = self.store.get(hash)
+            yield str(current_number), hash, data
             current_number += 1
     
     def number_for_rev(self, hash):
+        """
+        Returns the short number (as a string) of the specified revision hash.
+        """
         return self.numbersbyrev.child(hash).read()
-    
-    def get_dirparents(self, hash):
-        return bec.loads(self.dirparents.child(hash).read())
-    
+        
     def has_revision(self, hash):
-        return self.revisions.child(hash).exists
+        """
+        Returns True if the specified revision is present in this repository.
+        """
+        return self.store.has(hash)
 
 
 

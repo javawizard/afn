@@ -41,5 +41,8 @@ class DirectStore(Store):
         # longer needed.
         opened_file = f.open("r+b")
         return bec.load(opened_file)
+    
+    def has(self, hash):
+        return self.data_dir.child(hash).exists
 
 
