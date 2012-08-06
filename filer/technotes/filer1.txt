@@ -237,6 +237,39 @@ So now, to get back to filer-related things.
 
 I need to go through and change everything back to use complete file contents instead of diffs; I was in the process of changing everything to use the latter, but that'll be at the storage whatever thingie level now. So let's do that first.
 
+Actually no, let's change things to use the whole store idea right now.
+
+So I need to think a bit more about this...
+
+So I'm not tracking (change|dir)(parents|children) right now; I'll be tracking them later.
+
+So, another thing I need to consider is separating commits from directory states and file contents, which git does (it has commits, trees, and blobs). Filer would do things similarly to how git does them, but a tree would point to other commits instead of to other trees/blobs, and a commit could contain either a single tree or a single blob depending on whether it's a folde or a file.
+
+But the store doesn't need to know that, yet.
+
+So we store directories, for now, as dictionaries whose keys are file names and whose values are hashes of the corresponding commits.
+
+Then we store files as streams. No metadata surrounding them; we just pass the file-like object directly into the store for safe keeping.
+
+(Incidentally, I think stores should guarantee that after their store method returns, any streams passed in have been successfully stored elsewhere and are no longer needed.)
+
+Then we store commits as dictionaries with keys "parents", which is a list of the commit's parents, "type", which is "file" or "folder", "info", which contains information about the commit (date, message, author, and so on), and "contents", which is a string containing the hash of the stored file or folder mentioned above.
+
+Although, is there really much of a point? This would allow for automatic deduplication of files with identical content, but should the underlying store be responsible for said deduplication instead?
+
+For now, no, let's have things be separate like I just mentioned above. Underlying stores will already have their work cut out for them; let's store things separately for now to make it easier on the store itself.
+
+So yeah, everything's good for now, and we're storing commits, folders, and files separately.
+
+Although that would mess up the delta storage mechanism of the one store I was thinking of writing initially, since then it wouldn't know what parent revision to base things on...
+
+Ok, maybe I should just have contents be the file's data for files or the folder's dictionary for folders.
+
+Yeah, I think I'll just do that for now.
+
+And note that it'll be contents, not children, even if it's a folder, for now. I might change that later.
+
+
 
 
 
