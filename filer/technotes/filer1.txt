@@ -190,7 +190,7 @@ That makes me think I should come up with my own binary JSON-like format, simila
 
 I'm also thinking I want binary data to be stored in a contiguous block inside the file. That would allow the library to provide access to binary data via file-like objects, thus solving the memory problem. They could then be set to other file-like objects (such as the actual file to store) to store large amount of data. That solves both the read and the write problems for large amounts of data.
 
-Folders would still be stored entirely in memory as they would be stored as dicts, but I don't really care about that for now as... let's see, a folder with, say, 10,000 files or folders in it would take up probably abount 500KB of RAM to store, which honestly isn't that much compared to the Python interpreter's 5MB RAM overhead just to start up. So that's ok for now, and if it isn't, I can always change the format later. (I'll have a byte or two at the beginning indicating the format version number.)
+Folders would still be stored entirely in memory as they would be stored as dicts, but I don't really care about that for now as... let's see, a folder with, say, 10,000 files or folders in it would take up probably about 500KB of RAM to store, which honestly isn't that much compared to the Python interpreter's 5MB RAM overhead just to start up. So that's ok for now, and if it isn't, I can always change the format later. (I'll have a byte or two at the beginning indicating the format version number.)
 
 So, dictionary keys are, of course, strings; specifically UTF-8 strings. They're stored as bytes encoded with UTF-8, and they're written out in sorted order, sorted in terms of their byte-wise representation, not in terms of their corresponding Unicode representation.
 
@@ -208,6 +208,8 @@ Values are encoded first with a single byte indicating the type of the value, as
     \x04 indicates a double-precision number. This is the only type of number right now.
     \x05 indicates a boolean.
     \x06 indicates a null value.
+
+The length of the corresponding value then follows. This length is stored as a variable-length integer, encoded as follows: the integer is divided into groups of seven bits, with zeros added to the left to pad the integer out to seven bits. One byte for each group of seven bits is then written, most significant set of bits first; each of these bytes has the relevant seven bits as its least significant bits, and all but the last of these bytes have a 1 as the most significant bit; the last byte has a 0. (An integer can then be read back in by reading subsequent bytes until one is encountered which has a 0 as its most significant bit; the lower seven bits of all bytes read are then concatenated to reconstruct the original integer.)
 
 The encoding of each of these values follows. They are as specifies:
 
