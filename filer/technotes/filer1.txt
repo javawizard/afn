@@ -229,6 +229,15 @@ And that's pretty much it.
 
 
 
+So I just changed everything to use two different types for strings and bytes, which avoids the need for a BECDict class since streams are a completely different type from strings now.
+
+(And a StringIO instance can be used to store a literal string as a stream.)
+
+So now, to get back to filer-related things.
+
+I need to go through and change everything back to use complete file contents instead of diffs; I was in the process of changing everything to use the latter, but that'll be at the storage whatever thingie level now. So let's do that first.
+
+
 
 
 
