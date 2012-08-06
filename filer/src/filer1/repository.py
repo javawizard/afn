@@ -6,8 +6,26 @@ import hashlib
 from filer1 import exceptions
 from filer1 import bec
 from filer1.data.stores.direct import DirectStore
+import shutil
 
 global_debug = False
+
+def same_contents(fp1, fp2):
+    """
+    Compares the contents of two file-like objects to see if they're the same.
+    Both files will be seeked to zero before comparing, and both will be left
+    at indeterminate positions once a difference is found.
+    """
+    fp1.seek(0)
+    fp2.seek(0)
+    while True:
+        d1 = fp1.read(8192)
+        d2 = fp2.read(8192)
+        if d1 != d2:
+            return False
+        if not d1: # and not d2, since if they were different, we wouldn't get
+            # here because of the return statement on the previous line
+            return True
 
 
 def delete(target):
@@ -145,13 +163,6 @@ class Repository(object):
         """
         Updates target to the revision specified by new_rev, or deletes target
         if new_rev is None.
-        
-        The logic for this is quite simplified at the moment as file contents
-        are stored inside each revision; this is obviously quite prototypical
-        and will be changed to use just diffs and history walking later on.
-        When said changes are made, an old_rev parameter will be required that
-        specifies the revision that target is currently at (or None if target
-        doesn't yet exist).
         """
         # If new_rev is None, just delete target, or clear it if it's a
         # directory (see a few comments below for why we do that). FIXME: We
@@ -187,7 +198,7 @@ class Repository(object):
                 for f in target.list():
                     if not f.name.startswith("."):
                         delete(f)
-            else:
+            else: # Changing types or not a folder, so delete it
                 delete(target)
         # Now we check to see if we're dealing with a file or a folder.
         if data["type"] == "folder":
@@ -195,43 +206,19 @@ class Repository(object):
             target.mkdir(silent=True)
             # Now we go iterate through the folder's children and update each
             # of them.
-            for name, rev in data["children"].items():
+            for name, rev in data["contents"].items():
                 self.update_to(target.child(name), rev)
             # And that's it for folders.
         elif data["type"] == "file":
-            # It's a file, so we just write its contents.
-            target.write(data["contents"])
+            # It's a file, so we go seek the file to zero, then stream the
+            # file's contents into the target.
+            data["contents"].seek(0)
+            shutil.copyfileobj(data["contents"], target)
         # That's pretty much it for updating right now.
     
     def commit_changes(self, revstate, parent_files, new_file, info, current_name=None):
         """
-        Creates a new revision with the specified revstate as parents. There
-        should be one item in old_targets per item in revstate["revs"], i.e.
-        one old target for every parent revision; the differences between these
-        and new_target will be used as the revision to commit.
-        
-        If the specified revstate indicates only one parent for the current
-        revision and the old target and new_target are the same, the passed-in
-        revstate will be returned as-is. Otherwise, a new revstate built up
-        from the newly-created revision and all of its dirchild revisions
-        created for it will be returned.
-        
-        Note that switching types isn't supported right now; if target is a
-        file in one of its parent revisions but is a folder now, or vice versa,
-        bad things will happen.
-        
-        To commit a revision creating a file or folder that doesn't yet exist
-        in the repository, simply pass in an empty list for old_targets and an
-        empty revstate (i.e. {"revs": [], "children": {}}). Thus a minimal
-        example of putting new content into a repository would be:
-        
-        from filer1.repository import Repository
-        from afn.fileutils import File
-        repo = Repository(File("path/to/repository/folder"))
-        new_revstate = repo.commit_changes({"revs": [], "children": {}}, [],
-                                           folder_to_commit, {"date":
-                                           1234567890, "message":
-                                           "adding some new files"})
+        Commits changes. TODO: Document this better.
         """
         # Make sure the old targets and the new target are all of the same type
         for index, old in enumerate(old_targets):
