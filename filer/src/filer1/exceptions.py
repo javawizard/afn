@@ -37,3 +37,7 @@ class LargeValue(BECError):
             "rather large. Try reading it as a stream with get_stream instead.")
 
 
+class InvalidTypeCode(BECError):
+    _format = 'The type code "%(type)s" is not a valid type code.'
+
+

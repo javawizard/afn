@@ -31,7 +31,9 @@ class BECDict(object):
     def __setitem__(self, name, value):
         if not isinstance(name, basestring):
             raise exceptions.KeyType(name=name)
-        if not isinstance(value, JSON_TYPES):
+        if not isinstance(value, JSON_TYPES) and not hasattr(value, "read"):
+            # We're allowing setting file-like objects here to make the logic
+            # for reading BEC files simpler. TODO: is this a good idea?
             raise exceptions.ValueType(value=value)
         self._data[name] = value
     
@@ -115,31 +117,54 @@ class BECStream(object):
     # TODO: need to implement readline, readlines, and next
 
 
-def _load_at(file, position):
-    file.seek(position)
+def load_value(file):
+    """
+    Loads the specified BEC file.
+    """
     # First byte is type, next eight bytes are length
     value_type = file.read(1)
     value_length = struct.unpack("q", file.read(8))
-    if value_type == 
-
-
-def load(file, at_current=False):
-    """
-    Loads the specified BEC file. The file will be left seeked to just after
-    the end of the data read.
-    
-    (Note that the file-like object passed in must support seek/tell.)
-    
-    If at_current is False (the default), the file will be seeked to the
-    beginning before reading. If at_current is True, reading will begin at the
-    current position. Setting at_current to True is useful for reading
-    subsequent objects from a single BEC file; multiple objects can be written,
-    one after the other, to the same file with bec.dump, and then loaded in
-    turn with bec.load(..., at_current=True).
-    """
-    if not at_current:
-        file.seek(0)
-    return _load_at(file, file.tell())
+    if value_type == _NULL:
+        # No bytes to read; just return None
+        return None
+    elif value_type == _BOOL:
+        # Read one byte and return it as a bool
+        return file.read(1) == "\x01"
+    elif value_type == _NUMBER:
+        # Read eight bytes and parse as an IEEE 754 double
+        return struct.unpack("d", file.read(8))[0]
+    elif value_type == _BYTES:
+        # If length is less than 256 bytes, read it into memory and return it.
+        if value_length < 256:
+            return file.read(value_length)
+        # Otherwise, create a BECStream and return it, then seek past the bytes
+        # for now.
+        else:
+            stream = BECStream(file, file.tell(), value_length)
+            file.seek(value_length, SEEK_CUR)
+            return stream
+    elif value_type == _LIST:
+        # Store the point at which the list should end
+        end = file.tell() + value_length
+        # Read values until we hit the end position
+        result = []
+        while file.tell() < end:
+            result.append(load_value(file))
+        # Return the list
+        return result
+    elif value_type == _DICT:
+        # Store the point at which the dictionary should end
+        end = file.tell() + value_length
+        # Read keys and values until we hit the end position
+        result = BECDict()
+        while file.tell() < end:
+            # We probably should check to make sure the key's a byte sequence,
+            # but we're not going to for now, just because.
+            result[load_value(file)] = load_value(file)
+        # Return the result
+        return result
+    else:
+        raise exceptions.InvalidTypeCode(type=value_type)
 
 
 def dump(value, file):
