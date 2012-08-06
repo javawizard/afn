@@ -1,10 +1,12 @@
 
 from filer1.data.store import Store
-from filer1 import bec
+from filer1 import bec, hashutils, exceptions
 import time
 import random
 from afn.utils.concurrent import AtomicInteger
 from afn.fileutils import File
+import tempfile
+import os
 
 class DirectStore(Store):
     def __init__(self, folder):
@@ -12,29 +14,26 @@ class DirectStore(Store):
         folder.mkdirs(silent=True)
         self.data_dir = self.folder.child("data")
         self.data_dir.mkdirs(silent=True)
-        self.temp_dir = self.folder.child("temp")
-        self.temp_dir.mkdirs(silent=True)
-        self.temp_sequence = AtomicInteger(1)
     
     def store(self, data):
-        f = self._generate_temp_file()
-        with f.open("r+b") as opened_file:
+        # Write the data to a temporary file
+        fd, temp_name = tempfile.mkstemp()
+        with os.fdopen(fd, "r+b") as opened_file:
             bec.dump(data, opened_file)
-        
+        # Hash the file
+        hash = hashutils.hash_file(file)
+        # We're storing things as individual files in the data folder, named
+        # after the revision's hash; copy the contents into such a file.
+        File(temp_name).copy_to(self.data_dir.child(hash))
+        # Then delete the temporary file. TODO: Might want to have this in a
+        # try/finally to make sure it always gets deleted.
+        File(temp_name).delete()
     
     def get(self, hash):
-        pass
-    
-    def _generate_temp_file(self):
-        # Create a temporary file with a relatively random name, one basically
-        # guaranteed not to cause any conflicts. I'd like to use Python's
-        # tempfile module for this, but I can't find any decent way to create
-        # a file that can be later renamed and used as an ordinary file without
-        # all of, for example, the weird permissions that mkfstemp puts on the
-        # file in question.
-        name = "%s-%s-%s" % (time.time(), self.temp_sequence.get_and_add(),
-                random.random())
-        return self.temp_dir.child(name)
-        
+        f = self.data_dir.child(hash)
+        if not f.exists:
+            raise exceptions.NoSuchObject(hash=hash)
+        with f.open("r+b") as opened_file:
+            return bec.load(opened_file)
 
 
