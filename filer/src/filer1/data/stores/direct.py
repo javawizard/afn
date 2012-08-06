@@ -22,7 +22,7 @@ class DirectStore(Store):
             bec.dump(data, opened_file)
         # Hash the file
         with open(temp_name, "rb") as opened_file:
-            hash = hashutils.hash_file(opened_file)
+            hash = hashutils.hash_file(opened_file).hexdigest()
         # We're storing things as individual files in the data folder, named
         # after the revision's hash; copy the contents into such a file.
         File(temp_name).copy_to(self.data_dir.child(hash))
