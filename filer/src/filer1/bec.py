@@ -167,6 +167,7 @@ def dump_value(value, file):
         # Then seek back over the data we wrote
         file.seek(length, SEEK_CUR)
     elif isinstance(value, Sequence):
+        file.write(_LIST)
         # Same as with files, we won't know how much data we've written until
         # we've written everything out, so note where to write the length, then
         # skip over the length bytes
@@ -182,6 +183,7 @@ def dump_value(value, file):
         file.write(struct.pack(">q", length))
         file.seek(length, SEEK_CUR)
     elif isinstance(value, Mapping):
+        file.write(_DICT)
         # Same unknown length thing as with lists and files
         length_pos = file.tell()
         file.seek(8, SEEK_CUR)
