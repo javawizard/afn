@@ -176,7 +176,10 @@ class Repository(object):
                         delete(f)
             else: # File, so delete it
                 target.delete()
-            return # FIXME: What to return?
+            # FIXME: What are we supposed to return here? In my tired stupor
+            # I'm returning an empty revstate, but I'm not sure if that's
+            # exactly right...
+            return {"parents": [], "children": {}}
         # new_rev isn't None, so we need to update to it. First we need to get
         # the relevant revision's data.
         data = self.get_revision(new_rev)
