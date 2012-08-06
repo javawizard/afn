@@ -20,3 +20,20 @@ class MissingFileInfo(InternalError):
         pass
 
 
+class BECError(SemanticException):
+    pass
+
+
+class KeyType(BECError):
+    _format = "Keys must be strings, but the key %(key)r is not"
+
+
+class ValueType(BECError):
+    _format = "Values must be a JSONable type, but the value %(value)r is not"
+
+
+class LargeValue(BECError):
+    _format = ("The value %r can't be retrieved as a string because it's "
+            "rather large. Try reading it as a stream with get_stream instead.")
+
+
