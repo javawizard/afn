@@ -76,7 +76,7 @@ def load_value(file):
     """
     # First byte is type, next eight bytes are length
     value_type = file.read(1)
-    value_length = struct.unpack("q", file.read(8))
+    value_length = struct.unpack(">q", file.read(8))
     if value_type == _NULL:
         # No bytes to read; just return None
         return None
@@ -85,7 +85,7 @@ def load_value(file):
         return file.read(1) == "\x01"
     elif value_type == _NUMBER:
         # Read eight bytes and parse as an IEEE 754 double
-        return struct.unpack("d", file.read(8))[0]
+        return struct.unpack(">d", file.read(8))[0]
     elif value_type == _STRING:
         # Read the string in, then decode using UTF-8
         return file.read(value_length).decode("UTF-8")
@@ -126,21 +126,21 @@ def dump_value(value, file):
     """
     if value is None:
         file.write(_NULL)
-        file.write(struct.pack("q", 0))
+        file.write(struct.pack(">q", 0))
     elif isinstance(value, bool):
         file.write(_BOOL)
-        file.write(struct.pack("q", 1))
+        file.write(struct.pack(">q", 1))
         file.write("\x01" if value else "\x00")
     elif isinstance(value, (int, long, float)):
         file.write(_NUMBER)
-        file.write(struct.pack("q", 8))
-        file.write(struct.pack("d", value))
+        file.write(struct.pack(">q", 8))
+        file.write(struct.pack(">d", value))
     elif isinstance(value, basestring):
         file.write(_STRING)
         # Encode the string with UTF-8
         bytes = value.encode("UTF-8")
         # Write the length
-        file.write(struct.pack("q", len(bytes)))
+        file.write(struct.pack(">q", len(bytes)))
         # Then write the bytes out 
         file.write(bytes)
     elif hasattr(value, "read"):
@@ -163,7 +163,7 @@ def dump_value(value, file):
         length = file.tell() - length_pos - 8
         # Seek back to the length position and write the length out
         file.seek(length_pos)
-        file.write(struct.pack("q", length))
+        file.write(struct.pack(">q", length))
         # Then seek back over the data we wrote
         file.seek(length, SEEK_CUR)
     elif isinstance(value, Sequence):
@@ -179,7 +179,7 @@ def dump_value(value, file):
         length = file.tell() - length_pos - 8
         # Seek back and write the length, then seek over the data we wrote
         file.seek(length_pos)
-        file.write(struct.pack("q", length))
+        file.write(struct.pack(">q", length))
         file.seek(length, SEEK_CUR)
     elif isinstance(value, Mapping):
         # Same unknown length thing as with lists and files
@@ -201,7 +201,7 @@ def dump_value(value, file):
         # Then write the length back out as with lists and files
         length = file.tell() - length_pos - 8
         file.seek(length_pos)
-        file.write(struct.pack("q", length))
+        file.write(struct.pack(">q", length))
         file.seek(length, SEEK_CUR)
     else:
         raise exceptions.ValueType(value=value)
