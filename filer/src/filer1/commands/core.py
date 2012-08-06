@@ -6,6 +6,8 @@ from filer1 import bec, exceptions
 from afn.utils.partial import Partial
 from afn.fileutils import File
 import time
+import sys
+import json
 
 commands = {}
 # Convoluted bit of magic: after this line, command(x)(y) is the same as
@@ -206,6 +208,16 @@ class Push(Command):
             print "Pushed %s change%s to %s." % (changes_pushed, "s" if changes_pushed > 1 else "", args.target)
         else:
             print "Remote repository is already up to date."
+
+
+@command("becdump")
+class BECDumpCommand(Command):
+    def update_parser(self, parser):
+        pass
+    
+    def run(self, args):
+        print json.dumps(bec.load(sys.stdin), indent=4)    
+
 
 # Delete the command decorator since we don't need it anymore
 del command
