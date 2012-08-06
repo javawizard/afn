@@ -123,15 +123,16 @@ class Commit(Command):
                             "and you didn't specify --working.")
         repository_folder = File(working_folder.child(".filerfrom").read())
         repository = Repository(repository_folder)
-        # We've got the repository. Now we go read the list of parents to use.
-        parents = json.loads(working_folder.child(".filerparents").read())
+        # We've got the repository. Now we go read the revstate to use.
+        revstate = bec.loads(working_folder.child(".filerstate").read())
         # Then we write down the date and commit message
         info = {"date": time.time(), "message": args.message}
         # Then we create the new revision
-        hash = repository.commit_changes(parents, working_folder, info)
-        # Then update .filerparents to point to the new revision
-        working_folder.child(".filerparents").write(json.dumps([hash]))
+        new_revstate = repository.commit_changes(revstate, working_folder, info)
+        # Then update .filerstate to the new revstate
+        working_folder.child(".filerstate").write(bec.dumps(new_revstate))
         # And last of all, we print out a message about the commit.
+        hash = new_revstate["parents"][0]
         print "Committed revision %s:%s." % (repository.number_for_rev(hash), hash)
 
 
@@ -151,7 +152,7 @@ class Log(Command):
                                 "--repository.")
         repository = Repository(repository_folder)
         print
-        for number, hash, data_str, data in repository.revision_iterator():
+        for number, hash, data in repository.revision_iterator():
             print "Revision %s:%s:" % (number, hash)
             print "    date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
             print "    type:           %s" % data["type"]
@@ -187,12 +188,20 @@ class Push(Command):
         # to see if they're present in remote_repository, and if they're not,
         # add them.
         changes_pushed = 0
-        for number, hash, data_str, data in local_repository.revision_iterator():
+        for number, hash, data in local_repository.revision_iterator():
             if not remote_repository.has_revision(hash):
                 changes_pushed += 1
                 # Revision is not present, so create it
                 print "Pushing revision %s:%s" % (number, hash)
-                remote_repository.create_revision(data_str)
+                new_hash = remote_repository.create_revision(data)
+                # Sanity check to make sure we didn't get a different revision
+                # hash; this shouldn't actually be needed unless there's a bug
+                # in the revision encoding stuff somewhere
+                if new_hash != hash:
+                    raise Exception("INTERNAL ERROR: Transferred hash "
+                            "mismatch: %s -> %s. One of the two repositories "
+                            "involved in the push is most likely corrupt."
+                            % (hash, new_hash))
         if changes_pushed:
             print "Pushed %s change%s to %s." % (changes_pushed, "s" if changes_pushed > 1 else "", args.target)
         else:
