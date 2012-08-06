@@ -76,7 +76,7 @@ def load_value(file):
     """
     # First byte is type, next eight bytes are length
     value_type = file.read(1)
-    value_length = struct.unpack(">q", file.read(8))
+    value_length = struct.unpack(">q", file.read(8))[0]
     if value_type == _NULL:
         # No bytes to read; just return None
         return None
