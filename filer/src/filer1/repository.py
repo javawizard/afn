@@ -180,8 +180,11 @@ class Repository(object):
             # I'm returning an empty revstate, but I'm not sure if that's
             # exactly right...
             return {"parents": [], "children": {}}
-        # new_rev isn't None, so we need to update to it. First we need to get
-        # the relevant revision's data.
+        # new_rev isn't None, so we need to update to it. First we need to
+        # make sure we've got a revision hash and not a revision number.
+        if self.numbers.child(new_rev).exists():
+            new_rev = self.numbers.child(new_rev).read()
+        # Then we read the revision's data.
         data = self.get_revision(new_rev)
         # Then we delete the target so that we can start off with a clean slate.
         # Obviously we need to do something a bit better once we get past the
