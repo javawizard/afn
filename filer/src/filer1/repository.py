@@ -182,7 +182,7 @@ class Repository(object):
             return {"parents": [], "children": {}}
         # new_rev isn't None, so we need to update to it. First we need to
         # make sure we've got a revision hash and not a revision number.
-        if self.numbers.child(new_rev).exists():
+        if self.numbers.child(new_rev).exists:
             new_rev = self.numbers.child(new_rev).read()
         # Then we read the revision's data.
         data = self.get_revision(new_rev)
