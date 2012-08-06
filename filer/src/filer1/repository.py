@@ -5,6 +5,7 @@ from contextlib import closing
 import hashlib
 from filer1 import exceptions
 from filer1 import bec
+from filer1.data.stores.direct import DirectStore
 
 global_debug = False
 
@@ -88,8 +89,10 @@ class Repository(object):
         self.filer_dir = self.folder.child(".filer")
         if not self.filer_dir.exists:
             raise Exception("There isn't a repository at %s." % folder.path)
-        self.revisions = self.filer_dir.child("revisions")
-        self.revisions.mkdirs(True)
+        self.store_folder = self.filer_dir.child("store")
+        self.store_folder.mkdirs(True)
+        self.store_folder.child("type").write("direct")
+        self.store = DirectStore(self.store_folder.child("direct"))
         self.numbers = self.filer_dir.child("numbers")
         self.numbers.mkdirs(True)
         self.numbersbyrev = self.filer_dir.child("numbersbyrev")
@@ -99,18 +102,16 @@ class Repository(object):
         """
         Gets the revision with the specified revision id, which can either be a
         hex string representing the full sha1 hash or the revision's numeric id.
-        A ValueError will be thrown if no such revision exists.
+        An exceptions.NoSuchObject will be thrown if no such revision exists.
         
         The return value is a BEC object corresponding to the revision.
         
         Note that short revision numbers must still be given as strings. Bad
         things (exceptions mainly) will happen if ints are passed in instead.
         """
-        if self.revisions.child(id).exists: # Revision with the same hash exists
-            return bec.loads(self.revisions.child(id).read())
-        if self.numbers.child(id).exists: # Revision with that number exists
-            return bec.loads(self.revisions.child(self.numbers.child(id).read()).read())
-        raise Exception("The revision %r does not exist." % id)
+        if self.numbers.child(id).exists:
+            id = self.numbers.child(id).read()
+        return self.store.get(id)
     
     def create_revision(self, data):
         """
@@ -118,15 +119,14 @@ class Repository(object):
         object (not a string). The new revision's hash will be returned.
         
         Entries in changeparents, changechildren, dirparents, and dirchildren
-        will be created for this new revision.
+        will be created for this new revision. (Update: those have been
+        disabled for now, and will probably be replaced with some sort of graph
+        database soon.)
         """
-        if isinstance(data, dict):
-            text_data = bec.dumps(data, sort_keys=True)
-        else:
-            text_data = data
-            data = bec.loads(data)
-        hash = hashlib.sha1(text_data).hexdigest()
-        self.revisions.child(hash).write(text_data)
+        if not isinstance(data, dict):
+            raise Exception("Invalid revision data value: %r (must be a dict)"
+                    % data)
+        hash = self.store.store(data)
         if self.debug:
             print "Wrote revision %s" % hash
         # TODO: Implement a better algorithm for searching for the next number;
@@ -139,30 +139,6 @@ class Repository(object):
         self.numbers.child(str(number)).write(hash)
         # Add a reverse entry into numbersbyrev
         self.numbersbyrev.child(hash).write(str(number))
-        # Write our list of parents to a changeparents file created for us
-        self.changeparents.child(hash).write(bec.dumps(data["parents"]))
-        # Write an empty changechildren file for ourselves
-        self.changechildren.child(hash).write(bec.dumps([]))
-        # Iterate over our parents and write ourselves into their respective
-        # changechildren files
-        for p in data["parents"]:
-            f = self.changechildren.child(p)
-            f.write(bec.dumps(bec.loads(f.read()) + [hash]))
-        # If we're a file, write an empty dirchildren entry
-        if data["type"] == "file":
-            self.dirchildren.child(hash).write(bec.dumps([]))
-        # If we're a folder, write a list of all of the hashes in our
-        # "children" dict to our dirchildren entry
-        elif data["type"] == "folder":
-            self.dirchildren.child(hash).write(bec.dumps(data["children"].values()))
-        # Write an empty dirparents file for ourselves
-        self.dirparents.child(hash).write(bec.dumps([]))
-        # If we're a folder, iterate over our children and write ourselves into
-        # their respective dirparents files
-        if data["type"] == "folder":
-            for c in data["children"].values():
-                f = self.dirparents.child(c)
-                f.write(bec.dumps(bec.loads(f.read()) + [hash]))
         return hash
     
     def update_to(self, target, new_rev):
