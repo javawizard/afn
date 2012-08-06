@@ -228,27 +228,22 @@ class Repository(object):
             # It's a file. Check to see if we've got exactly one parent and the
             # file's old contents are the same as its new contents.
             if len(revstate["parents"]) == 1:
-                with 
-                    # Only one revision and the contents are the same; return the
-                    # revstate as-is
-                    return revstate
-            else:
-                # Multiple parents or different contents (or the file hasn't
-                # been created yet), so let's go make a diff against 
-            if (len(parent_revs) > 1 or
-                len(parent_revs) < 1 or
-                self.get_revision(parent_revs[0])["contents"] != target.read()):
-                # The file's changed, or we've got more or less than just one
-                # parent; create a new revision for the file and return it.
-                return self.create_revision({"type": "file",
+                with target.open("rb") as f:
+                    if same_contents(f,self.get_revision(
+                            revstate["parents"][0])["contents"]):
+                        # Only one revision and the contents are the same;
+                        # return the revstate as-is
+                        return revstate
+            # The file's changed, or we've got more or less than just one
+            # parent; create a new revision for the file and return a
+            # corresponding revstate.
+            with target.open("rb") as f:
+                hash = self.create_revision({"type": "file",
                                              "info": info,
                                              "current_name": current_name,
-                                             "parents": parent_revs,
-                                             "contents": target.read()})
-            else:
-                # The file hasn't changed and we've got only one revision.
-                # Return it as-is.
-                return parent_revs[0]
+                                             "parents": revstate["parents"],
+                                             "contents": f})
+                return {"parents": [hash], "children": {}}
         else:
             # It's a folder. First thing we do is create revisions for all of
             # our children.
@@ -266,38 +261,40 @@ class Repository(object):
                 # special files.
                 if child.name.startswith("."):
                     continue                
-                # We'll build up a list of parent revisions for this child by
-                # scanning our own parent revisions and seeing which of them
-                # have the file in question present.
-                child_parents = []
-                for p in parent_revs:
-                    # Get this parent revision's data
-                    parent_data = self.get_revision(p)
-                    # Check to see if this parent revision has the child we're
-                    # looking at
-                    if child.name in parent_data["children"]:
-                        # This child's present in the parent we're looking at;
-                        # add its listed revision as a parent.
-                        child_parents.append(parent_data["children"][child.name])
-                # We've got a list of parents for this child; now we create a
-                # revision for the child and store it in child_revs.
-                child_revs[child.name] = self.commit_changes(child_parents, child, info, child.name)
+                # We used to build up a list of parents for this child from the
+                # folder's current revision, but we're using revstates now to
+                # allow merges to add new parents to a child. So we just need
+                # to go get a revstate for this particular child, or use an
+                # empty one if it doesn't exist in the revstate we were
+                # provided.
+                child_revstate = revstate["children"].get(child.name)
+                if not child_revstate:
+                    child_revstate = {"parents": [], "children": {}}
+                # Now we create a revision for the specified child.
+                child_revs[child.name] = self.commit_changes(
+                        child_revstate, child, info, child.name)
+            # child_revs will map child names to revstates; we need to expand
+            # this into hashes (newly-created revstates will always mention
+            # exactly one parent hash, namely the one just created) to compare
+            # with the child revisions of our current revision
+            child_rev_hashes = dict((n, r["parents"][0]) for n, r in child_revs.items())
             # We've got a dictionary of child revisions. Now we check to see if
             # we've got exactly one parent, and it has the exact same revisions
-            # we do; if that's the case, we just return that parent's revision
-            # as-is.
-            if (len(parent_revs) == 1 and
-                self.get_revision(parent_revs[0])["children"] == child_revs):
-                # Same child revs, so we return the parent revision.
-                return parent_revs[0]
+            # we do; if that's the case, we just return the current revstate.
+            if (len(revstate["parents"]) == 1 and
+                self.get_revision(revstate["parents"][0])
+                        ["contents"] == child_rev_hashes):
+                # Same child revs, so we return the revstate as-is
+                return revstate
             else:
-                # Different child revs, so we create a new revision for this
-                # folder and return it.
-                return self.create_revision({"type": "folder",
+                # Different child revs or multiple parents, so we create a new
+                # revision for this folder and return a revstate for it.
+                hash = self.create_revision({"type": "folder",
                                              "info": info,
                                              "current_name": current_name,
-                                             "parents": parent_revs,
-                                             "children": child_revs})
+                                             "parents": revstate["parents"],
+                                             "contents": child_rev_hashes})
+                return {"parents": [hash], "children": child_revs}
     
     def revision_iterator(self):
         """
