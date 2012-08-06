@@ -53,14 +53,14 @@ class BECStream(object):
     
     def seek(self, offset, whence=SEEK_SET):
         new_position = self.position
-        if whence == SEEK_SET: # Absolute seeking; add self.offset first
-            new_position = self.offset + offset
+        if whence == SEEK_SET: # Absolute seeking
+            new_position = offset
         elif whence == SEEK_CUR: # Relative seeking
             new_position += offset
         else: # Assume SEEK_END; TODO: might want to check explicitly
-            new_position = self.offset + self.length + offset
+            new_position = self.length + offset
         # Trim position to file boundaries
-        new_position = max(min(new_position, self.offset + self.length), self.offset)
+        new_position = max(min(new_position, self.length), 0)
         # Then update our position
         self.position = new_position
     
