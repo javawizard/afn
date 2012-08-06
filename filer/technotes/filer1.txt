@@ -217,7 +217,7 @@ The encoding of each of these values follows. They are as specifies:
     
     For double-precision numbers, eight bytes follow. These bytes are the IEEE 754 double-precision binary floating-point format bytes of the number, in big endian format (with the sign bit as the most significant bit of the first byte following the \x04 byte specifying the type of this value).
     
-    For sequences of bytes, eight bytes follow. 
+    For sequences of bytes, eight bytes follow. These indicate, in big-endian representation, the size of 
 
 
 
