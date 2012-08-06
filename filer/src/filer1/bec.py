@@ -15,58 +15,11 @@ JSON_TYPES = (int, long, float, basestring, bool, type(None), Sequence, Mapping)
 
 _DICT = 1
 _LIST = 2
-_BYTES = 3
-_NUMBER = 4
-_BOOL = 5
-_NULL = 6
-
-
-class BECDict(object):
-    def __init__(self):
-        # Keys are dictionary keys. Values are ordinary values, or file-like
-        # objects. (Note that strings are allowed for binary data, and will be
-        # wrapped with a StringIO when requested as a stream.)
-        self._data = {}
-    
-    def __setitem__(self, name, value):
-        if not isinstance(name, basestring):
-            raise exceptions.KeyType(name=name)
-        if not isinstance(value, JSON_TYPES) and not hasattr(value, "read"):
-            # We're allowing setting file-like objects here to make the logic
-            # for reading BEC files simpler. TODO: is this a good idea?
-            raise exceptions.ValueType(value=value)
-        self._data[name] = value
-    
-    def __delitem__(self, name):
-        del self._data[name]
-    
-    def __getitem__(self, name):
-        value = self._data[name]
-        if hasattr(value, "read"): # file-like object; throw an exception for
-            # now. Might want to check its size later and read it if it's not
-            # too large.
-            raise exceptions.LargeValue(value=value)
-        # Not a file-like object; return as-is.
-        return value
-    
-    def get_stream(self, name):
-        value = self._data[name]
-        if isinstance(value, basestring): # Return a StringIO wrapper
-            return StringIO(value)
-        if hasattr(value, "read"): # File-like object; return it as-is
-            return value
-    
-    def set_stream(self, name, file):
-        self._data[name] = file
-    
-    def __len__(self):
-        return len(self._data)
-    
-    def __iter__(self):
-        return self._data.__iter__()
-    
-    def __contains__(self, key):
-        return self._data.__contains__(key)
+_STRING = 3
+_BYTES = 4
+_NUMBER = 5
+_BOOL = 6
+_NULL = 7
 
 
 class BECStream(object):
@@ -133,16 +86,16 @@ def load_value(file):
     elif value_type == _NUMBER:
         # Read eight bytes and parse as an IEEE 754 double
         return struct.unpack("d", file.read(8))[0]
+    elif value_type == _STRING:
+        # Read the string in, then decode using UTF-8
+        return file.read(value_length).decode("UTF-8")
     elif value_type == _BYTES:
-        # If length is less than 256 bytes, read it into memory and return it.
-        if value_length < 256:
-            return file.read(value_length)
-        # Otherwise, create a BECStream and return it, then seek past the bytes
-        # for now.
-        else:
-            stream = BECStream(file, file.tell(), value_length)
-            file.seek(value_length, SEEK_CUR)
-            return stream
+        # Create a stream for the bytes
+        stream = BECStream(file, file.tell(), value_length)
+        # Seek past the bytes of this file
+        file.seek(value_length, SEEK_CUR)
+        # Then return the stream
+        return stream
     elif value_type == _LIST:
         # Store the point at which the list should end
         end = file.tell() + value_length
@@ -156,7 +109,7 @@ def load_value(file):
         # Store the point at which the dictionary should end
         end = file.tell() + value_length
         # Read keys and values until we hit the end position
-        result = BECDict()
+        result = {}
         while file.tell() < end:
             # We probably should check to make sure the key's a byte sequence,
             # but we're not going to for now, just because.
@@ -182,12 +135,76 @@ def dump_value(value, file):
         file.write(_NUMBER)
         file.write(struct.pack("q", 8))
         file.write(struct.pack("d", value))
-    elif isinstance(value, basestring) or hasattr(value, "read"):
-        # Wrap it in a stream if it's not one already. BECDict values will
-        # always be passed in as streams but 
-        if isinstance(value, basestring):
-            value = StringIO(value)
-        
+    elif isinstance(value, basestring):
+        file.write(_STRING)
+        # Encode the string with UTF-8
+        bytes = value.encode("UTF-8")
+        # Write the length
+        file.write(struct.pack("q", len(bytes)))
+        # Then write the bytes out 
+        file.write(bytes)
+    elif hasattr(value, "read"):
+        file.write(_BYTES)
+        # We won't know how many bytes we've written until after we've written
+        # them, so skip past the size bytes and start writing. We'll come back
+        # to them later.
+        length_pos = file.tell()
+        file.seek(8, SEEK_CUR)
+        # Write bytes in 16KB blocks
+        while True:
+            data = value.read(16384)
+            if not data: # No more data to read
+                break
+            # Write the data out
+            file.write(data)
+        # Figure out how much data there is; this is the current position minus
+        # the length position, minus the eight bytes that the length itself
+        # uses up
+        length = file.tell() - length_pos - 8
+        # Seek back to the length position and write the length out
+        file.seek(length_pos)
+        file.write(struct.pack("q", length))
+        # Then seek back over the data we wrote
+        file.seek(length, SEEK_CUR)
+    elif isinstance(value, Sequence):
+        # Same as with files, we won't know how much data we've written until
+        # we've written everything out, so note where to write the length, then
+        # skip over the length bytes
+        length_pos = file.tell()
+        file.seek(8, SEEK_CUR)
+        # Write all the values out
+        for v in value:
+            dump_value(v, file)
+        # Note how much data we wrote
+        length = file.tell() - length_pos - 8
+        # Seek back and write the length, then seek over the data we wrote
+        file.seek(length_pos)
+        file.write(struct.pack("q", length))
+        file.seek(length, SEEK_CUR)
+    elif isinstance(value, Mapping):
+        # Same unknown length thing as with lists and files
+        length_pos = file.tell()
+        file.seek(8, SEEK_CUR)
+        # Get a list of the keys
+        keys = list(value.keys())
+        # Make sure they're all strings
+        for key in keys:
+            if not isinstance(key, basestring):
+                raise exceptions.KeyType(key=key)
+        # Sort them all on their UTF-8 representation
+        keys.sort(key=lambda k: k.encode("UTF-8"))
+        # Then write out the keys and the values
+        for k in keys:
+            v = value[k]
+            dump_value(k)
+            dump_value(v)
+        # Then write the length back out as with lists and files
+        length = file.tell() - length_pos - 8
+        file.seek(length_pos)
+        file.write(struct.pack("q", length))
+        file.seek(length, SEEK_CUR)
+    else:
+        raise exceptions.ValueType(value=value)
 
 
 
