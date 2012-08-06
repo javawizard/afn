@@ -20,7 +20,7 @@ class MissingFileInfo(InternalError):
         pass
 
 
-class BECError(SemanticException):
+class BECError(InternalError):
     pass
 
 
@@ -39,5 +39,13 @@ class LargeValue(BECError):
 
 class InvalidTypeCode(BECError):
     _format = 'The type code "%(type)s" is not a valid type code.'
+
+
+class StoreError(InternalError):
+    pass
+
+
+class NoSuchObject(StoreError):
+    _format = "No object with hash %(hash)r is present in this store."
 
 
