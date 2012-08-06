@@ -94,24 +94,6 @@ class Repository(object):
         self.numbers.mkdirs(True)
         self.numbersbyrev = self.filer_dir.child("numbersbyrev")
         self.numbersbyrev.mkdirs(True)
-        # File names are revision hashes, and their contents are BEC lists of
-        # their parent revisions.
-        self.changeparents = self.filer_dir.child("changeparents")
-        self.changeparents.mkdirs(True)
-        # File names are revision hashes, and their contents are
-        # BEC lists of child revisions.
-        self.changechildren = self.filer_dir.child("changechildren")
-        self.changechildren.mkdirs(True)
-        # File names are revision hashes, and their contents are BEC lists of
-        # all commits that include this file or folder.
-        self.dirparents = self.filer_dir.child("dirparents")
-        self.dirparents.mkdirs(True)
-        # File names are revision hashes, and their contents are BEC lists of
-        # all commits that the revision in question includes. For files, this
-        # will be an empty list, since files don't include anything; for
-        # folders, this will be the list of revisions of the folder's children.
-        self.dirchildren = self.filer_dir.child("dirchildren")
-        self.dirchildren.mkdirs(True)
     
     def get_revision(self, id):
         """
