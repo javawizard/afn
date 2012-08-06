@@ -168,9 +168,56 @@ Files appear to just store their contents as-is.
 
 As for commits...
 
+Hm, interesting. The format's plain-text: it looks something like this, but without the indentation (and this is taken from http://git-scm.com/book/en/Git-Internals-Git-Objects, with modifications):
 
+    tree d8329fc1cc938780ffdd9f94e0d364e0ea74f579
+    author Alex Boyd <alex@opengroove.org> 1243040974 -0700
+    committer Alex Boyd <alex@opengroove.org> 1243040974 -0700
+    
+    first commit
 
+So it's just a simple text-based format. The first line indicates the hash of the top-level tree being committed, the second line indicates the author and date, and the third line indicates the committer and date. (I'm not sure exactly how things show up if the two dates are different.) Then, after a blank line, comes the commit message.
 
+I'm missing how parent revisions are specified; presumably they'd just be a "parent 12ab34cd..." line.
+
+So, now to think about how commits would be stored in Filer...
+
+We need to have a canonical representation for commits outside of the various data store formats so that we can get hashes consistent across all of them. The problem is, we need a format that doesn't require loading the entire revision into memory, so that throws JSON out the window. JSON's also not good as there's not a well-defined canonical encoding that's suported by many cross-platform libraries.
+
+JSON's also not good at storing binary data, which is an issue.
+
+That makes me think I should come up with my own binary JSON-like format, similar to BSON but one heck of a lot simpler, and specifically designed to be canonical.
+
+I'm also thinking I want binary data to be stored in a contiguous block inside the file. That would allow the library to provide access to binary data via file-like objects, thus solving the memory problem. They could then be set to other file-like objects (such as the actual file to store) to store large amount of data. That solves both the read and the write problems for large amounts of data.
+
+Folders would still be stored entirely in memory as they would be stored as dicts, but I don't really care about that for now as... let's see, a folder with, say, 10,000 files or folders in it would take up probably abount 500KB of RAM to store, which honestly isn't that much compared to the Python interpreter's 5MB RAM overhead just to start up. So that's ok for now, and if it isn't, I can always change the format later. (I'll have a byte or two at the beginning indicating the format version number.)
+
+So, dictionary keys are, of course, strings; specifically UTF-8 strings. They're stored as bytes encoded with UTF-8, and they're written out in sorted order, sorted in terms of their byte-wise representation, not in terms of their corresponding Unicode representation.
+
+Lists are just stored as-is since they have a well-defined order.
+
+So now to get into the binary details of the whole thing.
+
+At the beginning of one of these encoding thingies is some sort of magic number and some sort of version number. Immediately following is the single value contained in the thingie.
+
+Values are encoded first with a single byte indicating the type of the value, as per the following table:
+
+    \x01 indicates a dictionary.
+    \x02 indicates a list.
+    \x03 indicates a sequence of bytes. This is used both for strings and for binary data.
+    \x04 indicates a double-precision number. This is the only type of number right now.
+    \x05 indicates a boolean.
+    \x06 indicates a null value.
+
+The encoding of each of these values follows. They are as specifies:
+
+    For null values, no bytes follow.
+    
+    For boolean values, one byte follows: \x00 for false, or \x01 for true. No other values are permitted.
+    
+    For double-precision numbers, eight bytes follow. These bytes are the IEEE 754 double-precision binary floating-point format bytes of the number, in big endian format (with the sign bit as the most significant bit of the first byte following the \x04 byte specifying the type of this value).
+    
+    For sequences of bytes, eight bytes follow. 
 
 
 
