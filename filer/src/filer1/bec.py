@@ -75,9 +75,7 @@ def load_value(file):
     Loads the specified BEC file.
     """
     # First byte is type, next eight bytes are length
-    print "Loading from offset %s" % file.tell()
     value_type = file.read(1)
-    print "Type %r received, and we're now at %r" % (value_type, file.tell())
     value_length = struct.unpack(">q", file.read(8))[0]
     if value_type == _NULL:
         # No bytes to read; just return None
