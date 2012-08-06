@@ -162,7 +162,7 @@ class Repository(object):
     def update_to(self, target, new_rev):
         """
         Updates target to the revision specified by new_rev, or deletes target
-        if new_rev is None.
+        if new_rev is None. The target's new revstate will be returned.
         """
         # If new_rev is None, just delete target, or clear it if it's a
         # directory (see a few comments below for why we do that). FIXME: We
@@ -176,7 +176,7 @@ class Repository(object):
                         delete(f)
             else: # File, so delete it
                 target.delete()
-            return
+            return # FIXME: What to return?
         # new_rev isn't None, so we need to update to it. First we need to get
         # the relevant revision's data.
         data = self.get_revision(new_rev)
@@ -205,15 +205,19 @@ class Repository(object):
             # It's a folder, so we need to create a new folder for it.
             target.mkdir(silent=True)
             # Now we go iterate through the folder's children and update each
-            # of them.
+            # of them, keeping track of the resulting revstates.
+            child_revstates = {}
             for name, rev in data["contents"].items():
-                self.update_to(target.child(name), rev)
-            # And that's it for folders.
+                child_revstates[name] = self.update_to(target.child(name), rev)
+            # Then we return a revstate.
+            return {"parents": [new_rev], "children": child_revstates}                
         elif data["type"] == "file":
             # It's a file, so we go seek the file to zero, then stream the
             # file's contents into the target.
             data["contents"].seek(0)
             shutil.copyfileobj(data["contents"], target)
+            # Then we return a revstate.
+            return {"parents": [new_rev], "children": {}}
         # That's pretty much it for updating right now.
     
     def commit_changes(self, revstate, target, info, current_name=None):

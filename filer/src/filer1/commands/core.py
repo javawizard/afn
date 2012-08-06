@@ -158,8 +158,8 @@ class Log(Command):
                 print "    committed as:   %s" % data["current_name"]
             for cparent in data["parents"]:
                 print "    change parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
-            for dparent in repository.get_dirparents(hash):
-                print "    dir parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
+#            for dparent in repository.get_dirparents(hash):
+#                print "    dir parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
             print "    message:        %s" % data.get("info", {}).get("message", "")
             print
 
