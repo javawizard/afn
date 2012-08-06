@@ -219,7 +219,13 @@ The encoding of each of these values follows. They are as specifies:
     
     For double-precision numbers, eight bytes follow. These bytes are the IEEE 754 double-precision binary floating-point format bytes of the number, in big endian format (with the sign bit as the most significant bit of the first byte following the \x04 byte specifying the type of this value).
     
-    For sequences of bytes, eight bytes follow. These indicate, in big-endian representation, the size of 
+    For sequences of bytes, the bytes themselves follow. The amount of bytes present can already be derived from the length specified right after the type of the value, so it doesn't need to be specified again.
+    
+    For lists, the items contained in the list then follow, one after the other. The number of items in the list aren't written out for now; I may change that later (and have the offsets from the start of the list at which each item occurs) to allow random read access of items from the list without loading them entirely into memory.
+    
+    For dictionaries, keys and values follow. They're both encoded as values as specified above to allow keys to perhaps be of different types in the future, but for now, I plan on the Python library for this only being able to decode keys stored as sequences of bytes. Entries written out are stored sorted by the key; since these are only byte sequences for now, they are sorted on their contained sets of bytes in ascending order.
+    
+And that's pretty much it.
 
 
 
