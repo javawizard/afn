@@ -75,7 +75,9 @@ def load_value(file):
     Loads the specified BEC file.
     """
     # First byte is type, next eight bytes are length
+    print "Loading from offset %s" % file.tell()
     value_type = file.read(1)
+    print "Type %r received, and we're now at %r" % (value_type, file.tell())
     value_length = struct.unpack(">q", file.read(8))[0]
     if value_type == _NULL:
         # No bytes to read; just return None
@@ -113,7 +115,13 @@ def load_value(file):
         while file.tell() < end:
             # We probably should check to make sure the key's a byte sequence,
             # but we're not going to for now, just because.
-            result[load_value(file)] = load_value(file)
+            # ONE IMPORTANT NOTE: I was previously doing this as a one-liner,
+            # but I discovered that the right-hand side of an item assignment
+            # is evaluated before the left-hand side, which resulted in the key
+            # and the value getting flipped. Hence why this has to be done in
+            # two lines.
+            k = load_value(file)
+            result[k] = load_value(file)
         # Return the result
         return result
     else:
