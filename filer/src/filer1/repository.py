@@ -4,7 +4,7 @@ from afn.fileutils import File
 from contextlib import closing
 import hashlib
 from filer1 import exceptions
-import json
+from filer1 import bec
 
 global_debug = False
 
@@ -94,19 +94,19 @@ class Repository(object):
         self.numbers.mkdirs(True)
         self.numbersbyrev = self.filer_dir.child("numbersbyrev")
         self.numbersbyrev.mkdirs(True)
-        # File names are revision hashes, and their contents are JSON lists of
+        # File names are revision hashes, and their contents are BEC lists of
         # their parent revisions.
         self.changeparents = self.filer_dir.child("changeparents")
         self.changeparents.mkdirs(True)
         # File names are revision hashes, and their contents are
-        # JSON lists of child revisions.
+        # BEC lists of child revisions.
         self.changechildren = self.filer_dir.child("changechildren")
         self.changechildren.mkdirs(True)
-        # File names are revision hashes, and their contents are JSON lists of
+        # File names are revision hashes, and their contents are BEC lists of
         # all commits that include this file or folder.
         self.dirparents = self.filer_dir.child("dirparents")
         self.dirparents.mkdirs(True)
-        # File names are revision hashes, and their contents are JSON lists of
+        # File names are revision hashes, and their contents are BEC lists of
         # all commits that the revision in question includes. For files, this
         # will be an empty list, since files don't include anything; for
         # folders, this will be the list of revisions of the folder's children.
@@ -119,35 +119,30 @@ class Repository(object):
         hex string representing the full sha1 hash or the revision's numeric id.
         A ValueError will be thrown if no such revision exists.
         
-        The return value is a JSON object corresponding to the revision.
+        The return value is a BEC object corresponding to the revision.
         
         Note that short revision numbers must still be given as strings. Bad
         things (exceptions mainly) will happen if ints are passed in instead.
         """
         if self.revisions.child(id).exists: # Revision with the same hash exists
-            return json.loads(self.revisions.child(id).read())
+            return bec.loads(self.revisions.child(id).read())
         if self.numbers.child(id).exists: # Revision with that number exists
-            return json.loads(self.revisions.child(self.numbers.child(id).read()).read())
+            return bec.loads(self.revisions.child(self.numbers.child(id).read()).read())
         raise Exception("The revision %r does not exist." % id)
     
     def create_revision(self, data):
         """
-        Creates a new revision with the specified data, which should be a JSON
+        Creates a new revision with the specified data, which should be a BEC
         object (not a string). The new revision's hash will be returned.
         
         Entries in changeparents, changechildren, dirparents, and dirchildren
         will be created for this new revision.
-        
-        Update: data can be a string, in which case it will be checked to
-        ensure it can be decoded as JSON properly, and the used as-is. This is
-        so that platforms that encode JSON slightly differently won't cause
-        hash mismatches due to decoding and re-encoding.
         """
         if isinstance(data, dict):
-            text_data = json.dumps(data, sort_keys=True)
+            text_data = bec.dumps(data, sort_keys=True)
         else:
             text_data = data
-            data = json.loads(data)
+            data = bec.loads(data)
         hash = hashlib.sha1(text_data).hexdigest()
         self.revisions.child(hash).write(text_data)
         if self.debug:
@@ -163,29 +158,29 @@ class Repository(object):
         # Add a reverse entry into numbersbyrev
         self.numbersbyrev.child(hash).write(str(number))
         # Write our list of parents to a changeparents file created for us
-        self.changeparents.child(hash).write(json.dumps(data["parents"]))
+        self.changeparents.child(hash).write(bec.dumps(data["parents"]))
         # Write an empty changechildren file for ourselves
-        self.changechildren.child(hash).write(json.dumps([]))
+        self.changechildren.child(hash).write(bec.dumps([]))
         # Iterate over our parents and write ourselves into their respective
         # changechildren files
         for p in data["parents"]:
             f = self.changechildren.child(p)
-            f.write(json.dumps(json.loads(f.read()) + [hash]))
+            f.write(bec.dumps(bec.loads(f.read()) + [hash]))
         # If we're a file, write an empty dirchildren entry
         if data["type"] == "file":
-            self.dirchildren.child(hash).write(json.dumps([]))
+            self.dirchildren.child(hash).write(bec.dumps([]))
         # If we're a folder, write a list of all of the hashes in our
         # "children" dict to our dirchildren entry
         elif data["type"] == "folder":
-            self.dirchildren.child(hash).write(json.dumps(data["children"].values()))
+            self.dirchildren.child(hash).write(bec.dumps(data["children"].values()))
         # Write an empty dirparents file for ourselves
-        self.dirparents.child(hash).write(json.dumps([]))
+        self.dirparents.child(hash).write(bec.dumps([]))
         # If we're a folder, iterate over our children and write ourselves into
         # their respective dirparents files
         if data["type"] == "folder":
             for c in data["children"].values():
                 f = self.dirparents.child(c)
-                f.write(json.dumps(json.loads(f.read()) + [hash]))
+                f.write(bec.dumps(bec.loads(f.read()) + [hash]))
         return hash
     
     def update_to(self, target, new_rev):
@@ -373,7 +368,7 @@ class Repository(object):
             # We've still got a revision, so yield it
             hash = self.numbers.child(str(current_number)).read()
             data_str = self.revisions.child(hash).read()
-            data = json.loads(data_str)
+            data = bec.loads(data_str)
             yield str(current_number), hash, data_str, data
             current_number += 1
     
@@ -381,7 +376,7 @@ class Repository(object):
         return self.numbersbyrev.child(hash).read()
     
     def get_dirparents(self, hash):
-        return json.loads(self.dirparents.child(hash).read())
+        return bec.loads(self.dirparents.child(hash).read())
     
     def has_revision(self, hash):
         return self.revisions.child(hash).exists
