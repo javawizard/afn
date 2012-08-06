@@ -2,9 +2,9 @@
 from filer1.commands.command import Command
 from filer1.repository import (Repository, init_repository,
                                detect_working, detect_repository)
+from filer1 import bec, exceptions
 from afn.utils.partial import Partial
 from afn.fileutils import File
-import json
 import time
 
 commands = {}
@@ -90,17 +90,18 @@ class Checkout(Command):
             working_folder.child(".filerfrom").write(repository_folder.path)
         # See if we're supposed to checkout a revision. Since existing working
         # folders can't be updated to new revisions, the only real point to
-        # this is to 
+        # this is to create new history lines in the repository by creating a
+        # blank working copy.
         if revision:
-            # Yep, we're supposed to check out a revision. Write the requested
-            # revision's hash to .filerparents and check out the revision.
-            working_folder.child(".filerparents").write(json.dumps([revision]))
-            repository.update_to(working_folder, revision)
+            # Yep, we're supposed to check out a revision. Check out the
+            # revision and store its revstate.
+            working_folder.child(".filerstate").write(bec.dumps(
+                    repository.update_to(working_folder, revision)))
         else:
-            # Nope, no revision to check out to. Write an empty list to
-            # .filerparents.
-            working_folder.child(".filerparents").write(json.dumps([]))
-
+            # Nope, no revision to check out to. Write an empty revstate to
+            # .filerstate
+            working_folder.child(".filerstate").write(bec.dumps(
+                    {"parents": [], "children": {}}))
 
 @command("commit")
 class Commit(Command):
@@ -112,7 +113,7 @@ class Commit(Command):
         # This is basically as simple as asking the repository to commit a new
         # revision on the current working directory (which we figure out by
         # jumping parents until we find .filerfrom) and then updating
-        # .filerparents to contain the new revision.
+        # .filerstate to contain the new revstate.
         if args.working is None:
             working_folder = detect_working(File("."))
         else:
