@@ -271,7 +271,7 @@ And note that it'll be contents, not children, even if it's a folder, for now. I
 
 I'm not going to have any support for removing commits for now. I'll add that later.
 
-(And I'm going to define stores as things that store BEC objects that form valid Filer commits, so they can rely on things like the parents key being present and throw exceptions if it's not.)
+(And I'm going to define stores as things that store BEC objects that form valid Filer commits, so they can rely on things like the parents key being present and throw exceptions if it's not. I might change that later once I decide how to properly store stamps, signatures, and other such metadata.)
 
 
 
