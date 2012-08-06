@@ -216,26 +216,22 @@ class Repository(object):
             shutil.copyfileobj(data["contents"], target)
         # That's pretty much it for updating right now.
     
-    def commit_changes(self, revstate, parent_files, new_file, info, current_name=None):
+    def commit_changes(self, revstate, target, info, current_name=None):
         """
         Commits changes. TODO: Document this better.
         """
-        # Make sure the old targets and the new target are all of the same type
-        for index, old in enumerate(old_targets):
-            if old.is_file != new_target.is_file:
-            # Trying to switch types; raise an exception about it
-                raise Exception("New data to commit is a %s but parent %s is "
-                        "a %s" % (["folder", "file"][new_target.is_file],
-                                  revstate["parents"][index],
-                                  ["folder", "file"][old.is_file]))
-        # They're the same type. Now see if we're a file or a folder.
-        if new_target.is_file:
+        # FIXME: Check to make sure our parents are of the same type as we are,
+        # and figure out what to do if they're not. (Perhaps create a new
+        # file/folder without any parents?)
+        # Anyways, let's get started. First we see if we're a file or a folder.
+        if target.is_file:
             # It's a file. Check to see if we've got exactly one parent and the
             # file's old contents are the same as its new contents.
-            if len(old_targets) == 1 and old_target.read() == new_target.read():
-                # Only one revision and the contents are the same; return the
-                # revstate as-is
-                return revstate
+            if len(revstate["parents"]) == 1:
+                with 
+                    # Only one revision and the contents are the same; return the
+                    # revstate as-is
+                    return revstate
             else:
                 # Multiple parents or different contents (or the file hasn't
                 # been created yet), so let's go make a diff against 

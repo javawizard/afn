@@ -33,7 +33,13 @@ class DirectStore(Store):
         f = self.data_dir.child(hash)
         if not f.exists:
             raise exceptions.NoSuchObject(hash=hash)
-        with f.open("r+b") as opened_file:
-            return bec.load(opened_file)
+        # NOTE: We specifically don't close the file here. This is a really
+        # unfortunate way to do it, and I'd like to figure out if it's possible
+        # to do this a different way, but the file needs to be opened for
+        # streams in the resulting BEC data to be read, so we have to rely on
+        # garbage collection to close the file for us once the BEC data's no
+        # longer needed.
+        opened_file = f.open("r+b")
+        return bec.load(opened_file)
 
 
