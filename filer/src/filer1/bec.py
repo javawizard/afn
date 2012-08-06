@@ -207,6 +207,21 @@ def dump_value(value, file):
         raise exceptions.ValueType(value=value)
 
 
+# FIXME: Probably should use a header specifying the version of BEC being used,
+# in case we change the format later on
+dump = dump_value
+load = load_value
+
+
+def dumps(value):
+    stream = StringIO()
+    dump(value, stream)
+    return stream.getvalue()
+
+
+def loads(string):
+    return load(StringIO(string))
+
 
 
 
