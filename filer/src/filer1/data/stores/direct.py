@@ -29,6 +29,8 @@ class DirectStore(Store):
         # Then delete the temporary file. TODO: Might want to have this in a
         # try/finally to make sure it always gets deleted.
         File(temp_name).delete()
+        # And last of all, return the hash.
+        return hash
     
     def get(self, hash):
         f = self.data_dir.child(hash)
