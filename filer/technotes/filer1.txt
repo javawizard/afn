@@ -275,6 +275,38 @@ I'm not going to have any support for removing commits for now. I'll add that la
 
 
 
+So things have been written and converted and stuff, and things work.
+
+Only now, I'm thinking I might want to generalize things a bit more. I've been reading up on git's index and how it's implemented, and it looks like it just uses the same object store that everything else uses. Git's object store supports that; it just cleans up the index-related objects, which become unreferenced once the whole thing's committed, and everything's good.
+
+The stash command works in a similar way; it puts the changes into the object store and adds a stash reference to them. They can later be restored onto the working copy and removed from the object store.
+
+Reading about how git does these sorts of things makes me think that Filer's not being sufficiently general enough. And there are two problems in particular that I can see: 1, one has to know the format of a particular type of object stored in the database (and all objects are commits right now) to be able to discover what other objects it references, and 2, only full-blown commits can be stored.
+
+The main thing that's got me thinking about this is how, were Filer to be more or less a git clone, the stash command could be written as a self-contained plugin. That's something I'd really like to have.
+
+And that's making me think even more... Hm...
+
+Ok, let's imagine, just to see where this goes, that we scrapped the whole BEC system and wrote a custom binary format for commits.
+
+A commit would then have a section for its parents, a section for arbitrary metadata (which would contain the commit message, author, date, etc.), and a section for each of its named children.
+
+A commit would be considered to reference its parents and its named children.
+
+And imagine that somewhere we maintain a list of commits that have external references to them. Maybe a refs directory like git, which has branches, stashes, the index, and any other type of reference a plugin wants to store.
+
+And imagine that the commit info (the part that contains the message, the date, and so on) can contain arbitrary information, and in particular can be left blank if it's not needed.
+
+And then whenever a commit is no longer referenced as per the refs folder, it, and anything it referenced that's no longer referenced, disappears.
+
+So then, to commit a set of changes for a working copy, which will have a corresponding branch, commits are created for the files and folders that have changed, pointing to their parents, as expected.
+
+
+
+
+
+
+
 
 
 
