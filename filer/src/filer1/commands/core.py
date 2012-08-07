@@ -216,7 +216,7 @@ class BECDumpCommand(Command):
         pass
     
     def run(self, args):
-        print json.dumps(bec.loads(sys.stdin.read()), indent=4)    
+        print json.dumps(bec.loads(sys.stdin.read()), indent=4)
 
 
 # Delete the command decorator since we don't need it anymore
