@@ -12,6 +12,7 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     parent="`echo "$parents" | tail -1`"
     if [ -z "$parent" ]; then
         # No mercurial parents. Do a blank Filer checkout.
+        echo Blank filer checkout.
         filer checkout --repository target --working w
     else
         # Mercurial parents are present. Look up the corresponding Filer parent 
@@ -21,6 +22,7 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
             exit 1
         fi
         # Checkout the parent
+        echo Checking out filer revision $filerparent.
         filer checkout --repository target --working w --revision "$filerparent"
     fi
     # Update to the corresponding Mercurial revision
@@ -29,7 +31,12 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     cp -r source/* w
     # Commit
     message="`hg log --repository source --rev $hash --template {desc}`"
-    filer commit --working w --message "Converted from Mercurial revision $hash\nParents:\n$parents\nOriginal message:\n\n$message"
+    filer commit --working w --message "Converted from Mercurial revision $hash
+Parents:
+$parents
+Original message:
+
+$message"
     filercurrent="`filer current --working w`"
     echo Filer revision $filercurrent added.
     # Delete the working folder

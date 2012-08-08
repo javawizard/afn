@@ -259,6 +259,7 @@ class Repository(object):
             # our children.
             child_revs = {}
             for child in target.list():
+                print "Child %s" % child.path
                 # If the child's name starts with a dot, skip it for now. This
                 # is to prevent working folder special files (.filerfrom and
                 # .filerparents in particular) from being committed. TODO: work
@@ -270,7 +271,10 @@ class Repository(object):
                 # exporting would just be a checkout without creating any
                 # special files.
                 if child.name.startswith("."):
-                    continue                
+                    continue
+                # We also ignore symbolic links for now
+                if child.is_link:
+                    continue
                 # We used to build up a list of parents for this child from the
                 # folder's current revision, but we're using revstates now to
                 # allow merges to add new parents to a child. So we just need
