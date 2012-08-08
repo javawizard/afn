@@ -1,3 +1,10 @@
 #!/bin/bash
 
+echo > map
 
+hg log --repository source -r $1 --template "{node}\n" | while read hash; do
+    print Source revision `hg log --template {rev} -r $hash`
+    parents="`hg parents --repository source -r $hash --template "{node}\n"`"
+    parent="`echo "$parents" | tail -1`"
+    
+done
