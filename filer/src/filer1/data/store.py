@@ -26,3 +26,11 @@ class Store(object):
         Returns true if the specified hash has been stored in this store, false
         if it hasn't.
         """
+    
+    @abstractmethod
+    def list(self):
+        """
+        Returns an iterator of some sort (could be a list, or the
+        implementation of this method could just be a generator) providing all
+        of the hashes stored in this store at the moment.
+        """

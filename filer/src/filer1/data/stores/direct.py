@@ -47,5 +47,9 @@ class DirectStore(Store):
     
     def has(self, hash):
         return self.data_dir.child(hash).exists
+    
+    def list(self):
+        for f in self.data_dir.list():
+            yield f.name
 
 
