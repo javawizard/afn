@@ -259,7 +259,6 @@ class Repository(object):
             # our children.
             child_revs = {}
             for child in target.list():
-                print "Child %s" % child.path
                 # If the child's name starts with a dot, skip it for now. This
                 # is to prevent working folder special files (.filerfrom and
                 # .filerparents in particular) from being committed. TODO: work
