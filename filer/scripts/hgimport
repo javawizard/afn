@@ -13,5 +13,25 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
         filer checkout --repository target --working w
     else
         # Mercurial parents are present. Look up the corresponding Filer parent 
-        filerparent="`cat map | grep "${hash}" | cut -d " " -f 2`"
+        filerparent="`cat map | grep "${parent}" | cut -d " " -f 2`"
+        if [ -z "$filerparent" ]; then
+            print "No filer revision for mercurial parent $parent. Exiting."
+            exit 1
+        fi
+        # Checkout the parent
+        filer checkout --repository target --working w --revision "$filerparent"
+    fi
+    # Update to the corresponding Mercurial revision
+    hg update --repository source $hash
+    # Copy files over
+    cp -r source/* w
+    # Commit
+    message="`hg log --rev $hash --template {desc}`"
+    filer commit --working w --message "Converted from Mercurial revision $hash\nParents:\n$parents\nOriginal message:\n\n$message"
+    filercurrent="`filer current --working w`"
+    echo Filer revision $filercurrent added.
+    # Delete the working folder
+    rm -r w
+    # Add an entry to the map
+    echo $hash $filercurrent >> map
 done
