@@ -301,6 +301,59 @@ And then whenever a commit is no longer referenced as per the refs folder, it, a
 
 So then, to commit a set of changes for a working copy, which will have a corresponding branch, commits are created for the files and folders that have changed, pointing to their parents, as expected.
 
+To add things to a hypothetical index, commits, with commit information left blank, would be created, and a special index ref stored.
+
+To commit the index, new commits, containing identical information, are created, with the commit's message, date, and so on.
+
+And to stash things, the index is stored as a stash ref, and a new, blank index is created.
+
+So that all sounds lovely (and I must say, I think git's underlying design was a lot better thought out than mercurial's was), but there's one rather large impedance mismatch between git and filer, and it has to do with the fact that filer stores one commit per file or folder.
+
+In git, commits are stored as pointers to trees, trees (which represent folders) are stored as dictionaries of filenames to other trees or blobs, and blobs, which are files, are basically stored as a bunch of binary data.
+
+The problem is that with git, you can commit the current index simply by creating a commit pointing to the index's blob, and you're done. So if you follow a write code -> add to index -> commit -> write code -> add to index -> commit -> ... model, where you only ever modify the index once before committing, then it's no more expensive, disk-wise or CPU-wise, than a model that doesn't have the index. And indeed, a commit becomes a very nearly O(1) operation and proceeds very quickly indeed.
+
+With filer, however, individual commits are created for files and folders, so if they were stored in the database as empty commits or some other sort of object, then entirely new commits wrapping them would need to be created. And since you can't reuse the tree that was built to store the index (since you have to recreate things at every level to get the commit message and such in), you have to create and discard and entire tree every time you commit through the index, even if you modify it just once. Which will blow up disk space and require frequent garbage collection of the database, which isn't good.
+
+And the other problem is that files and folders that have the same content in git will get the same hash by their very nature of having the same content, so git doesn't even need to worry about comparing file versions to see if things have changed; it just always writes the current state to the index, and if the resulting tree hash turns out the same, nothing's changed so we don't create a new commit.
+
+Such a luxury isn't present in filer, though, because commits themselves will always have different hashes by nature of the fact that they contain commit messages, dates, parent information, and so on. So we could go create a thousand new commits that don't change anything and we'd never realize it.
+
+(In fairness, such a thing could be done with git simply by creating a new commit with the same tree hash as the one before it, but comparing a single tree hash to see if it's changed is a lot easier than comparing hashes of every object in the tree, which is what would need to be done for filer.)
+
+So things become a lot harder to figure out.
+
+What to do, what to do...
+
+One thing we could do is separate out commits from their underlying files and folders. I know I mentioned that idea a while back and then discarded it, but how would it change things?
+
+Oh, and I also need to think about tags and how they're going to work while I'm at it.
+
+You know what, maybe I should just run with the 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
