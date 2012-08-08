@@ -5,7 +5,6 @@ filer() { python -m filer1.commands.main "$@"; }
 
 # map contains lines where the first field is a mercurial rev and the second
 # line is the corresponding filer rev
-echo > map
 
 hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     echo Source revision `hg log --repository source --template {rev} -r $hash`
