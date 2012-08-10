@@ -62,6 +62,8 @@ Then it checks to see which, of all of the combinations of diffs, gzipped diffs,
 
 Once all of the threads are done, the process is complete.
 
+The function that runs and consumes objects to process is written as a function that can just be called directly from the archiver instead of in a thread, if the archiver is to be run with threads disabled. There's not really much of a point to that, but you can do it if you want.
+
 
 
 
