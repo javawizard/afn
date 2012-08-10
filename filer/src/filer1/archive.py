@@ -28,7 +28,7 @@ def make_archive(object_generator, out, temp_dir):
 
 
 def _process(object_generator, window, in_lock, out_lock, temp_dir):
-    in_total, out_total = 0, 0
+    in_total, out_total, processed = 0, 0
     while True:
         with in_lock:
             try:
@@ -39,7 +39,7 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             # accidentally diff against ourselves
             window_copy = list(window)
             window.append((hash, object_file))
-            if len(window) > 50:
+            if len(window) > 150:
                 del window[0]
         o_dir = temp_dir.child(hash)
         o_dir.mkdirs()
@@ -82,6 +82,8 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
                     int(amount_saved * 100))
             in_total += original_size
             out_total += min_size
+            processed += 1
+            print "Processed %s" % processed
         finally:
             o_dir.delete_folder(True)
 
