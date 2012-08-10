@@ -23,16 +23,18 @@ def make_archive(object_generator, out, temp_dir):
     in_lock = RLock()
     out_lock = RLock()
     # TODO: Spawn several processor threads
-    _process(object_generator, window, in_lock, out_lock, temp_dir)
+    in_total, out_total = _process(object_generator, window, in_lock, out_lock, temp_dir)
+    print "Total space savings: %s%%" % int(100*(1.0 - (float(out_total) / float(in_total))))
 
 
 def _process(object_generator, window, in_lock, out_lock, temp_dir):
+    in_total, out_total = 0, 0
     while True:
         with in_lock:
             try:
                 hash, object_file = object_generator.next()
             except StopIteration:
-                return
+                return in_total, out_total
             # Make a copy /before/ appending to ourselves so as not to
             # accidentally diff against ourselves
             window_copy = list(window)
@@ -45,14 +47,13 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             # First, generate diffs and gzipped diffs
             for h, f in window_copy:
                 p = o_dir.child(h)
-                print h, f, p
                 # Generate diff
                 bsdiff4.file_diff(f.path, object_file.path, p.path)
                 # Generate gzipped diff
-                g = o_dir.child(h + ".gz")
-                with open(p.path, "rb") as in_patch:
-                    with gzip.GzipFile(filename=g.path, mode="wb") as out_patch:
-                        shutil.copyfileobj(in_patch, out_patch)
+#                g = o_dir.child(h + ".gz")
+#                with open(p.path, "rb") as in_patch:
+#                    with gzip.GzipFile(filename=g.path, mode="wb") as out_patch:
+#                        shutil.copyfileobj(in_patch, out_patch)
             # Then gzip the original
             with object_file.open("rb") as in_file:
                 with gzip.GzipFile(filename=o_dir.child("original.gz").path, mode="wb") as out_file:
@@ -63,8 +64,8 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             for h, f in window_copy:
                 p = o_dir.child(h)
                 to_compare.append((p.size, DIFF, p))
-                g = o_dir.child(h + ".gz")
-                to_compare.append((g.size, DIFF_GZIP, g))
+#                g = o_dir.child(h + ".gz")
+#                to_compare.append((g.size, DIFF_GZIP, g))
             to_compare.append((object_file.size, LITERAL, object_file))
             object_file_g = o_dir.child("original.gz")
             to_compare.append((object_file_g.size, LITERAL_GZIP, object_file_g))
@@ -79,6 +80,8 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
                     original_size, min_size, hex(ord(min_type)), min_file)
             print "Compressed to %s%% smaller (larger numbers are better)" % (
                     int(amount_saved * 100))
+            in_total += original_size
+            out_total += min_size
         finally:
             o_dir.delete_folder(True)
 
