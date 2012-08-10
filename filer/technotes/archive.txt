@@ -5,3 +5,66 @@ So, how they'll work.
 Actually, first I'm going to go have a look at how git does its index files...
 
 (I want, if possible, Filer's archive format to store the index and the data in the same file)
+
+So it looks like they're using a B-tree-like thing, only not. What they're doing is storing a table of offsets into a location table, more or less, as a table whose keys are the first bytes of the SHA1 hashes. So it's like a B-tree but with only one level.
+
+Which makes me wonder if I couldn't do a B-tree-like thing, but with multiple levels.
+
+So, have the upper four bits of the first byte of the SHA1 form one key, and the lower four bits form the next key, and so on until only, say, sixteen commits remain, and then just use those.
+
+Actually no, let's do 256-entry tables for now, to give less disk reads to look up a single file in a pack.
+
+No, never mind, let's make the table size dynamic, so that it can be specified when generating the index part of the pack file.
+
+So, let's say that the table size is N and the maximum number of commits before a table is made is M.
+
+If there are less than (or there are exactly) M commits with a certain prefix, then those commits are stored in order.
+
+Otherwise, those commits are made into a table with N buckets, and the process is repeated to the prefix specified by the entries in those buckets.
+
+That, of course, means that N must be a power of two, which is fine.
+
+Actually, let's just say that M and N are 256 for now. We can adjust them later.
+
+You know, maybe we should have separate index files, because it's pointless to send the index data across the network.
+
+So in that case, I'll write the data file format first, then come back to the index file format later.
+
+So, data files are stored with a magic number, which I'll decide on later.
+
+Then they have an eight-byte number specifying how many objects they contain.
+
+(Objects can be any binary data; they need not be BEC objects, although they pretty much always will if they come from Filer.)
+
+Then each object is present, such that, for any object B which is stored as a diff of object A, A comes before B in the file.
+
+Each object is encoded starting with the object's hash, stored as a sequence of 20 bytes. (There's a chance I may use SHA-256 in the future, in which case this will become 32 bytes.) Then comes a single byte, specifying how the object is encoded. (This is called the type code.) Then eight bytes follow, specifying the length of the object's encoded data. (I may change this to be some sort of variable-length encoding later.) The object's encoded data then follows, based on the particular type code:
+
+    \x01: The object's data is stored literally, byte-for-byte. No compression, nothing.
+    
+    \x02: The object's data is stored as-is, but compressed with gzip.
+    
+    \x03: The object's data is stored as a bsdiff4 delta of a previously-encoded object. The first 20 bytes (or 32 bytes, if SHA-256 hashes end up being used) specify the hash on which this object is based. The rest of the bytes are the diff.
+    
+    \x04: The object's data is stored as a gzipped bsdiff4 delta of a previously-encoded object. The format is the same as for \x03, but the bsdiff4 data is stored gzipped.
+
+
+
+That's it for the format for now. I might store a hash of the file at the end later on, but not yet.
+
+So, now for how the archiver itself works.
+
+What it does is takes an iterator of (hash, fileutils.File) tuples and wraps it in a mutex to allow thread-safe requests for the next object to encode.
+
+Then it spawns a number of threads (the precise number can be specified) that sit there and request new objects from the iterable. Each thread, on requesting a new object, obtains a lock, requests the object, adds it to the end of the sliding diff window, removes the object at the other end of the sliding window if it's at the maximum length, makes a copy of the sliding window, then releases the mutex. The sliding window includes the hashes and file objects of all of the input files; the thread then proceeds to generate a diff of the file it's processing against all of the files in the sliding window that it saw when it released the mutex. It then makes gzipped copies of the diffs, and then it makes a gzipped copy of its original data.
+
+Then it checks to see which, of all of the combinations of diffs, gzipped diffs, original data, and gzipped original data, is the smallest. It then obtains the file output lock, writes a new entry at the end of the file (a pointer to where the last thread that wrote to the file left off is stored in memory), and releases the lock. It then requests another object to diff and starts all over.
+
+Once all of the threads are done, the process is complete.
+
+
+
+
+
+
+
