@@ -218,8 +218,9 @@ class Repository(object):
             # Then we return a revstate.
             return {"parents": [new_rev], "children": child_revstates}                
         elif data["type"] == "file":
-            # It's a file, so we go seek the file to zero, then stream the
-            # file's contents into the target.
+            # It's a file. We seek the file to zero (as coming from who knows
+            # where, its position could be all over the board) and then copy
+            # the file's contents into the target.
             data["contents"].seek(0)
             shutil.copyfileobj(data["contents"], target)
             # Then we return a revstate.

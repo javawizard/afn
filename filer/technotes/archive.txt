@@ -1,0 +1,7 @@
+Working on an archive file format, like git's pack files...
+
+So, how they'll work.
+
+Actually, first I'm going to go have a look at how git does its index files...
+
+(I want, if possible, Filer's archive format to store the index and the data in the same file)
