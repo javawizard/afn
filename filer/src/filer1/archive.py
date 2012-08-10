@@ -35,7 +35,7 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
                 return
             # Make a copy /before/ appending to ourselves so as not to
             # accidentally diff against ourselves
-            window_copy = window
+            window_copy = list(window)
             window.append((hash, object_file))
             if len(window) > 50:
                 del window[0]
@@ -45,6 +45,7 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             # First, generate diffs and gzipped diffs
             for h, f in window_copy:
                 p = o_dir.child(h)
+                print h, f, p
                 # Generate diff
                 bsdiff4.file_diff(f.path, object_file.path, p.path)
                 # Generate gzipped diff
@@ -76,7 +77,7 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             print "For object %s:" % hash
             print "original_size, min_size, min_type, min_file: %s, %s, %s, %s" % (
                     original_size, min_size, hex(ord(min_type)), min_file)
-            print "Compressed to %s%% smaller (smaller numbers are better)" % (
+            print "Compressed to %s%% smaller (larger numbers are better)" % (
                     int(amount_saved * 100))
         finally:
             o_dir.delete_folder(True)
