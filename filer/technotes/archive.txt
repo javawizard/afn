@@ -66,6 +66,30 @@ The function that runs and consumes objects to process is written as a function 
 
 
 
+So it sort of worked. I haven't got it to do threads yet; I think that'll help a lot. But it sort of works.
+
+The main issue is that the commits are being sorted by commit hash right now, which is really less than optimal. And, I think because of that, I'm only seeing ratios along the lines of 50%. Which is obviously better than raw commits, but still not optimal.
+
+Another observation: gzipped diffs essentially never turned out to be smaller than raw diffs, so I'm scrapping that bit for now.
+
+So we just compare the original file, the gzipped original file, and the diffs (not gzipped) against the other files.
+
+So, the next step, I think, is to have the iterator yield a set of files to compare against, instead of manually keeping a window.
+
+I'll probably have the iterator yield the revision's parents for now, and that's it.
+
+At a later date, I might have it yield a few of their parents, too, up the line until, say, 20 commits are collected.
+
+And after I get that done, I want to have this thing keep track of how many diffs there are in a particular chain, so that it can avoid going too deep that performance suffers, and stuff.
+
+And actually, I just realized that the parents idea is bad, because what we really need is to diff against children, but that won't work because we don't have a way to access children.
+
+Actually, let's try sorting commits by their numeric sequence in which they were inserted in the repository first, and see if that improves things any. It won't help as much as git because the multiple-commits-per-changeset thing (a changeset is a set of commits all made at the same time with the same commit command) means a lot poorer locality of reference, but it should be better than the hash-based stuff going on right now.
+
+Also, I might want to trim down the repository to the point just before I imported uservoices, since those being binary files are probably unnecessarily taking up a lot of space since those won't diff well.
+
+
+
 
 
 
