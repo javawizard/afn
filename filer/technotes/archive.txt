@@ -90,6 +90,14 @@ Also, I might want to trim down the repository to the point just before I import
 
 
 
+So I just tried things without the uservoices folder, and that's a bit more like it: 86% smaller (i.e. compressed was 14% the size of the original). And I think I might have a jython.jar in there somewhere; I bet removing that would make everything even smaller.
+
+So this could work.
+
+I just need to make it faster. Maybe find a faster binary diff algorithm, if there's one faster than bsdiff4 out there. Or try also doing textual diffs and gzipping them (since those would benefit from gzipping), although I'd need to make sure that they can preserve binary content, too (even if they're really inefficient at storing it, since then the bsdiff would take over because it'd be smaller).
+
+
+
 
 
 
