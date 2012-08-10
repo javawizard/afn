@@ -39,7 +39,7 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             # accidentally diff against ourselves
             window_copy = list(window)
             window.append((hash, object_file))
-            if len(window) > 120:
+            if len(window) > 150:
                 del window[0]
         o_dir = temp_dir.child(hash)
         o_dir.mkdirs()
