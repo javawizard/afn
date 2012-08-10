@@ -39,7 +39,7 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             # accidentally diff against ourselves
             window_copy = list(window)
             window.append((hash, object_file))
-            if len(window) > 150:
+            if len(window) > 200:
                 del window[0]
         o_dir = temp_dir.child(hash)
         o_dir.mkdirs()
@@ -84,6 +84,7 @@ def _process(object_generator, window, in_lock, out_lock, temp_dir):
             out_total += min_size
             processed += 1
             print "Processed %s" % processed
+            print "Space savings so far: %s%%" % int(100*(1.0 - (float(out_total) / float(in_total))))
         finally:
             o_dir.delete_folder(True)
 
