@@ -216,7 +216,8 @@ class BECDumpCommand(Command):
         pass
     
     def run(self, args):
-        print json.dumps(bec.loads(sys.stdin.read()), indent=4)
+        print json.dumps(bec.loads(sys.stdin.read()), indent=4,
+                default=lambda a: "<binary data>")
 
 
 @command("current")

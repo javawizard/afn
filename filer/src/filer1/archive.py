@@ -6,24 +6,44 @@ import bsdiff4
 import gzip
 import shutil
 from afn.fileutils import File
+from filer1 import bec
 
 LITERAL = "\x01"
 LITERAL_GZIP = "\x02"
 DIFF = "\x03"
 DIFF_GZIP = "\x04"
 
+def compress_folder(folder, out, temp_dir):
+    objects, bec_map = load_objects(folder)
+    sort_commit_objects(objects, bec_map)
+    make_archive(objects, out, temp_dir)
 
-def make_archive(object_generator, out, temp_dir):
+
+def load_objects(folder):
+    objects = []
+    for f in folder.list():
+        objects.append((f.name, f))
+    bec_map = {}
+    for h, f in objects:
+        bec_map[h] = bec.load(f.open("rb"))
+    return objects, bec_map
+
+
+def sort_commit_objects(objects, bec_map):
+    objects.sort(key=lambda a: bec_map.get("current_name", ""))
+
+
+def make_archive(objects, out, temp_dir):
     """
-    Object generator is a (hash, File)-generating iterator. out is an open
-    file; it need not be seekable as it will only be appended to.
+    Objects is a list of (hash, fileutils.File) tuples representing the objects
+    to encode, in order.
     """
     # out.write(MAGIC)
     window = []
     in_lock = RLock()
     out_lock = RLock()
     # TODO: Spawn several processor threads
-    in_total, out_total = _process(object_generator, window, in_lock, out_lock, temp_dir)
+    in_total, out_total = _process(objects, window, in_lock, out_lock, temp_dir)
     print "Total space savings: %s%%" % int(100*(1.0 - (float(out_total) / float(in_total))))
 
 
