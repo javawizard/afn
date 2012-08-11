@@ -32,7 +32,7 @@ def load_objects(folder):
 
 def sort_commit_objects(objects, bec_map):
 #    objects.sort(key=lambda a: bec_map.get("current_name", ""))
-    objects.sort(key=lambda a: a[1].size)
+    objects.sort(key=lambda a: (a[1].size, bec_map[a[1].name]["current_name"]))
     objects.reverse()
 
 
@@ -78,7 +78,7 @@ def _process(objects, current, in_lock, temp_dir):
             return in_total, out_total
         # print "Starting %s in %s" % (position, current_thread())
         hash, object_file = objects[position]
-        window_copy = objects[max(0, position - 70):position]
+        window_copy = objects[max(0, position - 10):position]
         o_dir = temp_dir.child(hash)
         o_dir.mkdirs()
         try:
