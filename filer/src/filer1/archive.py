@@ -1,7 +1,7 @@
 
 
 MAGIC = "filer-archive-1:"
-from threading import RLock
+from threading import Thread, RLock, current_thread
 import bsdiff4
 import gzip
 import shutil
@@ -34,36 +34,49 @@ def sort_commit_objects(objects, bec_map):
     objects.sort(key=lambda a: bec_map.get("current_name", ""))
 
 
-def make_archive(objects, out, temp_dir):
+def make_archive(objects, out, temp_dir, thread_count=8):
     """
     Objects is a list of (hash, fileutils.File) tuples representing the objects
     to encode, in order.
     """
+    temp_dir.mkdirs(True)
     # out.write(MAGIC)
-    window = []
     current = AtomicInteger(0)
+    # A lock that's acquired by every thread before choosing an object to
+    # compress
     in_lock = RLock()
-    out_lock = RLock()
     # TODO: Spawn several processor threads
-    in_total, out_total = _process(objects, window, current, in_lock, out_lock, temp_dir)
+    # So, what we're doing is writing each compressed object to the compress
+    # folder. Then we combine them together afterward.
+    compress_folder = temp_dir.child("compress")
+    if compress_folder.is_folder:
+        compress_folder.delete_folder(True)
+    compress_folder.mkdirs()
+    in_total, out_total = AtomicInteger(0), AtomicInteger(0)
+    def run():
+        i, o = _process(objects, current, in_lock, temp_dir)
+        in_total.get_and_add(i)
+        out_total.get_and_add(o)
+    threads = [Thread(target=run) for i in range(thread_count)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    in_total, out_total = int(in_total), int(out_total)
     print "Total space savings: %s%%" % int(100*(1.0 - (float(out_total) / float(in_total))))
     print "Input size: %sKB, output size: %sKB" % (in_total / 1000, out_total / 1000)
+    print len(objects)
 
 
-def _process(objects, window, current, in_lock, out_lock, temp_dir):
-    in_total, out_total, processed = 0, 0, 0
+def _process(objects, current, in_lock, temp_dir):
+    in_total, out_total = 0, 0
     while True:
-        with in_lock:
-            position = current.get_and_add()
-            if position >= len(objects):
-                return in_total, out_total
-            hash, object_file = objects[position]
-            # Make a copy /before/ appending to ourselves so as not to
-            # accidentally diff against ourselves
-            window_copy = list(window)
-            window.append((hash, object_file))
-            if len(window) > 10:
-                del window[0]
+        position = current.get_and_add()
+        if position >= len(objects):
+            return in_total, out_total
+        # print "Starting %s in %s" % (position, current_thread())
+        hash, object_file = objects[position]
+        window_copy = objects[max(0, position - 5):position]
         o_dir = temp_dir.child(hash)
         o_dir.mkdirs()
         try:
@@ -98,16 +111,15 @@ def _process(objects, window, current, in_lock, out_lock, temp_dir):
             original_size = object_file.size
             fraction_of_original = float(min_size) / float(original_size)
             amount_saved = 1.0 - fraction_of_original
-            print "For object %s:" % hash
-            print "original_size, min_size, min_type, min_file: %s, %s, %s, %s" % (
-                    original_size, min_size, hex(ord(min_type)), min_file)
-            print "Compressed to %s%% smaller (larger numbers are better)" % (
-                    int(amount_saved * 100))
+#            print "For object %s:" % hash
+#            print "original_size, min_size, min_type, min_file: %s, %s, %s, %s" % (
+#                    original_size, min_size, hex(ord(min_type)), min_file)
+#            print "Compressed to %s%% smaller (larger numbers are better)" % (
+#                    int(amount_saved * 100))
             in_total += original_size
             out_total += min_size
-            processed += 1
-            print "Processed %s" % processed
-            print "Space savings so far: %s%%" % int(100*(1.0 - (float(out_total) / float(in_total))))
+            print "Compressed %s" % position
+#            print "Space savings so far: %s%%" % int(100*(1.0 - (float(out_total) / float(in_total))))
         finally:
             o_dir.delete_folder(True)
 
