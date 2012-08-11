@@ -31,7 +31,9 @@ def load_objects(folder):
 
 
 def sort_commit_objects(objects, bec_map):
-    objects.sort(key=lambda a: bec_map.get("current_name", ""))
+#    objects.sort(key=lambda a: bec_map.get("current_name", ""))
+    objects.sort(key=lambda a: a[1].size)
+    objects.reverse()
 
 
 def make_archive(objects, out, temp_dir, thread_count=8):
@@ -76,7 +78,7 @@ def _process(objects, current, in_lock, temp_dir):
             return in_total, out_total
         # print "Starting %s in %s" % (position, current_thread())
         hash, object_file = objects[position]
-        window_copy = objects[max(0, position - 5):position]
+        window_copy = objects[max(0, position - 30):position]
         o_dir = temp_dir.child(hash)
         o_dir.mkdirs()
         try:
