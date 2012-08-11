@@ -78,7 +78,7 @@ def _process(objects, current, in_lock, temp_dir):
             return in_total, out_total
         # print "Starting %s in %s" % (position, current_thread())
         hash, object_file = objects[position]
-        window_copy = objects[max(0, position - 30):position]
+        window_copy = objects[max(0, position - 70):position]
         o_dir = temp_dir.child(hash)
         o_dir.mkdirs()
         try:
