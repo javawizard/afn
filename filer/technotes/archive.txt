@@ -106,7 +106,21 @@ So I'm undecided as to whether to use separate chaining or open addressing. I'm 
 
 Separate chaining it is, then.
 
-So, the hash table will almost certainly be located at the beginning of the file, so that a single object lookup can be done without any need to seek backward in the file. I'll have the files store offsets to the hash table location, the linked list location, and the location where the actual objects start
+So, the hash table will almost certainly be located at the beginning of the file, so that a single object lookup can be done without any need to seek backward in the file. I'm thinking the hash table will store indexes relative to the start of the linked list and the linked list will store indexes relative to the start of the actual object contents. This will allow for 1: the future potential of splitting out the index and the object content, and 2: the linked list table to be written without needing to know how long it will be in advance. Offsets to the start of the hash table, the start of the linked list table, and the start of the object content will be stored at the beginning of the file, probably after the magic number.
+
+So, the format...
+
+Somewhere at the beginning of the file will be the offset table, as mentioned before. This will have four 8-byte integers, so 32 bytes total.
+
+    The first integer specifies the offset to the start of the hash table.
+
+    The second integer specifies the offset to the linked list table.
+    
+    The third integer specifies the offset to the start of object data.
+    
+    The fourth integer specifies how many hash buckets were used, as a number N such that the number of hash buckets used is equal to 2**N (where ** is exponentation).
+
+Then there's the hash table, which is simply stored as one eight-byte integer for each entry in the hash table. This eight-byte integer specifies an offset from the start of the linked list table at which the relevant linked list node starts.
 
 
 
