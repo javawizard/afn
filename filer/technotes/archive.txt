@@ -122,7 +122,15 @@ Somewhere at the beginning of the file will be the offset table, as mentioned be
 
 Then there's the hash table, which is stored as two eight-byte integers per hash bucket. The first integer points to the offset in the linked list table at which the relevant entry begins, and the second integer specifies how long, in bytes, the relevant entry is.
 
-Then there's the linked list table. For each hash bucket that has any values, an entry in the linked list table is stored; format TBD.
+Then there's the linked list table. For each hash bucket that has any values, an entry in the linked list table is stored; it contains two bytes, a string of bytes, and an eight-byte pointer for each corresponding object.
+
+    The two bytes are the number of bytes in the name.
+    
+    The string of bytes are the name.
+    
+    The eight-byte pointer is the offset into the object area at which the object is stored.
+
+Then come the objects, encoded as mentioned a few pages back. 
 
 
 
