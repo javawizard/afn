@@ -104,6 +104,10 @@ And the hash used would be the CRC32 of the name of the file to be archived; thi
 
 So I'm undecided as to whether to use separate chaining or open addressing. I'm leaning toward separate chaining because I'm rather more familiar with how to write separate chaining hash tables, and because it'll have better locality of reference: assuming the linked lists are stored in a separate section of the file from the hash table, only two disk reads would be needed to determine the position of a particular object in the archive: one from the corresponding cell in the hash table, and one from the linked list area.
 
+Separate chaining it is, then.
+
+So, the hash table will almost certainly be located at the beginning of the file, so that a single object lookup can be done without any need to seek backward in the file. I'll have the files store offsets to the hash table location, the linked list location, and the location where the actual objects start
+
 
 
 
