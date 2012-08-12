@@ -122,7 +122,7 @@ Somewhere at the beginning of the file will be the offset table, as mentioned be
 
 Then there's the hash table, which is stored as two eight-byte integers per hash bucket. The first integer points to the offset in the linked list table at which the relevant entry begins, and the second integer specifies how long, in bytes, the relevant entry is.
 
-
+Then there's the linked list table. For each hash bucket that has any values, an entry in the linked list table is stored; format TBD.
 
 
 
