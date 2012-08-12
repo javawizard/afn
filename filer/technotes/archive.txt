@@ -96,6 +96,14 @@ So this could work.
 
 I just need to make it faster. Maybe find a faster binary diff algorithm, if there's one faster than bsdiff4 out there. Or try also doing textual diffs and gzipping them (since those would benefit from gzipping), although I'd need to make sure that they can preserve binary content, too (even if they're really inefficient at storing it, since then the bsdiff would take over because it'd be smaller).
 
+Adding support for multiple threads made it fast enough that I'm going to leave it as is for now.
+
+So now I need to figure out how to the archive index. I've decided that I don't like the B-tree approach so well because it will result in a lot of reads. I'm thinking I might experiment with a hash-based format instead.
+
+And the hash used would be the CRC32 of the name of the file to be archived; this is so that the archiver can be used separately from Filer, with filenames that might not themselves be hashes.
+
+So I'm undecided as to whether to use separate chaining or open addressing. I'm leaning toward separate chaining because I'm rather more familiar with how to write separate chaining hash tables, and because it'll have better locality of reference: assuming the linked lists are stored in a separate section of the file from the hash table, only two disk reads would be needed to determine the position of a particular object in the archive: one from the corresponding cell in the hash table, and one from the linked list area.
+
 
 
 
