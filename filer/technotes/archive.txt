@@ -120,7 +120,9 @@ Somewhere at the beginning of the file will be the offset table, as mentioned be
     
     The fourth integer specifies how many hash buckets were used, as a number N such that the number of hash buckets used is equal to 2**N (where ** is exponentation).
 
-Then there's the hash table, which is simply stored as one eight-byte integer for each entry in the hash table. This eight-byte integer specifies an offset from the start of the linked list table at which the relevant linked list node starts.
+Then there's the hash table, which is stored as two eight-byte integers per hash bucket. The first integer points to the offset in the linked list table at which the relevant entry begins, and the second integer specifies how long, in bytes, the relevant entry is.
+
+
 
 
 
