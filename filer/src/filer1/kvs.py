@@ -116,6 +116,25 @@ class SQLiteKeyValueStore(KeyValueStore):
                         "(?, ?)", (name, value))
 
 
+def open_store(in_file):
+    # TODO: Make this a module-level constant, and update it when we add new
+    # store types. And maybe have a module-level constant indicating the
+    # default store type, too.
+    known_types = [SQLiteKeyValueStore]
+    for c in known_types:
+        try:
+            return c.open(in_file)
+        except exceptions.WrongKVSFormat:
+            continue
+    raise exceptions.WrongKVSFormat("None of the known formats could open the "
+            "store %r" % in_file.path)
+
+
+def create_store(out_file, list_function, get_function,
+        store_class=SQLiteKeyValueStore):
+    return store_class.create(out_file, list_function, get_function)
+
+
 
 
 
