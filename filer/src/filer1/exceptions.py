@@ -52,3 +52,7 @@ class NoSuchObject(StoreError):
 class WrongKVSFormat(InternalError):
     _format = "Wrong KVS file format: %(reason)s"
 
+
+class KVSKeyError(InternalError):
+    _format = "No such key: %(key)s"
+
