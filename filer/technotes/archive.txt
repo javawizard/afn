@@ -168,7 +168,13 @@ Darnit, I somehow keep designing myself into corners like this, which is really 
 
 Ok, we're going to use some sort of multiple pass thing, if I can work out how to do one properly.
 
-Gah, I need to go to bed and think about this tomorrow. Maybe I'll end up using a SQLite database just to get things working, and have it store things in memory for now.
+Gah, I need to go to bed and think about this tomorrow. Maybe I'll end up using a SQLite database just to get things working, and have it store things in memory for now. Then we can just produce a wrapping StringIO instance whenever an object is requested from the store.
+
+(The store will still be read-only, once it's been initially created. That way I can rewrite it into using a pack file format later on.)
+
+So, we need a nice little API, maybe KeyValueStore or something, and then a SQLiteKeyValueStore that we'll use pretty much everywhere for now.
+
+It would be nice if we had the thing that reads packs... er, archives... (Man, "pack" is such a lovely name for this, but git's already taken it, and my format will be different enough that I don't want to call it a pack format, to alleviate confusion with git and to avoid my format being steamrollered over because of the popularity of their format's name...) be able to detect the type of archive file and 
 
 
 
