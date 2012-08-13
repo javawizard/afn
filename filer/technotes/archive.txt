@@ -174,7 +174,11 @@ Gah, I need to go to bed and think about this tomorrow. Maybe I'll end up using 
 
 So, we need a nice little API, maybe KeyValueStore or something, and then a SQLiteKeyValueStore that we'll use pretty much everywhere for now.
 
-It would be nice if we had the thing that reads packs... er, archives... (Man, "pack" is such a lovely name for this, but git's already taken it, and my format will be different enough that I don't want to call it a pack format, to alleviate confusion with git and to avoid my format being steamrollered over because of the popularity of their format's name...) be able to detect the type of archive file and 
+It would be nice if we had the thing that reads key-value files be able to detect the type of file, so that once we start writing the hash table archive format I'm still trying to come up with, we can still read the older sqlite-based files. That shouldn't be too hard if we have a single function, say open_db, that opens a key-value database for reading, and that method would look at magic numbers and such and determine what class to use to read it.
+
+So then to read these, we open a key-value database and get back an instance of the abstract class KeyValueStore. A particular key-value store would have a close method to close it and would also be a context manager, and would also have a __del__ that closes it if it wasn't closed already. Then there's a method called... I'm thinking "get"... that we pass a key into and it gives us a file-like object that allows us to read the key's value. (The SQLite-based version would likely return a StringIO here; the future hash table format would probably return some sort of range-based seeking file instance, like the one I've got in the BEC decoder for reading streams from a BEC file. I'll probably actually generalize that class into an afn.utils class that would be used by both BEC and the archive format.) And then there's another method, probably "list", that's a generator that yields the names of all of the keys stored in the key-value store.
+
+And we don't have to worry too much about concurrency as the whole thing's read-only. The only point where we'd have to worry about that would be when we write the hash table format, when those range file thingies are seeking in the actual file; we'd need to make reads from them atomic. (Performance would obviously go to crap with multiple threads reading from a hash table key-value store due to all the seeking back and forth, but that's a lot better than obscure race conditions and data corruption.)
 
 
 
