@@ -132,6 +132,22 @@ Then there's the linked list table. For each hash bucket that has any values, an
 
 Then come the objects, encoded as mentioned a few pages back. 
 
+So I've finally (you'd think it would have been quicker) observed that I'm basically writing a read-only dbm-like thing. And I've already been doing a fairly good job at this, but that makes me think all the more that I need to keep the dbm-like part separate from the delta-encoding part so that the various parts can be reused and so that I can swap things out in the future if I decide I want to.
+
+And I've actually decided I want to change the format, so that not all of the nodes in a particular linked list entry have to be loaded into memory.
+
+Here's how I'm thinking it'll work: hash table entries are made up of ten bytes; the first eight are the offset into the linked list table at which the entry is present, and the next two are the length of the first entry in the linked list table.
+
+Then each entry in the linked list table is made up of eight bytes, two bytes, and a string of bytes, which mean the same things as I had planned before, except that the two bytes are the length of the /next/ entry in the linked list table, or zero if there is no next entry.
+
+So a lookup can proceed by jumping to the relevant location in the hash table and noting the length of the first entry and the position at which it is stored.
+
+Then we read that many bytes from that position in the linked list table, and parse it as noted above. If the string of bytes matches the key we're looking for, we're done, and we have the location of the corresponding object. If it doesn't, we read the next N bytes, where N is the length of the next key specified in the key we just read, and proceed from there until we find a match or we get a zero-length key, which means the key we're looking for isn't present in the table.
+
+And that should be it.
+
+So then we should have a library for writing these files. I think I'll plan on allowing it to have 
+
 
 
 
