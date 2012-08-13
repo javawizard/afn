@@ -180,6 +180,18 @@ So then to read these, we open a key-value database and get back an instance of 
 
 And we don't have to worry too much about concurrency as the whole thing's read-only. The only point where we'd have to worry about that would be when we write the hash table format, when those range file thingies are seeking in the actual file; we'd need to make reads from them atomic. (Performance would obviously go to crap with multiple threads reading from a hash table key-value store due to all the seeking back and forth, but that's a lot better than obscure race conditions and data corruption.)
 
+So, then, to build a key-value store, we provide a fileutils.File object to write the store to, and we provide two functions: one that, when called, returns an iterator (or iterable) over the names of all of the keys to store, and one that, when called with a particular name as its argument, returns a file-like object that can be used to read its value. (This would allow copying a key-value store into another key-value store by passing the source store's list and get methods, respectively, and it would also allow an easy way to take a folder with a bunch of files and store them in a key-value store by passing something like lambda: (f.name for f in the_folder.list()) and lambda a: the_folder.child(a).open("rb"), respectively. (I'm hoping to add a list_names method to fileutils.File to allow for a less memory-intensive way of doing the above.)
+
+And then that allows key-value stores storing revisions and diffs to be built simply by writing each revision/diff to a file with the revision's hash as its name and then storing those in a key-value store as mentioned above.
+
+The only issue I can see is that during delta compression, one file per delta would have to be written out, and on a hard disk with a 4KB block size, 1,000,000 revisions would need a working space of 4GB just to delta-compress, even if the result produced was a lot smaller. But I suppose we can address that once we actually get there; it might even be possible to address it by storing multiple key-value stores and combining them at the end, which would be slow as each store has to be asked in turn for the relevant key, but it would at least work.
+
+But let's not worry about that for now.
+
+So we've got a good way to write these archive files. And I'm thinking that'll be an abstract static method (of a sort, since Python doesn't actually have those; it'll just be a static method that throws a NotImplementedError when invoked) on KeyValueStore, called "create" or something.
+
+Actually, let's go write that real quick.
+
 
 
 
