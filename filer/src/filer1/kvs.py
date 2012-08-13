@@ -88,7 +88,17 @@ class SQLiteKeyValueStore(KeyValueStore):
         return StringIO(str(results[1]))
     
     def list(self):
-        pass
+        cursor = self.db.cursor()
+        cursor.execute("select key from keys")
+        # Call fetchone until there's no results left
+        for key in iter(cursor.fetchone, None):
+            # Key will be a tuple; return its first (and only) item. TODO:
+            # might want to use tuple unpacking as a sanity check that only one
+            # item is returned.
+            yield key[0]
+    
+    def close(self):
+        self.db.close()
     
     def open(cls, in_file):
         # FIXME: Check the format and raise WrongKVSFormat instead of whatever
