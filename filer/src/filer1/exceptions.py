@@ -49,3 +49,6 @@ class NoSuchObject(StoreError):
     _format = "No object with hash %(hash)r is present in this store."
 
 
+class WrongKVSFormat(InternalError):
+    _format = "Wrong KVS file format: %(reason)s"
+
