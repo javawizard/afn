@@ -150,7 +150,21 @@ So then we should have a library for writing these files. I think I'll plan on a
 
 (So, since a normal commit seems to expand to about ten filer commits, about 1,000 commits would equal 1MB of memory when packing. I'll need to figure out a way to up this in the future since things like Linux have far more commits than that, but I could always use a different dbm-type storage format or pack every, say, 100,000 filer commits (10,000 normal commits, or changesets as I'm going to call them) into its own file. Wouldn't necessarily be optimal, but it could work. But I'll think about that once I've actually got that many commits to work with.)
 
-So, I want an API for the key-value store where I pass in three things: 1, the file to write to, 2, 
+So I decided I really don't want to have to store everything in-memory as that'd be quite wasteful. I want to be able to write huge pack files at a time.
+
+And this needs some thought, as I did some tests and verified that only about 200 seeks across long ranges can be executed on a file, which is expected from my hard disk's rotation speed.
+
+My thought was to make it possible to append existing entries to an archive after the archive had already been written, in constant time per entry. Thus an empty archive could be created and each entry appended to it one by one. The number of hash buckets would, however, be fixed at creation. A new object would be added by looking up the corresponding hash bucket; if it didn't point to an object, the object was written to the end of the file and the hash bucket updated to point to it. If, however, it did point to an existing object, the new object would be written out with a pointer to the object currently in the hash bucket, and the hash bucket would be replaced with the newly-written object. Objects themselves would then include their name just before their content.
+
+One could look up any given object by looking up the corresponding hash bucket and following it to the object it pointed to; the name of this object was checked, and if it wasn't the right one, the next object (which the current object stored a pointer to) was looked up, and the process proceeded until either the object in question was found or an object without a pointer to another object was found.
+
+The problem is twofold. First, the object pointed to by the next pointer would already have been written and hence be further back in the file, and some tests I just did seem to indicate that seeking backward is around 3 times slower than seeking forward. Second, and more importantly, storing the linked list nodes all over the place in the file results in very bad locality of reference, the kind that could easily slow down object lookups where there are multiple entries per hash bucket by several orders of magnitude. (Seeking forward by 1KB around 20,000 times took around half a second, but seeking forward 100KB only 200 times also took half a second.) So I don't think an appendable format that works like this is feasible; linked list entries really need to be grouped together in order for disk reads not to slow down the whole thing.
+
+So, how could things still be done without having to store everything in memory?
+
+You know, I'm really tempted to see if I can figure out how to write something like this using just a SQLite database for now, to get a rough draft going. The only problem is, SQLite database row values can't be particularly large, as they're stored in memory. And I don't want to store them in a separate file as I want a way to be able to store everything in a single file. (And I don't think it's possible to tell SQLite to open a database in read-only mode and only use a particular range of a file.)
+
+Darnit, I somehow keep designing myself into corners like this, which is really annoying...
 
 
 
