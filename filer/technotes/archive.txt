@@ -166,6 +166,10 @@ You know, I'm really tempted to see if I can figure out how to write something l
 
 Darnit, I somehow keep designing myself into corners like this, which is really annoying...
 
+Ok, we're going to use some sort of multiple pass thing, if I can work out how to do one properly.
+
+Gah, I need to go to bed and think about this tomorrow. Maybe I'll end up using a SQLite database just to get things working, and have it store things in memory for now.
+
 
 
 
