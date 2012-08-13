@@ -146,7 +146,9 @@ Then we read that many bytes from that position in the linked list table, and pa
 
 And that should be it.
 
-So then we should have a library for writing these files. I think I'll plan on allowing it to have 
+So then we should have a library for writing these files. I think I'll plan on allowing it to store all of the keys in memory to sort them into buckets; if that gets to consume too much memory, I'll figure something else out. But, since the names are all that'll be stored in memory, an entry would only use probably less than 100 bytes of memory, so 100,000 entries would result in a maximum memory usage of 10MB, and Python's interpreter overhead is 5MB anyway so I think that's fine for now.
+
+(So, since a normal commit seems to expand to about ten filer commits, about 1,000 commits would equal 1MB of memory when packing. I'll need to figure out a way to up this in the future since things like Linux have far more commits than that, but I could always use a different dbm-type storage format or pack every, say, 100,000 filer commits (10,000 normal commits, or changesets as I'm going to call them) into its own file. Wouldn't necessarily be optimal, but it could work. But I'll think about that once I've actually got that many commits to work with.)
 
 
 
