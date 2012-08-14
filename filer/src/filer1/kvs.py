@@ -101,8 +101,13 @@ class SQLiteKeyValueStore(KeyValueStore):
         self.db.close()
     
     def open(cls, in_file):
-        # FIXME: Check the format and raise WrongKVSFormat instead of whatever
-        # error SQLite normally raises
+        with in_file.open("rb"):
+            header = in_file.read(16)
+        correct_header = "SQLite format 3\x00"
+        if header != correct_header:
+            raise exceptions.WrongKVSFormat(
+                    "The header was %r, not %r as expected" % (
+                            header, correct_header))
         return SQLiteKeyValueStore(in_file)
     
     def create(cls, out_file, list_function, get_function):
