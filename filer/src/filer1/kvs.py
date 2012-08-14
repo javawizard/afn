@@ -122,6 +122,9 @@ class SQLiteKeyValueStore(KeyValueStore):
 
 
 def open_store(in_file):
+    """
+    Opens the store located at the specified file.
+    """
     # TODO: Make this a module-level constant, and update it when we add new
     # store types. And maybe have a module-level constant indicating the
     # default store type, too.
