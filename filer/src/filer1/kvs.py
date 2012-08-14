@@ -138,9 +138,11 @@ def open_store(in_file):
             "store %r" % in_file.path)
 
 
-def create_store(out_file, list_function, get_function,
-        store_class=SQLiteKeyValueStore):
-    return store_class.create(out_file, list_function, get_function)
+# Make DefaultStore an alias for SQLiteKeyValueStore so that everything can
+# later be switched over to use the hash table format once I get around to
+# writing it. (Things can just use DefaultStore then, which will change to
+# the HashTableStore thingie, or whatever I call it, once it's done.)
+DefaultStore = SQLiteKeyValueStore
 
 
 
