@@ -198,6 +198,14 @@ Ok, less tired. Let's write it.
 
 
 
+Ok, that's written, and looks good.
+
+So now we need to think about the API for creating and reading key-value stores that contain delta-compressed commits.
+
+But it's fairly late, so I'll do that tomorrow.
+
+
+
 
 
 
