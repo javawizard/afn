@@ -2,6 +2,7 @@
 from filer1.commands.command import Command
 from filer1.repository import (Repository, init_repository,
                                detect_working, detect_repository)
+from filer1.working import WorkingCopy
 from filer1 import bec, exceptions
 from afn.utils.partial import Partial
 from afn.fileutils import File, file_or_none
@@ -32,8 +33,17 @@ class Init(Command):
     
     def run(self, args):
         location = File(args.location)
-        init_repository(File(args.repository))
-        print "Repository created at %s." % args.repository
+        if args.plain:
+            repository_folder = location
+        else:
+            location.mkdirs()
+            repository_folder = location.child(".filer")
+        init_repository(repository_folder)
+        if not args.plain:
+            repository = Repository(repository_folder)
+            working = WorkingCopy(repository, location)
+            working.create()
+        print "Repository created at %r." % repository_folder.path
 
 
 @command("checkout")
