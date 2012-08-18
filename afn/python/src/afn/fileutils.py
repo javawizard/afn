@@ -194,6 +194,15 @@ class File(object):
         first. If including_self is True, self will be first, self.parent will
         be second, and so on.
         """
+        if including_self:
+            current = self
+        else:
+            current = self.parent
+        results = []
+        while current is not None:
+            results.append(current)
+            current = current.parent
+        return results
     
     @property
     def name(self):
@@ -473,15 +482,7 @@ class File(object):
         Note that if self == other, False will be returned.
         """
         parent = File(other).parent
-        count = 3000
         while parent is not None:
-            # Sanity check to make sure we don't get into infinite loops,
-            # because I'm paranoid about the correctness of my implementation
-            # of the parent property when the file in question has no parents
-            count -= 1
-            if count < 0:
-                raise Exception("Probable infinite loop in %r.ancestor_of(%r)"
-                        % (self, other))
             if parent == self:
                 return True
             parent = parent.parent
