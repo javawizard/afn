@@ -66,6 +66,7 @@ def detect_repository(target, silent=False):
                     "comes from. You'll need to specify --repository to "
                     "indicate what repository to use. (In the future, there "
                     "will be a command that can be used to fix this.)")
+    return working.child(working.get_xattr(XATTR_REPO))
 
 
 def init_repository(folder):
