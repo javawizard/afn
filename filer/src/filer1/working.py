@@ -15,21 +15,29 @@ class WorkingCopy(object):
     instead of revstates. Have it delete folders that are being deleted and
     that have no contents, and untrack those that do. (Untracking is done by 
     removing the XATTR_BASE extended attribute.)
+    
     def update_to(self, target, new_rev):
         """
         Updates target to the revision specified by new_rev, or deletes target
-        if new_rev is None. The target's new revstate will be returned.
+        if new_rev is None. The target's extended attributes will be created
+        or updated as necessary.
+        
+        Note: Right now, this only deletes directories which have no untracked
+        files. Directories that do have untracked files will simply be
+        untracked themselves instead of deleted.
         """
-        # If new_rev is None, just delete target, or clear it if it's a
-        # directory (see a few comments below for why we do that). FIXME: We
-        # might want to consider deleting it unless it's got a .filerfrom or
-        # something like that to avoid it being sporadically recreated on the
-        # next commit because it didn't actually go away.
+        # If new_rev is None, the target's been removed. If it's a file, we
+        # delete it. If it's a folder, we remove all of its tracked contents,
+        # then delete it if it's empty or untrack it if it's not. FIXME: This
+        # will break if a file's been changed to a folder between the current
+        # revision and the one we're updating to; figure out what to do then.
+        # (Perhaps scan the directory structure beforehand and warn the user
+        # if any folders would be slated to be changed to files that have
+        # untracked contents.)
         if new_rev is None:
-            if target.is_folder: # Folder, so clear it
-                for f in target.list():
-                    if not f.name.startswith("."):
-                        delete(f)
+            if target.is_folder: # Folder, so delete its untracked contents
+                for child in target.list():
+                    if 
             else: # File, so delete it
                 target.delete()
             # FIXME: What are we supposed to return here? In my tired stupor
