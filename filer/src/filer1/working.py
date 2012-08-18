@@ -46,6 +46,7 @@ class WorkingCopy(object):
                                              "current_name": current_name,
                                              "parents": base,
                                              "contents": f})
+                self.print_commit_info(target, hash, base)
                 target.set_xattr(XATTR_BASE, json.dumps([hash]))
         else:
             # It's a folder. First thing we do is create revisions for all of
@@ -90,5 +91,15 @@ class WorkingCopy(object):
                                              "current_name": current_name,
                                              "parents": base,
                                              "contents": child_revs})
+                self.print_commit_info(target, hash, base)
                 target.set_xattr(XATTR_BASE, json.dumps([hash]))
+    
+    def print_commit_info(self, target, hash, base):
+        if len(base) == 0:
+            code = "A"
+        elif len(base) == 1:
+            code = "M"
+        else:
+            code = "G"
+        print code + " " + hash + " " + target.path.relative_to(self.target)
     
