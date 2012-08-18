@@ -28,7 +28,7 @@ class File(object):
     created.
     """
     def __init__(self, *path_components):
-        """
+        r"""
         Creates a new file from the specified path components. Each component
         represents the name of a folder or a file. These are internally joined
         as if by os.path.join(*path_components).
