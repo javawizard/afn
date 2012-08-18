@@ -31,7 +31,7 @@ class WorkingCopy(object):
             # file's old contents are the same as its new contents.
             if len(base) == 1:
                 with target.open("rb") as f:
-                    if repository.same_contents(f,self.get_revision(
+                    if repository.same_contents(f, self.repository.get_revision(
                             base[0])["contents"]):
                         # Only one revision and the contents are the same;
                         # just return
@@ -41,7 +41,7 @@ class WorkingCopy(object):
             # xattr to reflect the new parent. FIXME: We need to somehow make
             # the updating of xattrs atomic over the whole changeset.
             with target.open("rb") as f:
-                hash = self.create_revision({"type": "file",
+                hash = self.repository.create_revision({"type": "file",
                                              "info": info,
                                              "current_name": current_name,
                                              "parents": base,
@@ -61,7 +61,7 @@ class WorkingCopy(object):
                             "the future." % child.path)
                     continue
                 # Now we create a revision for the specified child.
-                self.commit_changes(info, child, child.name)
+                self.commit(info, child, child.name)
             # Now we iterate over our children and read their parent hashes
             # into child_revs, which will then map child names to corresponding
             # child revision hashes.
@@ -76,7 +76,7 @@ class WorkingCopy(object):
             # we've got exactly one parent, and it has the exact same revisions
             # we do; if that's the case, we just return the current revstate.
             if (len(base) == 1 and
-                self.get_revision(base[0])
+                self.repository.get_revision(base[0])
                         ["contents"] == child_revs):
                 # Same child revs, so we just return
                 return
@@ -85,7 +85,7 @@ class WorkingCopy(object):
                 # revision for this folder and update its xattr. FIXME: The
                 # same issue about atomically updating the xattrs that applies
                 # to files applies here.
-                hash = self.create_revision({"type": "folder",
+                hash = self.repository.create_revision({"type": "folder",
                                              "info": info,
                                              "current_name": current_name,
                                              "parents": base,
