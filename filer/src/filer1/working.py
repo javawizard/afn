@@ -3,9 +3,8 @@ from afn.fileutils import File
 import json
 from filer1 import repository
 import shutil
+from filer1.constants import XATTR_BASE, XATTR_REPO
 
-XATTR_BASE = "user.filer-base"
-XATTR_REPO = "user.filer-repo"
 
 def delete_tracked(target):
     """

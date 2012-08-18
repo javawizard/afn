@@ -7,6 +7,7 @@ from filer1 import exceptions
 from filer1 import bec
 from filer1.data.stores.direct import DirectStore
 import shutil
+from filer1.constants import XATTR_BASE, XATTR_REPO
 
 global_debug = False
 
@@ -30,15 +31,15 @@ def same_contents(fp1, fp2):
 
 def detect_working(target):
     """
-    Finds the current working directory by jumping parents until we arrive at
-    the parent that contains a .filerfrom file. The folder containing said file
-    is then returned. If no such folder is found before we hit the directory
-    root, None is returned.
+    Finds the current working directory by jumping parents until we have no
+    more parents, then scanning down until we find one of them that has a
+    XATTR_REPO attribute set. We use the topmost one and not the first one we
+    encounter while scanning up so that if someone copies a working folder or
+    working file into another working folder, it will be seen as an integrated
+    file or folder instead of as a separate working copy.
     """
-    while not target.child(".filerfrom").exists:
-        target = target.parent
-        if target is None:
-            return None
+    parents = []
+    
     return target
 
 
