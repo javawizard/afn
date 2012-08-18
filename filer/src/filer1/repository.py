@@ -28,19 +28,6 @@ def same_contents(fp1, fp2):
             return True
 
 
-def delete(target):
-    """
-    Deletes the specified file or folder. This mainly exists due to a limitation
-    of fileutils, namely that two separate methods are used to delete folders
-    and files; I intend to change fileutils to have the same method be used for
-    both, at which point this function will become obsolete.
-    """
-    if target.is_folder:
-        target.delete_folder(True)
-    else:
-        target.delete()
-
-
 def detect_working(target):
     """
     Finds the current working directory by jumping parents until we arrive at
