@@ -206,6 +206,12 @@ But it's fairly late, so I'll do that tomorrow.
 
 
 
+So I'm awake now and thinking about stuff.
+
+And I'm thinking it might be nice to write this so that it can be used with a mutable key-value store as well. I work for Fusion-io right now (note that nothing I say here represents any sort of official position of Fusion-io)
+
+
+
 
 
 
