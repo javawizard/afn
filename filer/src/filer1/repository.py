@@ -99,8 +99,8 @@ class Repository(object):
         self.folder = File(folder)
         # Sanity check to make sure we're not using the parent folder
         if self.folder.child(".filer").exists:
-            raise Exception("You should pass in the .filer folder itself to "
-                    "Repository(...), not the folder that contains .filer")
+            raise Exception("You should specify the .filer directory as the "
+                    "repository to work with, not the folder that contains it")
         self.store_folder = self.folder.child("store")
         self.store_folder.mkdirs(True)
         self.store_folder.child("type").write("direct")

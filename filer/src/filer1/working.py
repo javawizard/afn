@@ -12,12 +12,20 @@ def delete_tracked(target):
     have any untracked children (or formerly-tracked children that themselves
     have untracked children, and so on). Folders that do have untracked
     children will themselves be untracked instead of being deleted.
+    
+    Update: files/folders that have a XATTR_REPO will be untracked but not
+    deleted, to avoid steamrollering over the working copy root.
     """
     if target.is_file:
         # It's a file. See if it's tracked.
         if target.has_xattr(XATTR_BASE):
-            # It's tracked, so delete it.
-            target.delete()
+            # It's tracked, so see if it has XATTR_REPO.
+            if target.has_xattr(XATTR_REPO):
+                # It does, so untrack it but don't delete it.
+                target.delete_xattr(XATTR_REPO)
+            else:
+                # It doesn't, so delete it.
+                target.delete()
         else:
             # It's not tracked, so leave it as it is.
             pass
@@ -25,13 +33,14 @@ def delete_tracked(target):
         # It's a folder. See if it's tracked.
         if target.has_xattr(XATTR_BASE):
             # It's tracked. Iterate over its children and recursively call
-            # delete_tracked, then delete it if there aren't any remaining
-            # children.
+            # delete_tracked.
             target.delete_xattr(XATTR_BASE)
             for child in target.list():
                 delete_tracked(child)
-            if len(target.list()) == 0:
-                # No contents, so delete it
+            # We've already untracked it; now see if it has zero children and
+            # doesn't have XATTR_REPO.
+            if len(target.list()) == 0 and not target.has_xattr(XATTR_REPO):
+                # No contents and no XATTR_REPO, so delete it
                 target.delete(True)
         else:
             # It's not tracked, so leave it as it is.

@@ -4,7 +4,7 @@ from filer1.repository import (Repository, init_repository,
                                detect_working, detect_repository)
 from filer1 import bec, exceptions
 from afn.utils.partial import Partial
-from afn.fileutils import File
+from afn.fileutils import File, file_or_none
 import time
 import sys
 import json
@@ -23,9 +23,15 @@ command = Partial(Partial, commands.__setitem__)
 @command("init")
 class Init(Command):
     def update_parser(self, parser):
-        parser.add_argument("-d", "--repository", required=True)
+        parser.add_argument("location", required=True)
+        parser.add_argument("--plain", default=False, action="store_true",
+                help="Normally, a repository is created in the .filer folder "
+                "at the specified location, and the location is initialized "
+                "to be a working copy. This option causes the location itself "
+                "to be used as the repository.")
     
     def run(self, args):
+        location = File(args.location)
         init_repository(File(args.repository))
         print "Repository created at %s." % args.repository
 
@@ -38,14 +44,10 @@ class Checkout(Command):
         parser.add_argument("-r", "--revision", default=None)
     
     def run(self, args):
-        if not args.repository: # --repository not specified; try to detect it
-            repository_folder = detect_repository(File())
-            if not repository_folder:
-                raise Exception("You're not inside a repository (or an already "
-                                "existing working folder) right now, and you "
-                                "didn't specify --repository.")
-        else:
+        if args.repository:
             repository_folder = File(args.repository)
+        else:
+            repository_folder = detect_repository()
         repository = Repository(repository_folder)
         if args.working:
             working_folder = File(args.working)
