@@ -10,6 +10,7 @@ import os.path
 import shutil
 import zipfile as zip_module
 from contextlib import closing
+import errno
 
 
 class File(object):
@@ -526,9 +527,16 @@ class File(object):
         "security", and "user"). An "Operation not supported" error will be
         produced if an invalid format is used.
         
+        Setting extended attributes on symlinks will result in undefined and
+        platform-specific behavior. Don't do it unless you know what you're
+        doing.
+        
         Extended attribute support currently requires the PyPI module "xattr"
         to be installed. An exception will be thrown if it is not available.
+        You can usually install it by running "sudo pip install xattr".
         """
+        import xattr
+        return list(xattr.listxattr(self.path))
     
     def set_xattr(self, name, value):
         """
@@ -537,6 +545,8 @@ class File(object):
         
         The same compatibility warnings present on list_xattrs apply here.
         """
+        import xattr
+        xattr.setxattr(self.path, name, value)
     
     def get_xattr(self, name, default=None):
         """
@@ -546,6 +556,15 @@ class File(object):
         
         The same compatibility warnings present on list_xattrs apply here.
         """
+        import xattr
+        try:
+            return xattr.getxattr(self.path, name)
+        except IOError as e:
+            # TODO: See if this is different on other platforms, such as OS X
+            if e.errno == errno.ENODATA:
+                return default
+            else:
+                raise
     
     def check_xattr(self, name):
         """
@@ -554,6 +573,14 @@ class File(object):
         
         The same compatibility warnings present on list_xattrs apply here.
         """
+        import xattr
+        try:
+            return xattr.getxattr(self.path, name)
+        except IOError as e:
+            if e.errno == errno.ENODATA:
+                raise KeyError("File %r has no attribute %r" % (self.path, name))
+            else:
+                raise
     
     def delete_xattr(self, name):
         """
@@ -562,6 +589,8 @@ class File(object):
         
         The same compatibility warnings present on list_xattrs apply here.
         """
+        import xattr
+        xattr.removexattr(self.path, name)
     
     def __str__(self):
         return "fileutils.File(%r)" % self._path
