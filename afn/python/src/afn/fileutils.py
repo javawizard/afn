@@ -478,7 +478,7 @@ class File(object):
     def descendant_of(self, other):
         """
         Returns true if this file is a descendant of the specified file. This
-        is equivalent to File(other).is_ancestor(self).
+        is equivalent to File(other).ancestor_of(self).
         """
         return File(other).ancestor_of(self)
     
