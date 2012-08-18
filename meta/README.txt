@@ -9,6 +9,8 @@ The authoritative version of the AFN repository can be found at http://hg.opengr
 The structure of the AFN repository is somewhat disorganized. All of the folders in this folder are original to the AFN repository, with the exception of the projects folder. This folder, and its revision history, were originally the jwutils project, which was Alex's original collection of libraries and tools. He later created the AFN project to hold primarily home automation software, and as its scope expanded he decided to merge jwutils into afn. The version history of jwutils is preserved in the AFN repository.
 
 A brief summary of some of the projects provided as part of AFN:
+    
+    Filer is an in-development distributed version control system. Have a look at the filer folder for more information.
 
     Autobus 2 is a decentralized message bus/cross-language RPC system, with service discovery built-in. It allows applications to provide functions that can be called, events that can be listened for, and objects that can be observed, and it allows other applications on the network to automatically discover other applications providing functions. There is no central server involved. For more information, see afn/python/src/autobus2/__init__.py.
     
