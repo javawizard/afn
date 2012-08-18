@@ -11,6 +11,8 @@ The structure of the AFN repository is somewhat disorganized. All of the folders
 A brief summary of some of the projects provided as part of AFN:
     
     Filer is an in-development distributed version control system. Have a look at the filer folder for more information.
+    
+    Sixjet is a project to create a music-synchronized water-jet fountain. 
 
     Autobus 2 is a decentralized message bus/cross-language RPC system, with service discovery built-in. It allows applications to provide functions that can be called, events that can be listened for, and objects that can be observed, and it allows other applications on the network to automatically discover other applications providing functions. There is no central server involved. For more information, see afn/python/src/autobus2/__init__.py.
     
