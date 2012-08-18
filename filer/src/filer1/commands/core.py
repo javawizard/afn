@@ -24,7 +24,7 @@ command = Partial(Partial, commands.__setitem__)
 @command("init")
 class Init(Command):
     def update_parser(self, parser):
-        parser.add_argument("location", required=True)
+        parser.add_argument("location")
         parser.add_argument("--plain", default=False, action="store_true",
                 help="Normally, a repository is created in the .filer folder "
                 "at the specified location, and the location is initialized "
