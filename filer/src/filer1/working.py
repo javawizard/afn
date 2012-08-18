@@ -46,7 +46,7 @@ class WorkingCopy(object):
         self.repository = repository
         self.working = working
     
-    def update_to(self, target, new_rev):
+    def update_to(self, new_rev, target=None):
         """
         Updates target to the revision specified by new_rev, or deletes target
         if new_rev is None. The target's extended attributes will be created
@@ -56,6 +56,8 @@ class WorkingCopy(object):
         files. Directories that do have untracked files will simply be
         untracked themselves instead of deleted.
         """
+        if target is None:
+            target = self.working
         # If new_rev is None, the target's been removed. If it's a file, we
         # delete it. If it's a folder, we remove all of its tracked contents,
         # then delete it if it's empty or untrack it if it's not. FIXME: This
@@ -93,7 +95,7 @@ class WorkingCopy(object):
             # Now we go iterate through the folder's children and update each
             # of them.
             for name, rev in data["contents"].items():
-                self.update_to(target.child(name), rev)
+                self.update_to(rev, target.child(name))
             # Then we track the folder again
             target.set_xattr(XATTR_BASE, json.dumps([new_rev]))
             # And that's it.            
