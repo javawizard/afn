@@ -12,6 +12,15 @@ import zipfile as zip_module
 from contextlib import closing
 import errno
 
+def file_or_none(f):
+    """
+    Returns File(f), unless f is None, in which case None is returned.
+    """
+    if f is not None:
+        return File(f)
+    else:
+        return None
+
 
 class File(object):
     """
