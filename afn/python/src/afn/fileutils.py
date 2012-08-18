@@ -335,7 +335,7 @@ class File(object):
     def makedirs(self, *args, **kwargs):
         """
         Same as self.mkdirs(*args, **kwargs). Exists mainly because there are
-        two alternate spellings in use.
+        two alternate spellings in common use.
         """
         self.mkdirs(*args, **kwargs)
     
