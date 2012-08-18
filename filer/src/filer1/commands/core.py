@@ -51,7 +51,7 @@ class Checkout(Command):
     def update_parser(self, parser):
         parser.add_argument("-d", "--repository", required=False)
         parser.add_argument("-w", "--working", required=False)
-        parser.add_argument("-r", "--revision", default=None)
+        parser.add_argument("-r", "--revision", required=True)
     
     def run(self, args):
         if args.repository:
@@ -65,57 +65,25 @@ class Checkout(Command):
             print "Using the repository directory as the working directory"
             working_folder = repository_folder
         revision = args.revision
+        working = WorkingCopy(repository, working_folder)
         # We don't support updating existing working directories right now.
         # TODO: This needs to be fixed.
-        if working_folder.child(".filerfrom").exists:
-            raise Exception("That working directory already exists. Updating "
-                            "an already-existing working directory isn't "
-                            "supported right now; this is a rather large issue "
-                            "that will be fixed soon. For now, delete the "
-                            "working directory and then try the checkout again.")
-        # Make sure the revision in question actually exists, and make sure it's
-        # a folder revision. If it's a file, things will mess up big time.
-        # Obviously we don't check anything if we weren't requested to actually
-        # check out a revision.
-        if revision is not None and repository.get_revision(revision)["type"] != "folder":
-            raise Exception("That revision is a file. Only folders can be "
-                            "checked out to a working copy right now. This is "
-                            "mostly because I haven't decided how individual "
-                            "file revisions should be properly checked out; if "
-                            "you have any suggestions, let me know "
-                            "(alex@opengroove.org).")
-        # Create the working folder if it doesn't exist
-        working_folder.mkdirs(silent=True)
-        # If it's the same dir as the repository folder, use "." as the path to
-        # make it possible to just pick up the repository, contents and all, and
-        # drop it somewhere else, which wouldn't be possible if we used an
-        # absolute path here
-        if repository_folder == working_folder:
-            working_folder.child(".filerfrom").write(".")
-        # If it's a different folder, use an absolute path to the repository.
-        # TODO: Add a command-line switch to choose whether this is an absolute
-        # path or whether this is a relative path. And perhaps consider adding
-        # a switch that instructs the whole thing to not even store a path to
-        # the repository; the --repository flag would then have to be given to
-        # every command run on this working folder that needs access to the
-        # repository. (There could be potential use cases for this, but as I
-        # have yet to think of any, I won't be implementing it right now.)
-        else:
-            working_folder.child(".filerfrom").write(repository_folder.path)
-        # See if we're supposed to checkout a revision. Since existing working
-        # folders can't be updated to new revisions, the only real point to
-        # this is to create new history lines in the repository by creating a
-        # blank working copy.
-        if revision:
-            # Yep, we're supposed to check out a revision. Check out the
-            # revision and store its revstate.
-            working_folder.child(".filerstate").write(bec.dumps(
-                    repository.update_to(working_folder, revision)))
-        else:
-            # Nope, no revision to check out to. Write an empty revstate to
-            # .filerstate
-            working_folder.child(".filerstate").write(bec.dumps(
-                    {"parents": [], "children": {}}))
+        if working.is_working():
+            print "That's already a working copy. Are you sure you want to "
+            print "overwrite its contents? (y or n)"
+            if raw_input().lower()[0] != "y":
+                print "Aborting."
+                return
+        data = repository.get_revision(revision)
+        if not working_folder.exists:
+            if data["type"] == "folder":
+                working_folder.mkdirs(True)
+            else:
+                working_folder.write("")
+        if not working.is_working():
+            working.create()
+        # Check out the requested revision
+        working.update_to(revision)
 
 @command("commit")
 class Commit(Command):

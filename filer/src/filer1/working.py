@@ -64,6 +64,9 @@ class WorkingCopy(object):
             path = self.repository.folder.name
         self.working.set_xattr(XATTR_REPO, path)
     
+    def is_working(self):
+        return self.working.exists and self.working.has_xattr(XATTR_REPO)
+    
     def update_to(self, new_rev, target=None):
         """
         Updates target to the revision specified by new_rev. The target's
