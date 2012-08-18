@@ -435,12 +435,15 @@ class File(object):
         
         If relative_to is not specified, the working directory is used instead.
         
-        NOTE: right now, this only works if relative_to is an ancestor of self.
-        This is a limitation that will be removed soon.
+        NOTE: right now, this only works if relative_to is an ancestor of self,
+        or if relative_to == self (in which case "." will be returned). This is
+        a limitation that will be removed soon.
         """
         if relative_to is None:
             relative_to = File()
         relative_to = File(relative_to)
+        if relative_to == self:
+            return "."
         if not relative_to.ancestor_of(self):
             raise NotImplementedError("Relativizing paths against non-"
                     "ancestor folders has not yet been implemented, and %r "
@@ -448,7 +451,9 @@ class File(object):
         if not self._path.startswith(relative_to._path):
             raise Exception("Paths appear to be ancestor/descendant properly, "
                     "but self.path doensn't start with relative_to.path. The "
-                    "former and the latter are %r and %r, respectively." %
+                    "former and the latter are %r and %r, respectively. This "
+                    "usually indicates a bug in fileutils; report it to alex "
+                    "at opengroove dot org." %
                     (self, relative_to))
         return self._path[len(relative_to._path):]
     
