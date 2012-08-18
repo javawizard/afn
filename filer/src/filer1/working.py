@@ -7,15 +7,44 @@ import shutil
 XATTR_BASE = "user.filer-base"
 XATTR_REPO = "user.filer-repo"
 
+def delete_tracked(target):
+    """
+    Deletes the specified target if it's tracked and, if it's a folder, doesn't
+    have any untracked children (or formerly-tracked children that themselves
+    have untracked children, and so on). Folders that do have untracked
+    children will themselves be untracked instead of being deleted.
+    """
+    if target.is_file:
+        # It's a file. See if it's tracked.
+        if target.has_xattr(XATTR_BASE):
+            # It's tracked, so delete it.
+            target.delete()
+        else:
+            # It's not tracked, so leave it as it is.
+            pass
+    elif target.is_folder:
+        # It's a folder. See if it's tracked.
+        if target.has_xattr(XATTR_BASE):
+            # It's tracked. Iterate over its children and recursively call
+            # delete_tracked, then delete it if there aren't any remaining
+            # children.
+            target.delete_xattr(XATTR_BASE)
+            for child in target.list():
+                delete_tracked(child)
+            if len(target.list()) == 0:
+                # No contents, so delete it
+                target.delete(True)
+        else:
+            # It's not tracked, so leave it as it is.
+            pass
+    else:
+        raise ValueError("%r is not a file or a folder" % target)
+
+
 class WorkingCopy(object):
     def __init__(self, repository, working):
         self.repository = repository
         self.working = working
-    
-    TODO: Pick up here August 18, 2012. Convert the updater to use xattrs
-    instead of revstates. Have it delete folders that are being deleted and
-    that have no contents, and untrack those that do. (Untracking is done by 
-    removing the XATTR_BASE extended attribute.)
     
     def update_to(self, target, new_rev):
         """
@@ -36,18 +65,8 @@ class WorkingCopy(object):
         # if any folders would be slated to be changed to files that have
         # untracked contents.)
         if new_rev is None:
-            if target.is_folder: # Folder, so delete its untracked contents
-                for child in target.list():
-                    if child.has_xattr(XATTR_BASE): # Tracked; delete it
-                        child.delete(True)
-                # Tracked children are deleted. Untrack the folder first
-                child.delete_xattr(XATTR_BASE)
-            else: # File, so delete it
-                target.delete()
-            # FIXME: What are we supposed to return here? In my tired stupor
-            # I'm returning an empty revstate, but I'm not sure if that's
-            # exactly right...
-            return {"parents": [], "children": {}}
+            delete_tracked(target)
+            return
         # new_rev isn't None, so we need to update to it. First we need to
         # make sure we've got a revision hash and not a revision number.
         if self.numbers.child(new_rev).exists:
@@ -56,43 +75,38 @@ class WorkingCopy(object):
         data = self.get_revision(new_rev)
         # Then we delete the target so that we can start off with a clean slate.
         # Obviously we need to do something a bit better once we get past the
-        # prototype stage. TODO: Modify fileutils to just use one function for
-        # deleting things; I've written stuff down on why I kept things as two
-        # separate methods, but I've decided I want them together, as it'll get
-        # rid of a bunch of if/else statements like I've got here.
+        # prototype stage.
         # Update: if the revision's a folder and target is already a folder,
-        # just delete its contents instead, avoiding files that start with dots.
-        # This is to avoid trampling on a working directory's .filerfrom and
-        # .filerparents special files. (self.commit_changes also refuses to
-        # commit files that start with a dot, so this won't lose us anything.)
+        # just delete its tracked contents instead. This will avoid
+        # steamrollering over untracked files in the folder.
         if target.exists:
-            if target.is_folder and data["type"] == "folder":
-                # It's a folder, and our new revision is also a folder, so
-                # delete its contents that don't start with dots
-                for f in target.list():
-                    if not f.name.startswith("."):
-                        delete(f)
-            else: # Changing types or not a folder, so delete it
-                delete(target)
+            delete_tracked(target)
         # Now we check to see if we're dealing with a file or a folder.
         if data["type"] == "folder":
-            # It's a folder, so we need to create a new folder for it.
+            # It's a folder, so we need to create a new folder for it, if it
+            # doesn't already exist (due to having untracked files, as above)
             target.mkdir(silent=True)
+            # Then we temporarily untrack the folder if it exists so that if
+            # we die, we don't see a corrupted view of the folder's current
+            # revision, if it already exists
+            target.delete_xattr(XATTR_BASE)
             # Now we go iterate through the folder's children and update each
-            # of them, keeping track of the resulting revstates.
-            child_revstates = {}
+            # of them.
             for name, rev in data["contents"].items():
-                child_revstates[name] = self.update_to(target.child(name), rev)
-            # Then we return a revstate.
-            return {"parents": [new_rev], "children": child_revstates}                
+                self.update_to(target.child(name), rev)
+            # Then we track the folder again
+            target.set_xattr(XATTR_BASE, json.dumps([new_rev]))
+            # And that's it.            
         elif data["type"] == "file":
             # It's a file. We seek the file to zero (as coming from who knows
             # where, its position could be all over the board) and then copy
-            # the file's contents into the target.
+            # the file's contents into the target. We untrack the file while
+            # updating it for the same reason that we untrack folders while
+            # updating them.
+            target.delete_xattr(XATTR_BASE)
             data["contents"].seek(0)
             shutil.copyfileobj(data["contents"], target)
-            # Then we return a revstate.
-            return {"parents": [new_rev], "children": {}}
+            target.set_xattr(XATTR_BASE, json.dumps([new_rev]))
         # That's pretty much it for updating right now.
     
     def commit(self, info, target=None, current_name=None):
