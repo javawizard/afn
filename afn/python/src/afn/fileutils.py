@@ -1,7 +1,3 @@
-# Fileutils has been extracted into its own repository, and the version in that
-# repository (opengroove.org/hg/fileutils) should be preferred to this one. The
-# version in afn (this version) will no longer be updated.
-
 """
 Fileutils is an object-oriented filesystem library for Python.
 
@@ -13,6 +9,7 @@ import os
 import os.path
 import shutil
 import zipfile as zip_module
+from contextlib import closing
 
 
 class File(object):
@@ -331,14 +328,14 @@ class File(object):
         """
         self.mkdirs(*args, **kwargs)
     
-    def zip_into(self, filename, contents=False):
+    def zip_into(self, filename, contents=True):
         """
         Creates a zip archive of this folder and writes it to the specified
         filename, which can be either a pathname or a File object.
         
-        If contents is True, the files (and folders, and so on recursively)
-        contained within this folder will be written directly to the zip file.
-        If it's False (the default), the folder will be written itself. The
+        If contents is True (the default), the files (and folders, and so on
+        recursively) contained within this folder will be written directly to
+        the zip file. If it's False, the folder will be written itself. The
         difference is that, given a folder foo which looks like this:
         
         foo/
@@ -355,7 +352,7 @@ class File(object):
                 baz/
                     qux
         
-        Whereas specifying contents=False will result in this:
+        Whereas specifying contents=True will result in this:
         
         zipfile.zip/
             bar
@@ -365,7 +362,7 @@ class File(object):
         NOTE: This has only been tested on Linux. I still need to test it on
         Windows to make sure pathnames are being handled correctly.
         """
-        with zip_module.ZipFile(File(filename)._path, "w") as zipfile:
+        with closing(zip_module.ZipFile(File(filename)._path, "w")) as zipfile:
             for f in self.recurse():
                 if contents:
                     path_in_zip = f.relative_path(self)
@@ -389,7 +386,7 @@ class File(object):
         """
         folder = File(folder)
         folder.mkdirs(silent=True)
-        with zip_module.ZipFile(self._path, "r") as zipfile:
+        with closing(zip_module.ZipFile(self._path, "r")) as zipfile:
             zipfile.extractall(folder._path)
     
     def delete(self):
