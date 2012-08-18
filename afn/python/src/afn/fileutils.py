@@ -578,6 +578,7 @@ class File(object):
         
         The same compatibility warnings present on list_xattrs apply here.
         """
+        return self.get_xattr(name, None) != None
     
     def check_xattr(self, name):
         """
