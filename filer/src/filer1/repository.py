@@ -29,18 +29,24 @@ def same_contents(fp1, fp2):
             return True
 
 
-def detect_working(target):
+def detect_working(target, silent=False):
     """
     Finds the current working directory by jumping parents until we have no
     more parents, then scanning down until we find one of them that has a
-    XATTR_REPO attribute set. We use the topmost one and not the first one we
+    XATTR_BASE attribute set. We use the topmost one and not the first one we
     encounter while scanning up so that if someone copies a working folder or
     working file into another working folder, it will be seen as an integrated
     file or folder instead of as a separate working copy.
     """
-    parents = []
-    
-    return target
+    parents = target.ancestors(True)
+    # Reverse so that we've got the topmost folder first
+    parents.reverse()
+    # Scan through for XATTR_BASE
+    for parent in parents:
+        if parent.has_xattr(XATTR_BASE):
+            return parent
+    # Couldn't find a working copy
+    return None
 
 
 def detect_repository(target):
