@@ -571,6 +571,14 @@ class File(object):
             else:
                 raise
     
+    def has_xattr(self, name):
+        """
+        Returns True if this file has an extended attribute with the specified
+        name, or False if it doesn't.
+        
+        The same compatibility warnings present on list_xattrs apply here.
+        """
+    
     def check_xattr(self, name):
         """
         Same as get_xattr, but throws a KeyError if the specified extended
