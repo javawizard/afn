@@ -578,7 +578,7 @@ class File(object):
         
         The same compatibility warnings present on list_xattrs apply here.
         """
-        return self.get_xattr(name, None) != None
+        return self.get_xattr(name, None) is not None
     
     def check_xattr(self, name):
         """
@@ -596,15 +596,24 @@ class File(object):
             else:
                 raise
     
-    def delete_xattr(self, name):
+    def delete_xattr(self, name, silent=True):
         """
         Deletes the extended attribute with the specified name from this file.
-        This function silently does nothing if no such attribute exists.
+        If the attribute does not exist and silent is true, nothing will
+        happen. If the attribute does not exist and silent is false, an
+        exception will be thrown.
         
         The same compatibility warnings present on list_xattrs apply here.
         """
         import xattr
-        xattr.removexattr(self.path, name)
+        try:
+            xattr.removexattr(self.path, name)
+        except IOError as e:
+            if e.errno == errno.ENODATA and silent: # Attribute doesn't exist
+                # and silent is true; do nothing.
+                pass
+            else:
+                raise
     
     def __str__(self):
         return "fileutils.File(%r)" % self._path
