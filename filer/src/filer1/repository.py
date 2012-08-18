@@ -29,7 +29,7 @@ def same_contents(fp1, fp2):
             return True
 
 
-def detect_working(target, default=None):
+def detect_working(target, silent=False):
     """
     Finds the current working directory by jumping parents until we have no
     more parents, then scanning down until we find one of them that has a
@@ -37,10 +37,6 @@ def detect_working(target, default=None):
     encounter while scanning up so that if someone copies a working folder or
     working file into another working folder, it will be seen as an integrated
     file or folder instead of as a separate working copy.
-    
-    If a working copy was not found and default is None, an exception will be
-    thrown. If a working copy was not found and default is not None, it will
-    be returned.
     """
     parents = target.ancestors(True)
     # Reverse so that we've got the topmost folder first
@@ -50,32 +46,20 @@ def detect_working(target, default=None):
         if parent.has_xattr(XATTR_BASE):
             return parent
     # Couldn't find a working copy
-    if default is not None:
-        return default
+    if silent:
+        return None
     else:
         raise Exception("Couldn't find a working copy to use. You probably "
                 "need to specify --working.")
 
 
-def detect_repository(target, default=None):
-    try:
-        working = detect_working()
-    except: # BAD IDEA: We need to catch (and throw, inside detect_working) a
-        # specific exception instead
-        if default is not None:
-            return default
-        else:
-            # TODO: Figure out some way to check --working and see if we can
-            # infer a repository from that, if they specified that but not
-            # --repository
-            raise Exception("Couldn't find a working copy in order to "
-                    "figure out which repository to use. You probably need "
-                    "to specify --repository. Note that if you specified "
-                    "--working, you still need to specify --repository "
-                    "separately; this will be fixed soon.")
+def detect_repository(target, silent=False):
+    working = detect_working(silent)
+    if working is None:
+        return None
     if not working.has_xattr(XATTR_REPO):
-        if default is not None:
-            return default
+        if silent:
+            return None
         else:
             raise Exception("Dangling working copy detected; this is a "
                     "working copy that does not indicate what repository it "
