@@ -54,6 +54,16 @@ class WorkingCopy(object):
         self.repository = repository
         self.working = working
     
+    def create(self):
+        if self.working.has_xattr(XATTR_REPO):
+            raise Exception("%r is already a working copy." % self.working)
+        path = self.repository.folder.path
+        # Workaround to make repositories that are immediate children of their
+        # working copies use relative paths
+        if self.repository.folder.parent == self.working:
+            path = self.repository.folder.name
+        self.working.set_xattr(XATTR_REPO, path)
+    
     def update_to(self, new_rev, target=None):
         """
         Updates target to the revision specified by new_rev. The target's
