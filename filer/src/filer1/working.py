@@ -2,6 +2,7 @@
 from afn.fileutils import File
 import json
 from filer1 import repository
+import shutil
 
 XATTR_BASE = "user.filer-base"
 XATTR_REPO = "user.filer-repo"
@@ -37,7 +38,10 @@ class WorkingCopy(object):
         if new_rev is None:
             if target.is_folder: # Folder, so delete its untracked contents
                 for child in target.list():
-                    if 
+                    if child.has_xattr(XATTR_BASE): # Tracked; delete it
+                        child.delete(True)
+                # Tracked children are deleted. Untrack the folder first
+                child.delete_xattr(XATTR_BASE)
             else: # File, so delete it
                 target.delete()
             # FIXME: What are we supposed to return here? In my tired stupor
@@ -100,9 +104,13 @@ class WorkingCopy(object):
         # FIXME: Check to make sure our parents are of the same type as we are,
         # and figure out what to do if they're not. (Perhaps create a new
         # file/folder without any parents?)
-        if target.get_xattr(XATTR_BASE) is None:
+        if not target.has_xattr(XATTR_BASE):
             # No extended attribute is present, which means the file hasn't
-            # been scheduled to be committed. So we just return.
+            # been scheduled to be committed. So we just return. TODO: This
+            # presents a race condition: what if the attribute is deleted
+            # elsewhere between being checked and being read here? Although
+            # if that's the case, other things that will screw up our logic
+            # even worse are likely to happen, so maybe not that big of a deal.
             return
         base = json.loads(target.get_xattr(XATTR_BASE, "null"))
         # Let's get started. First we see if we're a file or a folder.
