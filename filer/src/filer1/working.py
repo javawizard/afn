@@ -48,9 +48,8 @@ class WorkingCopy(object):
     
     def update_to(self, new_rev, target=None):
         """
-        Updates target to the revision specified by new_rev, or deletes target
-        if new_rev is None. The target's extended attributes will be created
-        or updated as necessary.
+        Updates target to the revision specified by new_rev. The target's
+        extended attributes will be created or update as necessary.
         
         Note: Right now, this only deletes directories which have no untracked
         files. Directories that do have untracked files will simply be
@@ -58,17 +57,9 @@ class WorkingCopy(object):
         """
         if target is None:
             target = self.working
-        # If new_rev is None, the target's been removed. If it's a file, we
-        # delete it. If it's a folder, we remove all of its tracked contents,
-        # then delete it if it's empty or untrack it if it's not. FIXME: This
-        # will break if a file's been changed to a folder between the current
-        # revision and the one we're updating to; figure out what to do then.
-        # (Perhaps scan the directory structure beforehand and warn the user
-        # if any folders would be slated to be changed to files that have
-        # untracked contents.)
+        # new_rev can't be None, as we shouldn't get this far if it is
         if new_rev is None:
-            delete_tracked(target)
-            return
+            raise Exception("Can't specify None as the revision to update to")
         # new_rev isn't None, so we need to update to it. First we need to
         # make sure we've got a revision hash and not a revision number.
         if self.numbers.child(new_rev).exists:
