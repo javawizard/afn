@@ -17,7 +17,7 @@ def main():
     try:
         command = commands[command_name]()
     except KeyError:
-        print "The command %r does not exist." % command
+        print "The command %r does not exist." % command_name
         print "Valid commands are %r" % commands.keys()
         sys.exit(1)
     parser = ArgumentParser()

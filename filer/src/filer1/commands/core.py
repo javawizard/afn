@@ -1,7 +1,7 @@
 
 from filer1.commands.command import Command
 from filer1.repository import (Repository, init_repository,
-                               detect_working, detect_repository)
+                               detect_working)
 from filer1 import bec, exceptions
 from afn.utils.partial import Partial
 from afn.fileutils import File

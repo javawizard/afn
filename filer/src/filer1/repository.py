@@ -46,7 +46,26 @@ def detect_working(target, silent=False):
         if parent.has_xattr(XATTR_BASE):
             return parent
     # Couldn't find a working copy
-    return None
+    if silent:
+        return None
+    else:
+        raise Exception("Couldn't find a working copy to use. You probably "
+                "need to specify --working.")
+
+
+def detect_repository(target, silent=False):
+    working = detect_working(silent)
+    if working is None:
+        return None
+    if not working.has_xattr(XATTR_REPO):
+        if silent:
+            return None
+        else:
+            raise Exception("Dangling working copy detected; this is a "
+                    "working copy that does not indicate what repository it "
+                    "comes from. You'll need to specify --repository to "
+                    "indicate what repository to use. (In the future, there "
+                    "will be a command that can be used to fix this.)")
 
 
 def init_repository(folder):
