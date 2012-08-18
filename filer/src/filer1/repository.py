@@ -84,10 +84,9 @@ def init_repository(folder):
     # maintenance folders (numbers, numbersbyrev, changeparents,
     # changechildren, dirparents, and dirchildren).
     folder = File(folder)
-    filer_dir = folder.child(".filer")
-    if filer_dir.exists:
+    if folder.exists:
         raise Exception("There's already a filer repository at that location.")
-    filer_dir.mkdirs(True)
+    folder.mkdirs(True)
     # We don't have any sort of transaction support right now. This is a bad
     # idea and needs to be fixed in the future.
     
@@ -104,16 +103,17 @@ class Repository(object):
             debug = global_debug
         self.debug = debug
         self.folder = File(folder)
-        self.filer_dir = self.folder.child(".filer")
-        if not self.filer_dir.exists:
-            raise Exception("There isn't a repository at %s." % folder.path)
-        self.store_folder = self.filer_dir.child("store")
+        # Sanity check to make sure we're not using the parent folder
+        if self.folder.child(".filer").exists:
+            raise Exception("You should pass in the .filer folder itself to "
+                    "Repository(...), not the folder that contains .filer")
+        self.store_folder = self.folder.child("store")
         self.store_folder.mkdirs(True)
         self.store_folder.child("type").write("direct")
         self.store = DirectStore(self.store_folder.child("direct"))
-        self.numbers = self.filer_dir.child("numbers")
+        self.numbers = self.folder.child("numbers")
         self.numbers.mkdirs(True)
-        self.numbersbyrev = self.filer_dir.child("numbersbyrev")
+        self.numbersbyrev = self.folder.child("numbersbyrev")
         self.numbersbyrev.mkdirs(True)
     
     def get_revision(self, id):
