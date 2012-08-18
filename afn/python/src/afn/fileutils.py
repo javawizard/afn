@@ -188,6 +188,13 @@ class File(object):
             return None
         return f
     
+    def ancestors(self, including_self=False):
+        """
+        Returns a list of all of the ancestors of this file, with self.parent
+        first. If including_self is True, self will be first, self.parent will
+        be second, and so on.
+        """
+    
     @property
     def name(self):
         """
