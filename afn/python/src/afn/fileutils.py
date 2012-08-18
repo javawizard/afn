@@ -137,6 +137,16 @@ class File(object):
         results = os.listdir(self._path)
         return [self.child(p) for p in results]
     
+    def list_names(self):
+        """
+        Returns all of the children of this file, as a list of strings
+        representing each child's name. This is roughly equivalent to
+        [f.name for f in self.list()], except that no intermittent File objects
+        are created.
+        """
+        self.check_folder()
+        return os.listdir(self._path)
+    
     def open(self, *args, **kwargs):
         """
         Opens the file referred to by this File object and returns a Python
@@ -389,30 +399,29 @@ class File(object):
         with closing(zip_module.ZipFile(self._path, "r")) as zipfile:
             zipfile.extractall(folder._path)
     
-    def delete(self):
+    def delete(self, contents=False):
         """
         Deletes this file.
         
-        If this is a folder, use delete_folder instead. (I'm considering
-        merging delete and delete_folder, but I haven't decided yet.)
+        If this is a non-empty folder, contents must be True in order to
+        recursively delete the folder's contents; if it's False, an exception
+        will be thrown instead. This is intended mostly as a sanity check to
+        prevent folders with contents from being unintentionally deleted.
         """
-        os.remove(self._path)
+        if self.is_file or self.is_link:
+            os.remove(self._path)
+        else:
+            if contents:
+                shutil.rmtree(self._path)
+            else:
+                os.rmdir(self._path)
     
     def delete_folder(self, contents=False):
         """
-        Deletes this folder.
-        
-        If contents is False, an exception will be thrown if this folder is not
-        empty. If contents is True, any contents will be recursively deleted
-        first.
-        
-        If this is a symbolic link, an exception will be thrown, regardless of
-        whether it points to a folder or whether contents is True.
+        This has been merged into the delete method and as such should no
+        longer be used. It has the exact same effect as delete.
         """
-        if contents:
-            shutil.rmtree(self._path)
-        else:
-            os.rmdir(self._path)
+        self.delete(contents)
     
     def relative_path(self, relative_to=None):
         """
@@ -470,7 +479,7 @@ class File(object):
         Returns true if this file is a descendant of the specified file. This
         is equivalent to File(other).is_ancestor(self).
         """
-        return File(other).is_ancestor(self)
+        return File(other).ancestor_of(self)
     
     def link_to(self, other):
         """
@@ -496,6 +505,63 @@ class File(object):
         if not self.is_link:
             return None
         return os.readlink(self._path)
+    
+    def list_xattrs(self):
+        """
+        Returns a list of the names of all of the extended attributes present
+        on this file.
+        
+        This is only supported on Linux and Max OS X right now. I hope to add
+        Windows support in the future.
+        
+        Note that some Linux filesystems must be mounted with a particular
+        option to enable extended attribute support. Ext2/3/4, for example,
+        must be mounted with the user_xattr mount option set. (I heard
+        somewhere that user_xattr might become a default option in the near
+        future, but such a default is certainly not widely deployed yet.)
+        
+        Also note that some filesystems (such as ext2/3/4) require the
+        attribute name to have a particular format (in the case of ext2/3/4,
+        "prefix.name", where "prefix" is one of "system", "trusted",
+        "security", and "user"). An "Operation not supported" error will be
+        produced if an invalid format is used.
+        
+        Extended attribute support currently requires the PyPI module "xattr"
+        to be installed. An exception will be thrown if it is not available.
+        """
+    
+    def set_xattr(self, name, value):
+        """
+        Sets an extended attribute with the specified name and value on this
+        file.
+        
+        The same compatibility warnings present on list_xattrs apply here.
+        """
+    
+    def get_xattr(self, name, default=None):
+        """
+        Returns the value of the extended attribute with the specified name
+        on this file, as a string, or returns the value of default (which
+        defaults to None) if no such extended attribute exists.
+        
+        The same compatibility warnings present on list_xattrs apply here.
+        """
+    
+    def check_xattr(self, name):
+        """
+        Same as get_xattr, but throws a KeyError if the specified extended
+        attribute does not exist instead of returning a default value.
+        
+        The same compatibility warnings present on list_xattrs apply here.
+        """
+    
+    def delete_xattr(self, name):
+        """
+        Deletes the extended attribute with the specified name from this file.
+        This function silently does nothing if no such attribute exists.
+        
+        The same compatibility warnings present on list_xattrs apply here.
+        """
     
     def __str__(self):
         return "fileutils.File(%r)" % self._path
