@@ -37,6 +37,9 @@ def detect_working(target=None, silent=False):
     encounter while scanning up so that if someone copies a working folder or
     working file into another working folder, it will be seen as an integrated
     file or folder instead of as a separate working copy.
+    
+    Update: Either XATTR_BASE or XATTR_REPO being present will stop the search
+    and produce the relevant file as the result.
     """
     if target is None:
         target = File()
@@ -45,7 +48,7 @@ def detect_working(target=None, silent=False):
     parents.reverse()
     # Scan through for XATTR_BASE
     for parent in parents:
-        if parent.has_xattr(XATTR_BASE):
+        if parent.has_xattr(XATTR_BASE) or parent.has_xattr(XATTR_REPO):
             return parent
     # Couldn't find a working copy
     if silent:

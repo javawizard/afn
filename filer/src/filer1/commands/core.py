@@ -116,6 +116,23 @@ class Checkout(Command):
         # be overwriting their changes.
         if revision:
             working.update_to(revision)
+            print "Checked out revision %r" % revision
+        else:
+            print "Not checking out a new revision."
+
+
+@command("add")
+class Add(Command):
+    def update_parser(self, parser):
+        parser.add_argument("file", required=True)
+    
+    def run(self, args):
+        file = File(args.file)
+        if file.has_xattr(XATTR_BASE):
+            print "That file has already been added."
+            return
+        file.set_xattr(XATTR_BASE, json.dumps([]))
+
 
 @command("commit")
 class Commit(Command):
