@@ -279,9 +279,11 @@ class File(object):
             yield self
         children = self.list()
         for child in children:
-            filer_result = filter(child) if filter is not None else True
-            if filer_result:
+            filter_result = filter(child) if filter is not None else True
+            if filter_result:
                 yield child
+            if not recurse_skipped and not filter_result:
+                continue
             if child.is_folder:
                 for c in child.recurse(filter):
                     yield c
