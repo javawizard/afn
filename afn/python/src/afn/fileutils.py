@@ -647,7 +647,7 @@ class File(object):
             xattr.removexattr(self.path, name)
         except IOError as e:
             if (e.errno == errno.ENODATA or e.errno == errno.EOPNOTSUPP
-                    ) and silent: # Attribute doesn't exist
+                    or e.errno == errno.ENOENT) and silent: # Attribute doesn't exist
                 # and silent is true; do nothing.
                 pass
             else:
