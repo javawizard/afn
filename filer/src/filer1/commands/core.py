@@ -153,7 +153,8 @@ class Checkout(Command):
             working.update_to(revision)
             print "Checked out revision %r" % revision
         else:
-            print "Not checking out a new revision."
+            print "Resetting working copy to untracked"
+            working_file.delete_xattr(XATTR_BASE)
 
 
 @command("add")
