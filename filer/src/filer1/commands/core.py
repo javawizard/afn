@@ -216,7 +216,10 @@ class Commit(Command):
         working = WorkingCopy(repository, working_file)
         # Keep track of the old base (which will be None if the working copy
         # is untracked) and compare it later on to see if anything changed
-        base = json.loads(working_file.get_xattr(XATTR_BASE))
+        if working_file.has_xattr(XATTR_BASE):
+            base = json.loads(working_file.check_xattr(XATTR_BASE))
+        else:
+            base = None
         working.commit(info)
         if not working_file.has_xattr(XATTR_BASE):
             # This can happen when the working file itself isn't tracked, which
