@@ -119,7 +119,8 @@ class WorkingCopy(object):
             # updating them.
             target.delete_xattr(XATTR_BASE)
             data["contents"].seek(0)
-            shutil.copyfileobj(data["contents"], target)
+            with target.open("wb") as target_stream:
+                shutil.copyfileobj(data["contents"], target_stream)
             target.set_xattr(XATTR_BASE, json.dumps([new_rev]))
         # That's pretty much it for updating right now.
     
