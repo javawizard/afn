@@ -283,16 +283,16 @@ class Log(Command):
         for number, hash, data in repository.revision_iterator():
             if revisions is not None and hash not in revisions:
                 continue
-            print "Revision %s:%s:" % (number, hash)
-            print "    date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
-            print "    type:           %s" % data["type"]
+            print u"Revision %s:%s:" % (number, hash)
+            print u"    date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
+            print u"    type:           %s" % data["type"]
             if data.get("current_name"):
-                print "    committed as:   %s" % data["current_name"]
+                print u"    committed as:   %s" % data["current_name"]
             for cparent in data["parents"]:
-                print "    change parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
+                print u"    change parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
 #            for dparent in repository.get_dirparents(hash):
 #                print "    dir parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
-            print "    message:        %s" % data.get("info", {}).get("message", "")
+            print u"    message:        %s" % data.get("info", {}).get("message", "")
             print
 
 
