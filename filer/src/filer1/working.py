@@ -20,7 +20,7 @@ def delete_tracked(target):
         # It's a link. We'll treat it as an untracked file for now and give it
         # no further consideration.
         pass
-    if target.is_file:
+    elif target.is_file:
         # It's a file. See if it's tracked.
         if target.has_xattr(XATTR_BASE):
             # It's tracked, so see if it has XATTR_REPO.
