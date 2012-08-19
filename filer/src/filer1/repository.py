@@ -8,6 +8,7 @@ from filer1 import bec
 from filer1.data.stores.direct import DirectStore
 import shutil
 from filer1.constants import XATTR_BASE, XATTR_REPO
+import sys
 
 global_debug = False
 
@@ -174,6 +175,7 @@ class Repository(object):
         while self.numbers.child(str(current_number)).exists:
             # We've still got a revision, so yield it
             hash = self.numbers.child(str(current_number)).read()
+            print >>sys.stderr, current_number, hash
             data = self.store.get(hash)
             yield str(current_number), hash, data
             current_number += 1

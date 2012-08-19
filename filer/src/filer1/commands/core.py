@@ -55,6 +55,7 @@ class Checkout(Command):
         parser.add_argument("-d", "--repository", required=False)
         parser.add_argument("-w", "--working", required=False)
         parser.add_argument("-r", "--revision", required=False)
+        parser.add_argument("-q", "--quiet", default=False, action="store_true")
     
     def run(self, args):
         # The checkout command does something different depending on how it's
@@ -126,7 +127,7 @@ class Checkout(Command):
             # might want to recursively walk down and make sure we don't have
             # any children that also have impending merges.
             if base and len(base) > 1:
-                if raw_input("The working copy has multiple parents; this "
+                if not args.quiet and raw_input("The working copy has multiple parents; this "
                         "usually means a merge is in progress. Do you still "
                         "want to check out a new revision and overwrite "
                         "your changes (y or n)? ").lower()[0] != "y":
@@ -142,7 +143,7 @@ class Checkout(Command):
                 new_rev = repository.rev_for_number(revision)
                 if not (repository.is_ancestor(base_rev, new_rev) or
                         repository.is_ancestor(new_rev, base_rev)):
-                    if raw_input("The revision you're updating to (%s) is not "
+                    if not args.quiet and raw_input("The revision you're updating to (%s) is not "
                             "an ancestor or a descendant of the working "
                             "copy's current revision (%s). Do you still want "
                             "to continue updating (y or n)? "
