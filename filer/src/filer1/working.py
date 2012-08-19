@@ -17,12 +17,9 @@ def delete_tracked(target):
     deleted, to avoid steamrollering over the working copy root.
     """
     if target.is_link:
-        # It's a link. TODO: How should we handle these? We're deleting it for
-        # now since links within Filer repositories aren't supported, but we
-        # might want to keep it around (as if it were an untracked file) in
-        # case the user wants to keep it. This might play heck with some
-        # symlinks in afn on aster (such as the one to the uservoices folder
-        # for speakd), so we should probably change this to preserve them.
+        # It's a link. We'll treat it as an untracked file for now and give it
+        # no further consideration.
+        pass
     if target.is_file:
         # It's a file. See if it's tracked.
         if target.has_xattr(XATTR_BASE):
