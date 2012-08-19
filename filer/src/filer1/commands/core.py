@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 
 from filer1.commands.command import Command
 from filer1.repository import (Repository, init_repository,
@@ -292,7 +294,11 @@ class Log(Command):
                 print u"    change parent:  %s:%s" % (repository.number_for_rev(cparent), cparent)
 #            for dparent in repository.get_dirparents(hash):
 #                print "    dir parent:     %s:%s" % (repository.number_for_rev(dparent), dparent)
-            print u"    message:        %s" % data.get("info", {}).get("message", "")
+            try:
+                print u"    message:        %s" % data.get("info", {}).get("message", "")
+            except:
+                print >>sys.stderr, data
+                raise
             print
 
 
