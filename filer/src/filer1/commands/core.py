@@ -124,7 +124,7 @@ class Checkout(Command):
 @command("add")
 class Add(Command):
     def update_parser(self, parser):
-        parser.add_argument("file", required=True)
+        parser.add_argument("file")
     
     def run(self, args):
         file = File(args.file)
@@ -132,11 +132,27 @@ class Add(Command):
             print "That file has already been added."
             return
         file.set_xattr(XATTR_BASE, json.dumps([]))
+        print "%r is now being tracked. You should `filer commit` soon." % file.path
+
+
+@command("untrack")
+class Untrack(Command):
+    def update_parser(self, parser):
+        parser.add_argument("file")
+    
+    def run(self, args):
+        file = File(args.file)
+        if not file.has_xattr(XATTR_BASE):
+            print "That file isn't being tracked."
+            return
+        file.delete_xattr(XATTR_BASE)
+        print "%r has been untracked. You should `filer commit` soon." % file.path
 
 
 @command("commit")
 class Commit(Command):
     def update_parser(self, parser):
+        parser.add_argument("-d", "--repository", default=None)
         parser.add_argument("-w", "--working", default=None)
         parser.add_argument("-m", "--message", required=True)
 
@@ -155,6 +171,13 @@ class Commit(Command):
         info = {"date": time.time(), "message": args.message}
         working = WorkingCopy(repository, working_file)
         working.commit(info)
+        if not working_file.has_xattr(XATTR_BASE):
+            # This can happen when the working file itself isn't tracked, which
+            # is rare but happens if the user checks out a new, blank working
+            # copy but doesn't add it with the add command. In that case, we
+            # print a friendly warning.
+            print "The working copy isn't being tracked. You probably need to "
+            print "`filer add %s` first." % working_file.path
         hash = json.loads(working_file.check_xattr(XATTR_BASE))[0]
         print "Committed revision %s:%s." % (repository.number_for_rev(hash), hash)
 
