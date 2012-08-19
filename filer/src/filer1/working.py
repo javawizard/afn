@@ -16,6 +16,13 @@ def delete_tracked(target):
     Update: files/folders that have a XATTR_REPO will be untracked but not
     deleted, to avoid steamrollering over the working copy root.
     """
+    if target.is_link:
+        # It's a link. TODO: How should we handle these? We're deleting it for
+        # now since links within Filer repositories aren't supported, but we
+        # might want to keep it around (as if it were an untracked file) in
+        # case the user wants to keep it. This might play heck with some
+        # symlinks in afn on aster (such as the one to the uservoices folder
+        # for speakd), so we should probably change this to preserve them.
     if target.is_file:
         # It's a file. See if it's tracked.
         if target.has_xattr(XATTR_BASE):
