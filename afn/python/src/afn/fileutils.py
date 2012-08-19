@@ -485,7 +485,7 @@ class File(object):
                     "usually indicates a bug in fileutils; report it to alex "
                     "at opengroove dot org." %
                     (self, relative_to))
-        return self._path[len(relative_to._path):]
+        return self._path[len(relative_to._path):].lstrip(os.path.sep)
     
     def ancestor_of(self, other):
         """
