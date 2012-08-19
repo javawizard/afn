@@ -178,8 +178,9 @@ class Commit(Command):
             # print a friendly warning.
             print "The working copy isn't being tracked. You probably need to "
             print "`filer add %s` first." % working_file.path
-        hash = json.loads(working_file.check_xattr(XATTR_BASE))[0]
-        print "Committed revision %s:%s." % (repository.number_for_rev(hash), hash)
+        else:
+            hash = json.loads(working_file.check_xattr(XATTR_BASE))[0]
+            print "Committed revision %s:%s." % (repository.number_for_rev(hash), hash)
 
 
 @command("log")

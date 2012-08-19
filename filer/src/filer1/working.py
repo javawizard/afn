@@ -217,5 +217,5 @@ class WorkingCopy(object):
             code = "M"
         else:
             code = "G"
-        print code + " " + hash + " " + target.path.relative_to(self.target)
+        print code + " " + hash + " " + target.relative_to(self.target)
     
