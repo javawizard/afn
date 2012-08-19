@@ -143,7 +143,8 @@ class Checkout(Command):
                     if raw_input("The revision you're updating to (%s) is not "
                             "an ancestor or a descendant of the working "
                             "copy's current revision (%s). Do you still want "
-                            "to continue updating?" % (new_rev, base_rev)).lower()[0] != "y":
+                            "to continue updating (y or n)? "
+                            % (new_rev, base_rev)).lower()[0] != "y":
                         print "Stopping."
                         return
             working.update_to(revision)

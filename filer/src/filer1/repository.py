@@ -188,7 +188,7 @@ class Repository(object):
         if self.numbers.child(number).exists:
             return self.numbers.child(number).read()
         # Assume it's a hash instead of a number and just return it
-        return self.number
+        return number
         
     def has_revision(self, hash):
         """
