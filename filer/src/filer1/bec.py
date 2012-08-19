@@ -144,7 +144,12 @@ def dump_value(value, file):
     elif isinstance(value, basestring):
         file.write(_STRING)
         # Encode the string with UTF-8
-        bytes = value.encode("UTF-8")
+        if isinstance(value, str):
+            # Use the value as-is since it's already a byte string
+            bytes = value
+        else:
+            # Unicode string, so encode it using UTF-8
+            bytes = value.encode("UTF-8")
         # Write the length
         file.write(struct.pack(">q", len(bytes)))
         # Then write the bytes out 
