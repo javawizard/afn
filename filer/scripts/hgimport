@@ -19,7 +19,7 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
         # Mercurial parents are present. Look up the corresponding Filer parent 
         filerparent="`cat map | grep "${parent}" | cut -d " " -f 2`"
         if [ -z "$filerparent" ]; then
-            print "No filer revision for mercurial parent $parent. Exiting."
+            echo "No filer revision for mercurial parent $parent. Exiting."
             exit 1
         fi
         # Checkout the parent
@@ -32,7 +32,7 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     cp -r source/* w
     # Commit
     message="`hg log --repository source --rev $hash --template {desc}`"
-    filer commit --working w --message "Converted from Mercurial revision $hash
+    filer commit --repository source --working w --message "Converted from Mercurial revision $hash
     
 Parents:
 
