@@ -178,6 +178,9 @@ class Add(Command):
             if f.has_xattr(XATTR_BASE):
                 total_tracked += 1
             else:
+                if f.is_link:
+                    print "Warning: symbolic link %s will be ignored" % f.path
+                    continue
                 print "Adding %s" % f.path
                 f.set_xattr(XATTR_BASE, json.dumps([]))
                 total_added += 1
