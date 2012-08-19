@@ -158,6 +158,7 @@ class Add(Command):
     def update_parser(self, parser):
         parser.add_argument("file")
         parser.add_argument("-a", "--all", default=False, action="store_true")
+        parser.add_argument("-e", "--exclude-name", action="append")
     
     def run(self, args):
         file = File(args.file)
@@ -174,7 +175,7 @@ class Add(Command):
                 print "Adding %s" % f.path
                 f.set_xattr(XATTR_BASE, json.dumps([]))
                 total_added += 1
-        print "%s files added, %s files already tracked." % (total_added, total_tracked)
+        print "%s files added, %s files already tracked" % (total_added, total_tracked)
         if total_added:
             print "You should `filer commit` soon."
 
