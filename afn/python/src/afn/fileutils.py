@@ -582,7 +582,8 @@ class File(object):
         try:
             return list(xattr.listxattr(self.path))
         except IOError as e:
-            if e.errno == errno.EOPNOTSUPP: # No xattr support
+            if e.errno == errno.EOPNOTSUPP or e.errno == errno.ENOENT: # No
+                # xattr support or the file doesn't exist
                 return []
             else:
                 raise
@@ -610,7 +611,8 @@ class File(object):
             return xattr.getxattr(self.path, name)
         except IOError as e:
             # TODO: See if this is different on other platforms, such as OS X
-            if e.errno == errno.ENODATA or e.errno == errno.EOPNOTSUPP:
+            if (e.errno == errno.ENODATA or e.errno == errno.EOPNOTSUPP
+                    or e.errno == errno.ENOENT):
                 return default
             else:
                 raise
