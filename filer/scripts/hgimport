@@ -31,8 +31,9 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     # Copy files over
     cp -r source/* w
     # Commit
+    filer add -a w
     message="`hg log --repository source --rev $hash --template {desc}`"
-    filer commit --repository source --working w --message "Converted from Mercurial revision $hash
+    filer commit --repository target --working w --message "Converted from Mercurial revision $hash
     
 Parents:
 
