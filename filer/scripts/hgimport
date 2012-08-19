@@ -32,7 +32,7 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     # Commit
     filer add -a --exclude-name .hg source
     message="`hg log --repository source --rev $hash --template {desc}`"
-    filer commit --repository target --working w --message "$message
+    filer commit --repository target --working source --message "$message
 
 --mercurial--
 rev: $hash
