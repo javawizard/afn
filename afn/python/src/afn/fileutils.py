@@ -258,7 +258,7 @@ class File(object):
         self.check_file()
         shutil.copyfile(self._path, other._path)
     
-    def recurse(self, filter=None, include_self=False):
+    def recurse(self, filter=None, include_self=False, recurse_skipped=True):
         """
         A generator that recursively yields all child File objects of this file.
         Files and directories (and the files and directories contained within
@@ -266,9 +266,10 @@ class File(object):
         function return False (or None or some other Python false-like value)
         are not included.
         
-        Note that directories for which the filter returns False are still
-        recursed into. I might change this later to allow specifying whether
-        the directory should not be recursed into when it's filtered out.
+        If recuse_skipped is False, directories for which the filter function
+        return False will not themselves be recursed into. If recurse_skipped
+        is True (the default), then such directories won't be yielded from this
+        generator but will be recursed into.
         
         If include_self is True, this file (a.k.a. self) will be yielded as
         well. If it's False (the default), only this file's children (and their
@@ -278,7 +279,8 @@ class File(object):
             yield self
         children = self.list()
         for child in children:
-            if filter is None or filter(child):
+            filer_result = filter(child) if filter is not None else True
+            if filer_result:
                 yield child
             if child.is_folder:
                 for c in child.recurse(filter):
