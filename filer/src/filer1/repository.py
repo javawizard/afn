@@ -29,7 +29,7 @@ def same_contents(fp1, fp2):
             return True
 
 
-def detect_working(target, silent=False):
+def detect_working(target=None, silent=False):
     """
     Finds the current working directory by jumping parents until we have no
     more parents, then scanning down until we find one of them that has a
@@ -38,6 +38,8 @@ def detect_working(target, silent=False):
     working file into another working folder, it will be seen as an integrated
     file or folder instead of as a separate working copy.
     """
+    if target is None:
+        target = File()
     parents = target.ancestors(True)
     # Reverse so that we've got the topmost folder first
     parents.reverse()
@@ -53,7 +55,9 @@ def detect_working(target, silent=False):
                 "need to specify --working.")
 
 
-def detect_repository(target, silent=False):
+def detect_repository(target=None, silent=False):
+    if target is None:
+        target = File()
     working = detect_working(silent)
     if working is None:
         return None
