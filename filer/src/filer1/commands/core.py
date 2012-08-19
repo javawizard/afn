@@ -4,6 +4,7 @@ from filer1.repository import (Repository, init_repository,
                                detect_working, detect_repository)
 from filer1.working import WorkingCopy
 from filer1 import bec, exceptions
+from filer1.constants import XATTR_BASE, XATTR_REPO
 from afn.utils.partial import Partial
 from afn.fileutils import File, file_or_none
 import time
@@ -123,29 +124,21 @@ class Commit(Command):
         parser.add_argument("-m", "--message", required=True)
 
     def run(self, args):
-        # This is basically as simple as asking the repository to commit a new
-        # revision on the current working directory (which we figure out by
-        # jumping parents until we find .filerfrom) and then updating
-        # .filerstate to contain the new revstate.
-        if args.working is None:
-            working_folder = detect_working(File("."))
+        # This is basically as simple as getting the working file and the
+        # repository and committing a new revision on them.
+        if args.repository:
+            repository_folder = File(args.repository)
         else:
-            working_folder = File(args.working)
-        if working_folder is None:
-            raise Exception("You're not inside a working folder right now, "
-                            "and you didn't specify --working.")
-        repository_folder = File(working_folder.child(".filerfrom").read())
+            repository_folder = detect_repository()
         repository = Repository(repository_folder)
-        # We've got the repository. Now we go read the revstate to use.
-        revstate = bec.loads(working_folder.child(".filerstate").read())
-        # Then we write down the date and commit message
+        if args.working:
+            working_file = File(args.working)
+        else:
+            working_file = detect_working()
         info = {"date": time.time(), "message": args.message}
-        # Then we create the new revision
-        new_revstate = repository.commit_changes(revstate, working_folder, info)
-        # Then update .filerstate to the new revstate
-        working_folder.child(".filerstate").write(bec.dumps(new_revstate))
-        # And last of all, we print out a message about the commit.
-        hash = new_revstate["parents"][0]
+        working = WorkingCopy(repository, working_file)
+        working.commit(info)
+        hash = json.loads(working_file.check_xattr(XATTR_BASE))[0]
         print "Committed revision %s:%s." % (repository.number_for_rev(hash), hash)
 
 
