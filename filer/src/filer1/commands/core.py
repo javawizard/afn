@@ -4,7 +4,7 @@
 from filer1.commands.command import Command
 from filer1.repository import (Repository, init_repository,
                                detect_working, detect_repository)
-from filer1.working import WorkingCopy
+from filer1.working import WorkingCopy, delete_tracked
 from filer1 import bec, exceptions
 from filer1.constants import XATTR_BASE, XATTR_REPO
 from afn.utils.partial import Partial
@@ -154,7 +154,7 @@ class Checkout(Command):
             print "Checked out revision %r" % revision
         else:
             print "Resetting working copy to untracked"
-            working_file.delete_xattr(XATTR_BASE)
+            delete_tracked(working_file)
 
 
 @command("add")
