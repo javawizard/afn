@@ -172,7 +172,7 @@ class Commit(Command):
         working = WorkingCopy(repository, working_file)
         # Keep track of the old base (which will be None if the working copy
         # is untracked) and compare it later on to see if anything changed
-        base = working_file.get_xattr(XATTR_BASE)
+        base = json.loads(working_file.get_xattr(XATTR_BASE))
         working.commit(info)
         if not working_file.has_xattr(XATTR_BASE):
             # This can happen when the working file itself isn't tracked, which
@@ -189,8 +189,7 @@ class Commit(Command):
             else:
                 print "No changes to be committed."
                 print "If you copied new files into the working copy that you "
-                print "expected to show up, make sure to `filer add` them "
-                print "first."
+                print "expected to show up, make sure to `filer add` them first."
 
 
 @command("log")
