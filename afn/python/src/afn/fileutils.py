@@ -169,7 +169,12 @@ class File(object):
         """
         Returns a File object representing the child of this file with the
         specified name.
+        
+        If the specified name is an absolute path, File(name) will be returned
+        instead.
         """
+        if os.path.isabs(name):
+            return File(name)
         return File(self._path, name)
     
     def sibling(self, name):
@@ -556,9 +561,21 @@ class File(object):
         Extended attribute support currently requires the PyPI module "xattr"
         to be installed. An exception will be thrown if it is not available.
         You can usually install it by running "sudo pip install xattr".
+        
+        NOTE: For now, if xattr support is not enabled, this will just return
+        the empty list. Try using set_xattr if you want to get an exception if
+        extended attributes aren't enabled. I'll probably add a method for
+        checking if extended attributes are enabled on the file in question
+        later on.
         """
         import xattr
-        return list(xattr.listxattr(self.path))
+        try:
+            return list(xattr.listxattr(self.path))
+        except IOError as e:
+            if e.errno == errno.EOPNOTSUPP: # No xattr support
+                return []
+            else:
+                raise
     
     def set_xattr(self, name, value):
         """
@@ -583,7 +600,7 @@ class File(object):
             return xattr.getxattr(self.path, name)
         except IOError as e:
             # TODO: See if this is different on other platforms, such as OS X
-            if e.errno == errno.ENODATA:
+            if e.errno == errno.ENODATA or e.errno == errno.EOPNOTSUPP:
                 return default
             else:
                 raise
@@ -603,6 +620,9 @@ class File(object):
         attribute does not exist instead of returning a default value.
         
         The same compatibility warnings present on list_xattrs apply here.
+        
+        Note that an IOError will be thrown if extended attributes aren't
+        supported instead of KeyError.
         """
         import xattr
         try:
@@ -626,7 +646,8 @@ class File(object):
         try:
             xattr.removexattr(self.path, name)
         except IOError as e:
-            if e.errno == errno.ENODATA and silent: # Attribute doesn't exist
+            if (e.errno == errno.ENODATA or e.errno == errno.EOPNOTSUPP
+                    ) and silent: # Attribute doesn't exist
                 # and silent is true; do nothing.
                 pass
             else:
