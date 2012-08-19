@@ -13,6 +13,7 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     if [ -z "$parent" ]; then
         # No mercurial parents. Do a blank Filer checkout.
         echo Blank filer checkout.
+        mkdir w
         filer checkout --repository target --working w
     else
         # Mercurial parents are present. Look up the corresponding Filer parent 
@@ -32,8 +33,11 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     # Commit
     message="`hg log --repository source --rev $hash --template {desc}`"
     filer commit --working w --message "Converted from Mercurial revision $hash
+    
 Parents:
+
 $parents
+
 Original message:
 
 $message"
