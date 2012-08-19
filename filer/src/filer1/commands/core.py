@@ -221,18 +221,15 @@ class Log(Command):
             # Repository class of parent-child revision relationships. Still
             # thinking a Neo4j database might be useful for this, or maybe some
             # sort of equivalent SQLite database.
-            # TODO: What should we do if multiple parents are present? Ideally
-            # we'd interleave their history and show things in numerical order,
-            # but right now we're just using the first parent.
             revisions = set()
             base = json.loads(working_file.get_xattr(XATTR_BASE))
-            if len(base) > 0:
-                current = base[0]
-                if len(base) > 1:
-                    print "Warning: multiple parents are present in the "
-                    print "working copy. Only the first will be shown. This "
-                    print "will be changed soon to show all of the parents."
-                
+            current = set(base)
+            while current:
+                # Find the revision with the highest number in current
+                max_hash = max(current, key=lambda r: int(repository.number_for_rev(r)))
+                revisions.add(max_hash)
+                current.remove(max_hash)
+                current |= set(repository.get_revision(max_hash)["parents"])
         print
         for number, hash, data in repository.revision_iterator():
             if revisions is not None and hash not in revisions:
