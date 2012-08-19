@@ -157,14 +157,26 @@ class Checkout(Command):
 class Add(Command):
     def update_parser(self, parser):
         parser.add_argument("file")
+        parser.add_argument("-a", "--all", default=False, action="store_true")
     
     def run(self, args):
         file = File(args.file)
-        if file.has_xattr(XATTR_BASE):
-            print "That file has already been added."
-            return
-        file.set_xattr(XATTR_BASE, json.dumps([]))
-        print "%r is now being tracked. You should `filer commit` soon." % file.path
+        if args.all:
+            files = file.recurse(include_self=True)
+        else:
+            files = [file]
+        total_tracked = 0
+        total_added = 0
+        for f in files:
+            if f.has_xattr(XATTR_BASE):
+                total_tracked += 1
+            else:
+                print "Adding %s" % f.path
+                f.set_xattr(XATTR_BASE, json.dumps([]))
+                total_added += 1
+        print "%s files added, %s files already tracked." % (total_added, total_tracked)
+        if total_added:
+            print "You should `filer commit` soon."
 
 
 @command("untrack")
