@@ -139,7 +139,7 @@ class Checkout(Command):
                 base_rev = base[0]
                 new_rev = repository.rev_for_number(revision)
                 if not (repository.is_ancestor(base_rev, new_rev) or
-                        repository.is_ancestor(base_rev, new_rev)):
+                        repository.is_ancestor(new_rev, base_rev)):
                     if raw_input("The revision you're updating to (%s) is not "
                             "an ancestor or a descendant of the working "
                             "copy's current revision (%s). Do you still want "
