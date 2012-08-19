@@ -164,9 +164,12 @@ class Add(Command):
         parser.add_argument("-e", "--exclude-name", action="append")
     
     def run(self, args):
+        if args.exclude_name is None:
+            args.exclude_name = []
         file = File(args.file)
         if args.all:
-            files = file.recurse(include_self=True)
+            files = file.recurse(filter=lambda f: (f.name not in args.exclude_name),
+                    include_self=True, recurse_skipped=False)
         else:
             files = [file]
         total_tracked = 0

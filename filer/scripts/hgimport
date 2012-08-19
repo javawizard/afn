@@ -13,11 +13,11 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     echo Source revision `hg log --repository source --template {rev} -r $hash`
     parents="`hg parents --repository source -r $hash --template "{node}\n"`"
     parent="`echo "$parents" | tail -1`"
+    hg update --repository source --clean $hash 
     if [ -z "$parent" ]; then
         # No mercurial parents. Do a blank Filer checkout.
         echo Blank filer checkout.
-        mkdir w
-        filer checkout --repository target --working w
+        filer checkout --repository target --working source
     else
         # Mercurial parents are present. Look up the corresponding Filer parent 
         filerparent="`cat map | grep "${parent}" | cut -d " " -f 2`"
@@ -27,33 +27,18 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
         fi
         # Checkout the parent
         echo Checking out filer revision $filerparent.
-        filer checkout --repository target --working w --revision "$filerparent"
+        filer checkout --repository target --working source --revision "$filerparent"
     fi
-    # Update to the corresponding Mercurial revision
-    set +e
-    rm -r source/*
-    set -e
-    hg update --repository source --clean $hash
-    # Copy files over
-    set +e
-    cp -r -L source/* w
-    set -e
     # Commit
-    filer add -a w
+    filer add -a --exclude-name .hg source
     message="`hg log --repository source --rev $hash --template {desc}`"
-    filer commit --repository target --working w --message "Converted from Mercurial revision $hash
-    
-Parents:
+    filer commit --repository target --working w --message "$message
 
-$parents
-
-Original message:
-
-$message"
-    filercurrent="`filer current --working w`"
+--mercurial--
+rev: $hash
+$parents"
+    filercurrent="`filer current --working source`"
     echo Filer revision $filercurrent added.
-    # Delete the working folder
-    rm -r w
     # Add an entry to the map
     echo $hash $filercurrent >> map
 done
