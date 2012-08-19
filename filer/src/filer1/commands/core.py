@@ -51,39 +51,70 @@ class Checkout(Command):
     def update_parser(self, parser):
         parser.add_argument("-d", "--repository", required=False)
         parser.add_argument("-w", "--working", required=False)
-        parser.add_argument("-r", "--revision", required=True)
+        parser.add_argument("-r", "--revision", required=False)
     
     def run(self, args):
+        # The checkout command does something different depending on how it's
+        # run:
+        # 
+        # If the working copy (specified with --working or auto-detected)
+        # exists and -r is specified, the working copy is updated to the
+        # revision in question.
+        # If the working copy exists but is not a working copy, it is turned
+        # into one. Then, if -r is specified, it is updated to the specified
+        # revision.
+        # If the working copy does not exist, -r must be specified (so that we
+        # know whether to create a file or a folder), and the working copy
+        # will be created and updated to the revision in question.
+        # 
+        # So, if the working copy does not exist, we require -r and create it.
+        # Then, if it's not a working copy, we make it one by setting
+        # XATTR_REPO. Then we go update the working copy to the specified
+        # revision.
         if args.repository:
             repository_folder = File(args.repository)
         else:
             repository_folder = detect_repository()
         repository = Repository(repository_folder)
         if args.working:
-            working_folder = File(args.working)
+            working_file = File(args.working)
         else:
-            print "Using the repository directory as the working directory"
-            working_folder = repository_folder
+            working_file = detect_working()
         revision = args.revision
-        working = WorkingCopy(repository, working_folder)
-        # We don't support updating existing working directories right now.
-        # TODO: This needs to be fixed.
-        if working.is_working():
-            print "That's already a working copy. Are you sure you want to "
-            print "overwrite its contents? (y or n)"
-            if raw_input().lower()[0] != "y":
-                print "Aborting."
-                return
-        data = repository.get_revision(revision)
-        if not working_folder.exists:
-            if data["type"] == "folder":
-                working_folder.mkdirs(True)
+        # Check to see if the soon-to-be working copy already exists as a file
+        # or folder
+        if not working_file.exists:
+            # It doesn't exist. Make sure we've got a --revision (and error out
+            # if we don't, since then we don't know whether to create a file or
+            # a folder).
+            if revision is None:
+                raise Exception("When using the checkout command on a working "
+                        "copy that doesn't actually exist yet, --revision must "
+                        "be specified. This is because Filer doesn't know "
+                        "whether to create a folder or a file for it. If you "
+                        "want to create a new, blank working copy without "
+                        "checking one out from a revision, create a file or "
+                        "folder at the relevant location, then use the "
+                        "checkout command again. Then it'll work.")
+            # We've got a revision, so look at whether it's a file or a folder,
+            # and create a file or a folder accordingly.
+            working_type = repository.get_revision(revision)["type"]
+            if working_type == "file":
+                # It's a file, so create a blank file for it.
+                working_file.write("")
             else:
-                working_folder.write("")
+                # It's a folder, so create a blank folder for it.
+                working_file.mkdir()
+        # The working file exists. Now see if it's a working copy.
+        working = WorkingCopy(repository, working_file)
         if not working.is_working():
+            # It's not a working copy, so make it a working copy.
             working.create()
-        # Check out the requested revision
-        working.update_to(revision)
+        # Now update it. TODO: We might want to keep track of whether it
+        # already existed before now, and if it did, warn the user that they'll
+        # be overwriting their changes.
+        if revision:
+            working.update_to(revision)
 
 @command("commit")
 class Commit(Command):
