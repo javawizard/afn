@@ -351,15 +351,16 @@ class CurrentCommand(Command):
     
     def run(self, args):
         if args.working is None:
-            working_folder = detect_working(File("."))
+            working_folder = detect_working()
         else:
             working_folder = File(args.working)
         if working_folder is None:
             raise Exception("You're not inside a working folder right now, "
                             "and you didn't specify --working.")
-        revstate = bec.load(working_folder.child(".filerstate").open())
-        for parent in revstate["parents"]:
-            print parent
+        if working_folder.has_xattr(XATTR_BASE):
+            base = json.loads(working_folder.get_xattr(XATTR_BASE))
+            for parent in base:
+                print parent
 
 # Delete the command decorator since we don't need it anymore
 del command
