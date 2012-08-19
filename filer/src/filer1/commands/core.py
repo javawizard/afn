@@ -196,6 +196,7 @@ class Commit(Command):
 class Log(Command):
     def update_parser(self, parser):
         parser.add_argument("-d", "--repository", required=False)
+        parser.add_argument("-a", "--all", default=False, action="store_true")
     
     def run(self, args):
         if args.repository:
@@ -206,9 +207,36 @@ class Log(Command):
                 raise Exception("You're not in a repository (or a working "
                                 "folder) right now and you didn't specify "
                                 "--repository.")
+        if args.working:
+            working_file = File(args.working)
+        else:
+            working_file = detect_working(silent=True)
         repository = Repository(repository_folder)
+        revisions = None
+        if working_file and working_file.has_xattr(XATTR_BASE) and not args.all:
+            # We have a working file and we're not displaying all revisions.
+            # Only show revisions which are ancestors of the working file.
+            # TODO: Figure out a way to do this without having to reconstruct
+            # every revision; probably need to have some sort of cache in the
+            # Repository class of parent-child revision relationships. Still
+            # thinking a Neo4j database might be useful for this, or maybe some
+            # sort of equivalent SQLite database.
+            # TODO: What should we do if multiple parents are present? Ideally
+            # we'd interleave their history and show things in numerical order,
+            # but right now we're just using the first parent.
+            revisions = set()
+            base = json.loads(working_file.get_xattr(XATTR_BASE))
+            if len(base) > 0:
+                current = base[0]
+                if len(base) > 1:
+                    print "Warning: multiple parents are present in the "
+                    print "working copy. Only the first will be shown. This "
+                    print "will be changed soon to show all of the parents."
+                
         print
         for number, hash, data in repository.revision_iterator():
+            if revisions is not None and hash not in revisions:
+                continue
             print "Revision %s:%s:" % (number, hash)
             print "    date:           %s" % time.ctime(data.get("info", {}).get("date", 0))
             print "    type:           %s" % data["type"]
