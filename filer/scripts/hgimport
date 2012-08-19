@@ -30,10 +30,14 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
         filer checkout --repository target --working w --revision "$filerparent"
     fi
     # Update to the corresponding Mercurial revision
+    set +e
     rm -r source/*
+    set -e
     hg update --repository source $hash
     # Copy files over
+    set +e
     cp -r source/* w
+    set -e
     # Commit
     filer add -a w
     message="`hg log --repository source --rev $hash --template {desc}`"
