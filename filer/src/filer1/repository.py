@@ -58,7 +58,7 @@ def detect_working(target=None, silent=False):
 def detect_repository(target=None, silent=False):
     if target is None:
         target = File()
-    working = detect_working(silent)
+    working = detect_working(target, silent)
     if working is None:
         return None
     if not working.has_xattr(XATTR_REPO):
