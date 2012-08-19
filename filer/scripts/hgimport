@@ -33,10 +33,10 @@ hg log --repository source -r $1 --template "{node}\n" | while read hash; do
     set +e
     rm -r source/*
     set -e
-    hg update --repository source $hash
+    hg update --repository source --clean $hash
     # Copy files over
     set +e
-    cp -r source/* w
+    cp -r -L source/* w
     set -e
     # Commit
     filer add -a w
