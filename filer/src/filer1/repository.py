@@ -183,12 +183,31 @@ class Repository(object):
         Returns the short number (as a string) of the specified revision hash.
         """
         return self.numbersbyrev.child(hash).read()
+    
+    def rev_for_number(self, number):
+        if self.numbers.child(number).exists:
+            return self.numbers.child(number).read()
+        # Assume it's a hash instead of a number and just return it
+        return self.number
         
     def has_revision(self, hash):
         """
         Returns True if the specified revision is present in this repository.
         """
         return self.store.has(hash)
+    
+    def is_ancestor(self, descendant, ancestor):
+        descendant, ancestor = self.rev_for_number(descendant), self.rev_for_number(ancestor)
+        if descendant == ancestor:
+            return True
+        current = set(self.get_revision(descendant)["parents"])
+        while current:
+            rev = current.pop()
+            if rev == ancestor:
+                return True
+            current |= set(self.get_revision(rev)["parents"])
+        return False
+        
 
 
 

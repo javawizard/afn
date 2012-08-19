@@ -115,6 +115,37 @@ class Checkout(Command):
         # already existed before now, and if it did, warn the user that they'll
         # be overwriting their changes.
         if revision:
+            if working_file.has_xattr(XATTR_BASE):
+                base = json.loads(working_file.get_xattr(XATTR_BASE))
+            else:
+                base = None
+            # If we're already checked out, warn if we have multiple parents
+            # as that'll likely steamroller over an impending merge. TODO:
+            # might want to recursively walk down and make sure we don't have
+            # any children that also have impending merges.
+            if base and len(base) > 1:
+                if raw_input("The working copy has multiple parents; this "
+                        "usually means a merge is in progress. Do you still "
+                        "want to check out a new revision and overwrite "
+                        "your changes (y or n)? ").lower()[0] != "y":
+                    print "Stopping."
+                    return
+            # If we're checked out with one parent, see if the new revision is
+            # an ancestor of the current revision or vice versa. If not, warn
+            # that we're jumping history lines. TODO: Don't warn if they're on
+            # the same changeline, even if they're on disjointed branches of
+            # the changeline.
+            elif base and len(base) == 1:
+                base_rev = base[0]
+                new_rev = repository.rev_for_number(revision)
+                if not (repository.is_ancestor(base_rev, new_rev) or
+                        repository.is_ancestor(base_rev, new_rev)):
+                    if raw_input("The revision you're updating to (%s) is not "
+                            "an ancestor or a descendant of the working "
+                            "copy's current revision (%s). Do you still want "
+                            "to continue updating?" % (new_rev, base_rev)).lower()[0] != "y":
+                        print "Stopping."
+                        return
             working.update_to(revision)
             print "Checked out revision %r" % revision
         else:
@@ -196,6 +227,7 @@ class Commit(Command):
 class Log(Command):
     def update_parser(self, parser):
         parser.add_argument("-d", "--repository", required=False)
+        parser.add_argument("-w", "--working")
         parser.add_argument("-a", "--all", default=False, action="store_true")
     
     def run(self, args):
