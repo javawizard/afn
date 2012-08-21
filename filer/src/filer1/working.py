@@ -189,6 +189,8 @@ class WorkingCopy(object):
             # child revision hashes.
             child_revs = {}
             for child in target.list():
+                if child.is_link:
+                    continue
                 # Only add children that are actually being tracked
                 if child.get_xattr(XATTR_BASE) is not None:
                     # The comma just before the equals sign is intentional.
