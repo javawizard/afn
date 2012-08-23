@@ -256,14 +256,26 @@ class File(object):
     def copy_to(self, other):
         """
         Copies the contents of this file to the specified File object or
-        pathname.
+        pathname. An exception will be thrown if the specified file already
+        exists.
         
         This does not currently work for folders; I hope to add this ability
         in the near future.
         """
         other = File(other)
         self.check_file()
-        shutil.copyfile(self._path, other._path)
+        if other.exists:
+            raise Exception("%r already exists" % other)
+        # We do the copy by hand instead of using, say, shutils in case the
+        # other file is an instance of a non-File subclass (such as AtomicFile)
+        with self.open("rb") as read_from:
+            with other.open("wb") as write_to:
+                while True:
+                    # TODO: Might want to allow this to be configurable
+                    data = read_from.read(16384)
+                    if not data:
+                        break
+                    write_to.write(data)
     
     def recurse(self, filter=None, include_self=False, recurse_skipped=True):
         """
@@ -313,8 +325,21 @@ class File(object):
         """
         Rename this file or folder to the specified name, which can be a File
         object or a pathname.
+        
+        Note that renames to objects that are instances of classes other than
+        File (such as AtomicFile) are implemented by writing the file as if by
+        copy_to and then deleting self. This is obviously not a safe thing to
+        do, as it will leave both files around in the event of a software or
+        hardware crash. This method should therefore be used with care when
+        using instances of classes besides File.
         """
-        os.rename(self._path, File(other)._path)
+        if isinstance(other, File) or isinstance(other, basestring):
+            # Do it the quick (and safe) way
+            os.rename(self._path, File(other).path)
+        else:
+            # Do it the general way
+            self.copy_to(other)
+            self.delete(True)
     
     def read(self, binary=True):
         """
@@ -420,13 +445,13 @@ class File(object):
         NOTE: This has only been tested on Linux. I still need to test it on
         Windows to make sure pathnames are being handled correctly.
         """
-        with closing(zip_module.ZipFile(File(filename)._path, "w")) as zipfile:
+        with closing(zip_module.ZipFile(File(filename).path, "w")) as zipfile:
             for f in self.recurse():
                 if contents:
                     path_in_zip = f.relative_path(self)
                 else:
                     path_in_zip = f.relative_path(self.parent)
-                zipfile.write(f._path, path_in_zip)
+                zipfile.write(f.path, path_in_zip)
         
     def unzip_into(self, folder):
         """
@@ -445,7 +470,7 @@ class File(object):
         folder = File(folder)
         folder.mkdirs(silent=True)
         with closing(zip_module.ZipFile(self._path, "r")) as zipfile:
-            zipfile.extractall(folder._path)
+            zipfile.extractall(folder.path)
     
     def delete(self, contents=False):
         """
