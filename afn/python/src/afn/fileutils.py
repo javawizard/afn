@@ -235,6 +235,11 @@ class File(object):
         The pathname of this File object, in a format native to the operating
         system in use. This pathname can then be used with Python's traditional
         file-related utilities.
+        
+        Note that not all classes providing the same API as this class provide
+        a path attribute. In particular, AtomicFile does not provide a path
+        attribute to prevent external tools from mistakenly being used to
+        overwrite the underlying file, as this will result in data corruption.
         """
         return self._path
     
@@ -243,6 +248,8 @@ class File(object):
         """
         A list of the components of the pathname of this file. This is
         currently the same as self.path.split(os.path.sep).
+        
+        The same warning about the path property applies here.
         """
         return self._path.split(os.path.sep)
     
@@ -474,28 +481,10 @@ class File(object):
         would be the same as some_file.
         
         If relative_to is not specified, the working directory is used instead.
-        
-        NOTE: right now, this only works if relative_to is an ancestor of self,
-        or if relative_to == self (in which case "." will be returned). This is
-        a limitation that will be removed soon.
         """
         if relative_to is None:
-            relative_to = File()
-        relative_to = File(relative_to)
-        if relative_to == self:
-            return "."
-        if not relative_to.ancestor_of(self):
-            raise NotImplementedError("Relativizing paths against non-"
-                    "ancestor folders has not yet been implemented, and %r "
-                    " is not an ancestor of %r." % (relative_to, self))
-        if not self._path.startswith(relative_to._path):
-            raise Exception("Paths appear to be ancestor/descendant properly, "
-                    "but self.path doensn't start with relative_to.path. The "
-                    "former and the latter are %r and %r, respectively. This "
-                    "usually indicates a bug in fileutils; report it to alex "
-                    "at opengroove dot org." %
-                    (self, relative_to))
-        return self._path[len(relative_to._path):].lstrip(os.path.sep)
+            relative_to = File().path
+        return os.path.relpath(self._path, relative_to.path)
     
     def ancestor_of(self, other):
         """
@@ -529,7 +518,7 @@ class File(object):
         absolute.
         """
         if isinstance(other, File):
-            os.symlink(other._path, self._path)
+            os.symlink(other.path, self._path)
         else:
             os.symlink(other, self._path)
     
@@ -673,12 +662,19 @@ class File(object):
     def __eq__(self, other):
         if not isinstance(other, File):
             return NotImplemented
-        return self._path == other._path
+        return self._path == other.path
     
     def __ne__(self, other):
         if not isinstance(other, File):
             return NotImplemented
-        return self._path != other._path
+        return self._path != other.path
+    
+    def __nonzero__(self):
+        """
+        Returns True. File objects are always true values; to test for their
+        existence, use self.exists instead.
+        """
+        return True
 
     
 
