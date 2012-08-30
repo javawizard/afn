@@ -1,7 +1,7 @@
 
 module Main where
 
-import Filer.Main
+import qualified Filer.Main
 
 main :: IO ()
 main = Filer.Main.main
