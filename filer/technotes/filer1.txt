@@ -329,7 +329,29 @@ One thing we could do is separate out commits from their underlying files and fo
 
 Oh, and I also need to think about tags and how they're going to work while I'm at it.
 
-You know what, maybe I should just run with the 
+
+
+
+
+
+
+Ok, a lot of stuff has changed that I need to document.
+
+Like we're using extended filesystem attributes now.
+
+But I'll document most of that later.
+
+Right now, I need to figure out how merging should work.
+
+So right now merging is going to be quite naive. It'll compare things based on their path in the two things that are going to be merged, and merge them regardless of whether they share any history at all. Obviously in the future it would be better to figure out any other changes that have been made to the relevant thing in the relevant thing's history, but this isn't a simple thing to do (and it's certainly not a simple thing to decide the semantics of), so I'm going to have a naive merge approach for now. I merge so little anyway that the extra time to write a better merge just isn't worth it right now. Maybe I'll give plugins the ability to provide different merge strategies at a later point.
+
+I do, however, want support for merging a revision into a different location than the root of the repository. This will be the main thing used to implement submodules; repository A that wants another project B to be located in the folder A/b should be able to pull B's b_master into A and then `filer merge b_master --into b` and commit, thereby bringing up-to-date the copy of B within A. That's the whole reason I wrote filer anyway.
+
+So, merging works slightly differently depending on whether the two things being merged are folders or files, and depending on whether their type changes across the merge.
+
+So we're basically asked to merge a thing on disk with another revision. I think I'll assume that, when a merge is being run, commits have been made and there aren't any uncommitted changes (although there could be untracked changes) in the working copy.
+
+
 
 
 
