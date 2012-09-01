@@ -1,0 +1,18 @@
+So I'm going to try rewriting Filer in Haskell to see how things work.
+
+And I'm going to try to simplify the data model quite a bit.
+
+So, we're going to have an object store, and there are going to be four types of objects:
+
+    Blobs are binary chunks of data. They're essentially identical to git's blobs. The hash of a blob is the hash of its file contents, although I may later add a thing to track the blob's original filename to help with packing things. I haven't yet decided if that would be part of the hash.
+    
+    Trees are dictionaries of a sort: they map string keys (filenames, specifically) to hashes of commits that represent the folder/file's contents.
+    
+    Changesets (I'll probably come up with a different name at some point, one that differentiates the commits that constitite a set of changes from the metadata they all share in common; the notion I refer to here is the latter) are things that contain the commit's author, date, and message. They will probably contain additional information later on.
+    
+    Commits are things that point to zero or more parent commits, a tree or blob representing the commit's contents, and a changeset representing the commit's information.
+
+I'm going to use SHA-256 hashes for now since having one commit per file/folder somewhat increases the chance of a collision. (And SHA-1 is closer to being broken than SHA-256 is.)
+
+So those are 
+    

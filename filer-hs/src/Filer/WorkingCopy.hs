@@ -4,6 +4,12 @@ import qualified Filer.FileUtils as F
 import qualified Filer.Constants as C
 import Control.Monad (forM_)
 
+-- A working copy; the first argument is the repository and the second argument
+-- is the working file/folder. Note that this file will usually have a
+-- C.xattrRepo xattr, but it is not required to (e.g. when exporting a
+-- revision; this is done by creating a working copy without a C.xattrRepo).
+data WorkingCopy = WorkingCopy Repository FilePath
+
 
 -- Deletes if tracked, unless it's a dir that has untracked children; these are
 -- simply untracked.
@@ -30,3 +36,7 @@ untrackAndDelete file = do
                     return False
         unless hasContents $ F.delete file
                 
+
+
+
+
