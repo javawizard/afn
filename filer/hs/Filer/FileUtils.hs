@@ -23,3 +23,5 @@ xattrDelete = x.removeXAttr
 xattrList :: FilePath -> IO [String]
 xattrList = x.listXAttr
 
+isFolder :: FilePath -> IO Bool
+
