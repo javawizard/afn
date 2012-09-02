@@ -14,5 +14,18 @@ So, we're going to have an object store, and there are going to be four types of
 
 I'm going to use SHA-256 hashes for now since having one commit per file/folder somewhat increases the chance of a collision. (And SHA-1 is closer to being broken than SHA-256 is.)
 
-So those are 
-    
+So, we're going to have functions for reading and creating those objects. I'll worry about how to garbage collect things later on.
+
+So, how do we create them...
+
+Well, also, let's have a Hash data type that represents a pointer to a commit.
+
+
+
+
+
+
+
+
+
+
