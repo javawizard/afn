@@ -20,3 +20,8 @@
 /\.classpath$
 /\.settings/.*$
 /\.~.*$
+
+syntax: regexp
+/\.dist.*/.*
+/[^/]+\.hi$
+/[^/]+\.o$
