@@ -35,7 +35,17 @@ untrackAndDelete file = do
                 else
                     return False
         unless hasContents $ F.delete file
-                
+
+
+
+
+
+
+
+
+
+
+
 
 
 
