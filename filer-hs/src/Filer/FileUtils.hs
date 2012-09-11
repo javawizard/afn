@@ -13,7 +13,7 @@ xattrGet file name = catch (liftM Just $ X.getXAttr file name) (\_ -> return Not
 
 -- True if the specified xattr exists, false if it doesn't.
 xattrHas :: FilePath -> String -> IO Bool
-xattrHas = liftM isJust . xattrGet file name
+xattrHas file name = liftM isJust $ xattrGet file name
 
 -- Sets the specified name to the specified value.
 xattrSet :: FilePath -> String -> String -> IO ()
@@ -29,6 +29,9 @@ xattrList = x.listXAttr
 
 -- True if it's a folder, false if it isn't.
 isFolder :: FilePath -> IO Bool
+
+-- True if it exists, false if it doesn't.
+exists :: FilePath -> IO Bool
 
 -- The children of this folder.
 children :: FilePath -> IO [FilePath]
