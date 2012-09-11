@@ -1,8 +1,8 @@
 
 module Filer.Repository where
 
-import Data.ByteString as B
-import Filer.Utils (bytesToString, stringToBytes)
+import qualified Data.ByteString as B
+import Filer.Utils (translateList)
 
 
 -- FilePath is the path to the .filer folder
