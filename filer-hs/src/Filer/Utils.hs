@@ -4,16 +4,10 @@ module Filer.Utils where
 import Data.Word
 
 
-translate :: (Enum a, Enum b) => a -> b
-translate = toEnum . fromEnum
+translateEnum :: (Enum a, Enum b) => a -> b
+translateEnum = toEnum . fromEnum
 
 translateList :: (Enum a, Enum b) => [a] -> [b]
-translateList = map . translate
-
-bytesToString :: [Word8] -> String
-bytesToString = translateList
-
-stringToBytes :: String -> [Word8]
-stringToBytes = translateList
+translateList = map . translateEnum
 
 
