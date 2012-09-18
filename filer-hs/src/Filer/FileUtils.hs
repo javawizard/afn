@@ -39,5 +39,8 @@ children :: FilePath -> IO [FilePath]
 -- Deletes this file or folder; folders must not have any contents at present.
 delete :: FilePath -> IO ()
 
+-- Creates the specified folder
+mkdir :: FilePath -> IO ()
+
 
 

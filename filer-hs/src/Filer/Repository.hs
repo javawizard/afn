@@ -19,6 +19,8 @@ data Commit = Commit Hash Hash [Hash]
 
 type TreeMap = M.Map String Hash
 
+type ChangesetMap = M.Map String String
+
 
 getRepoPath (Repository path) = path
 
@@ -32,8 +34,8 @@ magicChangeset = makeMagic "filercst"
 
 magicLength = 8
 
-readObjectHeader :: Handle -> IO ObjectHeader
-readObjectHeader handle = do
+hReadObjectHeader :: Handle -> IO ObjectHeader
+hReadObjectHeader handle = do
     headerData = liftM unpack $ hGet handle magicLength
     case headerData of
         magicBlob      -> return $ ObjectHeader Blob
@@ -42,8 +44,8 @@ readObjectHeader handle = do
         magicChangeset -> return $ ObjectHeader Changeset
         _              -> error ("Invalid object header: " ++ headerData)  
 
-writeObjectHeader :: Handle -> ObjectHeader -> IO ()
-writeObjectHeader handle header = hPut handle $ pack $ case header of
+hWriteObjectHeader :: Handle -> ObjectHeader -> IO ()
+hWriteObjectHeader handle header = hPut handle $ pack $ case header of
     (ObjectHeader Blob)      -> magicBlob
     (ObjectHeader Tree)      -> magicTree
     (ObjectHeader Commit)    -> magicCommit
@@ -52,6 +54,30 @@ writeObjectHeader handle header = hPut handle $ pack $ case header of
 createBlobFromFile :: Repository -> FilePath -> IO Hash
 
 createTree :: Repository -> TreeMap -> IO Hash
+
+createCommit :: Repository -> Commit -> IO Hash
+
+createChangeset :: Repository -> ChangesetMap -> IO Hash
+
+readBlobToHandle :: Repository -> Hash -> Handle -> IO ()
+
+readBlobToFile :: Repository -> Hash -> FilePath -> IO ()
+
+readTree :: Repository -> Hash -> IO TreeMap
+
+readCommit :: Repository -> Hash -> IO Commit
+
+readChangeset :: Repository -> Hash -> IO ChangesetMap
+
+readObjectHeader :: Repository -> Hash -> IO ObjectHeader
+readObjectHeader repository hash = withFile (getObjectFile repository hash) hReadObjectHeader
+
+readObjectType :: Repository -> Hash -> IO ObjectType
+readObjectType repository hash = do
+    header <- readObjectHeader repository hash
+    case header of (ObjectHeader type) -> return type
+
+getObjectFile :: Repository -> Hash -> FilePath
 
 
 
