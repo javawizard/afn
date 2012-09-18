@@ -27,7 +27,7 @@ magicLength = 8
 
 readObjectHeader :: Handle -> IO ObjectHeader
 readObjectHeader handle = do
-    headerData = hGet handle magicLength
+    headerData = liftM unpack $ hGet handle magicLength
     case headerData of
         magicBlob      -> return $ ObjectHeader Blob
         magicTree      -> return $ ObjectHeader Tree
@@ -35,7 +35,12 @@ readObjectHeader handle = do
         magicChangeset -> return $ ObjectHeader Changeset
         _              -> error ("Invalid object header: " ++ headerData)  
 
-
+writeObjectHeader :: Handle -> ObjectHeader -> IO ()
+writeObjectHeader handle header = hPut handle $ pack $ case header of
+    (ObjectHeader Blob)      -> magicBlob
+    (ObjectHeader Tree)      -> magicTree
+    (ObjectHeader Commit)    -> magicCommit
+    (ObjectHeader Changeset) -> magicChangeset
 
 
 
