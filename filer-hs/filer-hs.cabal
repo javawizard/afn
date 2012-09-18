@@ -2,7 +2,7 @@ name:           filer-hs
 version:        0.1
 cabal-version:  >= 1.2
 build-type:     Simple
-author:         jcp
+author:         Alexander Boyd
 
 executable filer-hs
   hs-source-dirs:  src
