@@ -8,8 +8,11 @@ import qualified Data.Hex as Hex
 
 data Hash = Hash [Word8]
 
-hexToBinary :: String -> [Word8]
-hexToBinary d = unpack $ unhex $ fromString $ d
+hexToBinary :: String -> Maybe [Word8]
+hexToBinary d = do
+    -- Unhex it, passing along Nothing if unhex can't understand it
+    b <- unhex $ fromString $ d
+    return $ unpack b
 
 binaryToHex :: [Word8] -> String
 binaryToHex d = toString $ hex $ pack $ d
@@ -21,7 +24,9 @@ fromHex :: String -> Hash
 fromHex d = fromMaybe (error "Not a valid hex hash") (maybeFromHex d)
 
 maybeFromHex :: String -> Maybe Hash
-
+maybeFromHex text = do
+    b <- hexToBinary text
+    maybeFromBinary b
 
 toBinary :: Hash -> [Word8]
 toBinary (Hash words) = words
@@ -35,8 +40,6 @@ maybeFromBinary d = if length d == hashBinaryLength
     else Nothing
     
 hashBinaryLength = 32
-
-hashHexLength = 64
 
 readBinaryHash :: Handle -> IO Hash
 
