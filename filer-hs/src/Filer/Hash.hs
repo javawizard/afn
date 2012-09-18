@@ -2,18 +2,20 @@
 module Filer.Hash where
 
 import Data.ByteString.UTF8 (fromString, toString)
+import Data.ByteString (pack, unpack)
+import qualified Data.Hex as Hex
 
 
 data Hash = Hash [Word8]
 
-wordToHex :: Word -> String
-wordToHex = printf "%02x\n"
+hexToBinary :: String -> [Word8]
+hexToBinary d = unpack $ unhex $ fromString $ d
 
-wordsToHex :: [Word] -> String
-wordsToHex d = concat $ map wordToHex d
+binaryToHex :: [Word8] -> String
+binaryToHex d = toString $ hex $ pack $ d
 
 toHex :: Hash -> String
-toHex (Hash words) = wordsToHex words
+toHex (Hash words) = binaryToHex words
 
 fromHex :: String -> Hash
 fromHex d = fromMaybe (error "Not a valid hex hash") (maybeFromHex d)
