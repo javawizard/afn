@@ -2,7 +2,7 @@
 module Filer.Hash where
 
 import Data.ByteString.UTF8 (fromString, toString)
-import Data.ByteString (pack, unpack)
+import Data.ByteString (pack, unpack, hGet)
 import qualified Data.Hex as Hex
 
 
@@ -41,9 +41,17 @@ maybeFromBinary d = if length d == hashBinaryLength
     
 hashBinaryLength = 32
 
+hashHexLength = hashBinaryLength * 2
+
 readBinaryHash :: Handle -> IO Hash
+readBinaryHash handle = do
+    bytes <- liftM unpack $ hGet handle hashBinaryLength
+    return $ fromBinary bytes
 
 readHexHash :: Handle -> IO Hash
+readHexHash handle = do
+    text <- liftM toString $ hGet handle hashHexLength
+    return $ fromHex text
 
 
 
