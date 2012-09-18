@@ -1,13 +1,25 @@
 
 module Filer.Hash where
 
+import Data.ByteString.UTF8 (fromString, toString)
+
+
 data Hash = Hash [Word8]
 
+wordToHex :: Word -> String
+wordToHex = printf "%02x\n"
+
+wordsToHex :: [Word] -> String
+wordsToHex d = concat $ map wordToHex d
+
 toHex :: Hash -> String
+toHex (Hash words) = wordsToHex words
 
 fromHex :: String -> Hash
+fromHex d = fromMaybe (error "Not a valid hex hash") (maybeFromHex d)
 
 maybeFromHex :: String -> Maybe Hash
+
 
 toBinary :: Hash -> [Word8]
 toBinary (Hash words) = words
