@@ -31,24 +31,15 @@ data Object = Object Info [Ref]
 
 instance Binary Object where
     get = liftM2 Object get get
-    
-    put (Object info refs) = do
-        put info
-        put refs
+    put (Object info refs) = put info >> put refs
 
 instance Binary Ref where
     get = liftM2 Ref get get
-    
-    put (Ref hash info) = do
-        put hash
-        put info
+    put (Ref hash info) = put hash >> put info
 
 instance Binary Info where
     get = liftM2 get get
-    
-    put (Info label datamap) = do
-        put label
-        put datamap
+    put (Info label datamap) = put label >> put datamap
 
 {-
 So we need a data format...
