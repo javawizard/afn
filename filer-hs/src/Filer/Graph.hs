@@ -30,30 +30,21 @@ data Ref = Ref Hash Info
 data Object = Object Info [Ref]
 
 instance Binary Object where
-    get = do
-        info <- get
-        refs <- get
-        return $ Object info refs
+    get = liftM2 Object get get
     
     put (Object info refs) = do
         put info
         put refs
 
 instance Binary Ref where
-    get = do
-        hash <- get
-        info <- get
-        return $ Ref hash info
+    get = liftM2 Ref get get
     
     put (Ref hash info) = do
         put hash
         put info
 
 instance Binary Info where
-    get = do
-        label <- get
-        datamap <- get
-        return $ Info label datamap
+    get = liftM2 get get
     
     put (Info label datamap) = do
         put label
