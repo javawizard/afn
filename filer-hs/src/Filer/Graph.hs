@@ -3,6 +3,8 @@ module Filer.Graph where
 
 import qualified Data.Map as M
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import Data.Binary (Binary(put, get), Put, Get)
 import Filer.Hash (Hash)
 
 
@@ -26,6 +28,36 @@ data Ref = Ref Hash Info
 -- its SHA-256 hash, and it contains a type, zero or more attributes, and zero
 -- or more refs.
 data Object = Object Info [Ref]
+
+instance Binary Object where
+    get = do
+        info <- get
+        refs <- get
+        return $ Object info refs
+    
+    put (Object info refs) = do
+        put info
+        put refs
+
+instance Binary Ref where
+    get = do
+        hash <- get
+        info <- get
+        return $ Ref hash info
+    
+    put (Ref hash info) = do
+        put hash
+        put info
+
+instance Binary Info where
+    get = do
+        label <- get
+        datamap <- get
+        return $ Info label datamap
+    
+    put (Info label datamap) = do
+        put label
+        put datamap
 
 {-
 So we need a data format...
