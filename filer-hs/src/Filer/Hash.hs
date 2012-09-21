@@ -1,12 +1,17 @@
 
 module Filer.Hash where
 
-import Data.ByteString.UTF8 (fromString, toString)
-import Data.ByteString (pack, unpack, hGet)
-import qualified Data.Hex as Hex
+import Data.ByteString.Lazy.UTF8 (fromString, toString)
+import Data.ByteString.Lazy (ByteString, pack, unpack, hGet)
+import Data.Hex (hex, unhex)
+import Data.Binary (Binary, get, put)
 
 
 data Hash = Hash ByteString
+
+instance Binary Hash where
+    get = liftM Hash get
+    put (Hash bytes) = put bytes
 
 hexToBinary :: String -> Maybe ByteString
 hexToBinary d = unhex $ fromString $ d

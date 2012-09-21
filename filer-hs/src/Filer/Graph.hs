@@ -29,6 +29,11 @@ data Ref = Ref Hash Info
 -- or more refs.
 data Object = Object Info [Ref]
 
+-- We're using instances of Binary to encode/decode things. This may or may
+-- not be a good idea as I'm not sure how encoding plays with older versions of
+-- Haskell, and I'd like to be able to separately define the encoding for 
+-- objects so that things written in langauges other than Haskell can read and
+-- write databases. But this'll do for now.
 instance Binary Object where
     get = liftM2 Object get get
     put (Object info refs) = put info >> put refs
