@@ -42,5 +42,7 @@ delete :: FilePath -> IO ()
 -- Creates the specified folder
 mkdir :: FilePath -> IO ()
 
+child :: FilePath -> String -> FilePath
+
 
 

@@ -5,7 +5,8 @@ import qualified Data.Map as M
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Data.Binary (Binary(put, get), Put, Get)
-import Filer.Hash (Hash)
+import Filer.Hash (Hash, toHex)
+import qualified Filer.FileUtils as F
 
 
 type DataMap = Map String B.ByteString
@@ -46,11 +47,27 @@ instance Binary Info where
     get = liftM2 get get
     put (Info label datamap) = put label >> put datamap
 
-{-
-So we need a data format...
-
--}
 
 
-readObject :: DB -> Hash -> 
+readObject :: DB -> Hash -> IO Object
+readObject (DB dbPath) hash = ...
+
+getObjectPath :: DB -> Hash -> FilePath
+getObjectPath (DB dbPath) hash = dbPath `F.child` "objects" `F.child` (toHex hash)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
