@@ -8,6 +8,7 @@ import Data.Binary (Binary, get, put)
 
 
 data Hash = Hash ByteString
+    deriving Eq, Ord
 
 instance Binary Hash where
     get = liftM Hash get

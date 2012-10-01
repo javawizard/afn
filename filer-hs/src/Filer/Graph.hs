@@ -20,10 +20,12 @@ data DB = DB FilePath
 -- with a single attribute named "name" whose value is the name of the file
 -- under which the referred commit is to be stored.
 data Info = Info String DataMap
+    deriving Eq, Ord
 
 -- A ref is a pointer to an object, along with a type and some associated
 -- attributes. Every object has zero or more refs.
 data Ref = Ref Hash Info
+    deriving Eq, Ord
 
 -- An object is an entry in the graph database. It is uniquely identified by
 -- its SHA-256 hash, and it contains a type, zero or more attributes, and zero
