@@ -53,9 +53,7 @@ instance Binary Info where
 
 
 readObject :: DB -> Hash -> IO Object
-readObject db hash = withBinaryFile (getObjectPath db hash) \h -> do
-    bytes = B.hGetContents h
-    return $ decode bytes
+readObject db hash = decodeFile $ getObjectPath db hash
 
 getObjectPath :: DB -> Hash -> FilePath
 getObjectPath (DB dbPath) hash = dbPath `F.child` "objects" `F.child` (toHex hash)

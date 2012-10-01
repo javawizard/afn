@@ -58,6 +58,8 @@ readHexHash handle = do
     text <- liftM toString $ hGet handle hashHexLength
     return $ fromHex text
 
+makeHash :: ByteString -> Hash
+
 
 
 
