@@ -6,7 +6,7 @@ import qualified System.XAttr as X
 import System.IO.Error (catch)
 import Data.ByteString
 import Data.Maybe (isJust)
-import Control.Monad (liftM)
+import Control.Monad (liftM, liftM2)
 import qualified System.FilePath as F
 import qualified System.Directory as D 
 
@@ -32,9 +32,11 @@ xattrList = X.listXAttr
 
 -- True if it's a folder, false if it isn't.
 isFolder :: FilePath -> IO Bool
+isFOlder = D.doesDirectoryExist
 
 -- True if it exists, false if it doesn't.
 exists :: FilePath -> IO Bool
+exists path = liftM2 (||) (D.doesFileExist path) (D.doesDirectoryExist path) 
 
 -- The children of this folder.
 children :: FilePath -> IO [FilePath]
