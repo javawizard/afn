@@ -32,7 +32,7 @@ xattrList = X.listXAttr
 
 -- True if it's a folder, false if it isn't.
 isFolder :: FilePath -> IO Bool
-isFOlder = D.doesDirectoryExist
+isFolder = D.doesDirectoryExist
 
 -- True if it exists, false if it doesn't.
 exists :: FilePath -> IO Bool
