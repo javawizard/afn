@@ -1,5 +1,5 @@
 
-module WorkingCopy where
+module Filer.WorkingCopy where
 import qualified Filer.FileUtils as F
 import qualified Filer.Constants as C
 import qualified Filer.Repository as R

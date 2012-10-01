@@ -8,6 +8,6 @@ translateEnum :: (Enum a, Enum b) => a -> b
 translateEnum = toEnum . fromEnum
 
 translateList :: (Enum a, Enum b) => [a] -> [b]
-translateList = map . translateEnum
+translateList = map translateEnum
 
 
