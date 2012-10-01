@@ -4,6 +4,7 @@ module Filer.Repository where
 import qualified Data.ByteString as B
 import Filer.Utils (translateList)
 import qualified Data.Map as M
+import Filer.Hash (Hash)
 
 
 -- FilePath is the path to the .filer folder
@@ -15,7 +16,7 @@ data ObjectHeader = ObjectHeader ObjectType
 
 -- The changeset hash, the blob/tree hash, and a list of parent hashes,
 -- respectively
-data Commit = Commit Hash Hash [Hash]
+data Commit = CommitC Hash Hash [Hash]
 
 type TreeMap = M.Map String Hash
 
@@ -36,7 +37,7 @@ magicLength = 8
 
 hReadObjectHeader :: Handle -> IO ObjectHeader
 hReadObjectHeader handle = do
-    headerData = liftM unpack $ hGet handle magicLength
+    headerData <- liftM unpack $ hGet handle magicLength
     case headerData of
         magicBlob      -> return $ ObjectHeader Blob
         magicTree      -> return $ ObjectHeader Tree
@@ -75,7 +76,7 @@ readObjectHeader repository hash = withFile (getObjectFile repository hash) hRea
 readObjectType :: Repository -> Hash -> IO ObjectType
 readObjectType repository hash = do
     header <- readObjectHeader repository hash
-    case header of (ObjectHeader type) -> return type
+    case header of (ObjectHeader t) -> return t
 
 getObjectFile :: Repository -> Hash -> FilePath
 

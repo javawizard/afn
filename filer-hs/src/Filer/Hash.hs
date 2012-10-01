@@ -5,10 +5,13 @@ import Data.ByteString.Lazy.UTF8 (fromString, toString)
 import Data.ByteString.Lazy (ByteString, pack, unpack, hGet)
 import Data.Hex (hex, unhex)
 import Data.Binary (Binary, get, put)
+import Control.Monad (liftM)
+import System.IO (Handle)
+import Data.Maybe (fromMaybe)
 
 
 data Hash = Hash ByteString
-    deriving Eq, Ord, Read, Show
+    deriving (Eq, Ord, Read, Show)
 
 instance Binary Hash where
     get = liftM Hash get
@@ -37,9 +40,9 @@ toBinary (Hash bytes) = bytes
 fromBinary :: ByteString -> Hash
 fromBinary d = fromMaybe (error "Not a valid binary hash") (maybeFromBinary d) 
 
-maybeFromBinary -> ByteString -> Maybe Hash
-maybeFromBinary bytes = if length bytes == hashBinaryLength
-    then Just $ Hash d
+maybeFromBinary :: ByteString -> Maybe Hash
+maybeFromBinary bytes = if length (unpack bytes) == hashBinaryLength
+    then Just $ Hash bytes
     else Nothing
     
 hashBinaryLength = 32

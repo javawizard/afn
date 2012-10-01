@@ -6,6 +6,9 @@ import qualified System.XAttr as X
 import System.IO.Error (catch)
 import Data.ByteString
 import Data.Maybe (isJust)
+import Control.Monad (liftM)
+import qualified System.FilePath as F
+import qualified System.Directory as D 
 
 -- Gets an xattr, returning Nothing if it doesn't exist.
 xattrGet :: FilePath -> String -> IO (Maybe String)
@@ -21,11 +24,11 @@ xattrSet = X.setXAttr
 
 -- Deletes the specified xattr.
 xattrDelete :: FilePath -> String -> IO ()
-xattrDelete = x.removeXAttr
+xattrDelete = X.removeXAttr
 
 -- Lists the names of all xattrs.
 xattrList :: FilePath -> IO [String]
-xattrList = x.listXAttr
+xattrList = X.listXAttr
 
 -- True if it's a folder, false if it isn't.
 isFolder :: FilePath -> IO Bool
@@ -35,14 +38,22 @@ exists :: FilePath -> IO Bool
 
 -- The children of this folder.
 children :: FilePath -> IO [FilePath]
+children = D.getDirectoryContents
 
 -- Deletes this file or folder; folders must not have any contents at present.
 delete :: FilePath -> IO ()
+delete file = do
+    f <- isFolder file
+    if f
+        then D.removeDirectory file
+        else D.removeFile file
 
 -- Creates the specified folder
 mkdir :: FilePath -> IO ()
+mkdir = D.createDirectory
 
 child :: FilePath -> String -> FilePath
+child = F.combine
 
 
 
