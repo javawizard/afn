@@ -15,22 +15,31 @@ data Info = Info String DataMap
 data Ref = Ref Hash Info
     deriving (Eq, Ord, Read, Show)
 
--- An object is an entry in the graph database. It is uniquely identified by
+-- | An object is an entry in the graph database. It is uniquely identified by
 -- its SHA-256 hash, and it contains a type, zero or more attributes, and zero
 -- or more refs.
 data Object = Object Info [Ref]
     deriving (Eq, Ord, Read, Show)
 
-class DB a where
-    -- |Gets the object with a particular hash from the database.
+-- | Graph databases that can be read from.
+class ReadDB a where
+    -- | Gets the object with a particular hash from the database.
     getObject :: a -> Hash -> IO (Maybe Object)
-    -- |Stores an object into the database. The hash of the object will be
+
+-- | Graph databases that can be written to.
+class WriteDB a where
+    -- | Stores an object into the database. The hash of the object will be
     -- returned. If the object already exists, its hash will be returned
     -- without storing it again.
     addObject :: a -> Object -> IO Hash
-    -- |Deletes an object from the database, returning True if such an object
+
+-- | Graph databases that can be deleted from.
+class DeleteDB a where
+    -- | Deletes an object from the database, returning True if such an object
     -- existed or False if one didn't.
     deleteObject :: a -> Hash -> IO Bool
+    
+
     
     
     
