@@ -8,6 +8,8 @@ import Data.Binary (Binary, get, put)
 import Control.Monad (liftM)
 import System.IO (Handle)
 import Data.Maybe (fromMaybe)
+import Crypto.Hash.SHA256 (hashlazy)
+import Filer.Utils (strictToLazy)
 
 
 data Hash = Hash ByteString
@@ -59,6 +61,7 @@ readHexHash handle = do
     return $ fromHex text
 
 makeHash :: ByteString -> Hash
+makeHash bytes = Hash $ strictToLazy $ hashlazy bytes
 
 
 

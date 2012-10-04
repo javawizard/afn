@@ -55,6 +55,12 @@ instance Binary Info where
 readObject :: DB -> Hash -> IO Object
 readObject db hash = decodeFile $ getObjectPath db hash
 
+-- This requires loading the whole chunk of data into memory at once; we might
+-- want to come up with a more efficient alternative at some point.
+writeObject :: DB -> Object -> IO Hash
+writeObject = do
+    let hash 
+
 getObjectPath :: DB -> Hash -> FilePath
 getObjectPath (DB dbPath) hash = dbPath `F.child` "objects" `F.child` (toHex hash)
 
