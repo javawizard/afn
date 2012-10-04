@@ -3,8 +3,9 @@ module Filer.Graph where
 
 import qualified Data.Map as M
 import qualified Data.ByteString.Lazy as B
-import Data.Binary (Binary(put, get), Put, Get, decode, encode)
-import Filer.Hash (Hash, toHex)
+import Data.Binary (Binary(put, get), Put, Get, decode, encode, decodeFile)
+import Filer.Hash (Hash, toHex, makeHash)
+import Filer.Utils (whenM)
 import qualified Filer.FileUtils as F
 import Control.Monad (liftM2)
 
@@ -58,8 +59,11 @@ readObject db hash = decodeFile $ getObjectPath db hash
 -- This requires loading the whole chunk of data into memory at once; we might
 -- want to come up with a more efficient alternative at some point.
 writeObject :: DB -> Object -> IO Hash
-writeObject = do
-    let hash 
+writeObject db object = do
+    let bytes = encode object
+    let hash = makeHash bytes
+    let path = getObjectPath db hash
+    whenM (liftM not $ F.exists path) $ B.writeFile path bytes
 
 getObjectPath :: DB -> Hash -> FilePath
 getObjectPath (DB dbPath) hash = dbPath `F.child` "objects" `F.child` (toHex hash)
