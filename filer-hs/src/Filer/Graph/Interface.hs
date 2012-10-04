@@ -1,24 +1,15 @@
 
 module Filer.Graph.Interface where
 
--- An Info has a type, which is a string, and a map of additional attributes
--- present on the info. Every object has an info and every ref has an info.
--- For example, folders are stored as an object with an info whose type is
--- "folder", and which has a number of refs, each one's type being "child" and
--- with a single attribute named "name" whose value is the name of the file
--- under which the referred commit is to be stored.
-data Info = Info String DataMap
-    deriving (Eq, Ord, Read, Show)
-
 -- A ref is a pointer to an object, along with a type and some associated
 -- attributes. Every object has zero or more refs.
-data Ref = Ref Hash Info
+data Ref = Ref Hash DataMap
     deriving (Eq, Ord, Read, Show)
 
 -- | An object is an entry in the graph database. It is uniquely identified by
 -- its SHA-256 hash, and it contains a type, zero or more attributes, and zero
 -- or more refs.
-data Object = Object Info [Ref]
+data Object = Object DataMap [Ref]
     deriving (Eq, Ord, Read, Show)
 
 -- | Graph databases that can be read from.
