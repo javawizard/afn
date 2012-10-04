@@ -1,0 +1,7 @@
+So I'm re-doing some things about how this rewrite of Filer's working.
+
+So the first thing I'm doing is going to be to write a graph database. I might be generalizing this a bit too much, but we'll see how it goes.
+
+So push and pull would most likely be implemented at the graph database level, below the version control level. It would just push and pull graph database objects and such.
+
+So, graph database objects consist of a dictionary of attributes (keys are strings and values are binary data) and a set of references
