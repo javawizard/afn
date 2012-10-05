@@ -72,7 +72,9 @@ class ReadDB a where
 -- | Graph databases that can be queried. These maintain indexes of some sort
 -- to allow for efficient querying.
 class QueryDB a where
-    -- | Gets the hashes of all objects that match the specified query.
+    -- | Gets the hashes of all objects that match the specified query. I might
+    -- expand this later to support querying just for refs and attributes in
+    -- the future.
     query :: a -> ObjectQuery -> IO [Hash]
 
 -- | Graph databases that can be written to.
