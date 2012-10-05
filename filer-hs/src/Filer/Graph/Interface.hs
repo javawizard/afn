@@ -5,6 +5,27 @@ import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import qualified Data.Set as S
 
+data RefQuery
+    = RefHasAttributes AttributeQuery
+    | PointsTo ObjectQuery
+    | PointsFrom ObjectQuery
+    | AndR RefQuery RefQuery
+    | OrR RefQuery RefQuery
+    | NotR RefQuery
+data AttributeQuery
+    = HasAttribute String
+    | HasValue String ByteString
+    | AndA AttributeQuery AttributeQuery
+    | OrA AttributeQuery AttributeQuery
+    | NotA AttributeQuery
+data ObjectQuery 
+    = HasIncomingRef RefQuery
+    | HasOutgoingRef RefQuery
+    | ObjectHasAttributes AttributeQuery
+    | AndO ObjectQuery ObjectQuery
+    | OrO ObjectQuery ObjectQuery
+    | NotO ObjectQuery
+
 -- | An alias for Data.Map.Map String Data.ByteString.Lazy.ByteString used to
 -- store object and ref attributes.
 type DataMap = M.Map String B.ByteString
