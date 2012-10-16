@@ -1,5 +1,8 @@
 
-import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef)
+{-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses, FlexibleInstances #-}
+
+import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef)
+import Control.Monad (liftM2, forM_)
 
 -- | Types that represent containers that can hold a value. The containers are
 -- of kind * -> *, with the only type variable being the type of the value held
@@ -26,9 +29,9 @@ instance Var IORef IO where
 data BindVar v a = BindVar { bindings :: v [Binding a],
                              var :: v a }
 
-data Binding a = forall s => Binding (s a) 
+data Binding a = forall s. Binding (s a) 
 
-instance Monad m => Var BindVar m where
+instance (Monad m, Var v m) => Var (BindVar v) m where
     newVar a = liftM2 BindVar (newVar []) (newVar a)
     readVar v = readVar $ var v
     writeVar = accept
@@ -38,24 +41,24 @@ instance Monad m => Var BindVar m where
 class Monad m => Source v m where
     -- | Listen for when a new value is produced and send it to the specified
     -- sink.
-    watch :: (Sink s) => v a -> s -> m ()
+    watch :: (Sink s m) => v a -> s a -> m ()
 
 -- | Things that can accept new values.
 class Monad m => Sink v m where
     -- | Accept a new value.
     accept :: v a -> a -> m ()
 
-instance Monad m => Source BindVar m where
+instance (Monad m, Var v m) => Source (BindVar v) m where
     watch v s = do
         currentBindings <- readVar $ bindings v
         let currentBindings = (Binding s):currentBindings
         writeVar (bindings v) currentBindings
 
-instance Monad m => Sink BindVar m where
+instance (Monad m, Var v m) => Sink (BindVar v) m where
     accept v a = do
         writeVar $ var v
         currentBindings <- readVar $ bindings v
-        forM_ currentBindings \(Binding s) -> do
+        forM_ currentBindings $ \(Binding s) -> do
             accept s a
 
 
