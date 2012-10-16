@@ -1,0 +1,12 @@
+name:           landfill-hs-public
+version:        0.1
+cabal-version:  >= 1.2
+build-type:     Simple
+author:         jcp
+
+executable landfill-hs-public
+  hs-source-dirs:  src
+  main-is:         Main.hs
+  build-depends:   base >= 4
+  ghc-options:     -Wall
+
