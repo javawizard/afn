@@ -1,22 +1,21 @@
 
 import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef)
 
--- | Types that represent containers that can hold a value. Values held within
--- the containers can be changed in the IO monad. This will eventually be
--- generalized to work with any monad, probably by changing this class to
--- Var v m and then having instances such as Var IORef IO and Var TVar STM.
-class Var v where
+-- | Types that represent containers that can hold a value. The containers are
+-- of kind * -> *, with the only type variable being the type of the value held
+-- by the container. The container can be modified in the specified monad.
+class Monad m => Var v m where
     -- | Creates a new variable with the specified value.
-    newVar :: a -> IO (v a)
+    newVar :: a -> m (v a)
     -- | Gets the current value of the specified variable.
-    readVar :: (v a) -> IO a
+    readVar :: (v a) -> m a
     -- | Sets the value of the specified variable to the specified value.
-    writeVar :: (v a) -> a -> IO ()
+    writeVar :: (v a) -> a -> m ()
     -- | Modifies the value in the specified variable using the specified
     -- | function.
-    modifyVar :: (v a) -> (a -> a) -> IO ()
+    modifyVar :: (v a) -> (a -> a) -> m ()
 
-instance Var IORef where
+instance Var IORef IO where
     newVar = newIORef
     readVar = readIORef
     writeVar = writeIORef
@@ -29,30 +28,30 @@ data BindVar v a = BindVar { bindings :: v [Binding a],
 
 data Binding a = forall s => Binding (s a) 
 
-instance Var BindVar where
+instance Monad m => Var BindVar m where
     newVar a = liftM2 BindVar (newVar []) (newVar a)
     readVar v = readVar $ var v
     writeVar = accept
     modifyVar v f = do { a <- readVar v ; writeVar v $ f a }
 
 -- | Things that can produce new values.
-class Source v where
+class Monad m => Source v m where
     -- | Listen for when a new value is produced and send it to the specified
     -- sink.
-    watch :: Sink s => v a -> s -> IO ()
+    watch :: (Sink s) => v a -> s -> m ()
 
 -- | Things that can accept new values.
-class Sink v where
+class Monad m => Sink v m where
     -- | Accept a new value.
-    accept :: v a -> a -> IO ()
+    accept :: v a -> a -> m ()
 
-instance Source BindVar where
+instance Monad m => Source BindVar m where
     watch v s = do
         currentBindings <- readVar $ bindings v
         let currentBindings = (Binding s):currentBindings
         writeVar (bindings v) currentBindings
 
-instance Sink BindVar where
+instance Monad m => Sink BindVar m where
     accept v a = do
         writeVar $ var v
         currentBindings <- readVar $ bindings v
