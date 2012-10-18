@@ -1,0 +1,38 @@
+So I'm generalizing Filer's storage mechanism into a database, and I've already written some stuff in Haskell for it. But I've got some more ideas, so I figured I should write a technote about it.
+
+So, as it is right now, HashDB is a graph database where objects can be added and deleted, but not changed after they are created. Each object has a number of attributes and values; the attributes are strings and the values are binary data. Each object also has a number of outgoing refs, each of which point to exactly one other object and each of which also have a set of attributes and values.
+
+Each object has a hash associated with it; the hash is computed from the object's attributes and values and all outgoing refs and their attributes and values. An object cannot be changed after it's created; this in particular means that new outgoing refs cannot be added to an object after the object has been created. Incoming refs can, of course, be added by creating another object.
+
+A database stores only one copy of every object. Adding an object that already exists in a database does nothing.
+
+So that's how things stand at present. I hadn't yet worked out whether every object pointed to by a ref has to be present in a given database, so that's still a question to think about.
+
+So, the idea I'm getting now to complement this whole system is schemas. I got thinking, it's somewhat wasteful to have lots of logic to check to see if a commit object, for example, has refs pointing to a file or folder and a changeset, and issue an error if not. And when would the error occur? If it's when pulling a malformed commit, then it gets a lot harder to have pushing/pulling be implemented at the HashDB level, as Filer would need to have some input. If it's after that, then the user doesn't find out that they've pulled a malformed commit until they actually go to use it, which in my opinion is unacceptable.
+
+So I got this brilliant idea: schemas. Objects gain an additional aspect, so to speak, which is the hash of the schema object that they conform to. Schema objects specify, in some format or other that I haven't decided on yet, things like what attributes must be present and what types their values must be (I'm thinking attributes can have types other than just binary data in order to facilitate queries like looking for all commits that happened within a particular date range) and what refs with what attributes may be present and such.
+
+Then HashDB itself would enforce that any object being inserted into the database, whether because it's just been created from scratch or because it's being pulled from somewhere, conforms to its schema.
+
+The reason that this is so lovely is that then, instead of querying for anything with an attribute "type" whose value is "filer.commit" or some such thing, we can query for anything with the commit schema, which would be identified by a particular hash. And since the hash is the hash of the object containing the actual schema that the objects have to match, and since HashDB enforces that an object matches its schema, whatever its schema is, then we know that all results we get back will match the commit schema and thus will have everything we want.
+
+This also goes a long way toward solving namespacing problems that arise with using attributes like "type" to identify objects; before, there was a good chance of conflict, but now, there's relatively little, as I'm thinking schemas will somehow include a name and perhaps a description of what they are, and so two schemas would only conflict if they had the exact same name and description and actual schema specification, in which case chances are pretty high they're actually the same schema designed by the same person for the same purpose.
+
+So, a new term needs to be introduced for this, and that is dependency. An object has a dependency on (or is equivalently said to depend on) another object if it has a ref pointing to said object or if its schema is said object.
+
+One important difference between ref-related dependencies and schema-related dependencies is that I'm considering allowing a HashDB to contain objects that point to non-existent objects, the reason being that "databases" like archive files (files that contain an exported copy of a set of objects from a database; they will be used in filer pushing and pulling and when creating filer archives and will allow most of the push/pull system to be implemented at the HashDB level) will almost never be complete copies of the database, but will instead omit some objects that are known to exist on the recipient's end already. HashDB will be perfectly happy to allow this, although there will be some mechanism to produce an error if, say, a query could have returned more results but for missing objects.
+
+HashDB will not, however, permit an object's schema to be missing. If an object is inserted into a database, its schema must already be present.
+
+This makes copying things between databases slightly more complicated, but not too much.
+
+Slight detour: I'm currently writing HashDB in Haskell, which I'm liking quite well at present.
+
+So, I'm thinking I'll have a utility library in the Haskell implementation that has, say, copyObject :: (ReadDB r, WriteDB w) => r -> w -> Hash -> IO (), which copies a single object and takes care to copy its schema as well if it's not already present, and perhaps copyObjectAndRefs (with the same signature) that copies an object and all of its refs. And I might have copyAll :: (ReadDB r, WriteDB w) => r -> w -> IO (), which copies all objects present in r into w. (This would be useful for pulling; a list of objects not present locally is somehow exchanged with the remote end, which sends an archive to the local end, which then imports it with copyAll archiveDb localDb.)
+
+
+
+
+
+
+
