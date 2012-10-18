@@ -42,7 +42,65 @@ And I also need to work out how attribute values work, as I want them to be able
 
 So, first off, queries specify constraints on attributes that are typed to a particular type of attribute value, and attributes that exist but do not have that type of value do not match. So, for example, a query matching an object with an attribute "test" whose value is an int greater than 5 will not match objects with an attribute "test" whose value is the string "6". I expect I'll add queries that query an attribute's type, such that one could query for all objects with an attribute "test" whose value is of type Int, irrespective of the actual value.
 
-(And this would also allow for data types like IntQuery, with constructors like GreaterThan Int, LessThan Int, AnyInt (yes, that's a constructor with no arguments, not a missing space between "Any" and "Int"), and so on, and then a data type like ValueQuery, with constructors like IntValue IntQuery, StringValue StringQuery, and AnyValue. 
+(And this would also allow for data types like IntQuery, with constructors like GreaterThan Int, LessThan Int, AnyInt, and so on, and then a data type like ValueQuery, with constructors like IntValue IntQuery, StringValue StringQuery, and AnyValue. One could then query for objects with an attribute "test" which matches AnyValue, for example, to get objects that have a "test" attribute, and IntQuery AnyInt to get objects that have a "test" attribute whose value is of type Int.)
+
+I'll leave the list of supported types for later, but I'm thinking they could include Int (although I'll probably use Integer, to support arbitrary precision), Binary (represented as a ByteString), String, and Bool. I might add a floating-point value if I can come up with a good cross-language representation for one. Null values won't be allowed; in cases where one is needed, the attribute should just be omitted altogether. (Schemas will, of course, include a way to specify that a particular attribute is not required, but that if it is present, it is to have such-and-such a type and such-and-such other things as specified by the schema.)
+
+So that's attributes for now.
+
+Now, schemas...
+
+My initial feeling, for simplicity's sake, is to have the schema itself be a bunch of binary data (or textual data; could use read/show for an initial prototype and write a more cross-language solution later) which is generated from some Haskell data types expressing the schema. Then we just have a handful of attributes on schema objects specifying things like the schema's name (a textual description like "filer.commit") and perhaps a description, and then an attribute holding the schema itself.
+
+That sounds good. So, what things should schemas be able to specify?
+
+Well, there should be a way to specify that an attribute with a given name has to exist, with any value.
+
+And there should be a way to specify that an attribute with a given name has to exist and has to be of a certain type.
+
+And there should be a way to specify that an attribute is not required to exist, but that if it does, it has to be of a certain type.
+
+I don't know if I'll put any value constraints on attributes for now, as I don't know that there's really much of a reason to at present.
+
+So that's pretty much good for attributes for now. Now for refs...
+
+The problem with refs is that they almost need their own schemas separate from the object's schema. The point being, one can ask for an object that uses the page schema, and this object should have zero or more refs pointing to other pages, with attributes specifying what link in the page this ref represents. But how do you ask the object for all refs that point to said other pages with the relevant attributes present? This runs into the same problem with a commit object not having things required by commit objects.
+
+And that makes me think that we need a notion of object schemas and ref schemas. Object schemas would specify the attributes necessary on an object, and information about which refs an object must have, which would somehow specify a ref schema that the ref must conform to. Ref schemas would, then, be specifications of what attributes must be present on a ref, and perhaps what sort of object it points to.
+
+When creating an object, then, a schema would be specified for the object, and a schema would be specified for each of its refs. Ref schemas would themselves just be objects.
+
+This presents one problem, and that is that filer's schema would require circular dependencies among schemas: the commit schema would specify that exactly one commit-to-child ref must exist, the commit-to-ref schema would specify that the pointed-to object must conform either to the folder schema or the file schema, the folder schema would specify that zero or more folder-to-child refs must exist, and the folder-to-child schema would specify that the pointed-to object must conform to the commit schema (and that a name attribute, whose value is a string, must be present on the ref). So there's a problem.
+
+One obvious solution would be to allow schema objects to contain multiple schemas, each perhaps with a name, and then allow schemas the ability to reference their own object. Then schemas would be referred to by the hash of the object that contains them and their name, which might represent the attribute of the object on which they're stored. Schemas could then, when referring to other schemas, omit the hash part, which would mean that they refer to the schema object in which they're contained.
+
+Another solution, along similar lines, would be to somehow split schemas out into two separate types of objects. One type would contain individual ref and object schemas, one schema per object, and the second would be an object with refs to every individual schema it includes. The first objects would contain pointers to other named schemas, and the second object would essentially link those all together.
+
+So maybe the first type of object could be called a schema template, and the second type of object could be called a schema group, with the combined whole being called a schema.
+
+Refs from schema groups to schema templates would then specify the name that the template is to assume within the group, and a given schema would not be considered valid if any of its templates referred to names not given to any other templates within the group.
+
+This would solve the circular dependency problem quite nicely, but it's really complicated, and I'm somewhat hesitant to implement it as a result.
+
+There's just too many opportunities for circular schema dependencies that I can think of... More are surfacing when I think about how OpenGroove would work...
+
+So I think, for now, that I'm going to go with the old way of doing schemas, and have ref schemas not specify the type of object that they point to. And then I'll just let runtime errors happen as they happen if it's not the right type of object.
+
+Although I would really like to revisit the problem in the future and see if I can't think of some way to link things up... But I'll worry about that later, and get a prototype working for now.
+
+You know, I might even just let a schema be specified or not for now, and not do any validation on it yet, until I've got all of the other mechanics working first. Then I'll see. Or something like that.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
