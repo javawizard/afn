@@ -30,6 +30,27 @@ Slight detour: I'm currently writing HashDB in Haskell, which I'm liking quite w
 
 So, I'm thinking I'll have a utility library in the Haskell implementation that has, say, copyObject :: (ReadDB r, WriteDB w) => r -> w -> Hash -> IO (), which copies a single object and takes care to copy its schema as well if it's not already present, and perhaps copyObjectAndRefs (with the same signature) that copies an object and all of its refs. And I might have copyAll :: (ReadDB r, WriteDB w) => r -> w -> IO (), which copies all objects present in r into w. (This would be useful for pulling; a list of objects not present locally is somehow exchanged with the remote end, which sends an archive to the local end, which then imports it with copyAll archiveDb localDb.)
 
+One other issue I'm facing with schemas is the fact that HashDB, by its very nature of using object hashes, provides a directed acyclic graph: cycles cannot exist. The problem, of course, is that while the schema of a schema can be a schema defining the format of schemas themselves, there isn't really a clear-cut answer to what the schema of the schema of schemas should be. Ideally it would be itself, but that's not possible since cycles can't exist.
+
+Perhaps, then, schemas don't themselves have a schema, or at least they're not required to. Their format would be checked when inserting an object that uses them as its schema; HashDB would reject any object whose referenced schema is malformed. This would incur a performance penalty as the validity of every object's schema has to be checked (and thus the schema actually read from the database) when inserting the object, but smart HashDB libraries could keep an internal list of schemas that have already been verified since opening the database and consult that list before reverifying a schema.
+
+So that's all good. Now I need to work out a schema format.
+
+Well, first I need to work out what schemas can actually specify.
+
+And I also need to work out how attribute values work, as I want them to be able to have values other than just binary data.
+
+So, first off, queries specify constraints on attributes that are typed to a particular type of attribute value, and attributes that exist but do not have that type of value do not match. So, for example, a query matching an object with an attribute "test" whose value is an int greater than 5 will not match objects with an attribute "test" whose value is the string "6". I expect I'll add queries that query an attribute's type, such that one could query for all objects with an attribute "test" whose value is of type Int, irrespective of the actual value.
+
+(And this would also allow for data types like IntQuery, with constructors like GreaterThan Int, LessThan Int, AnyInt (yes, that's a constructor with no arguments, not a missing space between "Any" and "Int"), and so on, and then a data type like ValueQuery, with constructors like IntValue IntQuery, StringValue StringQuery, and AnyValue. 
+
+
+
+
+
+
+
+
 
 
 
