@@ -1,5 +1,6 @@
 
 import Filer.Graph.Interface
+import Database.HDBC
 
 data SQLiteDB = SQLiteDB Connection
 

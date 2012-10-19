@@ -66,6 +66,7 @@ data ObjectQuery
 class ReadDB a where
     getObjectAttributes :: a -> Hash -> IO (Maybe DataMap)
     getObjectRefs :: a -> Hash -> IO (Maybe S.Set (Hash, DataMap))
+    getAllObjects :: a -> [Hash]
 
 -- TODO: Should we merge ReadDB and QueryDB at some point?
 -- | Graph databases that can be queried. These maintain indexes of some sort
@@ -81,7 +82,7 @@ class WriteDB a where
     -- | Stores an object into the database. The hash of the object will be
     -- returned. If the object already exists, its hash will be returned
     -- without storing it again.
-    addObject :: a -> Object -> IO Hash
+    addObject :: a -> (DataMap, S.Set (Hash, DataMap)) -> IO Hash
 
 -- | Graph databases that can be deleted from.
 class DeleteDB a where
