@@ -50,8 +50,7 @@ data ObjectQuery
 
 -- | Graph databases that can be read from.
 class ReadDB a where
-    -- | Gets the object with a particular hash from the database.
-    getObject :: a -> Hash -> IO (Maybe Object)
+    getObjectAttributes :: a -> Hash -> IO (Maybe ...)
 
 -- TODO: Should we merge ReadDB and QueryDB at some point?
 -- | Graph databases that can be queried. These maintain indexes of some sort

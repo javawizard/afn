@@ -1,7 +1,8 @@
 
 module Encoding where
-import Data.Binary (Binary, get, put)
+import Data.Binary (Binary, get, put, encode, decode)
 import Data.Set (Set)
+import Filer.Hash (makeHash)
 
 -- | An alias for Data.Map.Map String Data.ByteString.Lazy.ByteString used to
 -- store object and ref attributes.
@@ -34,3 +35,19 @@ instance Binary Ref where
 instance Binary Info where
     get = liftM2 Info get get
     put (Info label datamap) = put label >> put datamap
+
+hashObject :: Object -> Hash
+hashObject object = makeHash $ encode object
+
+
+
+
+
+
+
+
+
+
+
+
+

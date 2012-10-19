@@ -90,6 +90,12 @@ Although I would really like to revisit the problem in the future and see if I c
 
 You know, I might even just let a schema be specified or not for now, and not do any validation on it yet, until I've got all of the other mechanics working first. Then I'll see. Or something like that.
 
+Another idea: proper schema templates, like where schemas are written as template objects, and then other objects can instantiate those into concrete schemas, and so on. I'm getting the idea from Haskell's classes and instances. More thought on this later.
+
+So I'm going to just not have schemas for now, and I'll worry about adding them later.
+
+Attributes are definitely going to have specific data types, though.
+
 
 
 
