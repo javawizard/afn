@@ -98,7 +98,13 @@ Attributes are definitely going to have specific data types, though.
 
 Ok so, I need to come up with a way to represent everything relationally, that I can use for the first prototype HashDB backend.
 
-So let's see... We're probably going to need some sort of identifier that's unique both for objects and for refs to store in the attributes table so that we can trace each attribute to the object/ref it applies to... 
+So let's see... We're probably going to need some sort of identifier that's unique both for objects and for refs to store in the attributes table so that we can trace each attribute to the object/ref it applies to... So it turns out SQLite doesn't support indexes, so I need another solution...
+
+Well, let's set up the other tables as if we had unique ids for objects and refs, and go from there.
+
+So I can think of two ways to store attributes of different types. One is to have a table with columns like intValue, stringValue, binaryValue, etc, and have non-relevant columns be null. The other is to have a separate table for each type. I'm leaning toward the first as then queries for, say, ints could be written with a where clause like "intValue is not null and ...", where ... is the int-specific tests. It should make translating HashDB queries into SQL queries much simpler.
+
+That being said, I need to check and see if SQLite will properly use indexes with a bunch of clauses like that...
 
 
 
