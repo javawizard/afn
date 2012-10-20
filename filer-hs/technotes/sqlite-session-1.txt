@@ -65,3 +65,7 @@ sqlite> explain query plan select source from attributes where (name = 'test' an
 0|0|0|SEARCH TABLE attributes USING INDEX attributes_name_intvalue (name=? AND intvalue=?) (~4 rows)
 0|0|0|SEARCH TABLE attributes USING INDEX attributes_name_textvalue (name=? AND textvalue=?) (~4 rows)
 sqlite> 
+sqlite> explain query plan select source from attributes where (name = 'test' and intvalue is not null and intvalue = 5) and (name = 'test' and intvalue is not null and intvalue = 6);
+0|0|0|SEARCH TABLE attributes USING INDEX attributes_name_intvalue (name=? AND intvalue=?) (~2 rows)
+sqlite> explain query plan select source from attributes where (name = 'test' and intvalue is not null and intvalue > 5) and (name = 'test' and intvalue is not null and intvalue < 8);
+0|0|0|SEARCH TABLE attributes USING INDEX attributes_name_intvalue (name=? AND intvalue>? AND intvalue<?) (~1 rows)

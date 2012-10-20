@@ -108,6 +108,14 @@ That being said, I need to check and see if SQLite will properly use indexes wit
 
 Things are looking positive... I should probably paste my interactive sqlite3 session here...
 
+Ok, pasted it into technotes/sqlite-session-1.txt.
+
+So, the results are that if I have an attributes table with columns "source" (or whatever I add that points back to the object), and a column "name" and columns "intvalue", "stringvalue", "boolvalue", and "blobvalue", and put indexes on (name, somethingvalue), and then if I convert every ivalue query to a where-clause of the form (name = '...' and value-specific-statements) where the name is injected from the wrapping attributequery and convert int queries to things like (intvalue is not null and intvalue > 42), and then a bunch of value queries are strung together with nested AndV or OrV instances, then SQLite uses indexes for the entire query and doesn't perform a table scan, which is positively lovely. (I suspect that if one mixes AndV and OrV instances, table scans might result, but I haven't tried this out yet.)
+
+So I think I'll go with the one table approach for now.
+
+(From some stuff I've been reading, most databases don't allow indexes on blob columns, so queries against blobs would likely result in table scans. But I can't forsee such queries being used in practice, so I'm fine with that.)
+
 
 
 
