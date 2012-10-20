@@ -1,17 +1,23 @@
 
+module Filer.Graph.SQL where
+
 import Filer.Graph.Interface
-import Database.HDBC
+import Database.HDBC (IConnection, run, commit, getTables)
 
-data SQLiteDB = SQLiteDB Connection
+data DB = forall a. IConnection a => DB a
 
-instance ReadDB SQLiteDB where
+connect :: IConnection a => a -> IO DB
+connect = do
+    
+
+instance ReadDB DB a where
     ...
 
-instance QueryDB SQLiteDB where
+instance QueryDB DB where
     ...
 
-instance WriteDB SQLiteDB where
+instance WriteDB DB where
     ...
 
-instance DeleteDB SQLiteDB where
+instance DeleteDB DB where
     ...

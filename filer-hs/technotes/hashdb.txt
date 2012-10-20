@@ -96,6 +96,10 @@ So I'm going to just not have schemas for now, and I'll worry about adding them 
 
 Attributes are definitely going to have specific data types, though.
 
+Ok so, I need to come up with a way to represent everything relationally, that I can use for the first prototype HashDB backend.
+
+So let's see... We're probably going to need some sort of identifier that's unique both for objects and for refs to store in the attributes table so that we can trace each attribute to the object/ref it applies to... 
+
 
 
 
