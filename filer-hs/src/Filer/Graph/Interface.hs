@@ -5,62 +5,10 @@ import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Filer.Graph.Encoding (makeHash, Value, DataMap)
+import Filer.Graph.Query (ValueQuery(..), IntQuery(..), BoolQuery(..),
+    BinaryQuery(..), StringQuery(..), ObjectQuery(..), RefQuery(..),
+    AttributeQuery(..))
 
-data ValueQuery
-    = IntValue IntQuery
-    | BoolValue BoolQuery
-    | StringValue StringQuery
-    | BinaryValue BinaryQuery
-    | AndV ValueQuery ValueQuery
-    | OrV ValueQuery ValueQuery
-    | NotV ValueQuery ValueQuery
-    | AnyValue
-
-data IntQuery
-    = IntGreaterThan Integer
-    | IntLessThan Integer
-    | IntEqualTo Integer
-    | AnyInt
-
-data BoolQuery
-    = BoolEqualTo Bool
-    | AnyBool
-
-data StringQuery
-    = StringEqualTo String
-    -- TODO: Add additional things for seeing if the string in question is
-    -- contained within an attribute's value or things like that, or maybe even
-    -- support regexes
-    | AnyString
-
-data BinaryQuery
-    = BinaryEqualTo B.ByteString
-    -- TODO: Add length queries, so that we can search for attributes with
-    -- large values
-    | AnyBinary
-
-data RefQuery
-    = RefHasAttributes AttributeQuery
-    | PointsTo ObjectQuery
-    | PointsFrom ObjectQuery
-    | AndR RefQuery RefQuery
-    | OrR RefQuery RefQuery
-    | NotR RefQuery
-
-data AttributeQuery
-    = HasAttribute String ValueQuery
-    | AndA AttributeQuery AttributeQuery
-    | OrA AttributeQuery AttributeQuery
-    | NotA AttributeQuery
-
-data ObjectQuery
-    = HasIncomingRef RefQuery
-    | HasOutgoingRef RefQuery
-    | ObjectHasAttributes AttributeQuery
-    | HashIs Hash
-    | AndO ObjectQuery ObjectQuery
-    | OrO ObjectQuery ObjectQuery
-    | NotO ObjectQuery
 
 -- | Graph databases that can be read from.
 class ReadDB a where
