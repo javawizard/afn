@@ -5,9 +5,7 @@ import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Filer.Graph.Encoding (makeHash, Value, DataMap)
-import Filer.Graph.Query (ValueQuery(..), IntQuery(..), BoolQuery(..),
-    BinaryQuery(..), StringQuery(..), ObjectQuery(..), RefQuery(..),
-    AttributeQuery(..))
+import Filer.Graph.Query
 
 
 -- | Graph databases that can be read from.
