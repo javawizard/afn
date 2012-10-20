@@ -14,7 +14,9 @@ data ValueQuery
 
 data IntQuery
     = IntGreaterThan Integer
+    | IntGreaterOrEqual Integer
     | IntLessThan Integer
+    | IntLessOrEqual Integer
     -- | First int is min, second int is max
     | IntInRange Integer Integer
     | IntEqualTo Integer
