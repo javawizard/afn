@@ -106,6 +106,8 @@ So I can think of two ways to store attributes of different types. One is to hav
 
 That being said, I need to check and see if SQLite will properly use indexes with a bunch of clauses like that...
 
+Things are looking positive... I should probably paste my interactive sqlite3 session here...
+
 
 
 
