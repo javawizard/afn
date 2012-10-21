@@ -7,6 +7,7 @@ import Data.ByteString.Lazy (ByteString)
 import Data.Word (Word8)
 import Control.Monad (liftM)
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 data Value
     = IntValue Integer
@@ -41,6 +42,22 @@ encodeObject attributes refs = encode (attributes, refs)
 
 decodeObject :: ByteString -> (DataMap, Set (Hash, DataMap))
 decodeObject bytes = decode bytes
+
+data Pretty a b = a := b
+
+prettyToTuple :: Pretty a b -> (a, b)
+prettyToTuple (a := b) = (a, b)
+
+tupleToPretty :: (a, b) -> Pretty a b
+tupleToPretty (a, b) = a := b
+
+type PrettyObject = Pretty [Pretty String Value] [Pretty String [Pretty String Value]]
+
+toPretty :: DataMap -> S.Set (Hash, DataMap) -> PrettyObject
+toPretty attrMap refSet = (map tupleToPretty $ M.toList attrMap) := (map (\(h, a) -> toHex h := (map tupleToPretty $ M.toList a)) $ S.toList refSet)
+
+fromPretty :: PrettyObject -> (DataMap, S.Set (Hash, DataMap))
+fromPretty (attrs := refs) = ((M.fromList $ map prettyToTuple attrs), S.fromList $ map (\(h, a) -> (fromHex h, M.fromList $ map prettyToTuple a)) refs)
 
 
 

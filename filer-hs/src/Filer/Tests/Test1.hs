@@ -9,6 +9,7 @@ import Filer.Graph.Encoding
 import qualified Data.Map as M
 import qualified Data.Set as S 
 import Filer.Hash (toHex)
+import Control.Monad (forM, forM_)
 
 main = do
     putStrLn "Connecting to sqlite3 database..."
@@ -21,7 +22,9 @@ main = do
     putStrLn "Two objects written. Number of objects in the database:"
     getObjectCount db >>= putStrLn . show
     putStrLn "About to read all objects back..."
-    getAllHashes db >>= mapM_ (\h -> getObject db h >>= putStrLn . ((toHex h ++ ": ") ++) . show)
+    hashes <- getAllHashes db
+    objects <- forM hashes $ getObject db
+    forM_ (zip hashes objects) $ \(hash, object) -> putStrLn $ toHex hash ++ ": " ++ show object
     putStrLn "All objects read. About to commit..." 
     commit sqldb
     putStrLn "Done!"
