@@ -82,7 +82,7 @@ instance WriteDB DB where
         existingObjectQuery <- quickQuery' c "select id from objects where hash = ?" [toSql $ toHex objectHash]
         case existingObjectQuery of
             -- If it already exists, just return its hash
-            [[]] -> return objectHash
+            [[_]] -> return objectHash
             _    -> do
                 -- Doesn't exist, so we need to create it. First we'll insert
                 -- the object into the objects table.
