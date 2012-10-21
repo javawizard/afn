@@ -116,6 +116,22 @@ So I think I'll go with the one table approach for now.
 
 (From some stuff I've been reading, most databases don't allow indexes on blob columns, so queries against blobs would likely result in table scans. But I can't forsee such queries being used in practice, so I'm fine with that.)
 
+So, now I need to decide about the columns in that table that refer to objects or refs...
+
+Having hashes stored in this table would probably be a bad idea from a performance standpoint, as ints are much faster to index and look up than hashes. But the other thing is, I don't really want to waste extra time looking for matching attributes for refs when I'm querying for objects, which makes me think a sourcetype column should be used, and all indexes on (name, somethingvalue) be updated to (sourcetype, name, somethingvalue). Then clauses that include the (name = '...') bit could include sourcetype = 1 or sourcetype = 2 just before it, for objects and refs respectively. Then we'd know that the results we get back are for objects or for refs, respectively, and then we could have numbering collisions between the two and it wouldn't be a problem.
+
+Yeah, let's go with that.
+
+So, we can store attributes like that. Now, for storing objects and refs...
+
+Let's say we had an objects table, which had two columns, hash and id, with the former being a string containing the object's hex hash and the latter being the object's numeric id, probably assigned with autoincrement or something. (This is SQLite-specific, but I can decide on a better way to do it later for other databases.)
+
+That'd sort objects. Then for refs, let's say we had a table called refs, which had three columns, id, source, and target. id is the ref's unique id. source is the id of the object that the ref points from. target is the id of the object that the ref points to.
+
+Then all of the attributes are stored in the attributes table as per normal.
+
+And then we could have indexes on objects for hash and id, and we could have indexes on refs for source, target, and id, and maybe a few others if they end up speeding things up.
+
 
 
 
