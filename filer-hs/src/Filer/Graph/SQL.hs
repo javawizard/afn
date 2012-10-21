@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 
 module Filer.Graph.SQL where
 
@@ -15,10 +16,6 @@ encodeValue (StringValue s) = toSql s
 encodeValue (BinaryValue b) = toSql b
 -- Bools encode as integers, 0 for False and 1 for True
 encodeValue (BoolValue b)   = toSql $ fromEnum b
-
--- Because I'm too lazy to type three additional characters
-null :: SqlValue
-null = SqlNull
 
 runInitialStatements :: IConnection c => c -> IO ()
 runInitialStatements conn = do
@@ -54,24 +51,24 @@ connect c = do
     -- some sort of version table in the future so that we can detect if we're
     -- using a newer schema than the one we created here, and migrate
     -- everything to a new set of tables as needed.
-    tableNames = getTables c
+    tableNames <- getTables c
     when (not $ elem "refs" tableNames) $ runInitialStatements c
     return $ DB c
 
-instance ReadDB DB a where
-    ...
+-- instance ReadDB DB a where
+--     ...
 
-instance QueryDB DB where
-    ...
+-- instance QueryDB DB where
+--     ...
 
 insertAttributes :: IConnection c => c -> Integer -> Integer -> DataMap
 insertAttributes c sourceType sourceId attributes = do
     statement <- prepare c "insert into attributes (sourcetype, id, name, intvalue, stringvalue, boolvalue, binaryvalue) values (?, ?, ?, ?, ?, ?, ?)"
     executeMany statement $ map (M.toList attributes) $ \(k, v) -> [toSql sourceType, toSql sourceId, k] ++ case v of
-        (IntValue i)    -> [toSql i, null, null, null]
-        (StringValue s) -> [null, toSql s, null, null]
-        (BoolValue b)   -> [null, null, toSql $ fromEnum b, null]
-        (BinaryValue b) -> [null, null, null, toSql b]
+        (IntValue i)    -> [toSql i, SqlNull, SqlNull, SqlNull]
+        (StringValue s) -> [SqlNull, toSql s, SqlNull, SqlNull]
+        (BoolValue b)   -> [SqlNull, SqlNull, toSql $ fromEnum b, SqlNull]
+        (BinaryValue b) -> [SqlNull, SqlNull, SqlNull, toSql b]
 
 instance WriteDB DB where
     addObject (DB c) attributeMap refSet = do
