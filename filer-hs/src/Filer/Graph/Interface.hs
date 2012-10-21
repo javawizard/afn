@@ -12,8 +12,8 @@ import Filer.Hash (Hash)
 -- | Graph databases that can be read from.
 class ReadDB a where
     getObject :: a -> Hash -> IO (Maybe (DataMap, S.Set (Hash, DataMap)))
-    getAllHashes :: a -> [Hash]
-    getObjectCount :: a -> Integer
+    getAllHashes :: a -> IO [Hash]
+    getObjectCount :: a -> IO Integer
 
 -- TODO: Should we merge ReadDB and QueryDB at some point?
 -- | Graph databases that can be queried. These maintain indexes of some sort

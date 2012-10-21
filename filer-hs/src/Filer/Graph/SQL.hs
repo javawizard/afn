@@ -9,7 +9,7 @@ import Filer.Hash (Hash, toHex, fromHex)
 import Filer.Graph.Encoding (hashObject, Value(..), DataMap)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Control.Monad (forM_, when)
+import Control.Monad (forM, forM_, liftM, when)
 
 isNull = (== SqlNull)
 
@@ -62,29 +62,29 @@ connect c = do
     return $ DB c
 
 instance ReadDB DB where
-    getObject c hash = do
+    getObject (DB c) hash = do
         -- See if the object exists, and get its id
         objectIdQuery <- quickQuery' c "select id from objects where hash = ?" [toSql $ toHex hash]
         case objectIdQuery of
             [[objectIdSql]] -> do
                 -- It does. Get its attributes.
-                lef objectId = fromSql objectIdSql :: Integer
+                let objectId = fromSql objectIdSql :: Integer
                 objectAttributes <- readAttributes c 1 objectId
                 -- Then get its refs
-                refQuery <- quickQuery' c "select id, target, (select id from objects where hash = target) from refs where source = ?" [toSql objectId]
+                refQuery <- quickQuery' c "select id, target, (select hash from objects where id = target) from refs where source = ?" [toSql objectId]
                 refList <- forM refQuery $ \[refId, refTargetId, refTargetHash] -> do
                     -- Get this ref's attributes
                     refAttributes <- readAttributes c 2 $ fromSql refId
                     -- Return the ref
                     return (fromHex $ fromSql refTargetHash, refAttributes)
                 -- Return the object
-                return (objectAttributes, S.fromList refList)
-            _ -> Nothing -- Doesn't exist
+                return $ Just (objectAttributes, S.fromList refList)
+            _ -> return Nothing -- Doesn't exist
     -- This is as simple as querying for all the hashes in the database, then
     -- flattening them out into a list of strings, then converting them all to
     -- hashes.
-    getAllHashes c = liftM (map fromHex . concat) $ quickQuery' c "select hash from objects" []
-    getObjectCount c = liftM (fromSql :: SqlValue -> Integer) quickQuery' c "select count(id) from objects" []
+    getAllHashes (DB c) = liftM (map (fromHex . fromSql) . concat) $ quickQuery' c "select hash from objects" []
+    getObjectCount (DB c) = liftM ((fromSql :: SqlValue -> Integer) . head . head) $ quickQuery' c "select count(id) from objects" []
 
 -- instance QueryDB DB where
 --     ...
@@ -93,10 +93,10 @@ readAttributes :: IConnection c => c -> Integer -> Integer -> IO DataMap
 readAttributes c sourceType sourceId = do
     queryResults <- quickQuery' c "select name, intvalue, stringvalue, boolvalue, binaryvalue from attributes where sourcetype = ? and id = ?" [toSql sourceType, toSql sourceId]
     return $ M.fromList $ flip map queryResults $ \[name, intValue, stringValue, boolValue, binaryValue] -> let n = (fromSql name :: String) in case () of
-        _ | isNotNull intValue = (name, IntValue $ fromSql intValue)
-        _ | isNotNull stringValue = (name, StringValue $ fromSql stringValue)
-        _ | isNotNull boolValue = (name, BoolValue $ toEnum $ fromSql boolValue)
-        _ | isNotNull binaryValue = (name, BinaryValue $ fromSql binaryValue)
+        _ | isNotNull intValue -> (n, IntValue $ fromSql intValue)
+        _ | isNotNull stringValue -> (n, StringValue $ fromSql stringValue)
+        _ | isNotNull boolValue -> (n, BoolValue $ toEnum $ fromSql boolValue)
+        _ | isNotNull binaryValue -> (n, BinaryValue $ fromSql binaryValue)
 
 insertAttributes :: IConnection c => c -> Integer -> Integer -> DataMap -> IO ()
 insertAttributes c sourceType sourceId attributes = do

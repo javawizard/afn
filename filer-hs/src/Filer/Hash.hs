@@ -14,7 +14,10 @@ import Data.Char (toLower)
 
 
 data Hash = Hash ByteString
-    deriving (Eq, Ord, Read, Show)
+    deriving (Eq, Ord)
+
+instance Show Hash where
+    show hash = "fromHex \"" ++ (toHex hash) ++ "\""
 
 instance Binary Hash where
     get = liftM Hash get
