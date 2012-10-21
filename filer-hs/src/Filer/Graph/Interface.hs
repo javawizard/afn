@@ -4,7 +4,7 @@ module Filer.Graph.Interface where
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Filer.Graph.Encoding (Value, DataMap)
+import Filer.Graph.Encoding (Value, DataMap, fromPretty, Pretty(..), PrettyObject)
 import Filer.Graph.Query
 import Filer.Hash (Hash)
 
@@ -33,6 +33,9 @@ class WriteDB a where
 
 addObject' :: (WriteDB a) => a -> (DataMap, S.Set (Hash, DataMap)) -> IO Hash
 addObject' db = uncurry (addObject db)
+
+addPrettyObject :: (WriteDB a) => a -> PrettyObject -> IO Hash
+addPrettyObject db object = addObject' db $ fromPretty object
 
 -- | Graph databases that can be deleted from.
 class DeleteDB a where
