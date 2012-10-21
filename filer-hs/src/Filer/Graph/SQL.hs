@@ -10,6 +10,7 @@ import Filer.Graph.Encoding (hashObject, Value(..), DataMap)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Control.Monad (forM, forM_, liftM, when)
+import Filer.Graph.Query
 
 isNull = (== SqlNull)
 
@@ -86,8 +87,59 @@ instance ReadDB DB where
     getAllHashes (DB c) = liftM (map (fromHex . fromSql) . concat) $ quickQuery' c "select hash from objects" []
     getObjectCount (DB c) = liftM ((fromSql :: SqlValue -> Integer) . head . head) $ quickQuery' c "select count(id) from objects" []
 
--- instance QueryDB DB where
---     ...
+-- Now we have the glorious part of this whole thing dedicated to converting
+-- HashDB queries to SQL queries.
+
+data SqlToken = Param SqlValue | Text String
+
+param :: (Convertible a SqlValue) => a -> SqlToken
+param a = Param $ toSql a
+
+valueQueryToSql :: ValueQuery -> String -> [SqlToken]
+valueQueryToSql (IntValueQuery v) name = [Text "name = ", param name] ++ intQueryToSql v
+valueQueryToSql (BoolValueQuery v) name = [Text "name = ", param name] ++ boolQueryToSql v
+valueQueryToSql (StringValueQuery v) name = [Text "name = ", param name] ++ stringQueryToSql v
+valueQueryToSql (BinaryValueQuery v) name = [Text "name = ", param name] ++ binaryQueryToSql v
+valueQueryToSql (AndV a b) name = [Text "("] ++ (valueQueryToSql a name) ++ [Text ") and ("] ++ (valueQueryToSql b name) ++ [Text ")"]
+valueQueryToSql (OrV a b) name = [Text "("] ++ (valueQueryToSql a name) ++ [Text ") or ("] ++ (valueQueryToSql b name) ++ [Text ")"]
+valueQueryToSql (NotV a) name = [Text "(not ("] ++ (valueQueryToSql a name) ++ [Text "))"]
+valueQueryToSql AnyValue name = [Text "name = ", param name]
+
+intQueryToSql :: IntQuery -> [SqlToken]
+intQueryToSql a = [Text " and intvalue is not null"] ++ (intQueryToSql' a)
+
+intQueryToSql' :: IntQuery -> [SqlToken]
+intQueryToSql' (IntGreaterThan i) = [Text " and intvalue > ", param i]
+intQueryToSql' (IntGreaterOrEqual i) = [Text " and intvalue >= ", param i]
+intQueryToSql' (IntLessThan i) = [Text " and intvalue < ", param i]
+intQueryToSql' (IntLessOrEqual i) = [Text " and intvalue <= ", param i]
+intQueryToSql' (IntInRange a b) = [Text " and intvalue >= ", param a, Text " and intvalue <= ", param b]
+intQueryToSql' (IntEqualTo i) = [Text " and intvalue = ", param i]
+intQueryToSql' AnyInt = []
+
+boolQueryToSql :: BoolQuery -> [SqlToken]
+boolQueryToSql b = [Text " and boolvalue is not null"] ++ boolQueryToSql' b
+
+boolQueryToSql' :: BoolQuery -> [SqlToken]
+boolQueryToSql' (BoolEqualTo b) = [Text " and boolvalue = ", param $ fromEnum b]
+boolQueryToSql' AnyBool = []
+
+stringQueryToSql :: StringQuery -> [SqlToken]
+stringQueryToSql s = [Text " and stringvalue is not null"] ++ stringQueryToSql' s
+
+stringQueryToSql' :: StringQuery -> [SqlToken]
+stringQueryToSql' (StringEqualTo s) = [Text " and stringvalue = ", param s]
+stringQueryToSql' AnyString = []
+
+binaryQueryToSql :: BinaryQuery -> [SqlToken]
+binaryQueryToSql b = [Text " and binaryvalue is not null"] ++ binaryQueryToSql' b
+
+binaryQueryToSql' :: BinaryQuery -> [SqlToken]
+binaryQueryToSql' (BinaryEqualTo b) = [Text " and binaryvalue = ", param b]
+binaryQueryToSql' AnyBinary = []
+
+instance QueryDB DB where
+    runObjectQuery = undefined
 
 readAttributes :: IConnection c => c -> Integer -> Integer -> IO DataMap
 readAttributes c sourceType sourceId = do

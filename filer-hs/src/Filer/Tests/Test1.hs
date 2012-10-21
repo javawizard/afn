@@ -19,7 +19,7 @@ main = do
     putStrLn "Opening a HashDB connected to the sqlite3 database..."
     db <- connect sqldb
     putStrLn "Writing two objects..."
-    hash1 <- addPrettyObject db $ ["a" := StringValue "b", "c" := StringValue "d"] := []
+    hash1 <- addPrettyObject db $ ["a" := StringValue "b", "c" := StringValue "d", "e" := StringValue "f"] := []
     hash2 <- addPrettyObject db $ ["e" := IntValue 42] := [toHex hash1 := ["f" := IntValue 45]]
     putStrLn "Two objects written. Number of objects in the database:"
     getObjectCount db >>= putStrLn . show
