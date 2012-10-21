@@ -21,7 +21,7 @@ main = do
     putStrLn "Two objects written. Number of objects in the database:"
     getObjectCount db >>= putStrLn . show
     putStrLn "About to read all objects back..."
-    getAllHashes db >>= mapM_ (\h -> getObject db h >>= putStrLn . ((toHex h ++ ": ") ++) .  show)
+    getAllHashes db >>= mapM_ (\h -> getObject db h >>= putStrLn . ((toHex h ++ ": ") ++) . show)
     putStrLn "All objects read. About to commit..." 
     commit sqldb
     putStrLn "Done!"
