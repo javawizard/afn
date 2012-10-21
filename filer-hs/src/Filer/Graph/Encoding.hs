@@ -3,11 +3,12 @@ module Encoding where
 import Data.Binary (Binary, get, put, encode, decode)
 import Data.Set (Set)
 import Filer.Hash (Hash, makeHash)
+import Data.ByteString.Lazy (ByteString)
 
 data Value
     = IntValue Integer
     | StringValue String
-    | BinaryValue B.ByteString
+    | BinaryValue ByteString
     | BoolValue Bool
 
 type DataMap = M.Map Value
