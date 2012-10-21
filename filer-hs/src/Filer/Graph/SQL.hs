@@ -90,7 +90,7 @@ instance WriteDB DB where
                 -- Then we query for the id it received. TODO: See if there's
                 -- a more efficient way to do this without querying for the id.
                 [[objectIdSql]] <- quickQuery' c "select max(id) from objects" []
-                let objectId = fromSql objectIdSql :: Integer
+                let objectId = 50 -- fromSql objectIdSql :: Integer
                 -- Then we insert the object's attributes
                 insertAttributes c 1 objectId attributeMap
                 -- Then we iterate over each of the object's refs

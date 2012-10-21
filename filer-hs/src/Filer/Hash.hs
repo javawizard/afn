@@ -10,6 +10,7 @@ import System.IO (Handle)
 import Data.Maybe (fromMaybe)
 import Crypto.Hash.SHA256 (hashlazy)
 import Filer.Utils (strictToLazy)
+import Data.Char (toLower)
 
 
 data Hash = Hash ByteString
@@ -23,7 +24,7 @@ hexToBinary :: String -> Maybe ByteString
 hexToBinary d = unhex $ fromString $ d
 
 binaryToHex :: ByteString -> String
-binaryToHex d = toString $ hex $ d
+binaryToHex d = map toLower $ toString $ hex $ d
 
 toHex :: Hash -> String
 toHex (Hash bytes) = binaryToHex bytes
