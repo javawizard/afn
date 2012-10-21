@@ -21,12 +21,12 @@ encodeValue (BoolValue b)   = toSql $ fromEnum b
 runInitialStatements :: IConnection c => c -> IO ()
 runInitialStatements c = do
     let r :: String -> IO Integer; r s = run c s [] 
-    r "create table objects (id integer auto_increment, hash text)"
+    r "create table objects (id integer primary key autoincrement, hash text)"
     r "create index objects_id_hash on objects (id, hash)"
     r "create index objects_hash_id on objects (hash, id)"
     r "create unique index objects_id on objects (id)"
     r "create unique index objects_hash on objects(hash)"
-    r "create table refs (id integer auto_increment, source integer, target integer)"
+    r "create table refs (id integer primary key autoincrement, source integer, target integer)"
     r "create unique index refs_id on refs (id)"
     r "create index refs_id_source on refs (id, source, target)"
     r "create index refs_id_target on refs (id, target, source)"
@@ -90,7 +90,7 @@ instance WriteDB DB where
                 -- Then we query for the id it received. TODO: See if there's
                 -- a more efficient way to do this without querying for the id.
                 [[objectIdSql]] <- quickQuery' c "select max(id) from objects" []
-                let objectId = 50 -- fromSql objectIdSql :: Integer
+                let objectId = fromSql objectIdSql :: Integer
                 -- Then we insert the object's attributes
                 insertAttributes c 1 objectId attributeMap
                 -- Then we iterate over each of the object's refs
