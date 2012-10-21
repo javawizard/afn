@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S 
 import Filer.Hash (toHex)
 import Control.Monad (forM, forM_)
+import Filer.Encoding (toPretty, toPretty', fromPretty)
 
 main = do
     putStrLn "Connecting to sqlite3 database..."
@@ -24,7 +25,7 @@ main = do
     putStrLn "About to read all objects back..."
     hashes <- getAllHashes db
     objects <- forM hashes $ getObject db
-    forM_ (zip hashes objects) $ \(hash, object) -> putStrLn $ toHex hash ++ ": " ++ show object
+    forM_ (zip hashes objects) $ \(hash, object) -> putStrLn $ toHex hash ++ ": " ++ show $ toPretty' object
     putStrLn "All objects read. About to commit..." 
     commit sqldb
     putStrLn "Done!"

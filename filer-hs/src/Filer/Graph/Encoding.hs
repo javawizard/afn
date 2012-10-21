@@ -44,6 +44,7 @@ decodeObject :: ByteString -> (DataMap, Set (Hash, DataMap))
 decodeObject bytes = decode bytes
 
 data Pretty a b = a := b
+    deriving (Eq, Ord, Show, Read)
 
 prettyToTuple :: Pretty a b -> (a, b)
 prettyToTuple (a := b) = (a, b)
@@ -55,6 +56,8 @@ type PrettyObject = Pretty [Pretty String Value] [Pretty String [Pretty String V
 
 toPretty :: DataMap -> S.Set (Hash, DataMap) -> PrettyObject
 toPretty attrMap refSet = (map tupleToPretty $ M.toList attrMap) := (map (\(h, a) -> toHex h := (map tupleToPretty $ M.toList a)) $ S.toList refSet)
+
+toPretty' = uncurry toPretty
 
 fromPretty :: PrettyObject -> (DataMap, S.Set (Hash, DataMap))
 fromPretty (attrs := refs) = ((M.fromList $ map prettyToTuple attrs), S.fromList $ map (\(h, a) -> (fromHex h, M.fromList $ map prettyToTuple a)) refs)
