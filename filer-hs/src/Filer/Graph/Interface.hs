@@ -4,14 +4,15 @@ module Filer.Graph.Interface where
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Filer.Graph.Encoding (makeHash, Value, DataMap)
+import Filer.Graph.Encoding (Value, DataMap)
 import Filer.Graph.Query
+import Filer.Hash (Hash)
 
 
 -- | Graph databases that can be read from.
 class ReadDB a where
     getObjectAttributes :: a -> Hash -> IO (Maybe DataMap)
-    getObjectRefs :: a -> Hash -> IO (Maybe S.Set (Hash, DataMap))
+    getObjectRefs :: a -> Hash -> IO (Maybe (S.Set (Hash, DataMap)))
     getAllObjects :: a -> [Hash]
 
 -- TODO: Should we merge ReadDB and QueryDB at some point?

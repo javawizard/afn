@@ -38,8 +38,8 @@ runInitialStatements conn = do
         "name text, intvalue integer, stringvalue text, boolvalue integer, " ++
         "binaryvalue blob)"
     r "create index attributes_sourcetype_id on attributes (sourcetype, id)"
-    let attrIndex name = "create index attributes_sourcetype_name_" ++ name ++
-        " on attributes (sourcetype, name, " ++ name ++ ")"
+    let {attrIndex name = "create index attributes_sourcetype_name_" ++ name ++
+        " on attributes (sourcetype, name, " ++ name ++ ")"}
     r $ attrIndex "intvalue"
     r $ attrIndex "stringvalue"
     r $ attrIndex "boolvalue"

@@ -1,10 +1,11 @@
 
 module Filer.Graph.Encoding where
-import Data.Binary (Binary, get, put, encode, decode)
+import Data.Binary (Binary, get, put, Get, Put, encode, decode)
 import Data.Set (Set)
 import Filer.Hash (Hash, makeHash)
 import Data.ByteString.Lazy (ByteString)
 import Data.Word (Word8)
+import Control.Monad (liftM)
 import qualified Data.Map as M
 
 data Value
