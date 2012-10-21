@@ -31,7 +31,7 @@ runInitialStatements c = do
     r "create index refs_id_source on refs (id, source, target)"
     r "create index refs_id_target on refs (id, target, source)"
     r "create index refs_source_id on refs (source, id)"
-    r "create inex refs_target_id on refs (target, id)"
+    r "create index refs_target_id on refs (target, id)"
     r ("create table attributes (id integer, sourcetype integer, " ++
         "name text, intvalue integer, stringvalue text, boolvalue integer, " ++
         "binaryvalue blob)")
