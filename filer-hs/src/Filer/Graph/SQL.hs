@@ -3,6 +3,7 @@ module Filer.Graph.SQL where
 
 import Filer.Graph.Interface
 import Database.HDBC (IConnection, run, commit, getTables)
+import Filer.
 
 runInitialStatements :: IConnection c => c -> IO ()
 runInitialStatements conn = do
@@ -29,8 +30,14 @@ runInitialStatements conn = do
 data DB = forall a. IConnection a => DB a
 
 connect :: IConnection a => a -> IO DB
-connect = do
-    
+connect c = do
+    -- If the tables haven't been created, create them. We might want to create
+    -- some sort of version table in the future so that we can detect if we're
+    -- using a newer schema than the one we created here, and migrate
+    -- everything to a new set of tables as needed.
+    tableNames = getTables c
+    when (not $ elem "refs" tableNames) $ runInitialStatements c
+    return $ DB c
 
 instance ReadDB DB a where
     ...
@@ -42,4 +49,35 @@ instance WriteDB DB where
     ...
 
 instance DeleteDB DB where
-    ...
+    deleteObject (DB c) hash = do
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
