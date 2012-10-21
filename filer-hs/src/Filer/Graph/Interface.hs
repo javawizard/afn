@@ -14,6 +14,7 @@ class ReadDB a where
     getObjectAttributes :: a -> Hash -> IO (Maybe DataMap)
     getObjectRefs :: a -> Hash -> IO (Maybe (S.Set (Hash, DataMap)))
     getAllObjects :: a -> [Hash]
+    getObjectCount :: a -> Integer
 
 -- TODO: Should we merge ReadDB and QueryDB at some point?
 -- | Graph databases that can be queried. These maintain indexes of some sort

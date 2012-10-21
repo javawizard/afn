@@ -57,8 +57,16 @@ connect c = do
     when (not $ elem "refs" tableNames) $ runInitialStatements c
     return $ DB c
 
--- instance ReadDB DB a where
---     ...
+instance ReadDB DB where
+    getObjectAttributes c hash = do
+        undefined
+    getObjectRefs c hash = do
+        undefined
+    -- This is as simple as querying for all the hashes in the database, then
+    -- flattening them out into a list of strings, then converting them all to
+    -- hashes.
+    getAllObjects c = liftM (map fromHex . concat) $ quickQuery' c "select hash from objects" []
+    getObjectCount c = liftM (fromSql :: SqlValue -> Integer) quickQuery' c "select count(id) from objects" []
 
 -- instance QueryDB DB where
 --     ...
