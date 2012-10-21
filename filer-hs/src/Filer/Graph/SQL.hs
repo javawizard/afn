@@ -11,6 +11,10 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Control.Monad (forM_, when)
 
+isNull = (== SqlNull)
+
+isNotNull = (/= SqlNull)
+
 encodeValue :: Value -> SqlValue
 encodeValue (IntValue i)    = toSql i
 encodeValue (StringValue s) = toSql s
@@ -58,18 +62,41 @@ connect c = do
     return $ DB c
 
 instance ReadDB DB where
-    getObjectAttributes c hash = do
-        undefined
-    getObjectRefs c hash = do
-        undefined
+    getObject c hash = do
+        -- See if the object exists, and get its id
+        objectIdQuery <- quickQuery' c "select id from objects where hash = ?" [toSql $ toHex hash]
+        case objectIdQuery of
+            [[objectIdSql]] -> do
+                -- It does. Get its attributes.
+                lef objectId = fromSql objectIdSql :: Integer
+                objectAttributes <- readAttributes c 1 objectId
+                -- Then get its refs
+                refQuery <- quickQuery' c "select id, target, (select id from objects where hash = target) from refs where source = ?" [toSql objectId]
+                refList <- forM refQuery $ \[refId, refTargetId, refTargetHash] -> do
+                    -- Get this ref's attributes
+                    refAttributes <- readAttributes c 2 $ fromSql refId
+                    -- Return the ref
+                    return (fromHex $ fromSql refTargetHash, refAttributes)
+                -- Return the object
+                return (objectAttributes, S.fromList refList)
+            _ -> Nothing -- Doesn't exist
     -- This is as simple as querying for all the hashes in the database, then
     -- flattening them out into a list of strings, then converting them all to
     -- hashes.
-    getAllObjects c = liftM (map fromHex . concat) $ quickQuery' c "select hash from objects" []
+    getAllHashes c = liftM (map fromHex . concat) $ quickQuery' c "select hash from objects" []
     getObjectCount c = liftM (fromSql :: SqlValue -> Integer) quickQuery' c "select count(id) from objects" []
 
 -- instance QueryDB DB where
 --     ...
+
+readAttributes :: IConnection c => c -> Integer -> Integer -> IO DataMap
+readAttributes c sourceType sourceId = do
+    queryResults <- quickQuery' c "select name, intvalue, stringvalue, boolvalue, binaryvalue from attributes where sourcetype = ? and id = ?" [toSql sourceType, toSql sourceId]
+    return $ M.fromList $ flip map queryResults $ \[name, intValue, stringValue, boolValue, binaryValue] -> let n = (fromSql name :: String) in case () of
+        _ | isNotNull intValue = (name, IntValue $ fromSql intValue)
+        _ | isNotNull stringValue = (name, StringValue $ fromSql stringValue)
+        _ | isNotNull boolValue = (name, BoolValue $ toEnum $ fromSql boolValue)
+        _ | isNotNull binaryValue = (name, BinaryValue $ fromSql binaryValue)
 
 insertAttributes :: IConnection c => c -> Integer -> Integer -> DataMap -> IO ()
 insertAttributes c sourceType sourceId attributes = do
