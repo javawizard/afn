@@ -2,8 +2,8 @@
 module Filer.Utils where
 
 import Data.Word
-import Data.ByteString
-import Data.ByteString.Lazy
+import qualified Data.ByteString
+import qualified Data.ByteString.Lazy
 import Control.Monad (when)
 
 
@@ -22,6 +22,6 @@ lazyToStrict = Data.ByteString.concat . Data.ByteString.Lazy.toChunks
 whenM :: Monad m => m Bool -> m () -> m ()
 whenM test ifTrue = do
     value <- test
-    when test ifTrue
+    when value ifTrue
 
 

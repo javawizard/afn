@@ -1,6 +1,7 @@
 
 module Filer.Graph.Query where
 import Data.ByteString.Lazy (ByteString)
+import Filer.Hash (Hash)
 
 data ValueQuery
     = IntValueQuery IntQuery
