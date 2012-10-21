@@ -102,7 +102,7 @@ instance WriteDB DB where
                         _     -> error ("Ref target " ++ (toHex refTargetHash) ++ " was not found. Support for " ++
                                      "inserting objects pointing to objects that do not exist yet may be added in the future.")
                     -- Insert the ref
-                    run c "insert into refs (source, dest) values (?, ?)" [toSql objectId, toSql targetId]
+                    run c "insert into refs (source, target) values (?, ?)" [toSql objectId, toSql targetId]
                     -- Get the ref's id
                     [[refIdSql]] <- quickQuery' c "select max(id) from refs" []
                     let refId = fromSql refIdSql :: Integer
