@@ -10,7 +10,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S 
 import Filer.Hash (toHex)
 import Control.Monad (forM, forM_)
-import Filer.Graph.Encoding (toPretty, toPretty', fromPretty)
+import Filer.Graph.Encoding (toPretty, toPretty', fromPretty, Pretty ((:=)))
 import Data.Maybe (fromJust)
 
 main = do
