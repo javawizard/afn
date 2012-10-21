@@ -31,6 +31,9 @@ class WriteDB a where
     -- without storing it again.
     addObject :: a -> DataMap -> S.Set (Hash, DataMap) -> IO Hash
 
+addObject' :: (WriteDB a) => a -> (DataMap, S.Set (Hash, DataMap)) -> IO Hash
+addObject' db = uncurry (addObject db)
+
 -- | Graph databases that can be deleted from.
 class DeleteDB a where
     -- | Deletes an object from the database, returning True if such an object

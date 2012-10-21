@@ -10,7 +10,8 @@ import qualified Data.Map as M
 import qualified Data.Set as S 
 import Filer.Hash (toHex)
 import Control.Monad (forM, forM_)
-import Filer.Encoding (toPretty, toPretty', fromPretty)
+import Filer.Graph.Encoding (toPretty, toPretty', fromPretty)
+import Data.Maybe (fromJust)
 
 main = do
     putStrLn "Connecting to sqlite3 database..."
@@ -18,14 +19,14 @@ main = do
     putStrLn "Opening a HashDB connected to the sqlite3 database..."
     db <- connect sqldb
     putStrLn "Writing two objects..."
-    hash1 <- addObject db (M.fromList [("a", StringValue "b"), ("c", StringValue "d")]) S.empty
-    hash2 <- addObject db (M.fromList [("e", IntValue 42)]) $ S.fromList [(hash1, M.fromList [("f", IntValue 45)])]
+    hash1 <- addObject' db $ fromPretty ["a" := StringValue "b", "c" := StringValue "d"] := []
+    hash2 <- addObject' db $ fromPretty ["e" := IntValue 42] := [toHex hash1 := ["f" := IntValue 45]]
     putStrLn "Two objects written. Number of objects in the database:"
     getObjectCount db >>= putStrLn . show
     putStrLn "About to read all objects back..."
     hashes <- getAllHashes db
     objects <- forM hashes $ getObject db
-    forM_ (zip hashes objects) $ \(hash, object) -> putStrLn $ toHex hash ++ ": " ++ show $ toPretty' object
+    forM_ (zip hashes objects) $ \(hash, object) -> putStrLn $ toHex hash ++ ": " ++ (show $ toPretty' $ fromJust object)
     putStrLn "All objects read. About to commit..." 
     commit sqldb
     putStrLn "Done!"

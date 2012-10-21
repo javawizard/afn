@@ -2,7 +2,7 @@
 module Filer.Graph.Encoding where
 import Data.Binary (Binary, get, put, Get, Put, encode, decode)
 import Data.Set (Set)
-import Filer.Hash (Hash, makeHash)
+import Filer.Hash (Hash, makeHash, toHex, fromHex)
 import Data.ByteString.Lazy (ByteString)
 import Data.Word (Word8)
 import Control.Monad (liftM)
@@ -60,7 +60,7 @@ toPretty attrMap refSet = (map tupleToPretty $ M.toList attrMap) := (map (\(h, a
 toPretty' = uncurry toPretty
 
 fromPretty :: PrettyObject -> (DataMap, S.Set (Hash, DataMap))
-fromPretty (attrs := refs) = ((M.fromList $ map prettyToTuple attrs), S.fromList $ map (\(h, a) -> (fromHex h, M.fromList $ map prettyToTuple a)) refs)
+fromPretty (attrs := refs) = ((M.fromList $ map prettyToTuple attrs), S.fromList $ map (\(h := a) -> (fromHex h, M.fromList $ map prettyToTuple a)) refs)
 
 
 
