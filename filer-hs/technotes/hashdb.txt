@@ -132,6 +132,10 @@ Then all of the attributes are stored in the attributes table as per normal.
 
 And then we could have indexes on objects for hash and id, and we could have indexes on refs for source, target, and id, and maybe a few others if they end up speeding things up.
 
+So let's see... We should be able to query for objects (which returns a list of hashes for now; might provide a way to get a list of hashes plus attributes and refs later), query for refs (getting back a list of source hashes, target hashes, and applicable attributes), query for attributes on an object (getting back a map of attributes to their values) and query for attributes on a ref (getting back the same thing).
+
+You know what, I'm going to try to code this up briefly and see how it goes, and then go back to design if it doesn't work.
+
 
 
 
