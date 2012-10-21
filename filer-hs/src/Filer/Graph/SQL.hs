@@ -3,12 +3,13 @@
 module Filer.Graph.SQL where
 
 import Filer.Graph.Interface
-import Database.HDBC (IConnection, run, commit, getTables, quickQuery', toSql, SqlValue(SqlNull))
+import Database.HDBC (IConnection, run, commit, getTables, quickQuery', toSql,
+    SqlValue(SqlNull), prepare, executeMany, fromSql)
 import Filer.Hash (Hash, toHex, fromHex)
-import Filer.Graph.Encoding (hashObject, Value(..))
+import Filer.Graph.Encoding (hashObject, Value(..), DataMap)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Control.Monad (forM_)
+import Control.Monad (forM_, when)
 
 encodeValue :: Value -> SqlValue
 encodeValue (IntValue i)    = toSql i
@@ -18,8 +19,8 @@ encodeValue (BinaryValue b) = toSql b
 encodeValue (BoolValue b)   = toSql $ fromEnum b
 
 runInitialStatements :: IConnection c => c -> IO ()
-runInitialStatements conn = do
-    let r s = run c s [] 
+runInitialStatements c = do
+    let r :: String -> IO Integer; r s = run c s [] 
     r "create table objects (id integer auto_increment, hash text)"
     r "create index objects_id_hash on objects (id, hash)"
     r "create index objects_hash_id on objects (hash, id)"
@@ -31,15 +32,16 @@ runInitialStatements conn = do
     r "create index refs_id_target on refs (id, target, source)"
     r "create index refs_source_id on refs (source, id)"
     r "create inex refs_target_id on refs (target, id)"
-    r "create table attributes (id integer, sourcetype integer, " ++
+    r ("create table attributes (id integer, sourcetype integer, " ++
         "name text, intvalue integer, stringvalue text, boolvalue integer, " ++
-        "binaryvalue blob)"
+        "binaryvalue blob)")
     r "create index attributes_sourcetype_id on attributes (sourcetype, id)"
-    let {attrIndex name = "create index attributes_sourcetype_name_" ++ name ++
-        " on attributes (sourcetype, name, " ++ name ++ ")"}
+    let {attrIndex name = ("create index attributes_sourcetype_name_" ++ name ++
+        " on attributes (sourcetype, name, " ++ name ++ ")")}
     r $ attrIndex "intvalue"
     r $ attrIndex "stringvalue"
     r $ attrIndex "boolvalue"
+    return ()
     -- We're not doing similar for binaryvalue as from what I've read a decent
     -- majority of databases don't support indexes on blobs
 
@@ -61,14 +63,16 @@ connect c = do
 -- instance QueryDB DB where
 --     ...
 
-insertAttributes :: IConnection c => c -> Integer -> Integer -> DataMap
+insertAttributes :: IConnection c => c -> Integer -> Integer -> DataMap -> IO ()
 insertAttributes c sourceType sourceId attributes = do
     statement <- prepare c "insert into attributes (sourcetype, id, name, intvalue, stringvalue, boolvalue, binaryvalue) values (?, ?, ?, ?, ?, ?, ?)"
-    executeMany statement $ map (M.toList attributes) $ \(k, v) -> [toSql sourceType, toSql sourceId, k] ++ case v of
+    executeMany statement $ flip map (M.toList attributes) $ \(k, v) -> [toSql sourceType, toSql sourceId, toSql k] ++ case v of
         (IntValue i)    -> [toSql i, SqlNull, SqlNull, SqlNull]
         (StringValue s) -> [SqlNull, toSql s, SqlNull, SqlNull]
         (BoolValue b)   -> [SqlNull, SqlNull, toSql $ fromEnum b, SqlNull]
         (BinaryValue b) -> [SqlNull, SqlNull, SqlNull, toSql b]
+    -- TODO: Not sure if this is needed or if executeMany returns IO ()
+    return ()
 
 instance WriteDB DB where
     addObject (DB c) attributeMap refSet = do
@@ -85,7 +89,8 @@ instance WriteDB DB where
                 run c "insert into objects (hash) values (?)" [toSql $ toHex objectHash]
                 -- Then we query for the id it received. TODO: See if there's
                 -- a more efficient way to do this without querying for the id.
-                [[objectId]] <- quickQuery' c "select max(id) from objects" []
+                [[objectIdSql]] <- quickQuery' c "select max(id) from objects" []
+                let objectId = fromSql objectIdSql :: Integer
                 -- Then we insert the object's attributes
                 insertAttributes c 1 objectId attributeMap
                 -- Then we iterate over each of the object's refs
@@ -99,9 +104,10 @@ instance WriteDB DB where
                     -- Insert the ref
                     run c "insert into refs (source, dest) values (?, ?)" [toSql objectId, toSql targetId]
                     -- Get the ref's id
-                    [[refId]] <- quickQuery' c "select max(id) from refs" []
+                    [[refIdSql]] <- quickQuery' c "select max(id) from refs" []
+                    let refId = fromSql refIdSql :: Integer
                     -- Insert the ref's attributes
-                    insertAttribute c 2 refId refAttributes
+                    insertAttributes c 2 refId refAttributes
                 -- And that's it!
                 return objectHash
 
@@ -115,13 +121,13 @@ instance DeleteDB DB where
                 -- It does exist, so delete it.
                 let objectId = (fromSql objectIdSql :: Integer)
                 -- Delete the object
-                run "delete from objects where id = ?" [toSql objectId]
+                run c "delete from objects where id = ?" [toSql objectId]
                 -- Delete the object's attributes
-                run "delete from attributes where sourcetype = 1 and id = ?" [toSql objectId]
+                run c "delete from attributes where sourcetype = 1 and id = ?" [toSql objectId]
                 -- Delete the object's refs' attributes
-                run "delete from attributes where sourcetype = 2 and id in (select id from refs where source = ?)" [toSql objectId]
+                run c "delete from attributes where sourcetype = 2 and id in (select id from refs where source = ?)" [toSql objectId]
                 -- Delete the object's refs
-                run "delete from refs where source = ?" [toSql objectId]
+                run c "delete from refs where source = ?" [toSql objectId]
                 -- And we're done!
                 return True
 
