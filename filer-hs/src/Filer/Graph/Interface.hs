@@ -28,7 +28,7 @@ class WriteDB a where
     -- | Stores an object into the database. The hash of the object will be
     -- returned. If the object already exists, its hash will be returned
     -- without storing it again.
-    addObject :: a -> (DataMap, S.Set (Hash, DataMap)) -> IO Hash
+    addObject :: a -> DataMap -> S.Set (Hash, DataMap) -> IO Hash
 
 -- | Graph databases that can be deleted from.
 class DeleteDB a where

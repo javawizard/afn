@@ -3,10 +3,10 @@ module Filer.Graph.Query where
 import Data.ByteString.Lazy (ByteString)
 
 data ValueQuery
-    = IntValue IntQuery
-    | BoolValue BoolQuery
-    | StringValue StringQuery
-    | BinaryValue BinaryQuery
+    = IntValueQuery IntQuery
+    | BoolValueQuery BoolQuery
+    | StringValueQuery StringQuery
+    | BinaryValueQuery BinaryQuery
     | AndV ValueQuery ValueQuery
     | OrV ValueQuery ValueQuery
     | NotV ValueQuery ValueQuery

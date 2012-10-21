@@ -2,8 +2,23 @@
 module Filer.Graph.SQL where
 
 import Filer.Graph.Interface
-import Database.HDBC (IConnection, run, commit, getTables, quickQuery', toSql)
+import Database.HDBC (IConnection, run, commit, getTables, quickQuery', toSql, SqlValue(SqlNull))
 import Filer.Hash (Hash, toHex, fromHex)
+import Filer.Graph.Encoding (hashObject, Value(..))
+import qualified Data.Map as M
+import qualified Data.Set as S
+import Control.Monad (forM_)
+
+encodeValue :: Value -> SqlValue
+encodeValue (IntValue i)    = toSql i
+encodeValue (StringValue s) = toSql s
+encodeValue (BinaryValue b) = toSql b
+-- Bools encode as integers, 0 for False and 1 for True
+encodeValue (BoolValue b)   = toSql $ fromEnum b
+
+-- Because I'm too lazy to type three additional characters
+null :: SqlValue
+null = SqlNull
 
 runInitialStatements :: IConnection c => c -> IO ()
 runInitialStatements conn = do
@@ -21,14 +36,14 @@ runInitialStatements conn = do
     r "create inex refs_target_id on refs (target, id)"
     r "create table attributes (id integer, sourcetype integer, " ++
         "name text, intvalue integer, stringvalue text, boolvalue integer, " ++
-        "blobvalue blob)"
+        "binaryvalue blob)"
     r "create index attributes_sourcetype_id on attributes (sourcetype, id)"
     let attrIndex name = "create index attributes_sourcetype_name_" ++ name ++
         " on attributes (sourcetype, name, " ++ name ++ ")"
     r $ attrIndex "intvalue"
     r $ attrIndex "stringvalue"
     r $ attrIndex "boolvalue"
-    -- We're not doing similar for blobvalue as from what I've read a decent
+    -- We're not doing similar for binaryvalue as from what I've read a decent
     -- majority of databases don't support indexes on blobs
 
 data DB = forall a. IConnection a => DB a
@@ -49,16 +64,58 @@ instance ReadDB DB a where
 instance QueryDB DB where
     ...
 
+insertAttributes :: IConnection c => c -> Integer -> Integer -> DataMap
+insertAttributes c sourceType sourceId attributes = do
+    statement <- prepare c "insert into attributes (sourcetype, id, name, intvalue, stringvalue, boolvalue, binaryvalue) values (?, ?, ?, ?, ?, ?, ?)"
+    executeMany statement $ map (M.toList attributes) $ \(k, v) -> [toSql sourceType, toSql sourceId, k] ++ case v of
+        (IntValue i)    -> [toSql i, null, null, null]
+        (StringValue s) -> [null, toSql s, null, null]
+        (BoolValue b)   -> [null, null, toSql $ fromEnum b, null]
+        (BinaryValue b) -> [null, null, null, toSql b]
+
 instance WriteDB DB where
-    ...
+    addObject (DB c) attributeMap refSet = do
+        -- Hash the object
+        let objectHash = hashObject attributeMap refSet
+        -- See if it already exists
+        existingObjectQuery <- quickQuery' c "select id from objects where hash = ?" [toSql $ toHex objectHash]
+        case existingObjectQuery of
+            -- If it already exists, just return its hash
+            [[]] -> return objectHash
+            _    -> do
+                -- Doesn't exist, so we need to create it. First we'll insert
+                -- the object into the objects table.
+                run c "insert into objects (hash) values (?)" [toSql $ toHex objectHash]
+                -- Then we query for the id it received. TODO: See if there's
+                -- a more efficient way to do this without querying for the id.
+                [[objectId]] <- quickQuery' c "select max(id) from objects" []
+                -- Then we insert the object's attributes
+                insertAttributes c 1 objectId attributeMap
+                -- Then we iterate over each of the object's refs
+                forM_ (S.toList refSet) $ \(refTargetHash, refAttributes) -> do
+                    -- Look up the ref's target's id
+                    targetQuery <- quickQuery' c "select id from objects where hash = ?" [toSql $ toHex refTargetHash]
+                    targetId <- case targetQuery of
+                        [[i]] -> return i
+                        _     -> error ("Ref target " ++ (toHex refTargetHash) ++ " was not found. Support for " ++
+                                     "inserting objects pointing to objects that do not exist yet may be added in the future.")
+                    -- Insert the ref
+                    run c "insert into refs (source, dest) values (?, ?)" [toSql objectId, toSql targetId]
+                    -- Get the ref's id
+                    [[refId]] <- quickQuery' c "select max(id) from refs" []
+                    -- Insert the ref's attributes
+                    insertAttribute c 2 refId refAttributes
+                -- And that's it!
+                return objectHash
 
 instance DeleteDB DB where
     deleteObject (DB c) hash = do
         objectIdQuery <- quickQuery' c "select id from objects where hash = ?" [toSql $ toHex hash]
         case objectIdQuery of
             -- If no such object exists, we're done
-            [[]] -> return False
+            [[]]            -> return False
             [[objectIdSql]] -> do
+                -- It does exist, so delete it.
                 let objectId = (fromSql objectIdSql :: Integer)
                 -- Delete the object
                 run "delete from objects where id = ?" [toSql objectId]

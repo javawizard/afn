@@ -10,12 +10,19 @@ data Value
     | StringValue String
     | BinaryValue ByteString
     | BoolValue Bool
+    deriving (Eq, Ord, Read, Show)
 
-type DataMap = M.Map Value
+type DataMap = M.Map String Value
 
 
-hashObject :: (DataMap, Set (Hash, DataMap)) -> Hash
-hashObject object = makeHash $ encode object
+hashObject :: DataMap -> Set (Hash, DataMap) -> Hash
+hashObject attributes refs = makeHash $ encodeObject attributes refs
+
+encodeObject :: DataMap -> Set (Hash, DataMap) -> ByteString
+encodeObject attributes refs = encode (attributes, refs)
+
+decodeObject :: ByteString -> (DataMap, Set (Hash, DataMap))
+decodeObject bytes = decode bytes
 
 
 
