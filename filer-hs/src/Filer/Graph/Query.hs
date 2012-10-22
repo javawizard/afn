@@ -41,27 +41,36 @@ data BinaryQuery
     | AnyBinary
 
 data RefQuery
-    = RefHasAttributes AttributeQuery
-    | PointsTo ObjectQuery
-    | PointsFrom ObjectQuery
-    | AndR RefQuery RefQuery
-    | OrR RefQuery RefQuery
-    | NotR RefQuery
+    = RefHasAttributes HasAttributeQuery
+    | PointsTo HasObjectQuery
+    | PointsFrom HasObjectQuery
+
+data HasRefQuery
+    = HasRef RefQuery
+    | AndR HasRefQuery HasRefQuery
+    | OrR HasRefQuery HasRefQuery
+    | NotR HasRefQuery
 
 data AttributeQuery
-    = HasAttribute String ValueQuery
-    | AndA AttributeQuery AttributeQuery
-    | OrA AttributeQuery AttributeQuery
-    | NotA AttributeQuery
+    = AttributeIs String ValueQuery
+
+data HasAttributeQuery
+    = HasAttribute AttributeQuery
+    | AndA HasAttributesQuery HasAttributesQuery
+    | OrA HasAttributesQuery HasAttributesQuery
+    | NotA HasAttributesQuery
 
 data ObjectQuery
-    = HasIncomingRef RefQuery
-    | HasOutgoingRef RefQuery
-    | ObjectHasAttributes AttributeQuery
+    = HasIncomingRef HasRefQuery
+    | HasOutgoingRef HasRefQuery
+    | ObjectHasAttributes HasAttributeQuery
     | HashIs Hash
-    | AndO ObjectQuery ObjectQuery
-    | OrO ObjectQuery ObjectQuery
-    | NotO ObjectQuery
+
+data HasObjectQuery
+    = HasObject ObjectQuery
+    | AndO HasObjectQuery HasObjectQuery
+    | OrO HasObjectQuery HasObjectQuery
+    | NotO HasObjectQuery
 
     
     

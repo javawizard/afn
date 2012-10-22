@@ -95,15 +95,21 @@ data SqlToken = Param SqlValue | Text String
 param :: (Convertible a SqlValue) => a -> SqlToken
 param a = Param $ toSql a
 
-valueQueryToSql :: ValueQuery -> String -> [SqlToken]
-valueQueryToSql (IntValueQuery v) name = [Text "name = ", param name] ++ intQueryToSql v
-valueQueryToSql (BoolValueQuery v) name = [Text "name = ", param name] ++ boolQueryToSql v
-valueQueryToSql (StringValueQuery v) name = [Text "name = ", param name] ++ stringQueryToSql v
-valueQueryToSql (BinaryValueQuery v) name = [Text "name = ", param name] ++ binaryQueryToSql v
-valueQueryToSql (AndV a b) name = [Text "("] ++ (valueQueryToSql a name) ++ [Text ") and ("] ++ (valueQueryToSql b name) ++ [Text ")"]
-valueQueryToSql (OrV a b) name = [Text "("] ++ (valueQueryToSql a name) ++ [Text ") or ("] ++ (valueQueryToSql b name) ++ [Text ")"]
-valueQueryToSql (NotV a) name = [Text "(not ("] ++ (valueQueryToSql a name) ++ [Text "))"]
-valueQueryToSql AnyValue name = [Text "name = ", param name]
+attributeQueryToSql :: AttributeQuery -> Integer -> SqlToken -> [SqlToken]
+attributeQueryToSql (HasAttribute name valueQuery) sourceType column = [column, Text " in (select id from attributes where "] ++ valueQueryToSql valueQuery sourceType name
+attributeQueryToSql (AndA a b) sourceType column = [Text "("] ++ (attributeQueryToSql a sourceType column) ++ [Text ") and ("] ++ (attributeQueryToSql b sourceType column) ++ [Text ")"]
+attributeQueryToSql (OrA a b) sourceType column = [Text "("] ++ (attributeQueryToSql a sourceType column) ++ [Text ") or ("] ++ (attributeQueryToSql b sourceType column) ++ [Text ")"]
+attributeQueryToSql (NotA a) sourceType column = [Text "(not ("] ++ (attributeQueryToSql a sourceType column) ++ [Text "))"]
+
+valueQueryToSql :: ValueQuery -> Integer -> String -> [SqlToken]
+valueQueryToSql (IntValueQuery v) sourceType name = [Text "sourcetype = ", param sourceType, Text " and name = ", param name] ++ intQueryToSql v
+valueQueryToSql (BoolValueQuery v) sourceType name = [Text "sourcetype = ", param sourceType, Text " and name = ", param name] ++ boolQueryToSql v
+valueQueryToSql (StringValueQuery v) sourceType name = [Text "sourcetype = ", param sourceType, Text " and name = ", param name] ++ stringQueryToSql v
+valueQueryToSql (BinaryValueQuery v) sourceType name = [Text "sourcetype = ", param sourceType, Text " and name = ", param name] ++ binaryQueryToSql v
+valueQueryToSql (AndV a b) sourceType name = [Text "("] ++ (valueQueryToSql a sourceType name) ++ [Text ") and ("] ++ (valueQueryToSql b sourceType name) ++ [Text ")"]
+valueQueryToSql (OrV a b) sourceType name = [Text "("] ++ (valueQueryToSql a sourceType name) ++ [Text ") or ("] ++ (valueQueryToSql b sourceType name) ++ [Text ")"]
+valueQueryToSql (NotV a) sourceType name = [Text "(not ("] ++ (valueQueryToSql a sourceType name) ++ [Text "))"]
+valueQueryToSql AnyValue sourceType name = [Text "sourcetype = ", param sourceType, Text " and name = ", param name]
 
 intQueryToSql :: IntQuery -> [SqlToken]
 intQueryToSql a = [Text " and intvalue is not null"] ++ (intQueryToSql' a)
