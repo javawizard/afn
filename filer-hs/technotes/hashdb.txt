@@ -136,6 +136,16 @@ So let's see... We should be able to query for objects (which returns a list of 
 
 You know what, I'm going to try to code this up briefly and see how it goes, and then go back to design if it doesn't work.
 
+So things have gone well so far, except now I'm getting rather confused over the query language.
+
+So I need to think about what queries I want to be able to make...
+
+I want to be able to get all objects (in the form of a list of hashes) that have attribute X with value Y and don't have attribute Z with value N and have attribute A whose value is an int less than B and which have a ref pointing to an object C which has attribute D whose value is E, but not a ref with an attribute F on it.
+
+I want to be able to get all attributes from object A whose name is either B or C and whose value, if its name is B, is an int less than 5 or whose value, if its name is C, is a string.
+
+I want to be able to get all refs (which are provided as a from-this-object hash and a to-this-object hash, and a dictionary of attributes) that point from any object that has... basically any object I could query for directly, and/or that points to any object that has... and/or that has a ref X whose value is Y and so on.
+
 
 
 
