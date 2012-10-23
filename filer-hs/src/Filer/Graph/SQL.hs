@@ -95,11 +95,15 @@ data SqlToken = Param SqlValue | Text String
 param :: (Convertible a SqlValue) => a -> SqlToken
 param a = Param $ toSql a
 
-attributeQueryToSql :: AttributeQuery -> Integer -> SqlToken -> [SqlToken]
-attributeQueryToSql (HasAttribute name valueQuery) sourceType column = [column, Text " in (select id from attributes where "] ++ valueQueryToSql valueQuery sourceType name
-attributeQueryToSql (AndA a b) sourceType column = [Text "("] ++ (attributeQueryToSql a sourceType column) ++ [Text ") and ("] ++ (attributeQueryToSql b sourceType column) ++ [Text ")"]
-attributeQueryToSql (OrA a b) sourceType column = [Text "("] ++ (attributeQueryToSql a sourceType column) ++ [Text ") or ("] ++ (attributeQueryToSql b sourceType column) ++ [Text ")"]
-attributeQueryToSql (NotA a) sourceType column = [Text "(not ("] ++ (attributeQueryToSql a sourceType column) ++ [Text "))"]
+fObjectQueryToSql :: ObjectQuery -> [SqlToken]
+fObjectQueryToSql o = [Text "select hash from objects where "] ++ fObjectQueryToSql' o
+
+fObjectQueryToSql' :: ObjectQuery -> [SqlToken]
+fObjectQueryToSql' (HashIs h) = [Text "hash = ", param $ toHex h]
+fObjectQueryToSql' (ObjectHasAttribute name v) = [Text "id in (select id from attributes where "] ++ valueQueryToSql v 1 name ++ [Text ")"]
+fObjectQueryToSql' (AndO a b) = [Text "("] ++ fObjectQueryToSql a ++ [Text ") and ("] ++ fObjectQueryToSql b ++ [Text ")"]
+fObjectQueryToSql' (OrO a b) = [Text "("] ++ fObjectQueryToSql a ++ [Text ") or ("] ++ fObjectQueryToSql b ++ [Text ")"]
+fObjectQueryToSql' (NotO a) = [Text "(not ("] ++ fObjectQueryToSql a ++ [Text "))"]
 
 valueQueryToSql :: ValueQuery -> Integer -> String -> [SqlToken]
 valueQueryToSql (IntValueQuery v) sourceType name = [Text "sourcetype = ", param sourceType, Text " and name = ", param name] ++ intQueryToSql v

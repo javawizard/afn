@@ -51,26 +51,15 @@ data HasRefQuery
     | OrR HasRefQuery HasRefQuery
     | NotR HasRefQuery
 
-data AttributeQuery
-    = AttributeIs String ValueQuery
-
-data HasAttributeQuery
-    = HasAttribute AttributeQuery
-    | AndA HasAttributesQuery HasAttributesQuery
-    | OrA HasAttributesQuery HasAttributesQuery
-    | NotA HasAttributesQuery
-
 data ObjectQuery
     = HasIncomingRef HasRefQuery
     | HasOutgoingRef HasRefQuery
-    | ObjectHasAttributes HasAttributeQuery
+    | ObjectHasAttribute String ValueQuery
     | HashIs Hash
+    | AndO ObjectQuery ObjectQuery
+    | OrO ObjectQuery ObjectQuery
+    | NotO ObjectQuery
 
-data HasObjectQuery
-    = HasObject ObjectQuery
-    | AndO HasObjectQuery HasObjectQuery
-    | OrO HasObjectQuery HasObjectQuery
-    | NotO HasObjectQuery
 
     
     
