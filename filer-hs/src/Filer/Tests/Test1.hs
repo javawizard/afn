@@ -12,6 +12,9 @@ import Filer.Hash (toHex)
 import Control.Monad (forM, forM_)
 import Filer.Graph.Encoding (toPretty, toPretty', fromPretty, Pretty ((:=)))
 import Data.Maybe (fromJust)
+import Filer.Graph.Query
+
+sampleQuery = ObjectHasAttribute "f" $ IntValueQuery $ IntEqualTo 45
 
 main = do
     putStrLn "Connecting to sqlite3 database..."
@@ -27,6 +30,7 @@ main = do
     hashes <- getAllHashes db
     objects <- forM hashes $ getObject db
     forM_ (zip hashes objects) $ \(hash, object) -> putStrLn $ toHex hash ++ ": " ++ (show $ toPretty' $ fromJust object)
-    putStrLn "All objects read. About to commit..." 
+    putStrLn $ "Sample query's SQL is " ++ (show $ tokensToSql $ fObjectQueryToSql sampleQuery)
+    putStrLn "About to commit..." 
     commit sqldb
     putStrLn "Done!"

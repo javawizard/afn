@@ -10,7 +10,7 @@ data ValueQuery
     | BinaryValueQuery BinaryQuery
     | AndV ValueQuery ValueQuery
     | OrV ValueQuery ValueQuery
-    | NotV ValueQuery ValueQuery
+    | NotV ValueQuery
     | AnyValue
 
 data IntQuery
@@ -40,14 +40,14 @@ data BinaryQuery
     -- large values
     | AnyBinary
 
-data RefQuery
-    = RefHasAttributes HasAttributeQuery
-    | PointsTo HasObjectQuery
-    | PointsFrom HasObjectQuery
+-- data RefQuery
+--     = RefHasAttributes HasAttributeQuery
+--     | PointsTo HasObjectQuery
+--     | PointsFrom HasObjectQuery
 
 data HasRefQuery
-    = HasRef RefQuery
-    | AndR HasRefQuery HasRefQuery
+    = {- HasRef RefQuery
+    | -} AndR HasRefQuery HasRefQuery
     | OrR HasRefQuery HasRefQuery
     | NotR HasRefQuery
 

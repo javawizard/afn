@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification, FlexibleContexts #-}
 
 module Filer.Graph.SQL where
 
@@ -11,6 +11,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Control.Monad (forM, forM_, liftM, when)
 import Filer.Graph.Query
+import Data.Convertible (Convertible)
 
 isNull = (== SqlNull)
 
@@ -97,9 +98,9 @@ param a = Param $ toSql a
 
 tokensToSql :: [SqlToken] -> (String, [SqlValue])
 tokensToSql [] = ("", [])
-tokensToSql x:xs = case x of
+tokensToSql (x:xs) = case x of
     (Text t) -> (t ++ fst xsSql, snd xsSql)
-    (Param a) -> ("?" ++ fst xsSql, a ++ snd xsSql)
+    (Param a) -> ("?" ++ fst xsSql, [a] ++ snd xsSql)
     where xsSql = tokensToSql xs
 
 fObjectQueryToSql :: ObjectQuery -> [SqlToken]
