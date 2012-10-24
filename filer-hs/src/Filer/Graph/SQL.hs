@@ -95,6 +95,13 @@ data SqlToken = Param SqlValue | Text String
 param :: (Convertible a SqlValue) => a -> SqlToken
 param a = Param $ toSql a
 
+tokensToSql :: [SqlToken] -> (String, [SqlValue])
+tokensToSql [] = ("", [])
+tokensToSql x:xs = case x of
+    (Text t) -> (t ++ fst xsSql, snd xsSql)
+    (Param a) -> ("?" ++ fst xsSql, a ++ snd xsSql)
+    where xsSql = tokensToSql xs
+
 fObjectQueryToSql :: ObjectQuery -> [SqlToken]
 fObjectQueryToSql o = [Text "select hash from objects where "] ++ fObjectQueryToSql' o
 
