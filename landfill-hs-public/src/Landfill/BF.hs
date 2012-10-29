@@ -42,10 +42,21 @@ parse' '.' = Out
 run :: [AST] -> BF ()
 run x:xs = 
 
+run' :: AST -> BF ()
+run Up = adjustCurrentCell (+ 1)
+run Down = adjustCurrentCell (- 1)
+run Left = adjustPointer (+ 1)
+run Right = adjustPointer (- 1)
+
 adjustCurrentCell :: (Cell -> Cell) -> BF ()
 adjustCurrentCell f = do
     pointer <- getPointer
     adjustMemory $ S.adjust f pointer
+
+adjustPointer :: (Pointer -> Pointer) -> BF ()
+adjustPointer f = do
+    pointer <- getPointer
+    setPointer $ f pointer
 
 adjustMemory :: (Memory -> Memory) -> BF ()
 adjustMemory f = do
@@ -64,16 +75,24 @@ setCurrentCell value = do
     setMemory $ S.update pointer value memory
 
 getMemory :: BF Memory
-getMemory = BF $ \s -> (snd s, s)
+getMemory = do
+    (p, m) <- get
+    return m
 
 getPointer :: BF Pointer
-getPointer = BF $ \s -> (fst s, s)
+getPointer = do
+    (p, m) <- get
+    return p
 
 setMemory :: Memory -> BF ()
-setMemory m = BF $ \(p, _) -> ((), (p, m))
+setMemory m = do
+    (p, _) <- get
+    set (p, m)
 
 setPointer :: BF Pointer
-setPointer p  BF $ \(_, m) -> ((), (p, m)) 
+setPointer p = do
+    (_, m) <- get
+    set (p, m) 
 
 
 
