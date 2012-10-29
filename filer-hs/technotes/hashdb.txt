@@ -169,7 +169,19 @@ That's it for constraints for now. I'll probably add the ability to impose restr
 
 A ref constraint specifies a particular ref schema to check, as a combination of a hash and a string. The hash points to a schema set object containing the ref schema, and the name points to a ref schema within the schema set object's refs attribute. The constraint is checked against all refs declared to conform to the relevant ref schema. (This is somewhat different from how I was doing things before: every ref declares a ref schema that it conforms to. Internally, I'll probably store this as a shortish integer pointing to the actual ref schema to avoid having to store an additional 32 bytes per ref for the hash.)
 
-A ref constraint also specifies the quantity of conforming refs that may appear on a conforming object. This is specified as a lower bound (which may be 0) and an upper bound (which can be unspecified (and I'll probably use Maybe Integer for this purpose in the Haskell HashDB library) to indicate that there is no upper bound).
+A ref constraint also specifies the quantity of conforming refs that may appear on a conforming object. This is currently specified in a way that somewhat mirrors regular expressions; the reason for choosing this way instead of a simple lower bound and (optionally unspecified) upper bound is that I have future hopes to use Template Haskell for the HashDB library to provide type safety when reading objects from a database that conform to a particular schema, and each type of quantity constraint matches up perfectly with a Haskell data type, namely a, Maybe a, [a], and [a], respectively. The four types of constraints are, and I use Haskell data type declaration syntax: data QuantityConstraint = One | ZeroOrOne | ZeroOrMore | OneOrMore.
+
+So, that's object schemas. Now ref schemas.
+
+Each ref schema specifies a list of object schemas to which conforming refs may point. A conforming ref may point to an object conforming to any of the schemas in the list, or if the list is empty, a conforming ref may point to an object conforming to any schema or to no schema at all. (This allows for, say, filer commits to point to either files or folders, depending on what their content is. Whether a commit contains a file or a folder can be queried by examining the schema that the object pointed to by the commit's commit-to-content ref points to.) These object schema references are declared in the same format as the ref schema references are declared in object schemas' ref constraints.
+
+Each ref schema also specifies a number of attribute constraints, in the same format as that specified on object schemas.
+
+Note that an object schema and a ref schema in the same schema set may share the same name. The two will be distinguished by which of the schema set's attributes ("refs" or "objects") they appear in.
+
+When an object is created, the schema it conforms to is specified in the same way as object and ref schema references are above; that is, as a combination of a hash and a string. Every ref specified on the object also declares, in the same format, the ref schema to which it conforms. Note that object schemas and ref schemas may be omitted when creating objects and refs, in which case the respective objects and refs do not conform to any schema and may contain attributes and refs in any format. Note also that refs declaring a schema may be freely intermixed with refs not declaring a schema on the same object (even an object which does not itself declare a schema) and that, as schemas require certain attributes and refs to be present but do not preclude the possibility of additional attributes and refs being present, additional refs that do or do not conform to a schema may be freely added to an object conforming to a schema insofar as they do not violate the constraints given by the schema.
+
+Ok, I think that looks good.
 
 
 
