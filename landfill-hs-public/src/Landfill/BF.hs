@@ -8,20 +8,29 @@ type Cell = Int
 type Memory = S.Seq Cell
 type BFState = (Pointer, Memory)
 
-data BF a = BF (BFState -> (a, BFState))
-
-extractBF :: BF a -> BFState -> (a, BFState)
-extractBF (BF f) = f
-
-instance Monad BF where
-    m >>= f = BF $ \state -> let (a, newState) = extractBF m s in extractBF (f a) newState
-    return a = BF $ \s -> (a, s)
+type BF = State BFState
 
 data AST = Up | Down | Right | Left | In | Out | Loop [AST]
 
-parse :: State s 
+getOneChar :: State String (Maybe Char)
+getOneChar = do
+    xs <- get
+    case xs of
+        [] -> return Nothing
+        y:ys = do
+            set ys
+            return $ Just y
 
-parse' :: String -> AS
+parse :: State String [AST]
+parse = do
+    mx <- getOneChar
+    case mx of
+        Nothing  -> return []
+        Just "[" -> liftM Loop parse
+        Just "]" -> return []
+        Just x -> liftM (parse' x :) parse
+
+parse' :: String -> AST
 parse' '+' = Up
 parse' '-' = Down
 parse' '>' = Right
