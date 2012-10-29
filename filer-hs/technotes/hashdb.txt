@@ -149,8 +149,27 @@ I want to be able to get all refs (which are provided as a from-this-object hash
 
 
 
+Hm, you know what, I've decided I need schemas before I do anything else. And I've worked out a way to do them that's not necessarily ideal but will do for now.
 
+So, I'm going to have schemas be objects that contain four attributes: name, description, objects, and refs. The first is a short, descriptive name for the schema (filer's four schemas will use the names "commit", "changeset", "file", and "folder" (I might use "blob" and "tree", respectively, for the last two; I'm undecided at present)) that will be shown in the future HashDB browser in the space where an object's schema is displayed. The description attribute is a longer description of what the schema is; it is free form, and should contain sufficient information that a similar schema intended for completely different purposes would be unlikely to have the same description and therefore potentially the same schema hash. It should also contain sufficient information to describe the purpose of conforming objects and where one might find programs capable of processing such objects. (Filer's description would contain information indicating what filer is and perhaps that, as of the time when the schema was created, filer's home page is on opengroove.org.) The refs and objects attributes contain the encoded forms of the schemas. (I'll use Haskell's Data.Binary package to do this for now, but I'll likely change this to use something else later.)
 
+Actually, I'm going to call these schema-containing objects schema sets, as they can contain multiple schemas. The point of multiple schemas being contained within the object is to permit circular schema dependencies, which I've discussed before is the problem that made schemas so difficult in the first place.
+
+So, this binary schema set representation thingies that are stored in the refs and objects attributes are maps whose keys are schema names and whose values are object schemas or ref schemas, respectively.
+
+Each object schema contains a number of attribute constraints and a number of ref constraints. All of the constraints must apply; I may add a way to specify a set of constraints such that only one need apply later. But this'll do for now.
+
+An attribute constraint specifies the name of an attribute that it applies to. In the future, I may permit prefixes here, such that one might constrain all attributes starting with "user-" to contain only strings, at a later date. No checks are performed to ensure that the same attribute is not specified twice with conflicting constraints; a schema containing such constraints is perfectly valid, but no object will conform to it.
+
+An attribute constraint also indicates whether the attribute is required. Required attributes must be present and must conform in every other way to the constraint. Optional attributes may or may not be present, but if they are present, they must conform in every other way to the constraint.
+
+An attribute constraint also indicates the type of the attribute. This part of the constraint is optional and, if not specified, conforming attributes may be of any type.
+
+That's it for constraints for now. I'll probably add the ability to impose restrictions on values later (and I might even reuse some of the query datatypes for that purpose, but we'll see.)
+
+A ref constraint specifies a particular ref schema to check, as a combination of a hash and a string. The hash points to a schema set object containing the ref schema, and the name points to a ref schema within the schema set object's refs attribute. The constraint is checked against all refs declared to conform to the relevant ref schema. (This is somewhat different from how I was doing things before: every ref declares a ref schema that it conforms to. Internally, I'll probably store this as a shortish integer pointing to the actual ref schema to avoid having to store an additional 32 bytes per ref for the hash.)
+
+A ref constraint also specifies the quantity of conforming refs that may appear on a conforming object. This is specified as a lower bound (which may be 0) and an upper bound (which can be unspecified (and I'll probably use Maybe Integer for this purpose in the Haskell HashDB library) to indicate that there is no upper bound).
 
 
 
