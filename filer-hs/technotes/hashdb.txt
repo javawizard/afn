@@ -185,9 +185,17 @@ Ok, I think that looks good.
 
 Oh, one other thing: I'm introducing a new concept which I'm going to call dependencies. An object A depends on an object B if A cannot be inserted into a HashDB without B being present. I've been writing things such that a ref from A to B is sufficient to create a dependency from A to B (i.e. A cannot exist without B present as well), but the concept of schemas introduces an additional mechanism whereby dependencies can be introduced: every object has a dependency on the object containing the schema to which it conforms, and every object also has a dependency on the objects containing the schemas to which each of its refs conform. In the future I might change HashDB such that a ref from A to B does not automatically create a dependency from A to B, but even if I do, schemas will always create dependencies since copying an object from one database to another would nearly always require revalidating the object against its schema as I expect HashDB databases to rarely trust teach other.
 
-Oh, and that reminds me, schema set objects must have a ref pointing to each schema set mentioned in any schemas that they contain. That's all I'm going to require for now (said refs don't have to have any attributes or anything), but I might change that in the future. The point of doing that is to pull along all dependent schemas when a particular schema is pulled from one HashDB to another, so that all information required to validate any given object is present in any HashDB in which the object exists.
+Oh, and that reminds me, schema set objects must have a ref pointing to each schema set mentioned in any schemas that they contain. That's all I'm going to require for now (said refs don't have to have any attributes or anything), but I might change that in the future. The point of doing that is to pull along all dependent schemas when a particular schema is pulled from one HashDB to another, so that all information required to validate any given object is present in any HashDB in which the object exists. (And I'll probably have the schema validator fail if a schema mentions another schema that isn't properly referred to, so that if an object conforms to a schema, the schema is guaranteed to be well-formed as well. I'm not yet sure if I'll validate all schemas in a schema set in this way.)
 
 Which is another reason I'm thinking I probably won't get rid of the A to B ref dependency thingie, is because then an incomplete schema could be pulled from one database to another, which would cause validation problems. So I think I'll leave it for now.
+
+I do need to think about how to have partial references in the future, though, as it'd be somewhat nice for web pages, for example, to publish semantic data as sets of HashDB objects referring to other objects that they perhaps don't want to host or don't have the space to host or things like that. In a sense, HashDB could become similar to RDF, but still quite different. But I'll wait until later to think along those lines.
+
+So, that's good for how schemas work. Now I need to think about how I'm going to support them in the HashDB Haskell library.
+
+
+
+
 
 
 
