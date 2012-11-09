@@ -121,11 +121,13 @@ class BindCell(ValueSender, ValueReceiver):
         # Validate our current value against the new receiver first; if our
         # value isn't valid, the exception will propagate out, preventing us
         # from binding, which is what we want
-        receiver.validate(SetValue(self._value))
+        with circuit():
+            receiver.validate(SetValue(self._value))
         # The value passed validation, so add the receiver and propagate the
         # value.
         self._receivers.append(receiver)
-        receiver.receive(SetValue(self._value))
+        with circuit():
+            receiver.receive(SetValue(self._value))
     
     def remove_receiver(self, receiver):
         self._receivers.remove(receiver)
