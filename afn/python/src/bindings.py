@@ -3,6 +3,18 @@ from collections import namedtuple
 
 ValueSet = namedtuple("ValueSet", ["value"])
 
+def circuit():
+    pass
+
+
+def processed(object):
+    pass
+
+
+def processing(object):
+    pass
+
+
 class ValueSender(object):
     def add_receiver(self, receiver):
         pass
