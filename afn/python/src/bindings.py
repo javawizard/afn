@@ -1,10 +1,23 @@
 
 from collections import namedtuple
 from threading import local as Local
+from abc import ABCMeta, abstractmethod
 
-ValueSet = namedtuple("ValueSet", ["value"])
+SetValue = namedtuple("SetValue", ["value"])
+SetList = namedtuple("SetList", ["value"])
+SetDict = namedtuple("SetDict", ["value"])
 
 context_thread_local = Local()
+
+
+class ValidationFailed(Exception):
+    pass
+
+
+def check_type(value, type):
+    if not isinstance(value, type):
+        raise Exception("Value %r is not an instance of %r" % (value, type))
+
 
 class CircuitContext(object):
     """
@@ -16,7 +29,7 @@ class CircuitContext(object):
         stack = context_thread_local.__dict__.setdefault("circuit_stack", [])
         stack.append(set())
     
-    def __exit__(self):
+    def __exit__(self, *args):
         stack = context_thread_local.circuit_stack
         del stack[-1]
         if not stack:
@@ -57,26 +70,94 @@ def process(object):
 
 
 class ValueSender(object):
+    __metaclass__ = ABCMeta
+    @abstractmethod
     def add_receiver(self, receiver):
         pass
     
+    @abstractmethod
     def remove_receiver(self, receiver):
         pass
 
 
 class ValueReceiver(object):
+    __metaclass__ = ABCMeta
+    
+    @abstractmethod
     def receive(self, action):
         pass
     
+    @abstractmethod
     def validate(self, action):
         pass
 
 
 class BindCell(ValueSender, ValueReceiver):
-    def __init__(self, value):
+    def __init__(self, value, validator=None):
         self._value = value
+        self._validator = validator
         self._receivers = []
     
     def receive(self, action):
-        
+        if process(self):
+            check_type(action, SetValue)
+            # Set our value
+            self._value = action.value
+            # Propagate the value
+            for receiver in self._receivers:
+                receiver.receive(action)
+    
+    def validate(self, action):
+        if process(self):
+            check_type(action, SetValue)
+            # Use our validator, if we have one, to validate the value
+            if self._validator is not None:
+                self.validator.validate(action)
+            # Propagate the validation
+            for receiver in self._receivers:
+                receiver.validate(action)
+    
+    def add_receiver(self, receiver):
+        # Validate our current value against the new receiver first; if our
+        # value isn't valid, the exception will propagate out, preventing us
+        # from binding, which is what we want
+        receiver.validate(SetValue(self._value))
+        # The value passed validation, so add the receiver and propagate the
+        # value.
+        self._receivers.append(receiver)
+        receiver.receive(SetValue(self._value))
+    
+    def remove_receiver(self, receiver):
+        self._receivers.remove(receiver)
+    
+    @property
+    def value(self):
+        return self._value
+    
+    @value.setter
+    def value(self, new_value):
+        with circuit():
+            self.validate(SetValue(new_value))
+        with circuit():
+            self.receive(SetValue(new_value))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
