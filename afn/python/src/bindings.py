@@ -94,6 +94,8 @@ class ValueReceiver(object):
 
 class BindCell(ValueSender, ValueReceiver):
     def __init__(self, value, validator=None):
+        # Validate the initial value against the validator
+        validator(value)
         self._value = value
         self._validator = validator
         self._receivers = []
