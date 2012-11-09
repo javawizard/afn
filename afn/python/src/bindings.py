@@ -115,7 +115,7 @@ class BindCell(ValueSender, ValueReceiver):
             check_type(action, SetValue)
             # Use our validator, if we have one, to validate the value
             if self._validator is not None:
-                self.validator.validate(action.value)
+                self._validator.validate(action.value)
             # Propagate the validation
             for receiver in self._receivers:
                 receiver.validate(action)
