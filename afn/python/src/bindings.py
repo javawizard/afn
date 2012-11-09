@@ -22,25 +22,38 @@ class CircuitContext(object):
         if not stack:
             del context_thread_local.circuit_stack
 
-
-class ProcessingContext(object):
-    """
-    A context manager that, upon entering, 
-    """
-    pass
-
-
 circuit = CircuitContext
-processing = ProcessingContext
 
 
-def processed(object):
+def process(object):
     """
-    Returns true if the specified object has been processed in the current
-    circuit, or false if it hasn't. Note that this will throw an exception if
-    there isn't a current circuit. (It's considered an error to invoke
-    validate or receive without a circuit, so this is usually what you want.)
+    Checks to see if the specified object is in the current circuit, i.e. it
+    has already been processed. If so, False is returned, indicating that the
+    specified object does not need to be processed again. If the specified
+    object is not in the current circuit, the object is added to the circuit,
+    and True is returned. Thus one can implement receive or validate methods
+    like so:
+    
+    def receive(self, action):
+        if process(self):
+            ...process the value, propagate to other receivers...
+    
+    and the circuit system will ensure that the object doesn't process the same
+    action twice.
+    
+    Note that if there isn't a current circuit (i.e. if this isn't being called
+    from within a block using a CircuitContext manager), an exception will be
+    thrown.
     """
+    if not hasattr(context_thread_local, "circuit_stack"):
+        raise Exception("process() can only be called within a CircuitContext "
+                "manager")
+    circuit = context_thread_local.circuit_stack[-1]
+    if object in circuit: # Already processed, so return False
+        return False
+    # Not processed; add to circuit, then return True
+    circuit.add(object)
+    return True
 
 
 class ValueSender(object):
