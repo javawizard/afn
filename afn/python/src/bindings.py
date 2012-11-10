@@ -240,12 +240,15 @@ class _ValueTranslatorCell(BaseSender, BaseReceiver):
         check_type(action, SetValue)
         self._send_validate(action)
         self._other.validate(SetValue(self._converter(action.value)))
+    
+    def _create_initial_action(self):
+        return SetValue(self._value)
 
 
 class ValueTranslator(object):
     def __init__(self, a_to_b, b_to_a, a):
-        self._a = _ValueTranslatorCell(self._a_to_b)
-        self._b = _ValueTranslatorCell(self._b_to_a)
+        self._a = _ValueTranslatorCell(a_to_b)
+        self._b = _ValueTranslatorCell(b_to_a)
         self._a._other = self._b
         self._b._other = self._a
         with circuit():
