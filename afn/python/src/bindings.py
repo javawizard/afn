@@ -2,12 +2,30 @@
 from collections import namedtuple
 from threading import local as Local
 from abc import ABCMeta, abstractmethod
+from weakref import ref as WeakRef
 
 SetValue = namedtuple("SetValue", ["value"])
 SetList = namedtuple("SetList", ["value"])
 SetDict = namedtuple("SetDict", ["value"])
 
 context_thread_local = Local()
+
+class StrongRef(object):
+    """
+    A class that behaves similarly to weakref.ref, except that it maintains a
+    strong reference to the underlying object. It exists mainly so that code
+    in BaseReceiver can function exactly the same for weak references as for
+    strong references, without a bunch of "if isinstance(value, weakref.ref)"
+    statements.
+    
+    Note that the StrongRef constructor does not accept a callback like
+    weakref.ref does.
+    """
+    def __init__(self, value):
+        self.__value = value
+    
+    def __call__(self):
+        return self.__value
 
 
 class ValidationFailed(Exception):
@@ -72,12 +90,63 @@ def process(object):
 class ValueSender(object):
     __metaclass__ = ABCMeta
     @abstractmethod
-    def add_receiver(self, receiver):
+    def add_receiver(self, receiver, weak=False):
         pass
     
     @abstractmethod
     def remove_receiver(self, receiver):
         pass
+
+
+class BaseSender(ValueSender):
+    __metaclass__ = ABCMeta
+    @abstractmethod
+    def _create_initial_action(self):
+        pass
+    
+    def __init__(self):
+        self.__receivers = []
+    
+    def add_receiver(self, receiver, weak=False):
+        # Create the initial action and validate it against the new receiver
+        initial_action = self._create_initial_action()
+        with circuit():
+            receiver.validate(initial_action)
+        # Create a ref to store this receiver in
+        if weak:
+            ref = WeakRef(receiver, self.__handle_dereference)
+        else:
+            ref = StrongRef(receiver)
+        self.__receivers.append(ref)
+        # Actually send out the initial value
+        with circuit():
+            receiver.receive(initial_action)
+    
+    def __handle_dereference(self, weakref):
+        # Find the weakref in the list, if it's still there, and remove it.
+        for index, ref in enumerate(self.__receivers):
+            if ref is weakref:
+                del self.__receivers[index]
+                break
+    
+    def remove_receiver(self, receiver):
+        # Find a ref whose value is the receiver in the list, and remove it.
+        for index, ref in enumerate(self.__receivers):
+            if ref() == receiver:
+                del self.__receivers[index]
+                break
+    
+    def _send_validate(self, action):
+        for ref in self.__receivers:
+            receiver = ref()
+            if receiver is not None:
+                receiver.validate(action)
+    
+    def _send_receive(self, action):
+        for ref in self.__receivers:
+            receiver = ref()
+            if receiver is not None:
+                receiver.receive(action)
 
 
 class ValueReceiver(object):
@@ -92,48 +161,51 @@ class ValueReceiver(object):
         pass
 
 
-class BindCell(ValueSender, ValueReceiver):
+class BaseReceiver(ValueReceiver):
+    __metaclass__ = ABCMeta
+    
+    @abstractmethod
+    def _receive(self, action):
+        pass
+    
+    @abstractmethod
+    def _validate(self, action):
+        pass
+    
+    def receive(self, action):
+        if process(self):
+            self._receive(action)
+    
+    def validate(self, action):
+        if process(self):
+            self._validate(action)
+
+
+class BindCell(BaseSender, BaseReceiver):
     def __init__(self, value, validator=None):
         # Validate the initial value against the validator
         if validator is not None:
             validator(value)
         self._value = value
         self._validator = validator
-        self._receivers = []
     
-    def receive(self, action):
-        if process(self):
-            check_type(action, SetValue)
-            # Set our value
-            self._value = action.value
-            # Propagate the value
-            for receiver in self._receivers:
-                receiver.receive(action)
+    def _receive(self, action):
+        check_type(action, SetValue)
+        # Set our value
+        self._value = action.value
+        # Propagate the value
+        self._send_receive(action)
     
-    def validate(self, action):
-        if process(self):
-            check_type(action, SetValue)
-            # Use our validator, if we have one, to validate the value
-            if self._validator is not None:
-                self._validator(action.value)
-            # Propagate the validation
-            for receiver in self._receivers:
-                receiver.validate(action)
+    def _validate(self, action):
+        check_type(action, SetValue)
+        # Use our validator, if we have one, to validate the value
+        if self._validator is not None:
+            self._validator(action.value)
+        # Propagate the validation
+        self._send_validate(action)
     
-    def add_receiver(self, receiver):
-        # Validate our current value against the new receiver first; if our
-        # value isn't valid, the exception will propagate out, preventing us
-        # from binding, which is what we want
-        with circuit():
-            receiver.validate(SetValue(self._value))
-        # The value passed validation, so add the receiver and propagate the
-        # value.
-        self._receivers.append(receiver)
-        with circuit():
-            receiver.receive(SetValue(self._value))
-    
-    def remove_receiver(self, receiver):
-        self._receivers.remove(receiver)
+    def _create_initial_action(self):
+        return SetValue(self._value)
     
     @property
     def value(self):
@@ -145,6 +217,49 @@ class BindCell(ValueSender, ValueReceiver):
             self.validate(SetValue(new_value))
         with circuit():
             self.receive(SetValue(new_value))
+
+
+class _ValueTranslatorCell(BaseSender, BaseReceiver):
+    def __init__(self, converter):
+        self._value = None
+        self._converter = converter
+    
+    def _receive(self, action):
+        check_type(action, SetValue)
+        self._value = action.value
+        self._send_receive(action)
+        # TODO: What should we do about circuit processing here? The problem is
+        # that we need to prevent the two translator cells linked to each other
+        # from updating each others' values in an infinite loop, and the only
+        # way I can think of doing that right now is to update the other value
+        # in the same circuit, and I still need to figure out whether that can
+        # end up resulting in desyncs. 
+        self._other.receive(SetValue(self._converter(action.value)))
+    
+    def _validate(self, action):
+        check_type(action, SetValue)
+        self._send_validate(action)
+        self._other.validate(SetValue(self._converter(action.value)))
+
+
+class ValueTranslator(object):
+    def __init__(self, a_to_b, b_to_a, a):
+        self._a = _ValueTranslatorCell(self._a_to_b)
+        self._b = _ValueTranslatorCell(self._b_to_a)
+        self._a._other = self._b
+        self._b._other = self._a
+        with circuit():
+            self._a.validate(a)
+        with circuit():
+            self._a.receive(a)
+    
+    @property
+    def a(self):
+        return self._a
+    
+    @property
+    def b(self):
+        return self._b
 
 
 
