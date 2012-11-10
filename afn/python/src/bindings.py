@@ -105,6 +105,7 @@ class BaseSender(ValueSender):
         pass
     
     def __init__(self):
+        super(BaseSender, self).__init__()
         self.__receivers = []
     
     def add_receiver(self, receiver, weak=False):
@@ -183,6 +184,7 @@ class BaseReceiver(ValueReceiver):
 
 class BindCell(BaseSender, BaseReceiver):
     def __init__(self, value, validator=None):
+        super(BindCell, self).__init__()
         # Validate the initial value against the validator
         if validator is not None:
             validator(value)
@@ -221,6 +223,7 @@ class BindCell(BaseSender, BaseReceiver):
 
 class _ValueTranslatorCell(BaseSender, BaseReceiver):
     def __init__(self, converter):
+        super(_ValueTranslatorCell, self).__init__()
         self._value = None
         self._converter = converter
     
@@ -252,9 +255,9 @@ class ValueTranslator(object):
         self._a._other = self._b
         self._b._other = self._a
         with circuit():
-            self._a.validate(a)
+            self._a.validate(SetValue(a))
         with circuit():
-            self._a.receive(a)
+            self._a.receive(SetValue(a))
     
     @property
     def a(self):
@@ -263,6 +266,11 @@ class ValueTranslator(object):
     @property
     def b(self):
         return self._b
+
+
+def value_bind(a, b):
+    a.add_receiver(b)
+    b.add_receiver(a)
 
 
 
