@@ -273,7 +273,7 @@ class _ValueTranslatorCell(Propagating):
         converted_value = self._converter(action.value)
         with circuit():
             process(self._other)
-            self._other._send_validate(converted_value)
+            self._other._send_validate(SetValue(converted_value))
     
     def _create_initial_action(self):
         return SetValue(self._value)
