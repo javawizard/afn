@@ -11,18 +11,18 @@ def s_i(v):
         raise ValidationFailed("Not a valid int representation: %r" % v)
 
 def s_b(v):
-    if v == "True":
+    if v == "1":
         return True
-    elif v == "False":
+    elif v == "0":
         return False
     else:
         raise ValidationFailed("Not a valid bool representation: %r" % v)
 
 def b_s(v):
     if v is True:
-        return "True"
+        return "1"
     elif v is False:
-        return "False"
+        return "0"
     else:
         raise ValidationFailed("Not a bool value: %r" % v)
 
