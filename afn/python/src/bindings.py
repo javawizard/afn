@@ -7,6 +7,8 @@ from weakref import ref as WeakRef
 SetValue = namedtuple("SetValue", ["value"])
 SetList = namedtuple("SetList", ["value"])
 SetDict = namedtuple("SetDict", ["value"])
+SetDictEntry = namedtuple("SetDictEntry", ["key", "value"])
+RemoveDictEntry = namedtuple("RemoveDictEntry", ["key"])
 
 context_thread_local = Local()
 
@@ -87,7 +89,7 @@ def process(object):
     return True
 
 
-class ValueSender(object):
+class Sender(object):
     __metaclass__ = ABCMeta
     @abstractmethod
     def add_receiver(self, receiver, weak=False):
@@ -98,7 +100,19 @@ class ValueSender(object):
         pass
 
 
-class BaseSender(ValueSender):
+class Receiver(object):
+    __metaclass__ = ABCMeta
+    
+    @abstractmethod
+    def receive(self, action):
+        pass
+    
+    @abstractmethod
+    def validate(self, action):
+        pass
+
+
+class BaseSender(Sender):
     __metaclass__ = ABCMeta
     @abstractmethod
     def _create_initial_action(self):
@@ -150,19 +164,7 @@ class BaseSender(ValueSender):
                 receiver.receive(action)
 
 
-class ValueReceiver(object):
-    __metaclass__ = ABCMeta
-    
-    @abstractmethod
-    def receive(self, action):
-        pass
-    
-    @abstractmethod
-    def validate(self, action):
-        pass
-
-
-class BaseReceiver(ValueReceiver):
+class BaseReceiver(Receiver):
     __metaclass__ = ABCMeta
     
     @abstractmethod
@@ -176,13 +178,32 @@ class BaseReceiver(ValueReceiver):
     def receive(self, action):
         if process(self):
             self._receive(action)
+            if isinstance(self, Propagating):
+                self._send_receive(action)
     
     def validate(self, action):
         if process(self):
             self._validate(action)
+            if isinstance(self, Propagating):
+                self._send_validate(action)
 
 
-class BindCell(BaseSender, BaseReceiver):
+class Propagating(BaseSender, BaseReceiver):
+    """
+    An abstract class that subclasses both BaseSender and BaseReceiver, and
+    indicates to them that they should manually propagate events. In other
+    words, this class provides no actual functionality beyond signaling
+    (through isinstance(self, Propagating)) to BaseSender and BaseReceiver that
+    they should automatically propagate events.
+    
+    Note that the way in which I do this might change. I don't particularly
+    like this approach, as I would like to have BaseSender and BaseReceiver
+    totally ignorant of each other, but I can't figure out a good way to do
+    this properly. So this is how I'm doing things for now.
+    """
+
+
+class BindCell(Propagating):
     def __init__(self, value, validator=None):
         super(BindCell, self).__init__()
         # Validate the initial value against the validator
@@ -195,16 +216,12 @@ class BindCell(BaseSender, BaseReceiver):
         check_type(action, SetValue)
         # Set our value
         self._value = action.value
-        # Propagate the value
-        self._send_receive(action)
     
     def _validate(self, action):
         check_type(action, SetValue)
         # Use our validator, if we have one, to validate the value
         if self._validator is not None:
             self._validator(action.value)
-        # Propagate the validation
-        self._send_validate(action)
     
     def _create_initial_action(self):
         return SetValue(self._value)
@@ -221,7 +238,7 @@ class BindCell(BaseSender, BaseReceiver):
             self.receive(SetValue(new_value))
 
 
-class _ValueTranslatorCell(BaseSender, BaseReceiver):
+class _ValueTranslatorCell(Propagating):
     def __init__(self, converter):
         super(_ValueTranslatorCell, self).__init__()
         self._value = None
@@ -230,19 +247,33 @@ class _ValueTranslatorCell(BaseSender, BaseReceiver):
     def _receive(self, action):
         check_type(action, SetValue)
         self._value = action.value
-        self._send_receive(action)
         # TODO: What should we do about circuit processing here? The problem is
         # that we need to prevent the two translator cells linked to each other
         # from updating each others' values in an infinite loop, and the only
         # way I can think of doing that right now is to update the other value
         # in the same circuit, and I still need to figure out whether that can
-        # end up resulting in desyncs. 
-        self._other.receive(SetValue(self._converter(action.value)))
+        # end up resulting in desyncs.
+        # UPDATE: I've realized this can cause problems (scenario: a synthetic
+        # dict providing a view of two ends of a value translator, will result
+        # in two updates to the dict which both need to propagate properly), so
+        # I've changed this to directly set the other translator's value in a
+        # new circuit, mark the other translator as visited, and manually
+        # propagate the change. This should probably be rewritten to use a
+        # public-ish method on this class so that one instance doesn't need to
+        # know about the internals of another instance, but I'll worry about
+        # that later. 
+        converted_value = self._converter(action.value)
+        with circuit():
+            process(self._other)
+            self._other._value = converted_value
+            self._other._send_receive(SetValue(converted_value))
     
     def _validate(self, action):
         check_type(action, SetValue)
-        self._send_validate(action)
-        self._other.validate(SetValue(self._converter(action.value)))
+        converted_value = self._converter(action.value)
+        with circuit():
+            process(self._other)
+            self._other._send_validate(converted_value)
     
     def _create_initial_action(self):
         return SetValue(self._value)
@@ -271,6 +302,17 @@ class ValueTranslator(object):
 def value_bind(a, b):
     a.add_receiver(b)
     b.add_receiver(a)
+
+
+class Dict(BaseSender, BaseReceiver):
+    def __init__(self):
+        super(Dict, self).__init__()
+        self._dict = {}
+    
+    def _create_initial_action(self):
+        return SetDict(self._dict.copy())
+    
+    
 
 
 
