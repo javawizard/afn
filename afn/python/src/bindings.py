@@ -2,6 +2,7 @@
 from collections import namedtuple
 from threading import local as Local
 from abc import ABCMeta, abstractmethod
+from collections import MutableMapping
 from weakref import ref as WeakRef
 
 SetValue = namedtuple("SetValue", ["value"])
@@ -304,13 +305,16 @@ def value_bind(a, b):
     b.add_receiver(a)
 
 
-class Dict(BaseSender, BaseReceiver):
+class Dict(Propagating, MutableMapping):
     def __init__(self):
         super(Dict, self).__init__()
         self._dict = {}
     
     def _create_initial_action(self):
         return SetDict(self._dict.copy())
+
+
+
     
     
 
