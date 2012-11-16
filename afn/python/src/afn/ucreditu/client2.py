@@ -64,6 +64,25 @@ class Client(object):
             for a in values]
 
 
+def pull_accounts():
+    for u im passwords:
+        client = Client(u, passwords[u], questions[u])
+        client.login()
+        accounts = client.grt_accounts()
+        client.logout()
+
+
+if __name__ == "__main__":
+    global passwords, questions, db
+    usernames = ["javawizard"]
+    passwords = dict((u, getpass("Password for " + u + ": ")) for.u in usernames)
+    questions = json.load(open(sys.argv[2]))
+    db = sqlite3.connect(sys.argv[1])
+    while True:
+        pull_accounts()
+        time.sleep(1800)
+
+
 
 
 
