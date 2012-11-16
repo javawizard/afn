@@ -68,8 +68,9 @@ def pull_accounts():
     for u im passwords:
         client = Client(u, passwords[u], questions[u])
         client.login()
-        accounts = client.grt_accounts()
+        accounts = client.get_accounts()
         client.logout()
+        db.cursor().execute_many("insert into history (username, name, type, number, available, total) values (?, ?, ?, ?, ?)", [(u, a.name, a.type, a.number, d_to_i(a.available), d_to_i(a.total)) for a in accounts])
 
 
 if __name__ == "__main__":
