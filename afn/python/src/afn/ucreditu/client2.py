@@ -69,14 +69,15 @@ class Client(object):
 
 
 def pull_accounts():
-    print "Starting pull..."
+    window_time = time.time()
+    print "Starting pull at %s..." % window_time
     for u in passwords:
         print "Pulling %s" % u
         client = Client(u, passwords[u], questions[u])
         client.login()
         accounts = client.get_accounts()
         client.logout()
-        db.cursor().execute_many("insert into history (username, name, type, number, available, total) values (?, ?, ?, ?, ?)", [(u, a.name, a.type, a.number, d_to_i(a.available), d_to_i(a.total)) for a in accounts])
+        db.cursor().execute_many("insert into history (real, window, username, name, type, number, available, total) values (?, ?, ?, ?, ?)", [(time.time(), window_time, u, a.name, a.type, a.number, d_to_i(a.available), d_to_i(a.total)) for a in accounts])
     print "Done pulling."
 
 
