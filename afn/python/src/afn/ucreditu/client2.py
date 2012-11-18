@@ -3,6 +3,10 @@ from selenium import webdriver
 import getpass
 import time
 from collections import namedtuple
+import sqlite3
+import time
+import json
+import sys
 
 Account = namedtuple("Account", ["name", "type", "number", "available", "total"])
 
@@ -65,20 +69,24 @@ class Client(object):
 
 
 def pull_accounts():
-    for u im passwords:
+    print "Starting pull..."
+    for u in passwords:
+        print "Pulling %s" % u
         client = Client(u, passwords[u], questions[u])
         client.login()
         accounts = client.get_accounts()
         client.logout()
         db.cursor().execute_many("insert into history (username, name, type, number, available, total) values (?, ?, ?, ?, ?)", [(u, a.name, a.type, a.number, d_to_i(a.available), d_to_i(a.total)) for a in accounts])
+    print "Done pulling."
 
 
 if __name__ == "__main__":
     global passwords, questions, db
     usernames = ["javawizard"]
     passwords = dict((u, getpass("Password for " + u + ": ")) for.u in usernames)
-    questions = json.load(open(sys.argv[2]))
-    db = sqlite3.connect(sys.argv[1])
+    questions = json.load(open(sys.argv[2] if len(sys.argv) > 2 else "/home/jcp/ucreditu/questions"))
+    db = sqlite3.connect(sys.argv[1] if len(sys.argv) > 1 else "/home/jcp/ucreditu/db")
+    print "Ready."
     while True:
         pull_accounts()
         time.sleep(1800)
