@@ -41,7 +41,7 @@ class Client(object):
         self.driver = None
     
     def login(self):
-        self.driver.get("http://my.ucreditu.com")
+        self.driver.get("https://my.ucreditu.com")
         self.driver.find_element_by_id("UsernameField").send_keys(self.username)
         self.driver.find_element_by_id("SubmitNext").click()
         self.driver.find_element_by_id("PasswordField").send_keys(self.password)
