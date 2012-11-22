@@ -1,7 +1,9 @@
 
+import Control.Monad.Trans (liftIO)
+import Test.WebDriver
+import Test.WebDriver.Commands
+import Data.Text (pack, unpack)
 
-
--- questions :: [(String, String)]
 login :: String -> [(String, String)] -> String -> WD ()
 login username questions password = do
     openPage "https://my.ucreditu.com/"
