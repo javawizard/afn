@@ -38,7 +38,7 @@ getAccounts = do
     forM rows $ \row -> do
         cols <- findElemsFrom row $ ByCSS "td"
         colsText <- forM cols getText
-        let [a, b, c, d, e] = map unpack colsText
+        let [_, a, b, c, d, e] = map unpack colsText
         return (a, b, c, d, e)
 
 
