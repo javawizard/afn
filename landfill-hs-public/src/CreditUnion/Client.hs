@@ -9,6 +9,7 @@ import Data.Text (pack, unpack)
 import Data.List (isInfixOf)
 import Control.Concurrent (threadDelay)
 import System.Console.Haskeline
+import Control.Monad (forM)
 
 getPass :: String -> IO String
 getPass text = do
@@ -27,4 +28,22 @@ login username questions password = do
     let (_, answer) = filter (\q -> fst q `isInfixOf` bodyText) questions !! 0
     findElem (ById "Answer") >>= (sendKeys $ pack answer)
     findElem (ById "SubmitNext") >>= click
+
+getAccounts :: WD [(String, String, String, String, String)]
+getAccounts = do
+    rows <- findElems $ ByCSS ".Data"
+    forM rows $ \row -> do
+        cols <- findElemsFrom row $ ByCSS "td"
+        colsText <- forM cols getText
+        let [a, b, c, d, e] = map unpack colsText
+        return (a, b, c, d, e)
+
+
+
+
+
+
+
+
+
 
