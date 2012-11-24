@@ -16,6 +16,9 @@ getPass text = do
     (Just pass) <- runInputT defaultSettings $ getPassword Nothing text
     return pass
 
+getPass' :: IO String
+getPass' = getPass "Password: "
+
 login :: String -> [(String, String)] -> String -> WD ()
 login username questions password = do
     openPage "https://my.ucreditu.com/"
