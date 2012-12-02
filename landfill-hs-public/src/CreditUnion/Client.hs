@@ -41,6 +41,9 @@ getAccounts = do
         let [_, a, b, c, d, e] = map unpack colsText
         return (a, b, c, d, e)
 
+logout :: WD ()
+logout = openPage "https://my.ucreditu.com/User/AccessSignout/Start"
+
 
 
 
