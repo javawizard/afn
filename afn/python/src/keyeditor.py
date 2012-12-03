@@ -187,6 +187,10 @@ def get_output_key(row_name, index):
     return "<A" + row_name + str(index).rjust(2, "0") + ">"
 
 
+if __name__ == "__main__":
+    main()
+
+
 
 
 
