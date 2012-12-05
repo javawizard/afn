@@ -253,18 +253,21 @@ class File(object):
         """
         return self._path.split(os.path.sep)
     
-    def copy_to(self, other):
+    def copy_to(self, other, overwrite=False):
         """
         Copies the contents of this file to the specified File object or
         pathname. An exception will be thrown if the specified file already
-        exists.
+        exists and overwrite is False.
         
         This does not currently work for folders; I hope to add this ability
         in the near future.
         """
-        other = File(other)
+        # Hack to get around AtomicFile destinations throwing exceptions in
+        # File.__init__
+        if not isinstance(other, File):
+            other = File(other)
         self.check_file()
-        if other.exists:
+        if other.exists and not overwrite:
             raise Exception("%r already exists" % other)
         # We do the copy by hand instead of using, say, shutils in case the
         # other file is an instance of a non-File subclass (such as AtomicFile)
