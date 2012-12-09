@@ -94,7 +94,7 @@ class File(object):
         True if this File is a file, False if it isn't. If the file/folder
         doesn't actually exist yet, this will be False.
         
-        If this file is a symbolic link that points to a folder, this will be
+        If this file is a symbolic link that points to a file, this will be
         True.
         """
         return os.path.isfile(self._path)
@@ -138,24 +138,37 @@ class File(object):
         if not self.is_file:
             raise Exception('"%s" does not exist or is not a file' % self._path)
     
-    def list(self):
+    @property
+    def children(self):
         """
-        Returns all of the children of this file, as a list of File objects. If
-        this file is not a folder, an exception will be thrown.
+        A list of all of the children of this file, as a list of File objects.
+        If this file is not a folder, the value of this property is None.
         """
-        self.check_folder()
+        if not self.is_folder:
+            return
         results = os.listdir(self._path)
         return [self.child(p) for p in results]
     
+    def list(self):
+        """
+        An obsolete method that simply returns self.children.
+        """
+    
+    @property
+    def child_names(self):
+        """
+        A list of the names of all of the children of this file, as a list of
+        strings. If this file is not a folder, the value of this property is
+        None.
+        """
+        if not self.is_folder:
+            return
+        return os.listdir(self._path)
+    
     def list_names(self):
         """
-        Returns all of the children of this file, as a list of strings
-        representing each child's name. This is roughly equivalent to
-        [f.name for f in self.list()], except that no intermittent File objects
-        are created.
+        An obsolete method that simply returns self.child_names.
         """
-        self.check_folder()
-        return os.listdir(self._path)
     
     def open(self, *args, **kwargs):
         """
@@ -288,14 +301,16 @@ class File(object):
         If recuse_skipped is False, directories for which the filter function
         return False will not themselves be recursed into. If recurse_skipped
         is True (the default), then such directories won't be yielded from this
-        generator but will be recursed into.
+        generator but will still be recursed into.
         
         If include_self is True, this file (a.k.a. self) will be yielded as
-        well. If it's False (the default), only this file's children (and their
-        children, and so on) will be yielded.
+        well (if it matches the specified filter function). If it's False (the
+        default), only this file's children (and their children, and so on)
+        will be yielded.
         """
         if include_self:
-            yield self
+            if filter is None or filter(self):
+                yield self
         children = self.list()
         for child in children:
             filter_result = filter(child) if filter is not None else True
@@ -538,9 +553,9 @@ class File(object):
         Creates this file as a symbolic link pointing to other, which can be
         a pathname or a File object. Note that if it's a pathname, a symbolic
         link will be created with the exact path specified; it will therefore
-        be absolute if the path is absolute or relative if the path is relative.
-        If a File object, however, is used, the symbolic link will always be
-        absolute.
+        be absolute if the path is absolute or relative (to the link itself) if
+        the path is relative. If a File object, however, is used, the symbolic
+        link will always be absolute.
         """
         if isinstance(other, File):
             os.symlink(other.path, self._path)
