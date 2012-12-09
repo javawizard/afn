@@ -1,7 +1,7 @@
-xkb_symbols "testname"
+xkb_symbols "basic"
 {
-    name[Group1] = "testdesc - 1";
-    name[Group2] = "testdesc - 2";
+    name[Group1] = "US - Alex - 1";
+    name[Group2] = "US - Alex - 2";
     key <AB01> { [        U007A,        U005A,        U00E6,        U00C6 ], [], [        U2282,        U2284,        U228A,     NoSymbol ] };
     key <AB02> { [        U0078,        U0058,        U0153,        U0152 ], [], [        U2286,        U2288,     NoSymbol,     NoSymbol ] };
     key <AB03> { [        U0063,        U0043,        U00A9,        U00A2 ], [], [        U2287,        U2289,     NoSymbol,     NoSymbol ] };
