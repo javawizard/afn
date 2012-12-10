@@ -11,6 +11,7 @@ import shutil
 import zipfile as zip_module
 from contextlib import closing
 import errno
+import urllib
 
 def file_or_none(f):
     """
@@ -118,9 +119,19 @@ class File(object):
     def exists(self):
         """
         True if this file/folder exists, False if it doesn't. This will be True
-        even for broken symbolic links.
+        even for broken symbolic links; use self.valid if you want an
+        alternative that returns False for broken symbolic links.
         """
         return os.path.lexists(self._path)
+    
+    @property
+    def valid(self):
+        """
+        True if this file/folder exists, False if it doesn't. This will be
+        False for broken symbolic links; use self.exists if you want an
+        alternative that returns True for broken symbolic links.
+        """
+        return os.path.exists(self._path)
         
     def check_folder(self):
         """
@@ -292,6 +303,16 @@ class File(object):
                     if not data:
                         break
                     write_to.write(data)
+    
+    def download_from(self, url, overwrite=False):
+        """
+        Downloads the specified URL and saves it to self. If self already
+        exists and overwrite is False, an exception will be thrown; otherwise,
+        self will be overwritten.
+        """
+        if self.exists and not overwrite:
+            raise Exception("%r already exists" % self)
+        urllib.urlretrieve(url, self._path)
     
     def recurse(self, filter=None, include_self=False, recurse_skipped=True):
         """
