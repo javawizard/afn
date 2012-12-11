@@ -1,9 +1,14 @@
 """
-Fileutils is an object-oriented filesystem library for Python.
+An object-oriented filesystem library for Python.
 
 More module documentation to come soon. For now, take a look at the File class
 to see what it does.
 """
+
+# This is afn.fileutils inside the AFN project, but it's used just as fileutils
+# nearly everywhere else. Name it what you will.
+# The authoritative version of fileutils can be found at:
+# http://hg.opengroove.org/afn/file/default/afn/python/src/afn/fileutils.py
 
 import os
 import os.path
@@ -450,6 +455,52 @@ class File(object):
         """
         self.mkdirs(*args, **kwargs)
     
+    def change_to(self):
+        """
+        Sets the current working directory to self.
+        
+        Since File instances internally store paths in absolute form, other
+        File instances will continue to work just fine after this is called.
+        
+        If you need to restore the working directory at any point, you might
+        want to consider using self.as_working instead.
+        """
+        os.chdir(self._path)
+    
+    def cd(self):
+        """
+        An alias for self.change_to().
+        """
+        self.change_to()
+    
+    @property
+    def as_working(self):
+        """
+        A property that returns a context manager. This context manager sets
+        the working directory to self upon being entered and restores it to
+        what it previously was upon being exited. One can use this to replace
+        something like:
+        
+        old_dir = os.getcwd() # A fileutils version of this will be coming soon
+        new_dir.cd()
+        try:
+            ...stuff...
+        finally:
+            File(old_dir).cd() # Or os.chdir(old_dir)
+        
+        with the much nicer:
+        
+        with new_dir.as_working:
+            ...stuff...
+        
+        and get exactly the same effect.
+        
+        The context manager's __enter__ returns self (this file), so you can
+        also use an "as" clause on the with statement to get access to the
+        file in case you haven't got it stored in a variable anywhere.
+        """
+        return _AsWorking(self)
+    
     def zip_into(self, filename, contents=True):
         """
         Creates a zip archive of this folder and writes it to the specified
@@ -739,6 +790,23 @@ class File(object):
         existence, use self.exists instead.
         """
         return True
+
+
+class _AsWorking(object):
+    """
+    The class of the context managers returned from File.as_working. See that
+    method's docstring for more information on what this class does.
+    """
+    def __init__(self, folder):
+        self.folder = folder
+    
+    def __enter__(self):
+        self.old_path = os.getcwd()
+        self.folder.cd()
+        return self.folder
+    
+    def __exit__(self, *args):
+        os.chdir(self.old_path)
 
     
 
