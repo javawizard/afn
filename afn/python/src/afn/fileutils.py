@@ -171,6 +171,7 @@ class File(object):
         """
         An obsolete method that simply returns self.children.
         """
+        return self.children
     
     @property
     def child_names(self):
@@ -187,6 +188,7 @@ class File(object):
         """
         An obsolete method that simply returns self.child_names.
         """
+        return self.child_names
     
     def open(self, *args, **kwargs):
         """
@@ -360,9 +362,16 @@ class File(object):
         file contains; the number of actual bytes of disk space it consumes is
         usually larger.
         
+        If this file is actually a folder, the sizes of its child files and
+        folders will be recursively summed up and returned. This can take quite
+        some time for large folders.
+        
         This is the same as len(self).
         """
-        return os.path.getsize(self._path)
+        if self.is_folder:
+            return sum(f.size for f in self.children)
+        else:
+            return os.path.getsize(self._path)
     
     def __len__(self):
         return self.size
