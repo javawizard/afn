@@ -370,8 +370,10 @@ class File(object):
         """
         if self.is_folder:
             return sum(f.size for f in self.children)
-        else:
+        elif self.is_file:
             return os.path.getsize(self._path)
+        else: # Broken symbolic link or some other type of file
+            return 0
     
     def __len__(self):
         return self.size
