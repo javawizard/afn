@@ -17,6 +17,8 @@ import zipfile as zip_module
 from contextlib import closing
 import errno
 import urllib
+import hashlib
+from functools import partial as _partial
 
 def file_or_none(f):
     """
@@ -419,6 +421,26 @@ class File(object):
         """
         with self.open("a" + ("b" if binary else "")) as f:
             f.write(data)
+    
+    def hash(self, algorithm=hashlib.md5, return_hex=True):
+        """
+        Compute the hash of this file and return it, as a hexidecimal string.
+        
+        The default algorithm is md5. An alternate constructor from hashlib
+        can be passed as the algorithm parameter; file.hash(hashlib.sha1)
+        would, for example, compute the SHA-1 hash instead.
+        
+        If return_hex is False (it defaults to True), the hash object itself
+        will be returned instead of the return value of its hexdigest() method.
+        One can use this to access the binary hash instead.
+        """
+        hasher = algorithm()
+        with self.open("rb") as f:
+            for block in iter(_partial(f.read, 10), ""):
+                hasher.update(block)
+        if return_hex:
+            hasher = hasher.hexdigest()
+        return hasher
     
     def mkdir(self, silent=False):
         """
