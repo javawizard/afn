@@ -1,5 +1,4 @@
 
-module SimpleHTTP where
 
 import Network
 import System.IO
