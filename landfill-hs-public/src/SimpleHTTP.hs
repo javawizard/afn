@@ -7,10 +7,12 @@ import Control.Monad
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.List (splitAt, elemIndex)
+import System.Mem
 
 main = do
     server <- listenOn $ PortNumber 8000
     forever $ do
+        performGC
         (handle, host, port) <- accept server
         isEnd <- hIsEOF handle
         if isEnd
