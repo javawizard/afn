@@ -829,7 +829,7 @@ class File(object):
     def __eq__(self, other):
         if not isinstance(other, File):
             return NotImplemented
-        return self._path == other.path
+        return os.path.normcase(self._path) == os.path.normcase(other.path)
     
     def __ne__(self, other):
         if not isinstance(other, File):
