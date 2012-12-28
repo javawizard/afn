@@ -83,7 +83,7 @@ Author:
 
 parser = ArgumentParser(add_help=False, description="!!!DESC!!!", epilog="!!!END!!!")
 parser.add_argument("-S", "--suppress-warnings", dest="warnings", action="store_false",
-                    help="Suppress warnings about some potentially-pathological situations")
+                    help="Suppress warnings about some potentially pathological situations")
 parser.add_argument("-V", "--verbose", dest="verbose", action="store_true",
                     help="Print information about the steps this command is taking as it takes them (TODO: add this)")
 parser.add_argument("-?", "--help", action='store_true', help='show this help message and exit')
@@ -190,7 +190,7 @@ add_modify_action = partial(modify_actions.add_argument, dest="actions", action=
 add_modify_action("-x", "--delete", "--remove", const="delete", nargs=0,
         help="Deletes the value at the current path. For example, if the current "
         'value is an object, and you want to delete the keys "example" and "test", '
-        'you could do that with -K example -d -u -K test -d.')
+        'you could do that with -K example -d -K test -d.')
 add_modify_action("-a", "--append", const="append", nargs=0)
 add_modify_action("-A", "--append-and-up", const="append-and-up", nargs=0,
         help="Appends a new item to the list/array that the current path points to, "
