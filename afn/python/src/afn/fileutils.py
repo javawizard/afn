@@ -433,6 +433,25 @@ class File(object):
         with self.open("a" + ("b" if binary else "")) as f:
             f.write(data)
     
+    def read_blocks(self, block_size=16384, binary=True):
+        """
+        A generator that yields successive blocks of data from this file. Each
+        block will be no larger than block_size bytes, which defaults to 16384.
+        This is useful when reading/processing files larger than would
+        otherwise fit into memory.
+        
+        One could implement, for example, a copy function thus:
+        
+        with target.open("wb") as target_stream:
+            for block in source.read_blocks():
+                target_stream.write(block)
+        """
+        with self.open("r" + ("b" if binary else "")) as f:
+            data = f.read(block_size)
+            while data:
+                yield data
+                data = f.read(block_size)
+    
     def hash(self, algorithm=hashlib.md5, return_hex=True):
         """
         Compute the hash of this file and return it, as a hexidecimal string.
