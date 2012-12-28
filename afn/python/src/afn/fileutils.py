@@ -834,7 +834,7 @@ class File(object):
     def __ne__(self, other):
         if not isinstance(other, File):
             return NotImplemented
-        return self._path != other.path
+        return not self.__eq__(other)
     
     def __nonzero__(self):
         """
