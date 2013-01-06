@@ -342,12 +342,12 @@ class File(object):
         SKIP, YIELD, or RECURSE, with the behavior of each outlined in the
         following table:
             
-                                Don't yield   Do yield
-                               +------------+---------+
-            Don't recurse into | SKIP       | YIELD   |
-                               +------------+---------+
-            Do recurse into    | RECURSE    | True    |
-                               +------------+---------+
+                                  Don't yield   Do yield
+                                +-------------+----------+
+            Don't recurse into  | SKIP        | YIELD    |
+                                +-------------+----------+
+            Do recurse into     | RECURSE     | True     |
+                                +-------------+----------+
             
             False behaves the same as RECURSE if recurse_skipped is True, or
             SKIP otherwise.
