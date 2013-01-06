@@ -19,6 +19,7 @@ import errno
 import urllib
 import hashlib
 from functools import partial as _partial
+import glob as _glob
 
 SKIP = "skip"
 RECURSE = "recurse"
@@ -216,6 +217,14 @@ class File(object):
         This method is analogous to os.path.join(self.path, *names).
         """
         return File(os.path.join(self.path, *names))
+    
+    def glob(self, glob):
+        """
+        Expands the specified path relative to self and returns a list of all
+        matching files, as File objects. This is a thin wrapper around a call
+        to Python's glob.glob function.
+        """
+        return [File(f) for f in _glob.glob(os.path.join(self.path, glob))]
     
     def safe_child(self, *names):
         """
