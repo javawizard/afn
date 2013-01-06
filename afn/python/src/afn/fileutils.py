@@ -826,15 +826,11 @@ class File(object):
     
     __repr__ = __str__
     
-    def __eq__(self, other):
+    # Use __cmp__ instead of the rich comparison operators for brevity
+    def __cmp__(self, other):
         if not isinstance(other, File):
             return NotImplemented
-        return self.path == other.path
-    
-    def __ne__(self, other):
-        if not isinstance(other, File):
-            return NotImplemented
-        return not self.__eq__(other)
+        return cmp(self.path, other.path)
     
     def __nonzero__(self):
         """
