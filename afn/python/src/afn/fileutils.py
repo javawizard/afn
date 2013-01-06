@@ -20,6 +20,11 @@ import urllib
 import hashlib
 from functools import partial as _partial
 
+SKIP = "skip"
+RECURSE = "recurse"
+YIELD = "yield"
+
+
 def file_or_none(f):
     """
     Returns File(f), unless f is None, in which case None is returned.
@@ -326,38 +331,41 @@ class File(object):
             raise Exception("%r already exists" % self)
         urllib.urlretrieve(url, self._path)
     
-    def recurse(self, filter=None, include_self=False, recurse_skipped=True):
+    def recurse(self, filter=None, include_self=True, recurse_skipped=True):
         """
         A generator that recursively yields all child File objects of this file.
         Files and directories (and the files and directories contained within
-        them, and so on) are all included; files for which the specified filter
-        function return False (or None or some other Python false-like value)
-        are not included.
+        them, and so on) are all included.
         
-        If recuse_skipped is False, directories for which the filter function
-        return False will not themselves be recursed into. If recurse_skipped
-        is True (the default), then such directories won't be yielded from this
-        generator but will still be recursed into.
+        A filter function accepting one argument can be specified. It will be
+        called for each file and folder. It can return one of True, False,
+        SKIP, YIELD, or RECURSE:
+            
+            SKIP causes the file not to be yielded or recursed into (if it's a
+            folder).
+            
+            YIELD causes the file to be yielded but not to be recursed into.
+            
+            RECURSE causes the file not to be yielded but to be recursed into.
+            
+            True causes the file to be yielded and recursed into (if it's a
+            folder).
+            
+            False behaves the same as RECURSE if recurse_skipped is True, or
+            SKIP otherwise.
         
-        If include_self is True, this file (a.k.a. self) will be yielded as
-        well (if it matches the specified filter function). If it's False (the
-        default), only this file's children (and their children, and so on)
-        will be yielded.
+        If include_self is True (the default), this file (a.k.a. self) will be
+        yielded as well (if it matches the specified filter function). If it's
+        False, only this file's children (and their children, and so on) will
+        be yielded.
         """
-        if include_self:
-            if filter is None or filter(self):
-                yield self
-        children = self.list()
-        for child in children or []:
-            filter_result = filter(child) if filter is not None else True
-            if filter_result:
-                yield child
-            if not recurse_skipped and not filter_result:
-                continue
-            if child.is_folder:
-                for c in child.recurse(filter):
-                    yield c
-    
+        include = True if filter is None else filter(self)
+        if include in (YIELD, True) and include_self:
+            yield self
+        if include in (RECURSE, True) or (recurse_skipped and not include):
+            for child in self.children() or []:
+                child.recurse(filter, True, recurse_skipped)
+        
     @property
     def size(self):
         """
