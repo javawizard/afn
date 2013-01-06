@@ -197,17 +197,36 @@ class File(object):
         """
         return open(self._path, *args, **kwargs)
     
-    def child(self, name):
+    def child(self, *names):
         """
         Returns a File object representing the child of this file with the
-        specified name.
+        specified name. If multiple names are present, they will be joined
+        together. If no names are present, self will be returned.
         
-        If the specified name is an absolute path, File(name) will be returned
-        instead.
+        If any names are absolute, all names before them (and self) will be
+        discarded. Relative names (like "..") are also allowed. If you want a
+        method that guarantees that the result is a child of self, use
+        self.safe_child(...).
+        
+        This method is analogous to os.path.join(self.path, *names).
         """
-        if os.path.isabs(name):
-            return File(name)
-        return File(self._path, name)
+        return File(os.path.join(self.path, *names))
+    
+    def safe_child(self, *names):
+        """
+        Same as self.child(*names), but checks that the resulting file is a
+        descendant of self. If it's not, an exception will be thrown. This
+        allows unsanitized paths to be used without fear that things like ".."
+        will be used to escape the confines of self.
+        
+        The pathname may contain occurrences of ".." so long as they do not
+        escape self. For example, "a/b/../c" is perfectly fine, but "a/../.."
+        is not.
+        """
+        child = self.child(*names)
+        if not self.ancestor_of(child):
+            raise ValueError("Names %r escape the parent %r" % (names, self))
+        return child
     
     def sibling(self, name):
         """
