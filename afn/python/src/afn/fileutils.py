@@ -164,8 +164,7 @@ class File(object):
         """
         if not self.is_folder:
             return
-        results = os.listdir(self._path)
-        return [self.child(p) for p in results]
+        return [self.child(p) for p in self.child_names]
     
     def list(self):
         """
@@ -182,7 +181,7 @@ class File(object):
         """
         if not self.is_folder:
             return
-        return os.listdir(self._path)
+        return sorted(os.listdir(self._path))
     
     def list_names(self):
         """
