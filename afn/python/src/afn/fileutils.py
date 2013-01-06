@@ -339,17 +339,15 @@ class File(object):
         
         A filter function accepting one argument can be specified. It will be
         called for each file and folder. It can return one of True, False,
-        SKIP, YIELD, or RECURSE:
+        SKIP, YIELD, or RECURSE, with the behavior of each outlined in the
+        following table:
             
-            SKIP causes the file not to be yielded or recursed into (if it's a
-            folder).
-            
-            YIELD causes the file to be yielded but not to be recursed into.
-            
-            RECURSE causes the file not to be yielded but to be recursed into.
-            
-            True causes the file to be yielded and recursed into (if it's a
-            folder).
+                                Don't yield   Do yield
+                               +------------+---------+
+            Don't recurse into | SKIP       | YIELD   |
+                               +------------+---------+
+            Do recurse into    | RECURSE    | True    |
+                               +------------+---------+
             
             False behaves the same as RECURSE if recurse_skipped is True, or
             SKIP otherwise.
