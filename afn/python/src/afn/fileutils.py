@@ -1,5 +1,5 @@
 """
-An object-oriented filesystem library for Python.
+An object-oriented file access library for Python.
 
 More module documentation to come soon. For now, take a look at the File class
 to see what it does.
