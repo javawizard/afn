@@ -345,7 +345,7 @@ class File(object):
             if filter is None or filter(self):
                 yield self
         children = self.list()
-        for child in children:
+        for child in children or []:
             filter_result = filter(child) if filter is not None else True
             if filter_result:
                 yield child
