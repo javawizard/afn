@@ -74,8 +74,8 @@ class File(object):
             path = os.path.join(*path_components)
         else:
             path = ""
-        # Make the pathname absolute
-        path = os.path.abspath(path)
+        # Make the pathname absolute, and normalize case
+        path = os.path.abspath(os.path.normcase(path))
         self._path = path
     
     @property
@@ -829,7 +829,7 @@ class File(object):
     def __eq__(self, other):
         if not isinstance(other, File):
             return NotImplemented
-        return os.path.normcase(self._path) == os.path.normcase(other.path)
+        return self.path == other.path
     
     def __ne__(self, other):
         if not isinstance(other, File):
