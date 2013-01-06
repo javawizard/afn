@@ -267,11 +267,6 @@ class File(object):
         The pathname of this File object, in a format native to the operating
         system in use. This pathname can then be used with Python's traditional
         file-related utilities.
-        
-        Note that not all classes providing the same API as this class provide
-        a path attribute. In particular, AtomicFile does not provide a path
-        attribute to prevent external tools from mistakenly being used to
-        overwrite the underlying file, as this will result in data corruption.
         """
         return self._path
     
@@ -294,23 +289,13 @@ class File(object):
         This does not currently work for folders; I hope to add this ability
         in the near future.
         """
-        # Hack to get around AtomicFile destinations throwing exceptions in
-        # File.__init__
-        if not isinstance(other, File):
-            other = File(other)
+        other = File(other)
         self.check_file()
         if other.exists and not overwrite:
             raise Exception("%r already exists" % other)
-        # We do the copy by hand instead of using, say, shutils in case the
-        # other file is an instance of a non-File subclass (such as AtomicFile)
-        with self.open("rb") as read_from:
-            with other.open("wb") as write_to:
-                while True:
-                    # TODO: Might want to allow this to be configurable
-                    data = read_from.read(16384)
-                    if not data:
-                        break
-                    write_to.write(data)
+        with other.open("wb") as write_to:
+            for block in self.read_blocks():
+                write_to.write(block)
     
     def download_from(self, url, overwrite=False):
         """
@@ -381,21 +366,8 @@ class File(object):
         """
         Rename this file or folder to the specified name, which can be a File
         object or a pathname.
-        
-        Note that renames to objects that are instances of classes other than
-        File (such as AtomicFile) are implemented by writing the file as if by
-        copy_to and then deleting self. This is obviously not a safe thing to
-        do, as it will leave both files around in the event of a software or
-        hardware crash. This method should therefore be used with care when
-        using instances of classes besides File.
         """
-        if isinstance(other, File) or isinstance(other, basestring):
-            # Do it the quick (and safe) way
-            os.rename(self._path, File(other).path)
-        else:
-            # Do it the general way
-            self.copy_to(other)
-            self.delete(True)
+        os.rename(self._path, File(other).path)
     
     def read(self, binary=True):
         """
