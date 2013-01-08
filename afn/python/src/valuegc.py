@@ -7,5 +7,7 @@ class Value(object):
     def __str__(self):
         return "Value(%r)" % self.value
     
+    __repr__ = __str__
+    
     def __del__(self):
         print "Deleting %r" % self
