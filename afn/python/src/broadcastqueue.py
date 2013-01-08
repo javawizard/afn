@@ -30,7 +30,7 @@ class BroadcastQueue(object):
             self._link = item.link
     
     def new_endpoint(self):
-        pass
+        return _Endpoint(self, self._link)
 
 
 class _Endpoint(object):
