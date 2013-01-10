@@ -370,8 +370,9 @@ class File(object):
         if include in (YIELD, True) and include_self:
             yield self
         if include in (RECURSE, True) or (recurse_skipped and not include):
-            for child in self.children() or []:
-                child.recurse(filter, True, recurse_skipped)
+            for child in self.children or []:
+                for f in child.recurse(filter, True, recurse_skipped):
+                    yield f
         
     @property
     def size(self):
