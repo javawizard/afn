@@ -31,6 +31,17 @@ newTPort (TChan chanVar) = do
     portVar <- newTVar currentLink
     return $ TPort portVar
 
+readTPort :: TPort a -> STM a
+readTPort (TPort portVar) = do
+    currentLink <- readTVar portVar
+    currentItem <- readTVar currentLink
+    case currentItem of
+        Empty -> retry
+        Item item nextLink -> do
+            writeTVar portVar nextLink
+            return item
+
+
 
 
 
