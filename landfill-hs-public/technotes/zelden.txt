@@ -2,5 +2,15 @@ Going to try writing Zelden again, but this time in Haskell.
 
 (Or at least the server will be. Haven't decided on the client yet.)
 
+Hm, thinking I'll write a nifty little utility library first, that lets you use sockets inside STM.
 
+Basically, it'll provide functions to "convert" a socket into a read Endpoint and a write Queue by spawning off threads to do everything. Or maybe I'll allow it to take a custom Endpoint to pull data off of and a custom Queue to put data onto.
+
+And maybe I could even do the same thing with server sockets, have a thing that takes a Queue Handle and accepts sockets and sticks them onto the Queue. Might do that later, though, as that's not as necessary.
+
+So, the endpoint you read from to read a socket would be an Endpoint (Maybe Packet) or something, where Nothing gets pushed across once data runs out. Might be nice, however, to give the converter an iteratee that it can use to parse data received from the socket into concrete packets and hand it to the queue that way. Or just hard-code it to push lines across; if I have Zelden be JSON-based, and require that each JSON command be on a single line, that'll sort me perfectly.
+
+I think I'll do that for now. And then have the converter have two functions (String -> a) and (a -> String) for encoding and decoding on the socket thread before handing stuff off.
+
+Let's try that.
 
