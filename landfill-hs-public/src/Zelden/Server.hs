@@ -1,6 +1,8 @@
 
 module Zelden.Server where
 
+import Zelden.IO
+
 
 data ConnectionBox = ConnectionBox (forall a. Connection a => a)
 data ProtocolBox = ProtocolBox (forall a. Protocol a => a)
@@ -24,5 +26,5 @@ class Protocol a where
 class Connection a where
     getProtocol :: a -> ProtocolBox
     connect :: a -> IO ()
-    sendMessage :: 
+    sendMessage :: a
     
