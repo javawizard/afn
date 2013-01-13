@@ -50,6 +50,14 @@ getNumber' v k = liftM getNumber $ getValue v k
 getBool' :: JSValue -> String -> Either JSONError Bool
 getBool' v k = liftM getBool $ getValue v k
 
+encode :: JSValue -> J.JSValue
+encode JSNull = J.JSNull
+encode (JSString s) = J.JSString s
+encode (JSBool b) = J.JSBool b
+encode (JSNumber i) = J.JSRational True 
+
+decode :: J.JSValue -> JSValue
+
 
 
 
