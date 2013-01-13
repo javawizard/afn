@@ -44,6 +44,8 @@ Or heck, we could just do that in the thread that tries to connect and stuff. (A
 
 Either that or we have the bit that reads stuff off the queue be part of that thread, so it blocks on either a new message coming in from the queue (or the "socket just died" message) or for enabled to be set to False, and if the latter happens we just send Nothing into the output queue and go back to doing things as normal, and eventually we'll get Nothing back when the socket shuts down and we'll drop out of that bit of the loop into the bit where we actually try to reconnect, only we'll see that we're disabled right now so we'll block on waiting to be re-enabled.
 
+Man, Haskell's STM implementation is positively lovely.
+
 
 
 
