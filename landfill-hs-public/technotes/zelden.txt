@@ -1,0 +1,6 @@
+Going to try writing Zelden again, but this time in Haskell.
+
+(Or at least the server will be. Haven't decided on the client yet.)
+
+
+
