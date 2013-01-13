@@ -40,3 +40,14 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
                     process
         process
 
+streamSocket' :: Handle -> (String -> i) -> (o -> String) -> IO (Endpoint (Maybe i), Queue (Maybe o))
+streamSocket' handle inputConverter outputConverter = do
+    (iq, ie, oq, oe) <- atomically $ do
+        iq <- newQueue
+        ie <- newEndpoint iq
+        oq <- newQueue
+        oe <- newEndpoint oq
+        return (iq, ie, oq, oe)
+    streamSocket handle inputConverter outputConverter iq oe
+    return (ie, oq)
+
