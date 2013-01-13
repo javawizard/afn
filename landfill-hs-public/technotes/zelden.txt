@@ -46,7 +46,17 @@ Either that or we have the bit that reads stuff off the queue be part of that th
 
 Man, Haskell's STM implementation is positively lovely.
 
+Ok so, we just let the protocol know when we want it to be enabled or disabled, and we let it know when we create it and when we feel like changing it. I'm thinking for now I'll have the notification done in STM, even though there's probably not much reason. If a protocol ends up needing IO in that bit of code, I'll reconsider.
 
+So of course the protocol typeclass should have a function for creating new protocols given the configuration details for that account and the current enabled/disabled status.
+
+And we also give the protocol the account id to which it's associated. It'll use that for most calls it makes into Zelden.
+
+Actually you know what, I think I'm going to have most things to protocols be in IO for now, and change it to STM later if I really need it to be transactional.
+
+So then a protocol can ask Zelden to create a new channel id or a new user id. Channels and users have names (which every protocol I can think of has) that Zelden knows about, and a protocol can request the id of a channel or user by their name, and then create one if one doesn't already exist. (I might have a function to combine that bit, the "see if it exists and if it doesn't, create it" bit.)
+
+This also seems to need some sort of locking ability, to coordinate all of this between threads, which is what I wanted to use STM for so this needs a bit of thought, how to go about doing this properly. Maybe have a single manager thread for communication with the database like that, and an STM queue that we can use to push requests to it and give it a TVar to stick the response in when it has one for us, then we just retry on the TVar until we've got a response. This needs some thought.
 
 
 
