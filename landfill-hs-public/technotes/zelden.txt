@@ -32,6 +32,20 @@ So Zelden starts off with no accounts. When an account is created via a client, 
 
 You know, I should take a look at lambdabot to see how it handles connections...
 
+Lambdabot's rather convoluted. And I'm still waiting for darcs get...
+
+So in the mean time, I think protocols should be in charge of connecting on their own. The only thing Zelden can do is tell a protocol if it's supposed to be enabled or not, with the idea that the protocol will disconnect if it's supposed to be disabled. But it doesn't have to actually honor that, although it should.
+
+And protocols can't be deleted for now; they can just be disabled and then hidden from the list of protocols.
+
+Then let's say we implemented most protocols to store their enabled/disabled state in a TVar Bool. Then we could watch for changes by simply comparing that to another TVar indicating our current status, and retrying if they're the same. Then when we eventually change our enabled/disabled status, that'll be updated accordingly.
+
+Or heck, we could just do that in the thread that tries to connect and stuff. (Also, this brings up the point that if I end up using Zelden.IO, streamSocket really ought to be able to update a TVar to indicate when the socket's been closed so that this main thread can block until either the socket closes for whatever reason or the protocol gets disabled; if the latter happens, we just write Nothing into the queue, then go back and block until we see the socket close.)
+
+Either that or we have the bit that reads stuff off the queue be part of that thread, so it blocks on either a new message coming in from the queue (or the "socket just died" message) or for enabled to be set to False, and if the latter happens we just send Nothing into the output queue and go back to doing things as normal, and eventually we'll get Nothing back when the socket shuts down and we'll drop out of that bit of the loop into the bit where we actually try to reconnect, only we'll see that we're disabled right now so we'll block on waiting to be re-enabled.
+
+
+
 
 
 
