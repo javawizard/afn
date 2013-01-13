@@ -14,3 +14,31 @@ I think I'll do that for now. And then have the converter have two functions (St
 
 Let's try that.
 
+Ok, done. And worked well.
+
+So now I need to figure out how everything else is going to work.
+
+Protocols need a way to expose things that can be configured about them. Maybe I'll just have it be a hierarchical thing like JZBot's configuration variables were.
+
+So then each protocol exports a set of variables it needs. Each variable has a name, a description, and a type. The types, for now, I think I'll have be Text and Folder [Variable], the latter of which would allow a folder to define what variables it contains. I might also have the default value be specified in there somewhere, probably as part of the type, with folders obviously not needing a default. And maybe a validation function could be specified too, if desired.
+
+Then each protocol would be provided with its configuration when creating connections, which would include the values of all of the variables. And whenever a variable ends up changing, a protocol would be notified.
+
+You know what, for simplicity let's just have a set of keys and values, and they're both strings, and a protocol simply indicates a list of strings representing the keys it needs, perhaps along with default values, and then we hand the protocol a list of the keys when creating it and let it know when the user changes any of them.
+
+We also pass some sort of Server object into each protocol that it can use to interact with us.
+
+So Zelden starts off with no accounts. When an account is created via a client, it creates an account number and a protocol for it, and tells the protocol to start connecting, or something like that.
+
+You know, I should take a look at lambdabot to see how it handles connections...
+
+
+
+
+
+
+
+
+
+
+
