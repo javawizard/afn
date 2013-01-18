@@ -2,6 +2,7 @@
 module Zelden.Server where
 
 import Zelden.IO
+import Database.HDBC as DB
 
 
 data ConnectionBox = ConnectionBox (forall a. Connection a => a)
@@ -27,4 +28,29 @@ class Connection a where
     getProtocol :: a -> ProtocolBox
     connect :: a -> IO ()
     sendMessage :: a
+
+
+
+
+
+type DBM a = ReaderT DB.Connection IO a
+
+closeDB :: DBM ()
+closeDB = do
+    c <- ask
+    lift $ DB.close c
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
