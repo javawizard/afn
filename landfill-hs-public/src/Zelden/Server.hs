@@ -35,6 +35,8 @@ class Connection a where
 
 type DBM a = ReaderT DB.Connection IO a
 
+type DBMBox = forall a. DBMBox (DBM a) (TMVar a)
+
 closeDB :: DBM ()
 closeDB = do
     c <- ask
