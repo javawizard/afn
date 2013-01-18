@@ -38,7 +38,7 @@ type DBM a = ReaderT DB.Connection IO a
 type DBAction = forall a. DBAction (DBM a) (TMVar a)
 
 closeDB :: DBM ()
-closeDB = ask >>= DB.close
+closeDB = ask >>= lift . DB.close
 
 
 
