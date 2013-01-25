@@ -28,8 +28,8 @@ writeQueue (Queue chanVar) item = do
 newEndpoint :: Queue a -> STM (Endpoint a)
 newEndpoint (Queue chanVar) = do
     currentLink <- readTVar chanVar
-    portVar <- newTVar currentLink
-    return $ Endpoint portVar
+    endpointVar <- newTVar currentLink
+    return $ Endpoint endpointVar
 
 readEndpoint :: Endpoint a -> STM a
 readEndpoint (Endpoint portVar) = do
