@@ -25,3 +25,5 @@ syntax: regexp
 /\.dist.*/.*
 /[^/]+\.hi$
 /[^/]+\.o$
+syntax: regexp
+^landfill-hs-public/src/simplehttp$
