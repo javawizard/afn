@@ -80,8 +80,8 @@ class File(object):
             path = os.path.join(*path_components)
         else:
             path = ""
-        # Make the pathname absolute, and normalize case
-        path = os.path.abspath(os.path.normcase(path))
+        # Make the pathname absolute
+        path = os.path.abspath(path)
         self._path = path
     
     @property
@@ -836,7 +836,7 @@ class File(object):
     def __cmp__(self, other):
         if not isinstance(other, File):
             return NotImplemented
-        return cmp(self.path, other.path)
+        return cmp(os.path.normcase(self.path), os.path.normcase(other.path))
     
     def __nonzero__(self):
         """
