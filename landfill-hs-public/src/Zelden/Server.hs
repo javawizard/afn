@@ -23,6 +23,8 @@ data EventData
     | RoomMessage RoomKey UserKey String
     | UserMessage UserKey String
     | UserStatus UserKey UserStatus
+    | SelfUserKey UserKey
+    | SwitchUserKey UserKey UserKey
 
 data UserStatus
     = Available
@@ -44,12 +46,14 @@ class Protocol a where
     getProtocolName :: a -> String
     initProtocol :: a -> IO ()
     likesPastebin :: a -> Bool
-    createConnection :: ProtocolConfig -> EventCallback -> IO ConnectionBox
+    createConnection :: EventCallback -> IO ConnectionBox
 
 class Connection a where
-    getProtocol :: a -> ProtocolBox
-    connect :: a -> IO ()
-    sendMessage :: a
+    -- getProtocol :: a -> ProtocolBox
+    setParam :: a -> String -> String -> IO ()
+    enable :: a -> IO ()
+    disable :: a -> IO ()
+    
 
 -- | A class of types that can receive events from connections. Connections are
 -- given a Controller to which they indicate events that happen.
