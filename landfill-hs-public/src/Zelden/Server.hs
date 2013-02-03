@@ -17,8 +17,8 @@ type RoomKey = String
 type UserKey = String
 
 data EventData
-    -- | Connection just connected. This shouldn't actually be issued until
-    -- 
+    -- | Connection just connected. Single parameter is our own user key. This
+    -- shouldn't be issued until we actually know what our user key is.
     = Connected UserKey
     -- | Connection was disconnected.
     | Disconnected
@@ -59,32 +59,32 @@ data EventData
     -- users should be assumed to have a status of Offline; UserStatus messages
     -- will be sent by the connection as soon as it knows the statuses of any
     -- users that it knows about. Note that, on some protocols, offline users
-    -- can still send user and room messages.
-    | UserStatus UserKey UserStatus
-    -- | We know our user key now. This must be sent relatively quickly after
-    -- Connected, and before any other events that use UserKeys; not doing so
-    -- will result in lots of exceptions within Zelden itself. I'm still
-    -- deciding whether this or UserSwitchedKey will be issued when our key
-    -- changes while we're still connected.
-    | SelfUserKey UserKey
-    -- | Another user that we previously knew under the first key is now known
-    -- under the second, and any further events mentioning the user will use
-    -- the second key. It's up to the user of the connection whether it wants
-    -- to start tracking the user under the second key or just log the event
-    -- under the first key and treat the user as a new user. (Zelden will
-    -- likely have a configuration option for choosing between the two
+    -- can still send user and room messages. Also note that some protocols may
+    -- send UserStatus Offline events on connect for users that are offline but
+    -- that still have a status message set. (The last parameter is the status
+    -- message of the user. Additional information, such as the user's mood on
+    -- protocols that support it, should go into the event's extra parameters.)
+    | UserStatus UserKey UserStatus (Maybe String)
+    -- | A user (possibly us or someone else) that we previously knew under the
+    -- first key is now known under the second, and any further events
+    -- mentioning the user will use the second key. It's up to the user
+    -- of the connection whether it wants to start tracking the user
+    -- under the second key or just log the event under the first
+    -- key and treat the user as a new user. (Zelden will likely
+    -- have a configuration option for choosing between the two
     -- behaviors. Most contemporary IRC clients seem to use the former
     -- behavior; I generally tend to prefer the latter.)
     | UserSwitchedKey UserKey UserKey
 
 data UserStatus
+    -- | User is available.
     = Available
-    -- | User is away. TODO: add some sort of reason to this, or merge Away and
-    -- Busy into Unavailable, which has a message and a reason (of type
-    -- UnavailableReason or some such, whose constructors would be things like
-    -- Away, Busy, etc.)
+    -- | User is away. Not yet sure how the date they went away should be
+    -- reported; for now, it'll go into the event's extra parameters.
     | Away
+    -- | User is busy and does not wish to be contacted.
     | Busy
+    -- | User is offline.
     | Offline
 
 -- | Reasons that a user (us or someone else) left a room. This does not
@@ -96,7 +96,7 @@ data PartReason
     -- | User was kicked by the specified user for the specified reason
     | Kicked UserKey String
 
--- | Alias for (,) that allows conveniently writing dictionaries as
+-- Alias for (,) that allows conveniently writing dictionaries as
 -- M.fromList ["a" := "b", "c" := "d"].
 -- (:=) :: a -> b -> (a, b)
 -- (:=) = (,)
