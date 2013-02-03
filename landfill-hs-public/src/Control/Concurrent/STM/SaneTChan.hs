@@ -2,8 +2,8 @@
 -- | A sane TChan-like library. It's quite similar to
 -- 'Control.Concurrent.STM.TChan', but it separates the read end and the write
 -- end of the channel into distinct types. This elegantly solves the problem
--- that 'Control.Concurrent.STM.TChan.newBroadcastTChan' solves in a much more
--- hackish way.
+-- that was solved in a much more hackish way by 
+-- 'Control.Concurrent.STM.TChan.newBroadcastTChan'.
 module Control.Concurrent.STM.SaneTChan (Queue, Endpoint, newQueue,
     newEndpoint, writeQueue, readEndpoint) where
 
