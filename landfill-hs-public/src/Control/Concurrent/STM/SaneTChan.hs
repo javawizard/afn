@@ -9,6 +9,7 @@ module Control.Concurrent.STM.SaneTChan (Queue, Endpoint, newQueue,
 
 import Control.Concurrent
 import Control.Concurrent.STM
+import Control.Monad (liftM)
 
 -- readTVar, writeTVar, atomically, retry, orElse
 

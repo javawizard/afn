@@ -2,17 +2,18 @@
 window.onload = function () {pageLoad();setSynopsis("mini_Control-Concurrent-STM-SaneTChan.html");};
 //]]>
 </script></head><body><div id="package-header"><ul class="links" id="page-menu"><li><a href="index.html">Contents</a></li><li><a href="doc-index.html">Index</a></li></ul><p class="caption empty">&nbsp;</p></div><div id="content"><div id="module-header"><table class="info"><tr><th>Safe Haskell</th><td>Safe-Infered</td></tr></table><p class="caption">Control.Concurrent.STM.SaneTChan</p></div><div id="description"><p class="caption">Description</p><div class="doc"><p>A sane TChan-like library. It's quite similar to
- Control.Concurrent.STM.TChan, but it separates the read end and the write
- end of the channel into distinct types.
+ <code>TChan</code>, but it separates the read end and the write
+ end of the channel into distinct types. This elegantly solves the problem
+ that <code><a href="Control-Concurrent-STM-TChan.html#v:newBroadcastTChan">newBroadcastTChan</a></code> solves in a much more
+ hackish way.
 </p></div></div><div id="synopsis"><p id="control.syn" class="caption expander" onclick="toggleSection('syn')">Synopsis</p><ul id="section.syn" class="hide" onclick="toggleSection('syn')"><li class="src short"><span class="keyword">data</span>  <a href="#t:Queue">Queue</a> a</li><li class="src short"><span class="keyword">data</span>  <a href="#t:Endpoint">Endpoint</a> a</li><li class="src short"><a href="#v:newQueue">newQueue</a> ::  STM (<a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a)</li><li class="src short"><a href="#v:newEndpoint">newEndpoint</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a -&gt; STM (<a href="Control-Concurrent-STM-SaneTChan.html#t:Endpoint">Endpoint</a> a)</li><li class="src short"><a href="#v:writeQueue">writeQueue</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a -&gt; a -&gt; STM ()</li><li class="src short"><a href="#v:readEndpoint">readEndpoint</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Endpoint">Endpoint</a> a -&gt; STM a</li></ul></div><div id="interface"><h1>Documentation</h1><div class="top"><p class="src"><span class="keyword">data</span>  <a name="t:Queue" class="def">Queue</a> a </p><div class="doc"><p>A queue that can be written to.
 </p></div></div><div class="top"><p class="src"><span class="keyword">data</span>  <a name="t:Endpoint" class="def">Endpoint</a> a </p><div class="doc"><p>An endpoint that can be used for reading items written to a queue.
-</p></div></div><div class="top"><p class="src"><a name="v:newQueue" class="def">newQueue</a> ::  STM (<a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a)</p><div class="doc"><p>Creates a new queue.
+</p></div></div><div class="top"><p class="src"><a name="v:newQueue" class="def">newQueue</a> ::  STM (<a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a)</p><div class="doc"><p>Creates a new <code><a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a></code>.
 </p></div></div><div class="top"><p class="src"><a name="v:newEndpoint" class="def">newEndpoint</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a -&gt; STM (<a href="Control-Concurrent-STM-SaneTChan.html#t:Endpoint">Endpoint</a> a)</p><div class="doc"><p>Creates a new endpoint that reads from the specified queue. The endpoint
  initially starts out empty; items will become available once writeQueue is
  called to write items to the queue.
-</p></div></div><div class="top"><p class="src"><a name="v:writeQueue" class="def">writeQueue</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a -&gt; a -&gt; STM ()</p><div class="doc"><p>Writes the specified item to the specified queue. The item will then be
- available for reading from any endpoints previously created with
- newEndpoint.
-</p></div></div><div class="top"><p class="src"><a name="v:readEndpoint" class="def">readEndpoint</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Endpoint">Endpoint</a> a -&gt; STM a</p><div class="doc"><p>Reads the next value from the specified endpoint, retrying if no value is
+</p></div></div><div class="top"><p class="src"><a name="v:writeQueue" class="def">writeQueue</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Queue">Queue</a> a -&gt; a -&gt; STM ()</p><div class="doc"><p>Write an item to a queue. The item will then be available for reading from
+ any endpoints previously created with newEndpoint.
+</p></div></div><div class="top"><p class="src"><a name="v:readEndpoint" class="def">readEndpoint</a> ::  <a href="Control-Concurrent-STM-SaneTChan.html#t:Endpoint">Endpoint</a> a -&gt; STM a</p><div class="doc"><p>Read the next value from the specified endpoint, retrying if no value is
  currently available.
 </p></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.11.0</p></div></body></html>
