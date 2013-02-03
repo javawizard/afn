@@ -1,9 +1,11 @@
+{-# LANGUAGE ExistentialQuantification, RankNTypes #-} 
 
 module Zelden.Server where
 
 import Zelden.IO
-import Database.HDBC as DB
+-- import Database.HDBC as DB
 import qualified Data.Map as M
+import Control.Monad.Trans.Reader
 
 
 data ConnectionBox = ConnectionBox (forall a. Connection a => a)
@@ -15,8 +17,9 @@ type RoomKey = String
 type UserKey = String
 
 data EventData
-    -- | Connection just connected.
-    = Connected
+    -- | Connection just connected. This shouldn't actually be issued until
+    -- 
+    = Connected UserKey
     -- | Connection was disconnected.
     | Disconnected
     -- | User joined room, possibly us or someone else. Note that this can
@@ -95,9 +98,9 @@ data PartReason
 
 -- | Alias for (,) that allows conveniently writing dictionaries as
 -- M.fromList ["a" := "b", "c" := "d"].
-(:=) :: a -> b -> (a, b)
-(:=) = (,)
-infixl 1 :=
+-- (:=) :: a -> b -> (a, b)
+-- (:=) = (,)
+-- infixl 1 :=
 
 
 
@@ -107,7 +110,7 @@ class Protocol a where
     getProtocolName :: a -> String
     initProtocol :: a -> IO ()
     likesPastebin :: a -> Bool
-    createConnection :: EventCallback -> IO ConnectionBox
+    createConnection :: a -> EventCallback -> IO ConnectionBox
 
 class Connection a where
     -- getProtocol :: a -> ProtocolBox
@@ -131,12 +134,12 @@ class Controller a where
 
 
 
-type DBM a = ReaderT DB.Connection IO a
+-- type DBM a = ReaderT DB.Connection IO a
 
-type DBAction = forall a. DBAction (DBM a) (TMVar a)
+-- type DBAction = forall a. DBAction (DBM a) (TMVar a)
 
-closeDB :: DBM ()
-closeDB = ask >>= lift . DB.close
+-- closeDB :: DBM ()
+-- closeDB = ask >>= lift . DB.close
 
 
 

@@ -1,6 +1,8 @@
 
 module Zelden.IO where
 
+import System.IO
+import Control.Monad (liftM)
 import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.STM.SaneTChan
@@ -12,7 +14,7 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
     forkIO $ do
         let doneWithSocket = do
             -- Send Nothing to the input queue
-            writeQueue inputQueue Nothing
+            atomically $ writeQueue inputQueue Nothing
             -- Close the handle, just in case
             hClose handle
             return Nothing
@@ -22,7 +24,7 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
             case line of
                 Nothing -> return ()
                 Just l -> do
-                    atomically $ writeQueue inputQueue $ inputConverter l
+                    atomically $ writeQueue inputQueue $ Just $ inputConverter l
                     process
         process
     -- Start output thread
@@ -36,9 +38,10 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
                 -- Otherwise, write the (converted) message out and read another
                 -- item from the endpoint
                 Just m -> do
-                    hPutStrLn $ outputConverter m
+                    hPutStrLn handle $ outputConverter m
                     process
         process
+    return ()
 
 streamSocket' :: Handle -> (String -> i) -> (o -> String) -> IO (Endpoint (Maybe i), Queue (Maybe o))
 streamSocket' handle inputConverter outputConverter = do
