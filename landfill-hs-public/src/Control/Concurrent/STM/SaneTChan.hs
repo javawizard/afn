@@ -5,7 +5,8 @@
 -- that was solved in a much more hackish way by 
 -- 'Control.Concurrent.STM.TChan.newBroadcastTChan'.
 module Control.Concurrent.STM.SaneTChan (Queue, Endpoint, newQueue,
-    newEndpoint, writeQueue, readEndpoint) where
+    newEndpoint, writeQueue, readEndpoint, tryReadEndpoint, peekEndpoint,
+    tryPeekEndpoint, unGetEndpoint, isEmptyEndpoint, cloneEndpoint) where
 
 import Control.Concurrent
 import Control.Concurrent.STM
