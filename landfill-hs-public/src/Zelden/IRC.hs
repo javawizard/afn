@@ -4,18 +4,29 @@ module Zelden.IRC where
 import Zelden.Protocol
 import Control.Concurrent.STM
 import Control.Concurrent.STM.SaneTChan
+import qualified Network.IRC.Base as I
+import qualified Data.Map as M
 
 data IRCProtocol = IRCProtocol
 
 data IRCConnection
     = IRCConnection {
-        
+        getConfigVars :: M.Map String String
+    }
+
+data IRCSession
+    = IRCSession {
+        getIrcConnection :: IRCConnection,
+        getReader :: Endpoint I.Message,
+        getWriter :: Queue I.Message
     }
 
 instance Protocol IRCProtocol where
     likesPastebin _ = True
     createConnection _ callback = do
         return IRCConnection
+
+type IRCM a = ReaderT IRCSession (MaybeT IO)
 
 {-
 So, how are we going to actually do connections?
@@ -114,6 +125,12 @@ read function even simpler; could also have the ReaderT contain a list of
 timeout variables for read to additionally make use of, as well as the amount
 of time that the timeout it creates should be for. Probably should use a custom
 data type for this.
+
+We ought also to have the logic for processing ordinary everyday messages from
+the connection be inside MaybeT as well, so that the few messages that require
+us to stop and wait for other messages (such as the initial topic on a join; we
+wait for the part that indicates who initially set it) can just operate as
+typical calls to read and still abort properly when we're asked to disconnect.
 -}
 
 instance Connection IRCConnection where
