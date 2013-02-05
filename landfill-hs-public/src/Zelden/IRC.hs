@@ -6,19 +6,23 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.SaneTChan
 import qualified Network.IRC.Base as I
 import qualified Data.Map as M
+import Zelden.Delay
 
 data IRCProtocol = IRCProtocol
 
 data IRCConnection
     = IRCConnection {
-        getConfigVars :: M.Map String String
+        connConfigVars :: M.Map String String
+        connEnabledVar :: TVar Boolean
+        connAliveVar :: TVar Boolean
     }
 
 data IRCSession
     = IRCSession {
-        getIrcConnection :: IRCConnection,
-        getReader :: Endpoint I.Message,
-        getWriter :: Queue I.Message
+        sessionConnection :: IRCConnection,
+        sessionReader :: Endpoint I.Message,
+        sessionWriter :: Queue I.Message,
+        sessionReadTimeout :: Maybe Int
     }
 
 instance Protocol IRCProtocol where
@@ -132,6 +136,56 @@ us to stop and wait for other messages (such as the initial topic on a join; we
 wait for the part that indicates who initially set it) can just operate as
 typical calls to read and still abort properly when we're asked to disconnect.
 -}
+
+readMessage :: IRCM Message
+readMessage = do
+    session <- ask
+    -- Make a timeout variable to time out reads that take too long
+    -- TODO: Pretty sure this can be collapsed into one line using Maybe as a
+    -- monad (or MaybeT)
+    timeoutVar <- liftIO $ case sessionReadTimeout session of
+        (Just timeout) -> liftM Just $ makeTimeout timeout
+        Nothing        -> return Nothing
+    -- Read the next message
+    maybeMessage <- liftIO $ atomically $ do
+        -- Try to read a message
+        message <- tryReadEndpoint $ sessionReader session
+        -- See if we've timed out yet, if a timeout was specified
+        timedOut <- case timeoutVar of
+            (Just v) -> readTVar v
+            Nothing  -> return False
+        -- See if we're still enabled and alive
+        
+        case message of
+            -- If we got a message, return it
+            (Just m) -> return $ Just m
+            -- We didn't get a message, so see if we've timed out yet
+            Nothing  -> if timedOut
+                -- Timed out; return Nothing
+                then return Nothing
+                -- Didn't time out; go back to waiting for a message
+                else retry
+    -- Now see if we got a message or if we timed out
+    case maybeMessage of
+        -- Got a message; return it
+        (Just m) -> return m
+        -- Timed out; bail out of the IRC session
+        Nothing  -> bail
+
+
+
+-- | Bail out of an IRC session. This jumps up to the point where the IRC
+-- session was started. Right now this is lift $ MaybeT $ return Nothing, but
+-- I may change IRCM to use EitherT and provide a reason for bailing from the
+-- computation, in which case bail will change to accept a reason argument.
+bail :: IRCM ()
+bail = lift $ MaybeT $ return Nothing
+
+writeMessage :: Message -> IRCM ()
+writeMessage message = do
+    session <- ask
+    liftIO $ atomically $ writeQueue (sessionWriter session) message
+
 
 instance Connection IRCConnection where
 
