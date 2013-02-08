@@ -14,7 +14,6 @@ data IRCConnection
     = IRCConnection {
         connConfigVars :: M.Map String String
         connEnabledVar :: TVar Boolean
-        connAliveVar :: TVar Boolean
     }
 
 data IRCSession
@@ -25,12 +24,17 @@ data IRCSession
         sessionReadTimeout :: Maybe Int
     }
 
+data DisconnectReason
+    = SocketClosed
+    | ReadTimedOut
+    
+
 instance Protocol IRCProtocol where
     likesPastebin _ = True
     createConnection _ callback = do
         return IRCConnection
 
-type IRCM a = ReaderT IRCSession (MaybeT IO)
+type IRCM a = ReaderT IRCSession (EitherT DisconnectReason IO)
 
 {-
 So, how are we going to actually do connections?
@@ -154,35 +158,59 @@ readMessage = do
         timedOut <- case timeoutVar of
             (Just v) -> readTVar v
             Nothing  -> return False
-        -- See if we're still enabled and alive
-        
+        -- See if we're still enabled
+        enabled <- readTVar $ connEnabledVar $ sessionConnection session
         case message of
             -- If we got a message, return it
-            (Just m) -> return $ Just m
+            (Just m) -> return $ Right m
             -- We didn't get a message, so see if we've timed out yet
             Nothing  -> if timedOut
-                -- Timed out; return Nothing
-                then return Nothing
+                -- Timed out
+                then return $ Left ReadTimedOut
+                else if not enabled
+                -- Disabled
+                then return $ Left ConnectionDisabled
                 -- Didn't time out; go back to waiting for a message
                 else retry
     -- Now see if we got a message or if we timed out
     case maybeMessage of
         -- Got a message; return it
-        (Just m) -> return m
+        (Right m)     -> return m
         -- Timed out; bail out of the IRC session
-        Nothing  -> bail
+        (Left reason) -> bail reason
+
+-- | Wait for a message to arrive, then return it without removing it from the
+-- queue.
+peekMessage :: IRCM Message
+peekMessage = do
+    message <- readMessage
+    session <- ask
+    unGetEndpoint (sessionReader session) message
+    return message
+
+runSession :: IRCM ()
+runSession = do
+    -- Write the user message. We'll worry about allowing the user to configure
+    -- the various parameters later.
+    writeMessage $ Message Nothing "USER" $ replicate 4 "zelden"
+    -- Write a NICK message, then peek the next message. If it's a
+    -- nick-already-in-use message, read it off the queue and try again.
+    let chooseNick = do
+        ...
+    chooseNick
+    -- Now read off the messages we've received. TODO: Issue Connected
 
 
 
--- | Bail out of an IRC session. This jumps up to the point where the IRC
--- session was started. Right now this is lift $ MaybeT $ return Nothing, but
--- I may change IRCM to use EitherT and provide a reason for bailing from the
--- computation, in which case bail will change to accept a reason argument.
-bail :: IRCM ()
-bail = lift $ MaybeT $ return Nothing
+-- | Bail out of an IRC session.
+bail :: DisconnectReason -> IRCM ()
+bail reason = lift $ EitherT $ return $ Left reason
 
 writeMessage :: Message -> IRCM ()
 writeMessage message = do
+    -- We could check if the connection's been disabled before writing, but
+    -- a write will essentially always be followed by a read at some point, so
+    -- there's not much point.
     session <- ask
     liftIO $ atomically $ writeQueue (sessionWriter session) message
 
