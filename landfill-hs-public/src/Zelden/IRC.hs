@@ -188,6 +188,11 @@ peekMessage = do
     unGetEndpoint (sessionReader session) message
     return message
 
+getConfig :: String -> String -> IRCM String
+getConfig name def = do
+    session <- ask
+    return $ M.findWithDefault def name $ connConfigVars $ sessionConnection session
+
 runSession :: IRCM ()
 runSession = do
     -- Write the user message. We'll worry about allowing the user to configure
@@ -196,7 +201,7 @@ runSession = do
     -- Write a NICK message, then peek the next message. If it's a
     -- nick-already-in-use message, read it off the queue and try again.
     let chooseNick = do
-        ...
+        writeMessage $ Message Nothing "NICK" 
     chooseNick
     -- Now read off the messages we've received. TODO: Issue Connected
 
