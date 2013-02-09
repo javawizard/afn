@@ -24,6 +24,7 @@ main = do
             logout
             return accounts
         putStrLn "Inserting into database"
+        
         putStrLn "Done"
         threadDelay (1800*1000*1000)
         loop
