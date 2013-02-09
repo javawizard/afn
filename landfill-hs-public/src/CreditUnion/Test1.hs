@@ -1,6 +1,6 @@
 
 module CreditUnion.Test1 where
-import CreditUnion.Client (login, getAccounts, getPass')
+import CreditUnion.Client (login, getAccounts, getPass', logout)
 import System.IO (readFile)
 import Control.Monad (liftM)
 import Test.WebDriver
@@ -13,6 +13,7 @@ main = do
         login "javawizard" questions pass
         accounts <- getAccounts
         liftIO $ putStrLn $ show accounts
+        logout
     
 
 

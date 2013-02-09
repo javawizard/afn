@@ -22,7 +22,7 @@ getPass' = getPass "Password: "
 login :: String -> [(String, String)] -> String -> WD ()
 login username questions password = do
     openPage "https://my.ucreditu.com/"
-    liftIO $ threadDelay (5*1000*1000)
+    liftIO $ threadDelay (7*1000*1000)
     findElem (ById "UsernameField") >>= (sendKeys $ pack username)
     findElem (ById "SubmitNext") >>= click
     findElem (ById "PasswordField") >>= (sendKeys $ pack password)
