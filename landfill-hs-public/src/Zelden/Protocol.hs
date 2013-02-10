@@ -102,6 +102,9 @@ data ActionData
     | PartRoom RoomKey String
     | SendUserMessage UserKey String
     | SendRoomMessage UserKey String
+    | Enable
+    | Disable
+    | SetParam String String
 
 -- Alias for (,) that allows conveniently writing dictionaries as
 -- M.fromList ["a" := "b", "c" := "d"].
@@ -111,7 +114,13 @@ data ActionData
 
 
 
-type EventCallback = ConnectionBox -> Event -> IO ()
+type EventCallback = Event -> IO ()
+
+-- I ended up simplifying Protocol and Connection down to a simple message
+-- passing construct, with Actions being sent in and Events being sent out.
+-- At this point, it might be a good idea to factor them out into simple data
+-- types encapsulating functions instead of having them be full-blown classes.
+-- That would also get rid of the need for things like ConnectionBox.
 
 class Protocol a where
 --    getProtocolName :: a -> String
@@ -121,13 +130,7 @@ class Protocol a where
 
 class Connection a where
     -- getProtocol :: a -> ProtocolBox
-    setParam :: a -> String -> String -> IO ()
-    enable :: a -> IO ()
-    disable :: a -> IO ()
-    sendUserMessage :: a -> UserKey -> String -> IO ()
-    sendRoomMessage :: a -> RoomKey -> String -> IO ()
-    joinRoom :: a -> RoomKey -> IO ()
-    partRoom :: a -> RoomKey -> String -> IO ()
+    sendAction :: Action -> IO ()
 
 
 

@@ -14,6 +14,8 @@ data IRCConnection
     = IRCConnection {
         connConfigVars :: M.Map String String
         connEnabledVar :: TVar Boolean
+        connSession :: TVar (Maybe IRCSession)
+        connHandler :: EventCallback -- Event -> IO ()
     }
 
 data IRCSession
@@ -21,12 +23,15 @@ data IRCSession
         sessionConnection :: IRCConnection,
         sessionReader :: Endpoint I.Message,
         sessionWriter :: Queue I.Message,
-        sessionReadTimeout :: Maybe Int
+        sessionReadTimeout :: Maybe Int,
+        sessionVars :: TVar (M.Map String String),
+        sessionNick :: TVar String
     }
 
 data DisconnectReason
     = SocketClosed
     | ReadTimedOut
+    | TooManyNickTries
     
 
 instance Protocol IRCProtocol where
@@ -200,16 +205,81 @@ runSession = do
     writeMessage $ Message Nothing "USER" $ replicate 4 "zelden"
     -- Write a NICK message, then peek the next message. If it's a
     -- nick-already-in-use message, read it off the queue and try again.
-    let chooseNick = do
-        writeMessage $ Message Nothing "NICK" 
-    chooseNick
-    -- Now read off the messages we've received. TODO: Issue Connected
+    let chooseNick nextNumber = do
+        -- Send the nick command
+        let nickToTry = "zelden" ++ fromMaybe "" (liftM show nextNumber)
+        writeMessage $ Message Nothing "NICK" [nickToTry]
+        -- See if the response is 433 (Nick already in use). TODO: Might also
+        -- want to check for invalid nick chars here too, and bail if that's
+        -- what we get
+        response <- peekMessage
+        case response of
+            (Message _ "433" _) -> do
+                -- Already in use. Read the already-in-use message that we
+                -- just peeked
+                readMessage
+                -- Then try again, with a number appended or incremented, or
+                -- bail if we've already tried 20 times. TODO:
+                -- ought to make the list of nicks to try configurable, and
+                -- resort to incrementing numbers if none of them work.
+                if (fromMaybe 0 nextNumber) > 20
+                    then bail TooManyNickTries
+                    else chooseNick $ fromMaybe 1 $ liftM (+ 1) nextNumber
+            _ -> do
+                -- It worked! Issue the Connected event with the nick that
+                -- made it (and store the nick locally), then move on.
+                session <- getSession
+                writeVar (sessionNick session) nickToTry
+                sendEvent $ Connected nickToTry
+                return ()
+    chooseNick Nothing
+    -- Now read off messages until we hit a 376 End of MOTD, and process each
+    -- one as we read it.
+    let readToMotd = do
+        message <- readMessage
+        case message of
+            -- If it's a 376, we're done here
+            (Message _ "376" _) -> return ()
+            -- If it's 005, then it's server info, so parse and store it
+            (Message _ "005" (_:options')) -> do
+                -- Strip the "are supported by this server" bit
+                let options = init options'
+                -- Split the options up, and stick each one into the options map
+                forM options $ \option -> do
+                    -- Store no-value options with an empty string value
+                    k:vs <- splitOn "=" option
+                    let v = fromMaybe "" $ listToMaybe vs
+                    session <- getSession
+                    modifyVar (sessionVars session) $ M.insert k v
+                readToMotd
+            -- If it's anything else, ignore it for now
+            _ -> return ()
+    readToMotd
+    -- We're now alive and running! Now we sit in a loop and try to read
+    -- messages from the server and read actions that we need to run.
+    forever $ do
+        -- TODO: Pick up here. We need a way to read messages in STM, or
+        -- perhaps a readMessage-like thing for also reading actions from the
+        -- list of actions to be processed. Or maybe have them share the same
+        -- queue in some sort of manner and just read from that. Needs thought.
 
 
 
--- | Bail out of an IRC session.
+-- | Bail out of an IRC session. We do this when the remote end closes its
+-- connection or when we're told to disable ourselves, or things like that.
 bail :: DisconnectReason -> IRCM ()
 bail reason = lift $ EitherT $ return $ Left reason
+
+bailIf :: DisconnectReason -> Bool -> IRCM ()
+bailIf reason test = if test then bail reason else return ()
+
+getSession :: IRCM IRCSession
+getSession = ask
+
+sendEvent :: Event -> IRCM ()
+sendEvent event = do
+    session <- ask
+    liftIO $ (connHandler $ sessionConnection session) event 
 
 writeMessage :: Message -> IRCM ()
 writeMessage message = do

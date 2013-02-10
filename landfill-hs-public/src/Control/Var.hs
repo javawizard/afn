@@ -11,6 +11,7 @@ import Control.Concurrent.STM
 import Control.Monad.Trans
 import Data.IORef
 
+-- TODO: Is the fundef necessary?
 class Var v m a | v -> a where
     newVar :: a -> m v
     readVar :: v -> m a
