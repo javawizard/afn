@@ -1,5 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances, FunctionalDependencies, OverlappingInstances #-}
 -- I'd really like to do away with the UndecidableInstances bit, but the
 -- STM-to-IO Var instance requires it. TODO: Is there a better way to do it?
 
@@ -11,7 +11,7 @@ import Control.Concurrent.STM
 import Control.Monad.Trans
 import Data.IORef
 
-class Var v m a where
+class Var v m a | v -> a where
     newVar :: a -> m v
     readVar :: v -> m a
     writeVar :: v -> a -> m ()
