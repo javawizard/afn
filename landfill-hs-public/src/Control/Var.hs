@@ -24,13 +24,12 @@ instance Var (TVar a) STM a where
     writeVar = writeTVar
     modifyVar = modifyTVar
 
--- | Any var (including TVars) that operates in STM also operates in IO by
--- wrapping each action with a call to @atomically@
-instance (MonadIO m, Var v STM a) => Var v m a where
-    newVar a = liftIO $ atomically $ newVar a
-    readVar v = liftIO $ atomically $ readVar v
-    writeVar v a = liftIO $ atomically $ writeVar v a
-    modifyVar v f = liftIO $ atomically $ modifyVar v f
+-- | TVars also operate in IO
+instance (MonadIO m) => Var (TVar a) m a where
+    newVar = newTVarIO
+    readVar = readTVarIO
+    writeTVar v a = liftIO $ atomically $ writeTVar v a
+    modifyTVar v f = liftIO $ atomically $ modifyTVar v f
 
 -- | IORefs operate in IO
 instance (MonadIO m) => Var (IORef a) m a where
