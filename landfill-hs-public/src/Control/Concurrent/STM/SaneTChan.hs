@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- | A sane TChan-like library. It's quite similar to
 -- 'Control.Concurrent.STM.TChan', but it separates the read end and the write
@@ -99,6 +100,26 @@ cloneEndpoint (Endpoint endpointVar) = do
     currentLink <- readTVar endpointVar
     newEndpointVar <- newTVar currentLink
     return $ Endpoint newEndpointVar
+
+readSkipEndpoint :: Endpoint a -> (a -> Bool) -> STM a
+readSkipEndpoint (Endpoint endpointVar) condition = do
+    link <- readTVar endpointVar
+    (value, newLink) <- go link
+    writeTVar endpointVar newLink
+    return value
+    where
+        go link = do
+            item <- readTVar link
+            case item of
+                Empty -> retry
+                (Item value nextLink)
+                    | condition value -> return (value, nextLink)
+                    | otherwise -> do
+                        (resultValue, resultLink) <- go nextLink
+                        newLink <- newTVar $ Item value resultLink
+                        return (resultValue, newLink)
+
+            
 
  
      
