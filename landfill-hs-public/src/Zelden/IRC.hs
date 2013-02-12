@@ -3,6 +3,7 @@ module Zelden.IRC where
 
 import Zelden.Protocol
 import Control.Concurrent.STM
+import Control.Concurrent.STM.Utils
 import Control.Concurrent.STM.SaneTChan
 import qualified Network.IRC.Base as I
 import qualified Data.Map as M
@@ -144,6 +145,25 @@ the connection be inside MaybeT as well, so that the few messages that require
 us to stop and wait for other messages (such as the initial topic on a join; we
 wait for the part that indicates who initially set it) can just operate as
 typical calls to read and still abort properly when we're asked to disconnect.
+
+Ok, need to redo the message reading code a bit.
+
+First off, we need to be able to handle pings and respond to them with pongs.
+I'm pretty certain they're the only messages that can happen sporadically.
+
+Actually, maybe we should have something that's part of the session that stores
+a list of functions waiting to trap messages coming in from the server...
+
+Although that's probably too much for now. So how about we just write a simple
+function that reads from the action queue and from the event queue and stuff.
+
+Although we still need to read from the action queue even when we're not
+connected to a server...
+
+Maybe we should have some sort of state somewhere that doesn't get erased when
+we abort with EitherT...
+
+
 -}
 
 readMessage :: IRCM Message
