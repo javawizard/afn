@@ -79,7 +79,11 @@ data UserStatus
     -- | User is available.
     = Available
     -- | User is away. Not yet sure how the date they went away should be
-    -- reported; for now, it'll go into the event's extra parameters.
+    -- reported; for now, it'll go into the event's extra parameters. TODO:
+    -- Should statuses have extra data associated with them instead of just
+    -- data tacked onto the event? Then things like the connection manager
+    -- facility I want to write could store a status's extra information along
+    -- with the status itself.
     | Away
     -- | User is busy and does not wish to be contacted.
     | Busy
@@ -98,12 +102,22 @@ data PartReason
 data Action = Action ActionData (M.Map String String)
 
 data ActionData
+    -- | Joins a room, if the protocol is currently connected.
     = JoinRoom RoomKey
+    -- | Parts a room.
     | PartRoom RoomKey String
+    -- | Sends a message to a specific user.
     | SendUserMessage UserKey String
-    | SendRoomMessage UserKey String
+    -- | Sends a message to a specific room.
+    | SendRoomMessage RoomKey String
+    -- | Enables the protocol. The protocol should connect as soon as possible.
     | Enable
+    -- | Disables the protocol. The protocol should disconnect immediately.
     | Disable
+    -- | Shuts down the protocol. The protocol should release all resources
+    -- associated with it and stop any threads it may have started.
+    | Shutdown
+    -- | Sets a protocol parameter.
     | SetParam String String
 
 -- Alias for (,) that allows conveniently writing dictionaries as

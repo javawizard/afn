@@ -312,7 +312,7 @@ writeMessage message = do
     liftIO $ atomically $ writeQueue (sessionWriter session) message
 
 
-instance Connection IRCConnection where
+instance Connection IRCConnection
 
 
 
@@ -335,13 +335,27 @@ instance Connection IRCConnection where
 
 
 
+{-
+If we're enabled, try to connect, and if we do, enter the loop that processes
+connection stuff. More later.
 
+Once we disconnect, or if we're not enabled, read and process actions until we
+either get an Enabled action, in which case start over after changing enabled
+to true, or we get a Shutdown action, in which case bail out of the whole
+thing.
+-}
 
-run2 :: Endpoint Action -> (Event -> IO ()) -> IO ()
-run2 actionEndpoint eventHandler = do
-    currentlyEnabled <- newTVar False
-    let mainLoop = do
-    mainLoop
+run2 :: Endpoint Action -> (Event -> IO ()) -> ContT () IO ()
+run2 actionEndpoint eventHandler enabledVar = loop $ \continueOuter breakOuter -> do
+    enabled <- atomically $ readTVar enabledVar
+    when enabled $ callCC \bailConnection -> do
+        maybeSocket <- openSocket "irc.opengroove.org" 6667
+        when (not $ isJust maybeSocket) bailConnection
+        let (Just (inputEndpoint, outputQueue)) = maybeSocket
+        
+    action <- atomically $ readEndpoint actionEndpoint
+    case action of
+        Enable -> 
 
 
 
