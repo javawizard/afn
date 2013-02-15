@@ -8,6 +8,8 @@ import Control.Concurrent.STM.SaneTChan
 import qualified Network.IRC.Base as I
 import qualified Data.Map as M
 import Zelden.Delay
+import Control.Monad.Trans.Cont
+import Zelden.Utils
 
 data IRCProtocol = IRCProtocol
 
@@ -311,4 +313,73 @@ writeMessage message = do
 
 
 instance Connection IRCConnection where
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+run2 :: Endpoint Action -> (Event -> IO ()) -> IO ()
+run2 actionEndpoint eventHandler = do
+    currentlyEnabled <- newTVar False
+    let mainLoop = do
+    mainLoop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
