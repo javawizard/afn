@@ -346,12 +346,13 @@ thing.
 -}
 
 run2 :: Endpoint Action -> (Event -> IO ()) -> ContT () IO ()
-run2 actionEndpoint eventHandler enabledVar = loop $ \continueOuter breakOuter -> do
+run2 actionQueue actionEndpoint eventHandler enabledVar = loop $ \continueOuter breakOuter -> do
     enabled <- atomically $ readTVar enabledVar
     when enabled $ callCC \bailConnection -> do
-        maybeSocket <- openSocket "irc.opengroove.org" 6667
+        maybeSocket <- openSocket "irc.opengroove.org" 6667 actionQueue
         when (not $ isJust maybeSocket) bailConnection
-        let (Just (inputEndpoint, outputQueue)) = maybeSocket
+        let (Just outputQueue) = maybeSocket
+        
         
     action <- atomically $ readEndpoint actionEndpoint
     case action of
