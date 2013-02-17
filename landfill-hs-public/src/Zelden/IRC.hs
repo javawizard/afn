@@ -361,20 +361,25 @@ run2 actionQueue actionEndpoint eventHandler enabledVar = loop $ \continueOuter 
 
 data IRCConnection2
     = IRCConnection2 {
-        inEndpoint :: Endpoint Message,
-        outQueue :: Queue Message,
+        inEndpoint :: Endpoint (Maybe Message),
+        outQueue :: Queue (Maybe Message),
         -- Nothing until we get a nick from the server
         cNick :: Maybe String
     }
 
-data Thing = Timeout | M Message | A Action
+data Thing = Timeout | M Message | A Action | D
     deriving (Read, Show)
 
 run3 :: Queue (Either Message Action) ->  -> (Event -> IO ()) -> ContT () IO ()
 run3 actionEndpoint handleEvent = do
     connVar <- atomically $ newTVar (Nothing :: Maybe IRCConnection2)
-    messageEndpointVar <- atomically $ newTVar (Nothing :: Maybe (Endpoint Message))
     enabledVar <- atomically $ newTVar False
+    -- A var that holds a var that holds a boolean. The inner var is created
+    -- by registerDelay (which sets it to True after a certain delay), or
+    -- manually created with newTVar False to cause the delay to expire
+    -- immedately. The outer var, then, holds the current inner var we're
+    -- dealing with; it gets set to a new inner var every time we call
+    -- registerDelay or manually set it to newTVar False.
     connectTimeoutVar <- atomically $ newTVar True >>= newTVar
     loop $ \continueOuter breakOuter -> do
         enabled <- atomically $ readTVar enabledVar
@@ -387,7 +392,11 @@ run3 actionEndpoint handleEvent = do
                 then do
                     delayVar <- registerDelay 20000000 -- 20 seconds. TODO: Make this configurable
                     return Timeout                                        -- 
-                else liftM A (readEndpoint actionEndpoint) `orElse` liftM M (maybe retry (readEndpoint . inEndpoint) cm)
+                else liftM A (readEndpoint actionEndpoint) `orElse` do
+                    maybeNextMessage <- maybe retry (readEndpoint . inEndpoint) cm
+                    case maybeNextMessage of
+                        Nothing -> D
+                        Just m -> M m
         case (nextThing, conn) of
             (Timeout, Nothing) -> undefined -- TODO: Connect here. Also have
                 -- some sort of timeout support for issuing ISON messages, but
@@ -396,18 +405,27 @@ run3 actionEndpoint handleEvent = do
                 -- support in some manner, maybe watchlist all (or as many as
                 -- we can) of the user's contacts, which would probably require
                 -- Zelden to somehow give us that information. 
-            (A (Action _ (JoinRoom room)), Just c) -> do
-                writeQueue $ Message Nothing "JOIN" [room]
-            (A (Action _ (PartRoom room)), Just c) -> do
+            (A (Action _ (JoinRoom room)), Just IRCConnection2 {outQueue=q}) -> do
+                writeQueue q $ Message Nothing "JOIN" [room]
+            (A (Action _ (PartRoom room)), Just IRCConnection2 {outQueue=q}) -> do
                 writeQueue $ Message Nothing "PART" [room]
-            (A (Action _ (SendUserMessage user message)), Just c) -> do
+            (A (Action _ (SendUserMessage user message)), Just IRCConnection2 {outQueue=q}) -> do
                 writeQueue $ Message Nothing "PRIVMSG" [user, message]
-            (A (Action _ (SendRoomMessage room message)), Just c) -> do
+            (A (Action _ (SendRoomMessage room message)), Just IRCConnection2 {outQueue=q}) -> do
                 writeQueue $ Message Nothing "PRIVMSG" [room, message]
-            (A (Action _ (SwitchSelfKey key)), Just c) -> do
+            (A (Action _ (SwitchSelfKey key)), Just IRCConnection2 {outQueue=q}) -> do
                 writeQueue $ Message Nothing "NICK" [key]
-            (A (Action _ (SetRoomTopic room topic)), Just c) -> do
+            (A (Action _ (SetRoomTopic room topic)), Just IRCConnection2 {outQueue=q}) -> do
                 writeQueue $ Message Nothing "TOPIC" [room, topic]
+            (A (Action _ Shutdown), c) -> do
+                case c of
+                    Nothing -> return ()
+                    Just IRCConnection2 {outQueue=outQueue, cNick=maybeCurrentNick} -> do
+                        writeQueue outQueue Nothing
+                        when (isJust maybeCurrentNick) $ handleEvent $ Event M.empty Disconnected
+                breakOuter
+            (M (Message _ "PING" [pingData], IRCConnection2 {outQueue=q}) -> do
+                writeQueue q $ Message Nothing "PONG" [pingData]
             (M (Message _ "NICK" [nick]), Just (c@IRCConnection2 {cNick=Nothing})) -> do
                 -- Initial NICK message, so notify Connected and set our nick
                 atomically $ writeTVar connVar $ c {cNick=Just nick}
@@ -440,7 +458,18 @@ run3 actionEndpoint handleEvent = do
                     -- recipients when snooping in on direct messages when an
                     -- op...
                     handleEvent $ Event M.empty $ RoomMessage recipient fromNick message
+            (D, Just (c@IRCConnection2 {cNick=maybeCurrentNick}) -> do
+                -- Disconnected. If we have a nick (which means we've sent Connected),
+                -- send Disconnected. Then nix out the connection. If we don't
+                -- actually have a connection, then we shouldn't be getting
+                -- this in the first place. We'll also clear the timeout to
+                -- cause an immediate attempt to reconnect if we're enabled.
+                when (isJust maybeCurrentNick) $ handleEvent $ Event M.empty Disconnected
+                atomically $ writeTVar connVar Nothing >> newTVar False >>= writeTVar connectTimeoutVar
+                
             (t, cm) -> putStrLn $ "IRC: Unhandled thing from connection " ++ show cm ++ ": " ++ show t
+        continueOuter
+    putStrLn "IRC loop exiting."
 
 
 waitForTrue :: a -> TVar Bool -> STM a
