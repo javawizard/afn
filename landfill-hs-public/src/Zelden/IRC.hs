@@ -352,11 +352,97 @@ run2 actionQueue actionEndpoint eventHandler enabledVar = loop $ \continueOuter 
         maybeSocket <- openSocket "irc.opengroove.org" 6667 actionQueue
         when (not $ isJust maybeSocket) bailConnection
         let (Just outputQueue) = maybeSocket
-        
+        queue endpoint
         
     action <- atomically $ readEndpoint actionEndpoint
     case action of
-        Enable -> 
+        Enable -> undefined
+
+
+data IRCConnection2
+    = IRCConnection2 {
+        inEndpoint :: Endpoint Message,
+        outQueue :: Queue Message,
+        currentNick :: String
+    }
+
+data Thing = Timeout | M Message | A Action
+    deriving (Read, Show)
+
+run3 :: Queue (Either Message Action) ->  -> (Event -> IO ()) -> ContT () IO ()
+run3 actionEndpoint handleEvent = do
+    connVar <- atomically $ newTVar (Nothing :: Maybe IRCConnection2)
+    messageEndpointVar <- atomically $ newTVar (Nothing :: Maybe (Endpoint Message))
+    enabledVar <- atomically $ newTVar False
+    connectTimeoutVar <- atomically $ newTVar True >>= newTVar
+    loop $ \continueOuter breakOuter -> do
+        enabled <- atomically $ readTVar enabledVar
+        conn <- atomically $ readTVar connVar
+        nextThing <- atomically $ do
+            timedOutVar <- readTVar connectTimeoutVar
+            timedOut <- readTVar timedOutVar
+            cm <- readTVar connVar
+            if timedOut
+                then do
+                    delayVar <- registerDelay 20000000 -- 20 seconds. TODO: Make this configurable
+                    return Timeout                                        -- 
+                else liftM A (readEndpoint actionEndpoint) `orElse` liftM M (maybe retry (readEndpoint . inEndpoint) cm)
+        case (nextThing, conn) of
+            (Timeout, Nothing) -> undefined -- TODO: Connect here. Also have
+                -- some sort of timeout support for issuing ISON messages, but
+                -- probably have a separate timeout to allow ISON messages to
+                -- delay longer or something. Also consider having watchlist
+                -- support in some manner, maybe watchlist all (or as many as
+                -- we can) of the user's contacts, which would probably require
+                -- Zelden to somehow give us that information. 
+            (A (Action _ (JoinRoom room)), Just c) -> do
+                writeQueue $ Message Nothing "JOIN" [room]
+            (A (Action _ (PartRoom room)), Just c) -> do
+                writeQueue $ Message Nothing "PART" [room]
+            (A (Action _ (SendUserMessage user message)), Just c) -> do
+                writeQueue $ Message Nothing "PRIVMSG" [user, message]
+            (A (Action _ (SendRoomMessage room message)), Just c) -> do
+                writeQueue $ Message Nothing "PRIVMSG" [room, message]
+            (A (Action _ (SwitchSelfKey key)), Just c) -> do
+                writeQueue $ Message Nothing "NICK" [key]
+            (A (Action _ (SetRoomTopic room topic)), Just c) -> do
+                writeQueue $ Message Nothing "TOPIC" [room, topic]
+            (M (Message (Just (NickName oldNick _ _)) "NICK" [newNick]), Just c)
+                | oldNick == currentNick c -> do
+                    -- Self rename
+                    atomically $ writeTVar connVar $ c {currentNick=newNick}
+                    handleEvent $ Event M.empty $ UserSwitchedKey oldNick newNick
+                | otherwise -> do
+                    -- Someone else renamed
+                    handleEvent $ Event M.empty $ UserSwitchedKey oldNick newNick
+            (M (Message (Just (NickName fromNick _ _)) "JOIN" [room]), Just c) -> do
+                -- Us or someone else joined
+                handleEvent $ Event M.empty $ UserJoinedRoom room fromNick
+            (M (Message (Just (NickName fromNick _ _)) "PART" room:maybeReason), Just c) -> do
+                -- Us or someone else parted a room
+                handleEvent $ Event M.empty $ UserPartedRoom room fromNick $ Parted $ fromMaybe "" $ listToMaybe maybeReason
+            (M (Message (Just (NickName fromNick _ _)) "QUIT" maybeReason), Just c) -> do
+                handleEvent $ Event M.empty $ UserQuit fromNick $ fromMaybe "" $ listToMaybe maybeReason
+            (M (Message (Just (NickName fromNick _ _)) "PRIVMSG" [recipient, message]), Just c)
+                | recipient == currentNick c -> do
+                    -- Direct message to us
+                    handleEvent $ Event M.empty $ UserMessage fromNick message
+                | otherwise -> do
+                    -- Message to a room. TODO: Might need to double-check here
+                    -- that it's actually a valid room, as I seem to recall
+                    -- that some servers will deliver messages with weird
+                    -- recipients when snooping in on direct messages when an
+                    -- op...
+                    handleEvent $ Event M.empty $ RoomMessage recipient fromNick message
+            (t, cm) -> putStrLn $ "IRC: Unhandled thing from connection " ++ show cm ++ ": " ++ show t
+
+
+waitForTrue :: a -> TVar Bool -> STM a
+waitForTrue constant var = do
+    value <- readTVar var
+    if value
+        then return constant
+        else retry
 
 
 

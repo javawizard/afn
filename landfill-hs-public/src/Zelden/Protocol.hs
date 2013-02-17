@@ -11,7 +11,7 @@ data ConnectionBox = ConnectionBox (forall a. Connection a => a)
 data ProtocolBox = ProtocolBox (forall a. Protocol a => a)
 
 
-data Event = Event EventData (M.Map String String)
+data Event = Event (M.Map String String) EventData
 type RoomKey = String
 type UserKey = String
 
@@ -35,6 +35,10 @@ data EventData
     -- reason. (A local pingout just results in a Disconnect, without a
     -- corresponding UserQuit. TODO: Actually, should we have a UserQuit for
     -- ourselves on a local pingout? Probably protocol-specific though.)
+    -- Things using protocols shouldn't pack up and go home when they receive a
+    -- UserQuit for ourselves; they should instead wait for the Disconnect
+    -- that should immediately follow. (But they're free to log the UserQuit
+    -- as desired.)
     | UserQuit UserKey String
     -- | Topic for the specified room was modified. This also happens right
     -- after a UserJoinedRoom on ourselves, indicating the room's current
@@ -51,7 +55,10 @@ data EventData
     -- | Private message to us from the specified user. I'm thinking IRC
     -- notices will just be UserMessages (and RoomMessages) with special keys
     -- in the event's extra parameters, as they're almost exclusive to IRC. I
-    -- also haven't decided how I want to handle /me actions yet.
+    -- also haven't decided how I want to handle /me actions yet. Also, not
+    -- sure if/how I want to handle confirmations from protocols such as XMPP
+    -- that a message was actually sent, probably will just have those be a
+    -- general event that can be used to log general protocol events.
     | UserMessage UserKey String
     -- | User's status changed. I haven't decided whether our own status
     -- changes should be reported with this. When a protocol connects, all
@@ -99,7 +106,7 @@ data PartReason
     -- | User was kicked by the specified user for the specified reason
     | Kicked UserKey String
 
-data Action = Action ActionData (M.Map String String)
+data Action = Action (M.Map String String) ActionData
 
 data ActionData
     -- | Joins a room, if the protocol is currently connected.
@@ -110,6 +117,14 @@ data ActionData
     | SendUserMessage UserKey String
     -- | Sends a message to a specific room.
     | SendRoomMessage RoomKey String
+    -- | Switch our own key. Not (at present) guaranteed to work when not
+    -- connected, and certainly not guaranteed to work on all protocols (IRC
+    -- is the only one to support this right now). UserSwitchedKey will be
+    -- issued when the change actually happens.
+    | SwitchSelfKey UserKey
+    -- | Changes the room's topic. RoomTopic will be issued once (if) the
+    -- change is actually made.
+    | SetRoomTopic RoomKey String
     -- | Enables the protocol. The protocol should connect as soon as possible.
     | Enable
     -- | Disables the protocol. The protocol should disconnect immediately.
