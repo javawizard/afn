@@ -363,7 +363,8 @@ data IRCConnection2
     = IRCConnection2 {
         inEndpoint :: Endpoint Message,
         outQueue :: Queue Message,
-        currentNick :: String
+        -- Nothing until we get a nick from the server
+        cNick :: Maybe String
     }
 
 data Thing = Timeout | M Message | A Action
@@ -407,10 +408,14 @@ run3 actionEndpoint handleEvent = do
                 writeQueue $ Message Nothing "NICK" [key]
             (A (Action _ (SetRoomTopic room topic)), Just c) -> do
                 writeQueue $ Message Nothing "TOPIC" [room, topic]
-            (M (Message (Just (NickName oldNick _ _)) "NICK" [newNick]), Just c)
-                | oldNick == currentNick c -> do
+            (M (Message _ "NICK" [nick]), Just (c@IRCConnection2 {cNick=Nothing})) -> do
+                -- Initial NICK message, so notify Connected and set our nick
+                atomically $ writeTVar connVar $ c {cNick=Just nick}
+                handleEvent $ Event M.empty $ Connected nick
+            (M (Message (Just (NickName oldNick _ _)) "NICK" [newNick]), Just (c@IRCConnection2 {cNick=Just currentNick}))
+                | oldNick == currentNick -> do
                     -- Self rename
-                    atomically $ writeTVar connVar $ c {currentNick=newNick}
+                    atomically $ writeTVar connVar $ c {cNick=Just newNick}
                     handleEvent $ Event M.empty $ UserSwitchedKey oldNick newNick
                 | otherwise -> do
                     -- Someone else renamed
@@ -422,9 +427,10 @@ run3 actionEndpoint handleEvent = do
                 -- Us or someone else parted a room
                 handleEvent $ Event M.empty $ UserPartedRoom room fromNick $ Parted $ fromMaybe "" $ listToMaybe maybeReason
             (M (Message (Just (NickName fromNick _ _)) "QUIT" maybeReason), Just c) -> do
+                -- Us or someone else quit
                 handleEvent $ Event M.empty $ UserQuit fromNick $ fromMaybe "" $ listToMaybe maybeReason
-            (M (Message (Just (NickName fromNick _ _)) "PRIVMSG" [recipient, message]), Just c)
-                | recipient == currentNick c -> do
+            (M (Message (Just (NickName fromNick _ _)) "PRIVMSG" [recipient, message]), Just (c@IRCConnection2 {cNick=Just currentNick}))
+                | recipient == currentNick -> do
                     -- Direct message to us
                     handleEvent $ Event M.empty $ UserMessage fromNick message
                 | otherwise -> do
