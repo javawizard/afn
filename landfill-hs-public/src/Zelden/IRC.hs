@@ -358,17 +358,20 @@ run2 actionQueue actionEndpoint eventHandler enabledVar = loop $ \continueOuter 
     case action of
         Enable -> undefined
 
-
 data IRCConnection2
     = IRCConnection2 {
         inEndpoint :: Endpoint (Maybe Message),
         outQueue :: Queue (Maybe Message),
         -- Nothing until we get a nick from the server
-        cNick :: Maybe String
+        cNick :: Maybe String,
+        nicksToTry :: [String]
     }
 
+instance Show IRCConnection2 where
+    show (IRCConnection2 {..}) = "<IRCConnection2 nick: " ++ show cNick ++ ">"
+
 data Thing = Timeout | M Message | A Action | D
-    deriving (Read, Show)
+    deriving (Show)
 
 run3 :: Queue (Either Message Action) ->  -> (Event -> IO ()) -> ContT () IO ()
 run3 actionEndpoint handleEvent = do
@@ -398,13 +401,36 @@ run3 actionEndpoint handleEvent = do
                         Nothing -> D
                         Just m -> M m
         case (nextThing, conn) of
-            (Timeout, Nothing) -> undefined -- TODO: Connect here. Also have
-                -- some sort of timeout support for issuing ISON messages, but
-                -- probably have a separate timeout to allow ISON messages to
-                -- delay longer or something. Also consider having watchlist
-                -- support in some manner, maybe watchlist all (or as many as
-                -- we can) of the user's contacts, which would probably require
-                -- Zelden to somehow give us that information. 
+            (Timeout, Nothing) -> do
+                putStrLn "IRC: Trying to connect"
+                -- FIXME: Need to figure out how we're going to pass the server
+                -- to connect into the protocol. Hard-coded to
+                -- irc.opengroove.org to at least test things out for now. Also
+                -- might want to make the timeout configurable, or even better,
+                -- figure out how to connect in a separate thread so that we
+                -- don't block up processing of actions just because we're
+                -- trying to connect.
+                maybeSocket <- flip catch (const Nothing) $ timeout 5000000 $ catch connectTo "irc.opengroove.org" $ PortNumber 6667
+                case maybeSocket of
+                    -- Timed out or didn't connect. Don't do anything, just
+                    -- wait until the next timeout happens and it's time to
+                    -- connect once again
+                    Nothing -> return ()
+                    Just s -> do
+                        -- Connected. Create a set of queues for the socket
+                        (inEndpoint, outQueue) <- streamSocket' s (decode . (++ "\n")) (Just . encode)
+                        -- Create a connection
+                        atomically $ writeTVar connVar $ IRCConnection2 inEndpoint outQueue Nothing $ map (("zelden" ++) . show) $ take 10 $ iterate (+ 1) 1
+                        -- Then write the initial user and nick messages.
+                        atomically $ do
+                            writeQueue outQueue $ Message Nothing "USER" $ replicate 4 "zelden"
+                            writeQueue outQueue $ Message Nothing "NICK" ["zelden"]
+            (M (Message _ "433" _), c@IRCConnection2 {outQueue=q, nicksToTry=nextNick:remainingNicks, cNick=Nothing}) -> do
+                -- Got a 433 and we don't yet have a nick, which means our
+                -- initial nick was rejected. Try the next one in the list.
+                putStrLn "IRC: Nick failed. Trying " ++ nextNick
+                atomically $ writeQueue q $ Message Nothing "NICK" [nextNick]
+                atomically $ writeTVar connVar $ c {nicksToTry=remainingNicks}
             (A (Action _ (JoinRoom room)), Just IRCConnection2 {outQueue=q}) -> do
                 writeQueue q $ Message Nothing "JOIN" [room]
             (A (Action _ (PartRoom room)), Just IRCConnection2 {outQueue=q}) -> do
@@ -424,10 +450,10 @@ run3 actionEndpoint handleEvent = do
                         writeQueue outQueue Nothing
                         when (isJust maybeCurrentNick) $ handleEvent $ Event M.empty Disconnected
                 breakOuter
-            (M (Message _ "PING" [pingData], IRCConnection2 {outQueue=q}) -> do
+            (M (Message _ "PING" [pingData]), IRCConnection2 {outQueue=q}) -> do
                 writeQueue q $ Message Nothing "PONG" [pingData]
-            (M (Message _ "NICK" [nick]), Just (c@IRCConnection2 {cNick=Nothing})) -> do
-                -- Initial NICK message, so notify Connected and set our nick
+            (M (Message _ "001" nick:values), Just (c@IRCConnection2 {cNick=Nothing})) -> do
+                -- Initial message, so notify Connected and set our nick
                 atomically $ writeTVar connVar $ c {cNick=Just nick}
                 handleEvent $ Event M.empty $ Connected nick
             (M (Message (Just (NickName oldNick _ _)) "NICK" [newNick]), Just (c@IRCConnection2 {cNick=Just currentNick}))

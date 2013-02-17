@@ -8,7 +8,7 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.SaneTChan
 import Network
 
-streamSocket :: Handle -> (String -> i) -> (o -> String) -> Queue (Maybe i) -> Endpoint (Maybe o) -> IO ()
+streamSocket :: Handle -> (String -> Maybe i) -> (o -> Maybe String) -> Queue (Maybe i) -> Endpoint (Maybe o) -> IO ()
 streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = do
     -- Start input thread
     forkIO $ do
@@ -24,7 +24,9 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
             case line of
                 Nothing -> return ()
                 Just l -> do
-                    atomically $ writeQueue inputQueue $ Just $ inputConverter l
+                    case inputConverter l of
+                        Nothing -> return ()
+                        Just thing -> atomically $ writeQueue inputQueue $ Just thing 
                     process
         process
     -- Start output thread
@@ -38,12 +40,14 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
                 -- Otherwise, write the (converted) message out and read another
                 -- item from the endpoint
                 Just m -> do
-                    hPutStrLn handle $ outputConverter m
+                    case outputConverter m of
+                        Nothing -> return ()
+                        Just thing -> hPutStrLn handle thing 
                     process
         process
     return ()
 
-streamSocket' :: Handle -> (String -> i) -> (o -> String) -> IO (Endpoint (Maybe i), Queue (Maybe o))
+streamSocket' :: Handle -> (String -> Maybe i) -> (o -> Maybe String) -> IO (Endpoint (Maybe i), Queue (Maybe o))
 streamSocket' handle inputConverter outputConverter = do
     (iq, ie, oq, oe) <- atomically $ do
         iq <- newQueue
