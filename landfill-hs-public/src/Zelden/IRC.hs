@@ -132,8 +132,6 @@ run3 actionEndpoint handleEvent = do
                 liftIO $ atomically $ writeQueue q $ Just $ Message Nothing "NICK" [key]
             (A (Action _ (SetRoomTopic room topic)), Just IRCConnection2 {outQueue=q}) -> do
                 liftIO $ atomically $ writeQueue q $ Just $ Message Nothing "TOPIC" [room, topic]
-            (A (Action _ (SwitchSelfKey newNick)), Just IRCConnection2 {outQueue=q}) -> do
-                liftIO $ atomically $ writeQueue q $ Just $ Message Nothing "NICK" [newNick]
             (A (Action _ Shutdown), c) -> do
                 case c of
                     Nothing -> return ()
