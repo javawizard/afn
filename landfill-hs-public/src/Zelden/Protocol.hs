@@ -115,7 +115,7 @@ data Action = Action (M.Map String String) ActionData
 data ActionData
     -- | Joins a room, if the protocol is currently connected.
     = JoinRoom RoomKey
-    -- | Parts a room.
+    -- | Parts a room with a particular reason
     | PartRoom RoomKey String
     -- | Sends a message to a specific user.
     | SendUserMessage UserKey String
