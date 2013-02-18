@@ -167,10 +167,7 @@ run3 actionEndpoint handleEvent = do
                     -- granted the mode just after we see them join the
                     -- channel. Although I might not end up doing that, I'm not
                     -- sure yet.
-                    let nick = case user of
-                        -- TODO: Change this to use the server's 005 PREFIX
-                        prefix:nick | prefix `elem` "@+%&~" -> nick
-                        nick                                -> nick
+                    let nick = dropWhile (flip elem "@+%&~") user
                     liftIO $ handleEvent $ Event M.empty $ UserJoinedRoom room nick
             (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c) -> do
                 -- Us or someone else parted a room
