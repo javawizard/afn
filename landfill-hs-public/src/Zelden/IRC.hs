@@ -51,8 +51,8 @@ run3' handler = do
     forkIO $ runContT (run3 e handler) return
     return $ \a -> atomically $ writeQueue q a
 
-run3 :: Endpoint Action -> (Event -> IO ()) -> ContT () IO ()
-run3 actionEndpoint handleEvent = do
+run3 :: Endpoint Action -> (Event -> IO ()) -> Bool -> ContT () IO ()
+run3 actionEndpoint handleEvent logUnknown = do
     connVar <- liftIO $ atomically $ newTVar (Nothing :: Maybe IRCConnection2)
     enabledVar <- liftIO $ atomically $ newTVar False
     -- A var that holds a var that holds a boolean. The inner var is created
@@ -156,11 +156,11 @@ run3 actionEndpoint handleEvent = do
             (M (Message (Just (NickName fromNick _ _)) "JOIN" [room]), Just c) -> do
                 -- Us or someone else joined
                 liftIO $ handleEvent $ Event M.empty $ UserJoinedRoom room fromNick
-            (M (Message _ "353" [_, _, channel, userString]), Just c) -> do
+            (M (Message _ "353" [_, _, channel, userString]), Just IRCConnection2 {cNick=Just cNick}) -> do
                 -- TODO: Somehow track whether we've received this for a
                 -- channel yet to prevent issuing duplicate joins if we ever
                 -- issue a NAMES manually.
-                forM (splitOn " " userString) $ \user -> do
+                forM_ (splitOn " " userString) $ \user -> do
                     -- Ignore the mode for now, if one's present. I'm thinking
                     -- in the future I'll break tradition a bit and issue
                     -- modes as a separate event, as if the user had been
@@ -168,7 +168,9 @@ run3 actionEndpoint handleEvent = do
                     -- channel. Although I might not end up doing that, I'm not
                     -- sure yet.
                     let nick = dropWhile (flip elem "@+%&~") user
-                    liftIO $ handleEvent $ Event M.empty $ UserJoinedRoom room nick
+                    unless (nick == cNick) $ liftIO $ handleEvent $ Event M.empty $ UserJoinedRoom channel nick
+            -- Ignore 366 (End of /NAMES) at the moment
+            (M (Message _ "366" _), _) -> return ()
             (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c) -> do
                 -- Us or someone else parted a room
                 liftIO $ handleEvent $ Event M.empty $ UserPartedRoom room fromNick $ Parted $ fromMaybe "" $ listToMaybe maybeReason
@@ -195,7 +197,7 @@ run3 actionEndpoint handleEvent = do
                 when (isJust maybeCurrentNick) $ liftIO $ handleEvent $ Event M.empty Disconnected
                 liftIO $ atomically $ writeTVar connVar Nothing >> newTVar False >>= writeTVar connectTimeoutVar
                 
-            (t, cm) -> liftIO $ putStrLn $ "IRC: Unhandled thing from connection " ++ show cm ++ ": " ++ show t
+            (t, cm) -> when logUnknown $ liftIO $ putStrLn $ "IRC: Unhandled thing from connection " ++ show cm ++ ": " ++ show t
         continueOuter
     liftIO $ putStrLn "IRC loop exiting."
 
