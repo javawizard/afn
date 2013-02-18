@@ -11,7 +11,7 @@ data ConnectionBox = ConnectionBox (forall a. Connection a => a)
 data ProtocolBox = ProtocolBox (forall a. Protocol a => a)
 
 
-data Event = Event (M.Map String String) EventData
+data Event = Event (M.Map String String) EventData deriving (Show)
 type RoomKey = String
 type UserKey = String
 
@@ -81,6 +81,7 @@ data EventData
     -- behaviors. Most contemporary IRC clients seem to use the former
     -- behavior; I generally tend to prefer the latter.)
     | UserSwitchedKey UserKey UserKey
+    deriving (Show)
 
 data UserStatus
     -- | User is available.
@@ -96,6 +97,7 @@ data UserStatus
     | Busy
     -- | User is offline.
     | Offline
+    deriving (Show)
 
 -- | Reasons that a user (us or someone else) left a room. This does not
 -- include the user disconnecting from the server altogether; such things are
@@ -105,8 +107,10 @@ data PartReason
     = Parted String
     -- | User was kicked by the specified user for the specified reason
     | Kicked UserKey String
+    deriving (Show)
 
 data Action = Action (M.Map String String) ActionData
+    deriving (Show)
 
 data ActionData
     -- | Joins a room, if the protocol is currently connected.
@@ -134,6 +138,7 @@ data ActionData
     | Shutdown
     -- | Sets a protocol parameter.
     | SetParam String String
+    deriving (Show)
 
 -- Alias for (,) that allows conveniently writing dictionaries as
 -- M.fromList ["a" := "b", "c" := "d"].
@@ -159,7 +164,7 @@ class Protocol a where
 
 class Connection a where
     -- getProtocol :: a -> ProtocolBox
-    sendAction :: Action -> IO ()
+    sendAction :: a -> Action -> IO ()
 
 
 

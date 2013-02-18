@@ -1,7 +1,10 @@
 
 module Control.Concurrent.STM.Utils where
 
-import Control.Concurrent.STM.TVar (readTVar, atomically, registerDelay)
+import Control.Concurrent.STM.TVar (readTVar, registerDelay)
+import Control.Concurrent.STM (atomically, STM, orElse, retry)
+import Control.Monad (liftM)
+
 
 -- | Runs the specified STM action, which may retry. If it retries but, for
 -- whatever reason, it is unable to actually produce a value by the time the
@@ -11,6 +14,6 @@ import Control.Concurrent.STM.TVar (readTVar, atomically, registerDelay)
 runTimed :: Int -> STM a -> IO (Maybe a)
 runTimed delay action = do
     var <- registerDelay delay
-    atomically liftM Just action `orElse` do
+    atomically $ liftM Just action `orElse` do
         timedOut <- readTVar var
         if timedOut then return Nothing else retry

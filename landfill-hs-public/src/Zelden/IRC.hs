@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 
 module Zelden.IRC where
 
@@ -10,14 +11,29 @@ import qualified Data.Map as M
 import Zelden.Delay
 import Control.Monad.Trans.Cont
 import Zelden.Utils
+import Control.Monad.Trans.Either
+import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.Reader
+import Network.IRC.Base
+import Control.Monad
+import Data.Maybe
+import Control.Monad.IO.Class
+import Network.IRC.Parser
+import Control.Var
+import Data.List.Split
+import Control.Monad.Trans
+import System.Timeout
+import Network
+-- import Network.Socket
+import Zelden.IO
 
 data IRCProtocol = IRCProtocol
 
 data IRCConnection
     = IRCConnection {
-        connConfigVars :: M.Map String String
-        connEnabledVar :: TVar Boolean
-        connSession :: TVar (Maybe IRCSession)
+        connConfigVars :: M.Map String String,
+        connEnabledVar :: TVar Bool,
+        connSession :: TVar (Maybe IRCSession),
         connHandler :: EventCallback -- Event -> IO ()
     }
 
@@ -35,6 +51,7 @@ data DisconnectReason
     = SocketClosed
     | ReadTimedOut
     | TooManyNickTries
+    | ConnectionDisabled
     
 
 instance Protocol IRCProtocol where
@@ -284,6 +301,7 @@ runSession = do
         -- perhaps a readMessage-like thing for also reading actions from the
         -- list of actions to be processed. Or maybe have them share the same
         -- queue in some sort of manner and just read from that. Needs thought.
+        undefined
 
 
 
@@ -344,11 +362,11 @@ either get an Enabled action, in which case start over after changing enabled
 to true, or we get a Shutdown action, in which case bail out of the whole
 thing.
 -}
-
+{-
 run2 :: Endpoint Action -> (Event -> IO ()) -> ContT () IO ()
 run2 actionQueue actionEndpoint eventHandler enabledVar = loop $ \continueOuter breakOuter -> do
     enabled <- atomically $ readTVar enabledVar
-    when enabled $ callCC \bailConnection -> do
+    when enabled $ callCC $ \bailConnection -> do
         maybeSocket <- openSocket "irc.opengroove.org" 6667 actionQueue
         when (not $ isJust maybeSocket) bailConnection
         let (Just outputQueue) = maybeSocket
@@ -357,6 +375,7 @@ run2 actionQueue actionEndpoint eventHandler enabledVar = loop $ \continueOuter 
     action <- atomically $ readEndpoint actionEndpoint
     case action of
         Enable -> undefined
+-}
 
 data IRCConnection2
     = IRCConnection2 {
@@ -373,7 +392,7 @@ instance Show IRCConnection2 where
 data Thing = Timeout | M Message | A Action | D
     deriving (Show)
 
-run3 :: Queue (Either Message Action) ->  -> (Event -> IO ()) -> ContT () IO ()
+run3 :: Endpoint Action -> (Event -> IO ()) -> ContT () IO ()
 run3 actionEndpoint handleEvent = do
     connVar <- atomically $ newTVar (Nothing :: Maybe IRCConnection2)
     enabledVar <- atomically $ newTVar False
@@ -484,7 +503,7 @@ run3 actionEndpoint handleEvent = do
                     -- recipients when snooping in on direct messages when an
                     -- op...
                     handleEvent $ Event M.empty $ RoomMessage recipient fromNick message
-            (D, Just (c@IRCConnection2 {cNick=maybeCurrentNick}) -> do
+            (D, Just (c@IRCConnection2 {cNick=maybeCurrentNick})) -> do
                 -- Disconnected. If we have a nick (which means we've sent Connected),
                 -- send Disconnected. Then nix out the connection. If we don't
                 -- actually have a connection, then we shouldn't be getting

@@ -14,6 +14,6 @@ getCC = callCC (\c -> let x = c x in return x)
 -- language. Note that break takes an argument, which is the value that the
 -- loop should evaluate to when it's called.
 loop :: (ContT r m b -> (a -> ContT r m c) -> ContT r m a) -> ContT r m a
-loop f = callCC \break -> do
+loop f = callCC $ \break -> do
     continue <- getCC
-    loop continue break
+    f continue break

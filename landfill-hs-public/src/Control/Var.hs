@@ -27,10 +27,10 @@ instance Var (TVar a) STM a where
 
 -- | TVars also operate in IO
 instance (MonadIO m) => Var (TVar a) m a where
-    newVar = newTVarIO
-    readVar = readTVarIO
-    writeTVar v a = liftIO $ atomically $ writeTVar v a
-    modifyTVar v f = liftIO $ atomically $ modifyTVar v f
+    newVar = liftIO . newTVarIO
+    readVar = liftIO . readTVarIO
+    writeVar v a = liftIO $ atomically $ writeTVar v a
+    modifyVar v f = liftIO $ atomically $ modifyTVar v f
 
 -- | IORefs operate in IO
 instance (MonadIO m) => Var (IORef a) m a where
