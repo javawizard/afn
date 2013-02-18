@@ -156,6 +156,15 @@ run3 actionEndpoint handleEvent = do
             (M (Message (Just (NickName fromNick _ _)) "JOIN" [room]), Just c) -> do
                 -- Us or someone else joined
                 liftIO $ handleEvent $ Event M.empty $ UserJoinedRoom room fromNick
+            (M (Message _ "353" [_, _, channel, userString]), Just c) -> do
+                forM (splitOn " " userString) $ \user -> do
+                    -- Ignore the mode for now, if one's present. I'm thinking
+                    -- in the future I'll break tradition a bit and issue
+                    -- modes as a separate event, as if the user had been
+                    -- granted the mode just after we see them join the
+                    -- channel. Although I might not end up doing that, I'm not
+                    -- sure yet.
+                    
             (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c) -> do
                 -- Us or someone else parted a room
                 liftIO $ handleEvent $ Event M.empty $ UserPartedRoom room fromNick $ Parted $ fromMaybe "" $ listToMaybe maybeReason
