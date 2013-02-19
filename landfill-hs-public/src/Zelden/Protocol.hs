@@ -21,13 +21,23 @@ data EventData
     = Connected UserKey
     -- | Connection was disconnected.
     | Disconnected
-    -- | User joined room, possibly us or someone else. Note that this can
-    -- happen without a request that the connection join a room if the server
-    -- forces us to join a room (IRC is one such protocol that can do this).
+    -- | We just joined a room, whether because we chose to (by sending a
+    -- JoinRoom) or because the server forced us into a particular room.
+    -- If the room has a topic, it will be provided, along with the user that
+    -- set the topic and the time it was set. (Right now, protocols that don't
+    -- have any way of indicating the user that set the topic or the time
+    -- should just use a key invalid to that protocol ("unknown.user" usually
+    -- suffices) and 0, respectively.) The list of users currently present at
+    -- the room will also be provided.
+    | SelfJoinedRoom RoomKey (Maybe (String, UserKey, Integer)) [UserKey]
+    -- | Another user joined a room that we're currently joined to. Note that
+    -- users currently present at the room when we join are instead indicated
+    -- in the SelfJoinedRoom message.
     | UserJoinedRoom RoomKey UserKey
     -- | User left room, possibly us or someone else. Note that this is one of
     -- two ways a user can leave a room; the other is with UserQuit, which
     -- removes the user from all rooms they were joined to. 
+    | SelfPartedRoom RoomKey
     | UserPartedRoom RoomKey UserKey PartReason
     -- | User quit, possibly us or someone else. If it's us, this will almost
     -- certainly be followed by a Disconnect event. Note that we can end up

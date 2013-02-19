@@ -35,7 +35,8 @@ data IRCConnection2
         outQueue :: Queue (Maybe Message),
         -- Nothing until we get a nick from the server
         cNick :: Maybe String,
-        nicksToTry :: [String]
+        nicksToTry :: [String],
+        currentJoin :: CurrentJoin
     }
 
 instance Show IRCConnection2 where
@@ -44,11 +45,18 @@ instance Show IRCConnection2 where
 data Thing = Timeout | M Message | A Action | D
     deriving (Show)
 
-run3' :: (Event -> IO ()) -> IO (Action -> IO ())
-run3' handler = do
+data CurrentJoin
+    = NotJoining | CurrentJoin {
+        joinName :: String,
+        joinTopic :: Maybe (String, UserKey, Integer),
+        joinUsers :: [UserKey]
+    }
+
+run3' :: (Event -> IO ()) -> Bool -> IO (Action -> IO ())
+run3' handler logUnknown = do
     q <- atomically $ newQueue
     e <- atomically $ newEndpoint q
-    forkIO $ runContT (run3 e handler) return
+    forkIO $ runContT (run3 e handler logUnknown) return
     return $ \a -> atomically $ writeQueue q a
 
 run3 :: Endpoint Action -> (Event -> IO ()) -> Bool -> ContT () IO ()
@@ -104,7 +112,7 @@ run3 actionEndpoint handleEvent logUnknown = do
                         -- Connected. Create a set of queues for the socket
                         (inEndpoint, outQueue) <- liftIO $ streamSocket' s (decode . (++ "\n")) (Just . encode)
                         -- Create a connection. Stick an infinite list ["zelden1","zelden2",...] as nicksToTry.
-                        liftIO $ atomically $ writeTVar connVar $ Just $ IRCConnection2 inEndpoint outQueue Nothing $ map (("zelden" ++) . show) $ iterate (+ 1) 1
+                        liftIO $ atomically $ writeTVar connVar $ Just $ IRCConnection2 inEndpoint outQueue Nothing (map (("zelden" ++) . show) $ iterate (+ 1) 1) NotJoining
                         -- Then write the initial user and nick messages.
                         liftIO $ atomically $ do
                             writeQueue outQueue $ Just $ Message Nothing "USER" $ replicate 4 "zelden"
@@ -153,24 +161,26 @@ run3 actionEndpoint handleEvent logUnknown = do
                 | otherwise -> do
                     -- Someone else renamed
                     liftIO $ handleEvent $ Event M.empty $ UserSwitchedKey oldNick newNick
-            (M (Message (Just (NickName fromNick _ _)) "JOIN" [room]), Just c) -> do
-                -- Us or someone else joined
+            (M (Message (Just (NickName fromNick _ _)) "JOIN" [room]), Just c@IRCConnection2 {cNick=Just currentNick})
+                | fromNick == currentNick -> do
+                    -- We joined a channel. Store off that we're currently
+                    -- joining.
+                    liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=CurrentJoin room Nothing []}
+                | otherwise -> do
+                -- Someone else joined. Just issue it as an event.
                 liftIO $ handleEvent $ Event M.empty $ UserJoinedRoom room fromNick
-            (M (Message _ "353" [_, _, channel, userString]), Just IRCConnection2 {cNick=Just cNick}) -> do
-                -- TODO: Somehow track whether we've received this for a
-                -- channel yet to prevent issuing duplicate joins if we ever
-                -- issue a NAMES manually.
-                forM_ (splitOn " " userString) $ \user -> do
-                    -- Ignore the mode for now, if one's present. I'm thinking
-                    -- in the future I'll break tradition a bit and issue
-                    -- modes as a separate event, as if the user had been
-                    -- granted the mode just after we see them join the
-                    -- channel. Although I might not end up doing that, I'm not
-                    -- sure yet.
-                    let nick = dropWhile (flip elem "@+%&~") user
-                    unless (nick == cNick) $ liftIO $ handleEvent $ Event M.empty $ UserJoinedRoom channel nick
-            -- Ignore 366 (End of /NAMES) at the moment
-            (M (Message _ "366" _), _) -> return ()
+            (M (Message _ "353" [_, _, channel, userString]), Just c@IRCConnection2 {cNick=Just cNick, currentJoin=cj@CurrentJoin {joinUsers=joinUsers}}) -> do
+                -- 353 while in the middle of joining. Add the list of users to
+                -- the current join.
+                let userList = splitOn " " userString
+                -- TODO: Really ought to get this from 005 PREFIX
+                let nickList = map (dropWhile $ flip elem "@+%&~") userList
+                let nickList' = filter (/= cNick) nickList
+                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinUsers=joinUsers ++ nickList'}} 
+            (M (Message _ "366" _), Just c@IRCConnection2 {currentJoin=cj@CurrentJoin {..}}) -> do
+                -- Join finished.
+                liftIO $ handleEvent $ Event M.empty $ SelfJoinedRoom joinName joinTopic joinUsers
+                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=NotJoining}
             (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c) -> do
                 -- Us or someone else parted a room
                 liftIO $ handleEvent $ Event M.empty $ UserPartedRoom room fromNick $ Parted $ fromMaybe "" $ listToMaybe maybeReason
