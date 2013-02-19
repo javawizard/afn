@@ -20,6 +20,7 @@ import urllib
 import hashlib
 from functools import partial as _partial
 import glob as _glob
+import urllib2
 
 SKIP = "skip"
 RECURSE = "recurse"
