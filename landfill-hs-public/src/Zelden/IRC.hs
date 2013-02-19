@@ -93,7 +93,7 @@ run3 actionEndpoint handleEvent logUnknown = do
             _ -> return ()
         -- Then process this event
         case (nextThing, conn) of
-            (Timeout, Nothing) -> do
+            (Timeout, Nothing) | enabled -> do
                 liftIO $ putStrLn "IRC: Trying to connect"
                 -- FIXME: Need to figure out how we're going to pass the server
                 -- to connect into the protocol. Hard-coded to
@@ -122,6 +122,12 @@ run3 actionEndpoint handleEvent logUnknown = do
                 -- probably send things like WHO and ISON when we time out
                 -- while connected.
                 return ()
+            (A (Action _ Enable), _) -> do
+                liftIO $ atomically $ writeTVar enabledVar True
+                liftIO $ atomically $ newTVar True >>= writeTVar connectTimeoutVar
+            (A (Action _ Disable), _) -> do
+                liftIO $ atomically $ writeTVar enabledVar False
+                liftIO $ atomically $ newTVar False >>= writeTVar connectTimeoutVar
             (M (Message _ "433" _), Just c@IRCConnection2 {outQueue=q, nicksToTry=nextNick:remainingNicks, cNick=Nothing}) -> do
                 -- Got a 433 and we don't yet have a nick, which means our
                 -- initial nick was rejected. Try the next one in the list.
