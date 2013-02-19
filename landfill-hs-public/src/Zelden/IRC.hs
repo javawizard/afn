@@ -127,7 +127,7 @@ run3 actionEndpoint handleEvent logUnknown = do
                 liftIO $ atomically $ newTVar True >>= writeTVar connectTimeoutVar
             (A (Action _ Disable), _) -> do
                 liftIO $ atomically $ writeTVar enabledVar False
-                liftIO $ atomically $ newTVar False >>= writeTVar connectTimeoutVar
+                liftIO $ atomically $ newTVar True >>= writeTVar connectTimeoutVar
             (M (Message _ "433" _), Just c@IRCConnection2 {outQueue=q, nicksToTry=nextNick:remainingNicks, cNick=Nothing}) -> do
                 -- Got a 433 and we don't yet have a nick, which means our
                 -- initial nick was rejected. Try the next one in the list.
