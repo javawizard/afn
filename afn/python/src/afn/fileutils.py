@@ -338,7 +338,9 @@ class File(object):
         """
         if self.exists and not overwrite:
             raise Exception("%r already exists" % self)
-        urllib.urlretrieve(url, self._path)
+        s = urllib2.urlopen(url)
+        with self.open("wb") as f:
+            shutil.copyfileobj(s, f)
     
     def recurse(self, filter=None, include_self=True, recurse_skipped=True):
         """
