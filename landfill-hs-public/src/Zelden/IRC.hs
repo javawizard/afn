@@ -125,9 +125,14 @@ run3 actionEndpoint handleEvent logUnknown = do
             (A (Action _ Enable), _) -> do
                 liftIO $ atomically $ writeTVar enabledVar True
                 liftIO $ atomically $ newTVar True >>= writeTVar connectTimeoutVar
-            (A (Action _ Disable), _) -> do
+            (A (Action _ Disable), maybeConnection) -> do
                 liftIO $ atomically $ writeTVar enabledVar False
                 liftIO $ atomically $ newTVar True >>= writeTVar connectTimeoutVar
+                -- If we're currently connected, simulate a server disconnect
+                -- so that on the next iteration we disconnect from the server.
+                case maybeConnection of
+                    Nothing -> return ()
+                    Just IRCConnection2 {inEndpoint=inEndpoint} -> liftIO $ atomically $ unGetEndpoint inEndpoint Nothing
             (M (Message _ "433" _), Just c@IRCConnection2 {outQueue=q, nicksToTry=nextNick:remainingNicks, cNick=Nothing}) -> do
                 -- Got a 433 and we don't yet have a nick, which means our
                 -- initial nick was rejected. Try the next one in the list.
@@ -204,12 +209,13 @@ run3 actionEndpoint handleEvent logUnknown = do
                     -- recipients when snooping in on direct messages when an
                     -- op...
                     liftIO $ handleEvent $ Event M.empty $ RoomMessage recipient fromNick message
-            (D, Just (c@IRCConnection2 {cNick=maybeCurrentNick})) -> do
+            (D, Just (c@IRCConnection2 {cNick=maybeCurrentNick, outQueue=outQueue})) -> do
                 -- Disconnected. If we have a nick (which means we've sent Connected),
                 -- send Disconnected. Then nix out the connection. If we don't
                 -- actually have a connection, then we shouldn't be getting
                 -- this in the first place. We'll also clear the timeout to
                 -- cause an immediate attempt to reconnect if we're enabled.
+                liftIO $ atomically $ writeQueue outQueue Nothing
                 when (isJust maybeCurrentNick) $ liftIO $ handleEvent $ Event M.empty Disconnected
                 liftIO $ atomically $ writeTVar connVar Nothing >> newTVar False >>= writeTVar connectTimeoutVar
                 
