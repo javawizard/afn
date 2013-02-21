@@ -24,7 +24,9 @@ import Data.List.Split
 import Control.Monad.Trans
 import System.Timeout
 import Network
--- import Network.Socket
+import Network.Socket hiding (Connected)
+import Network.Socket.Internal
+import Network.BSD
 import Zelden.IO
 import Control.Concurrent
 
@@ -232,12 +234,14 @@ waitForTrue constant var = do
         else retry
 
 
+connectToServer :: IO (Maybe Socket)
 connectToServer = do
     p <- getProtocolNumber "tcp"
     s <- socket AF_INET Stream p
     host <- liftM hostAddress $ getHostByName "irc.opengroove.org"
-    flip catch (const $ return Nothing) $ timeout 5000000 $ connect s $ SockAddrInet 6667 host
-    return s
+    flip catch (const $ return Nothing) $ timeout 5000000 $ do
+        connect s $ SockAddrInet 6667 host
+        return s
 
 
 
