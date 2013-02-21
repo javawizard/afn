@@ -7,9 +7,11 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Concurrent.STM.SaneTChan
 import Network
+import Network.Socket
 
-streamSocket :: Handle -> (String -> Maybe i) -> (o -> Maybe String) -> Queue (Maybe i) -> Endpoint (Maybe o) -> IO ()
-streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = do
+streamSocket :: Socket -> (String -> Maybe i) -> (o -> Maybe String) -> Queue (Maybe i) -> Endpoint (Maybe o) -> IO ()
+streamSocket socket inputConverter outputConverter inputQueue outputEndpoint = do
+    lineSocket <- newLineSocket socket
     -- Start input thread
     forkIO $ do
         let doneWithSocket = do
@@ -24,7 +26,7 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
         let process = do
             -- Read a line from the socket, calling doneWithSocket on errors
             putStrLn "4"
-            line <- catch (liftM Just $ hGetLine handle) $ const doneWithSocket
+            line <- catch (liftM Just $ getLineFrom lineSocket) $ const doneWithSocket
             putStrLn "5"
             case line of
                 Nothing -> putStrLn "6" >> return ()
@@ -47,14 +49,14 @@ streamSocket handle inputConverter outputConverter inputQueue outputEndpoint = d
             putStrLn "14"
             case nextItem of
                 -- If it's Nothing, close the socket
-                Nothing -> putStrLn "15" >> hClose handle
+                Nothing -> putStrLn "15" >> sClose socket
                 -- Otherwise, write the (converted) message out and read another
                 -- item from the endpoint
                 Just m -> do
                     putStrLn "16"
                     case outputConverter m of
                         Nothing -> putStrLn "17" >> return ()
-                        Just thing -> putStrLn "18" >> hPutStrLn handle thing
+                        Just thing -> putStrLn "18" >> sendAll socket thing
                     putStrLn "19" 
                     process
         putStrLn "20"
@@ -72,4 +74,37 @@ streamSocket' handle inputConverter outputConverter = do
         return (iq, ie, oq, oe)
     streamSocket handle inputConverter outputConverter iq oe
     return (ie, oq)
+
+data LineSocket = LineSocket Socket (TVar String)
+
+newLineSocket :: Socket -> IO LineSocket
+newLineSocket s = do
+    var <- atomically $ newTVar ""
+    return $ LineSocket s var
+
+getLineFrom :: LineSocket -> IO String
+getLineFrom lineSocket@(LineSocket socket var) = do
+    value <- atomically $ readTVar var
+    if "\n" `elem` value
+        then do
+            let (result, _:rest) = break (== "\n") value
+            atomically $ writeTVar var rest
+            return result
+        else do
+            socketData <- recv socket 1024
+            when (socketData == "") $ error "End of input"
+            atomically $ writeTVar var $ value ++ socketData
+            getLineFrom lineSocket
+
+sendAll :: Socket -> String -> IO ()
+sendAll _ "" = return ()
+sendAll socket socketData = do
+    amount <- send socket socketData
+    sendAll socket $ drop amount socketData
+
+
+
+
+
+
 

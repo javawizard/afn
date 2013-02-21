@@ -102,7 +102,7 @@ run3 actionEndpoint handleEvent logUnknown = do
                 -- figure out how to connect in a separate thread so that we
                 -- don't block up processing of actions just because we're
                 -- trying to connect.
-                maybeSocket <- liftIO $ flip catch (const $ return Nothing) $ timeout 5000000 $ connectTo "irc.opengroove.org" $ PortNumber 6667
+                maybeSocket <- liftIO $ connectToServer
                 case maybeSocket of
                     -- Timed out or didn't connect. Don't do anything, just
                     -- wait until the next timeout happens and it's time to
@@ -231,6 +231,10 @@ waitForTrue constant var = do
         then return constant
         else retry
 
+
+connectToServer = do
+    s <- socket AF_INET Stream defaultProtocol
+    flip catch (const $ return Nothing) $ timeout 5000000 $ connectTo "irc.opengroove.org" $ PortNumber 6667
 
 
 
