@@ -64,7 +64,7 @@ streamSocket socket inputConverter outputConverter inputQueue outputEndpoint = d
     putStrLn "21"
     return ()
 
-streamSocket' :: Handle -> (String -> Maybe i) -> (o -> Maybe String) -> IO (Endpoint (Maybe i), Queue (Maybe o))
+streamSocket' :: Socket -> (String -> Maybe i) -> (o -> Maybe String) -> IO (Endpoint (Maybe i), Queue (Maybe o))
 streamSocket' handle inputConverter outputConverter = do
     (iq, ie, oq, oe) <- atomically $ do
         iq <- newQueue

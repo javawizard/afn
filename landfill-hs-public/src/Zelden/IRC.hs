@@ -233,8 +233,11 @@ waitForTrue constant var = do
 
 
 connectToServer = do
-    s <- socket AF_INET Stream defaultProtocol
-    flip catch (const $ return Nothing) $ timeout 5000000 $ connectTo "irc.opengroove.org" $ PortNumber 6667
+    p <- getProtocolNumber "tcp"
+    s <- socket AF_INET Stream p
+    host <- liftM hostAddress $ getHostByName "irc.opengroove.org"
+    flip catch (const $ return Nothing) $ timeout 5000000 $ connect s $ SockAddrInet 6667 host
+    return s
 
 
 
