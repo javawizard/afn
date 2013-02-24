@@ -8,6 +8,7 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.SaneTChan
 import Network
 import Network.Socket
+import Data.Conduit
 -- import Network.BSD
 
 streamSocket :: Socket -> (String -> Maybe i) -> (o -> Maybe String) -> Queue (Maybe i) -> Endpoint (Maybe o) -> IO ()
