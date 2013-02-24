@@ -91,6 +91,34 @@ sendAll socket socketData = do
 
 
 
+linesP :: MonadIO m => Conduit String String m ()
+linesP = linesP' ""
+
+linesP' :: MonadIO m => String -> Conduit String String m ()
+linesP' leftover = do
+    if '\n' `elem` leftover
+        then do
+            let (result, _:rest) = break (== '\n') value
+            -- TODO: Might want to check for (and strip) a trailing \r
+            yield result
+            linesP' rest
+        else do
+            nextData <- await
+            -- TODO: Probably ought to yield the leftovers we were passed as
+            -- the last line, in case the connection was closed without a
+            -- trailing newline
+            if (nextData == "")
+                then return ()
+                else linesP' $ leftover ++ nextData
+
+writeToQueueP :: MonadIO m => Queue a -> Conduit a () m ()
+writeToQueueP q -> do
+    value <- await
+    liftIO $ atomically $ writeQueue q a
+    writeToQueueP q
+
+
+
 
 
 
