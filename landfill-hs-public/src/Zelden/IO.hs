@@ -9,6 +9,7 @@ import Control.Concurrent.STM.SaneTChan
 import Network
 import Network.Socket
 import Data.Conduit
+import Data.Conduit.Network
 -- import Network.BSD
 
 streamSocket :: Socket -> (String -> Maybe i) -> (o -> Maybe String) -> Queue (Maybe i) -> Endpoint (Maybe o) -> IO ()
@@ -89,7 +90,14 @@ sendAll socket socketData = do
     amount <- send socket socketData
     sendAll socket $ drop amount socketData
 
-
+readSocketP :: MonadIO m => Socket -> Producer m String
+readSocketP socket = do
+    socketData <- recv socket 1024
+    if (socketData == "")
+        then return ()
+        else do
+            yield socketData
+            readSocketP socket
 
 linesP :: MonadIO m => Conduit String String m ()
 linesP = linesP' ""
