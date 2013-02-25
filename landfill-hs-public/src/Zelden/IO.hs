@@ -23,6 +23,9 @@ streamSocket socket inputConverter outputConverter inputQueue outputEndpoint = d
             -- Close the handle, just in case
             catch (sClose socket) $ const $ return ()
             return Nothing
+        -- Still need to write a proper conduit for converting things via
+        -- inputConverter and discarding things it turns out None for
+        -- readSocketP socket $= linesP $$ writeToQueueP inputQueue Just
         let process = do
             -- Read a line from the socket, calling doneWithSocket on errors
             line <- catch (liftM Just $ getLineFrom lineSocket) $ const doneWithSocket
@@ -90,19 +93,19 @@ sendAll socket socketData = do
     amount <- send socket socketData
     sendAll socket $ drop amount socketData
 
-readSocketP :: MonadIO m => Socket -> Producer m String
+readSocketP :: MonadIO m => Socket -> Source m String
 readSocketP socket = do
-    socketData <- recv socket 1024
+    socketData <- catch (recv socket 32) $ const $ return ""
     if (socketData == "")
         then return ()
         else do
             yield socketData
             readSocketP socket
 
-linesP :: MonadIO m => Conduit String String m ()
+linesP :: MonadIO m => Conduit String m String
 linesP = linesP' ""
 
-linesP' :: MonadIO m => String -> Conduit String String m ()
+linesP' :: MonadIO m => String -> Conduit String m String
 linesP' leftover = do
     if '\n' `elem` leftover
         then do
@@ -119,11 +122,11 @@ linesP' leftover = do
                 then return ()
                 else linesP' $ leftover ++ nextData
 
-writeToQueueP :: MonadIO m => Queue a -> Conduit a () m ()
-writeToQueueP q -> do
+writeToQueueP :: MonadIO m => Queue a -> (b -> a) -> Sink b m ()
+writeToQueueP q f -> do
     value <- await
-    liftIO $ atomically $ writeQueue q a
-    writeToQueueP q
+    liftIO $ atomically $ writeQueue q $ f a
+    writeToQueueP q f
 
 
 
