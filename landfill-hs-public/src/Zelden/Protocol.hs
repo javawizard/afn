@@ -50,13 +50,10 @@ data EventData
     -- that should immediately follow. (But they're free to log the UserQuit
     -- as desired.)
     | UserQuit UserKey String
-    -- | Topic for the specified room was modified. This also happens right
-    -- after a UserJoinedRoom on ourselves, indicating the room's current
-    -- topic. Information about the time the topic was last set and by whom
-    -- should go into the event's extra parameters, although I might move it
-    -- to RoomTopic if it's used enough. (It would almost certainly be wrapped
-    -- in a Maybe, though, as topic changes don't mention what time they were
-    -- set at or any such thing.)
+    -- | Topic for the specified room was modified, or set for the first time
+    -- if the room did not have a topic when we joined it. (Topics that were
+    -- set before we joined the room are passed as part of the SelfJoinedRoom
+    -- event.)
     | RoomTopic RoomKey UserKey String
     -- | Message was sent to a room. I might merge this with UserMessage in the
     -- future, and have a Maybe RoomKey parameter that's Nothing for users and

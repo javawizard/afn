@@ -54,6 +54,9 @@ data CurrentJoin
         joinUsers :: [UserKey]
     }
 
+nickOnly :: String -> String
+nickOnly = takeWhile (/= '!')
+
 run3' :: (Event -> IO ()) -> Bool -> IO (Action -> IO ())
 run3' handler logUnknown = do
     q <- atomically $ newQueue
@@ -200,6 +203,8 @@ run3 actionEndpoint handleEvent logUnknown = do
                 -- Join finished.
                 liftIO $ handleEvent $ Event M.empty $ SelfJoinedRoom joinName joinTopic joinUsers
                 liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=NotJoining}
+            (M (Message (Just prefix) "TOPIC" [room, topic]), _) -> do
+                liftIO $ handleEvent $ Event M.empty $ RoomTopic room (nickOnly $ showPrefix prefix) topic
             (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c@IRCConnection2 {cNick=Just currentNick}) -> do
                 -- Us or someone else parted a room
                 let eventConstructor = if fromNick == currentNick then (SelfPartedRoom room) else (UserPartedRoom room fromNick)
