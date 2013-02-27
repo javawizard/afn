@@ -210,9 +210,10 @@ run3 actionEndpoint handleEvent logUnknown = do
                 | command `elem` ["PART", "KICK"] -> do
                     -- Us or someone else parted a room
                     let eventConstructor = if fromNick == currentNick then (SelfPartedRoom room) else (UserPartedRoom room fromNick)
-                    let reason = case (command, args) of
-                        ("PART", maybeReason) -> Parted $ fromMaybe "" $ listToMaybe maybeReason
-                        ("KICK", (kicker:maybeReason)) -> Kicked kicker $ fromMaybe "" $ listToMaybe maybeReason
+                    let
+                        reason = case (command, args) of
+                            ("PART", maybeReason) -> Parted $ fromMaybe "" $ listToMaybe maybeReason
+                            ("KICK", (kicker:maybeReason)) -> Kicked kicker $ fromMaybe "" $ listToMaybe maybeReason
                     liftIO $ handleEvent $ Event M.empty $ eventConstructor $ reason
             (M (Message (Just (NickName fromNick _ _)) "QUIT" maybeReason), Just c) -> do
                 -- Us or someone else quit
