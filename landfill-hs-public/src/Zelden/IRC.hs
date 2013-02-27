@@ -205,10 +205,15 @@ run3 actionEndpoint handleEvent logUnknown = do
                 liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=NotJoining}
             (M (Message (Just prefix) "TOPIC" [room, topic]), _) -> do
                 liftIO $ handleEvent $ Event M.empty $ RoomTopic room (nickOnly $ showPrefix prefix) topic
-            (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c@IRCConnection2 {cNick=Just currentNick}) -> do
-                -- Us or someone else parted a room
-                let eventConstructor = if fromNick == currentNick then (SelfPartedRoom room) else (UserPartedRoom room fromNick)
-                liftIO $ handleEvent $ Event M.empty $ eventConstructor $ Parted $ fromMaybe "" $ listToMaybe maybeReason
+            -- room:maybeReason, "PART" (Parted reason)
+            (M (Message (Just (NickName fromNick _ _)) command (room:args)), Just c@IRCConnection2 {cNick=Just currentNick})
+                | command `elem` ["PART", "KICK"] -> do
+                    -- Us or someone else parted a room
+                    let eventConstructor = if fromNick == currentNick then (SelfPartedRoom room) else (UserPartedRoom room fromNick)
+                    let reason = case (command, args) of
+                        ("PART", maybeReason) -> Parted $ fromMaybe "" $ listToMaybe maybeReason
+                        ("KICK", (kicker:maybeReason)) -> Kicked kicker $ fromMaybe "" $ listToMaybe maybeReason
+                    liftIO $ handleEvent $ Event M.empty $ eventConstructor $ reason
             (M (Message (Just (NickName fromNick _ _)) "QUIT" maybeReason), Just c) -> do
                 -- Us or someone else quit
                 liftIO $ handleEvent $ Event M.empty $ UserQuit fromNick $ fromMaybe "" $ listToMaybe maybeReason
