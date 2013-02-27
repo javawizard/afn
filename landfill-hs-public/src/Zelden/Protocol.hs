@@ -37,7 +37,7 @@ data EventData
     -- | User left room, possibly us or someone else. Note that this is one of
     -- two ways a user can leave a room; the other is with UserQuit, which
     -- removes the user from all rooms they were joined to. 
-    | SelfPartedRoom RoomKey
+    | SelfPartedRoom RoomKey PartReason
     | UserPartedRoom RoomKey UserKey PartReason
     -- | User quit, possibly us or someone else. If it's us, this will almost
     -- certainly be followed by a Disconnect event. Note that we can end up

@@ -189,14 +189,21 @@ run3 actionEndpoint handleEvent logUnknown = do
                 -- TODO: Really ought to get this from 005 PREFIX
                 let nickList = map (dropWhile $ flip elem "@+%&~") userList
                 let nickList' = filter (/= cNick) nickList
-                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinUsers=joinUsers ++ nickList'}} 
+                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinUsers=joinUsers ++ nickList'}}
+            (M (Message _ "332" [_, _, topic]), Just c@IRCConnection2 {currentJoin=cj@CurrentJoin {}}) -> do
+                -- Initial topic
+                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinTopic=Just (topic, "unknown.user", 0)}}
+            (M (Message _ "333" [_, _, user, time]), Just c@IRCConnection2 {currentJoin=cj@CurrentJoin {joinTopic=Just (topic, _, _)}}) -> do
+                -- Initial topic date and user
+                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinTopic=Just (topic, user, time)}}
             (M (Message _ "366" _), Just c@IRCConnection2 {currentJoin=cj@CurrentJoin {..}}) -> do
                 -- Join finished.
                 liftIO $ handleEvent $ Event M.empty $ SelfJoinedRoom joinName joinTopic joinUsers
                 liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=NotJoining}
-            (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c) -> do
+            (M (Message (Just (NickName fromNick _ _)) "PART" (room:maybeReason)), Just c@IRCConnection2 {cNick=Just currentNick}) -> do
                 -- Us or someone else parted a room
-                liftIO $ handleEvent $ Event M.empty $ UserPartedRoom room fromNick $ Parted $ fromMaybe "" $ listToMaybe maybeReason
+                let eventConstructor = if fromNick == currentNick then (SelfPartedRoom room) else (UserPartedRoom room fromNick)
+                liftIO $ handleEvent $ Event M.empty $ eventConstructor $ Parted $ fromMaybe "" $ listToMaybe maybeReason
             (M (Message (Just (NickName fromNick _ _)) "QUIT" maybeReason), Just c) -> do
                 -- Us or someone else quit
                 liftIO $ handleEvent $ Event M.empty $ UserQuit fromNick $ fromMaybe "" $ listToMaybe maybeReason

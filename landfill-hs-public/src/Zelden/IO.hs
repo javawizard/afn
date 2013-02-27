@@ -3,7 +3,8 @@ module Zelden.IO where
 
 import System.IO
 import Control.Monad (liftM, when)
-import Control.Concurrent
+import Control.Monad.IO.Class
+import Control.Concurrent hiding (yield)
 import Control.Concurrent.STM
 import Control.Concurrent.STM.SaneTChan
 import Network
@@ -95,7 +96,7 @@ sendAll socket socketData = do
 
 readSocketP :: MonadIO m => Socket -> Source m String
 readSocketP socket = do
-    socketData <- catch (recv socket 32) $ const $ return ""
+    socketData <- liftIO $ catch (recv socket 32) $ const $ return ""
     if (socketData == "")
         then return ()
         else do
@@ -109,7 +110,7 @@ linesP' :: MonadIO m => String -> Conduit String m String
 linesP' leftover = do
     if '\n' `elem` leftover
         then do
-            let (result, _:rest) = break (== '\n') value
+            let (result, _:rest) = break (== '\n') leftover
             -- TODO: Might want to check for (and strip) a trailing \r
             yield result
             linesP' rest
@@ -118,15 +119,18 @@ linesP' leftover = do
             -- TODO: Probably ought to yield the leftovers we were passed as
             -- the last line, in case the connection was closed without a
             -- trailing newline
-            if (nextData == "")
-                then return ()
-                else linesP' $ leftover ++ nextData
+            case nextData of
+                Nothing -> return ()
+                (Just d) -> linesP' $ leftover ++ d
 
 writeToQueueP :: MonadIO m => Queue a -> (b -> a) -> Sink b m ()
-writeToQueueP q f -> do
+writeToQueueP q f = do
     value <- await
-    liftIO $ atomically $ writeQueue q $ f a
-    writeToQueueP q f
+    case value of
+        (Just v) -> do
+            liftIO $ atomically $ writeQueue q $ f v
+            writeToQueueP q f
+        Nothing -> return ()
 
 
 
