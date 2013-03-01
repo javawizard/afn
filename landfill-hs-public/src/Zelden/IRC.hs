@@ -197,8 +197,8 @@ run3 actionEndpoint handleEvent logUnknown = do
                 -- Initial topic
                 liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinTopic=Just (topic, "unknown.user", 0)}}
             (M (Message _ "333" [_, _, user, time]), Just c@IRCConnection2 {currentJoin=cj@CurrentJoin {joinTopic=Just (topic, _, _)}}) -> do
-                -- Initial topic date and user
-                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinTopic=Just (topic, user, time)}}
+                -- Initial topic date and user. Use 1 as the current time if the time fails to parse so that we can see what happened.
+                liftIO $ atomically $ writeTVar connVar $ Just $ c {currentJoin=cj {joinTopic=Just (topic, nickOnly user, case reads time of {[(t, _)] -> t; _ -> 1})}}
             (M (Message _ "366" _), Just c@IRCConnection2 {currentJoin=cj@CurrentJoin {..}}) -> do
                 -- Join finished.
                 liftIO $ handleEvent $ Event M.empty $ SelfJoinedRoom joinName joinTopic joinUsers
