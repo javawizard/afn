@@ -1,0 +1,6 @@
+More notes on Zelden, and in particular the stuff to let clients attach to views.
+
+And I'm not going to worry about how to select exactly which messages to download; I'm just going to write this out as if we have this concept of "views" of a sort, whatever those are, and we have some ability to restrict messages that we're interested in to a single view. The particulars are a separate topic entirely.
+
+So, we have a table that can store things that we're to display, which I think I'll be calling events for now.
+
