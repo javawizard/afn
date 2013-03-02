@@ -33,7 +33,6 @@ main = do
                 logout
                 return accounts
             threadDelay $ 3000*1000
-            system "pkill -f firefox"
             putStrLn "Inserting into database"
             time <- (liftM (floor . realToFrac) getPOSIXTime) :: IO Integer
             forM_ accounts $ \(shareName, _, number, available, total) -> do
@@ -42,6 +41,7 @@ main = do
                      toSql (read $ filter (flip elem "0123456789") available :: Integer), toSql (read $ filter (flip elem "0123456789") total :: Integer)])
             commit db
             putStrLn "Done"
+        flip catch (\e -> putStrLn $ "Exception happened while killing firefox: " ++ show e) $ system "pkill -f firefox"
         threadDelay (20*1000*1000)
         loop
     loop
