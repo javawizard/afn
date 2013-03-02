@@ -41,7 +41,7 @@ main = do
                      toSql (read $ filter (flip elem "0123456789") available :: Integer), toSql (read $ filter (flip elem "0123456789") total :: Integer)])
             commit db
             putStrLn "Done"
-        flip catch (\e -> putStrLn $ "Exception happened while killing firefox: " ++ show e) $ system "pkill -f firefox"
+        flip catch (\e -> putStrLn $ "Exception happened while killing firefox: " ++ show e) $ system "pkill -f firefox" >> return ()
         threadDelay (20*1000*1000)
         loop
     loop
