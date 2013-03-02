@@ -17,6 +17,7 @@ import Control.Monad
 main = do
     args <- getArgs
     db <- connectSqlite3 $ args !! 0
+    waitTime <- readIO (args !! 1) :: IO Int
     run db "create table if not exists balance (person text, shareid text, sharename text, checktime integer, available integer, total integer)" []
     commit db
     password <- getPass'
@@ -42,6 +43,6 @@ main = do
             commit db
             putStrLn "Done"
         flip catch (\e -> putStrLn $ "Exception happened while killing firefox: " ++ show e) $ system "pkill -f firefox" >> return ()
-        threadDelay (20*1000*1000)
+        threadDelay waitTime
         loop
     loop
