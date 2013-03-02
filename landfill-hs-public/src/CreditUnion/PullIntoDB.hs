@@ -10,6 +10,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import System (getArgs)
 import Data.Time.Clock.POSIX
+import System.Process (system)
 
 main = do
     args <- getArgs
@@ -27,11 +28,15 @@ main = do
                 accounts <- getAccounts
                 logout
                 return accounts
+            threadDelay $ 3000*1000
+            system "pkill -f firefox"
             putStrLn "Inserting into database"
             time <- liftM (floor . realToFrac) getPOSIXTime
             forM_ accounts $ \(shareName, _, number, available, total) -> do
-                
-            commit db 
+                (run db "insert into balance (person, shareid, sharename, when, available, total) values (?, ?, ?, ?, ?, ?)" $
+                    [toSql "javawizard", toSql $ drop 2 $ dropWhile (/= '-') number, toSql shareName, toSql time,
+                     toSql (read $ filter (flip elem "0123456789") available :: Integer), toSql (read $ filter (flip elem "0123456789") available :: Integer)])
+            commit db 3600*1000*1000
             putStrLn "Done"
         threadDelay (3600*1000*1000)
         loop
