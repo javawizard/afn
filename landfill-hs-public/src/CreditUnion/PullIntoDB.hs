@@ -43,6 +43,6 @@ main = do
             commit db
             putStrLn "Done"
         flip catch (\e -> putStrLn $ "Exception happened while killing firefox: " ++ show e) $ system "pkill -f firefox" >> return ()
-        threadDelay waitTime
+        threadDelay $ waitTime * 1000000
         loop
     loop
