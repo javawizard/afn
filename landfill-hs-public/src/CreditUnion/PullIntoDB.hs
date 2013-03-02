@@ -26,7 +26,9 @@ main = do
         flip catch (\e -> putStrLn $ "Exception happened: " ++ show e) $ do
             putStrLn "Starting session"
             accounts <- runSession defaultSession defaultCaps $ do
+                liftIO $ putStrLn "Logging in"
                 login "javawizard" questions password
+                liftIO $ putStrLn "Getting accounts"
                 accounts <- getAccounts
                 logout
                 return accounts
