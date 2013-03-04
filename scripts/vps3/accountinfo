@@ -40,9 +40,9 @@ for time in times2:
         if a:
             available = a[0][0]
             available = str(available)
+            print available[:-2] + "." + available[-2:] + ",",
         else:
-            available = ""
-        print available[:-2] + "." + available[-2:] + ",",
+            print ",",
     print
 
 
