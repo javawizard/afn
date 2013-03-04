@@ -14,6 +14,7 @@ import System.Process (system)
 import Control.Concurrent
 import Control.Monad
 import Data.Maybe (fromJust)
+import qualified Control.Exception as E
 
 main = do
     args <- getArgs
@@ -29,7 +30,7 @@ main = do
         return (username, password)
     putStrLn "Running."
     let loop = do
-        flip catch (\e -> putStrLn $ "Exception happened: " ++ show e) $ do
+        flip E.catch (\e -> putStrLn $ "Exception happened: " ++ show (e :: E.SomeException)) $ do
             time <- (liftM (floor . realToFrac) getPOSIXTime) :: IO Integer
             putStrLn $ "Starting at time: " ++ show time 
             forM_ accountInfos $ \(username, questions) -> do
@@ -49,7 +50,7 @@ main = do
                          toSql (read $ filter (flip elem "0123456789") available :: Integer), toSql (read $ filter (flip elem "0123456789") total :: Integer)])
             commit db
             putStrLn "Done"
-        flip catch (\e -> putStrLn $ "Exception happened while killing firefox: " ++ show e) $ system "pkill -f firefox" >> return ()
+        flip E.catch (\e -> putStrLn $ "Exception happened while killing firefox: " ++ show (e :: E.SomeException)) $ system "pkill -f firefox" >> return ()
         threadDelay $ waitTime * 1000000
         loop
     loop
