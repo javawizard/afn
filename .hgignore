@@ -27,3 +27,5 @@ syntax: regexp
 /[^/]+\.o$
 syntax: regexp
 ^landfill-hs-public/src/simplehttp$
+syntax: regexp
+^landfill-hs-public/cabal-dev$
