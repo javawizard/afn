@@ -1,7 +1,47 @@
-#!/bin/bash
+#!/usr/bin/env python
 
-echo "HTTP/1.1 200 OK"
-echo "Content-Type: text/xml"
-echo
-echo '<data>'
+import sqlite3
+from time import strftime
+
+db = sqlite3.connect("/home/jcp/ucreditu/db")
+
+c = db.cursor()
+c.execute("select distinct checktime from balance order by checktime asc")
+times1 = [t for (t,) in c]
+# Only produce every third time right now. Might change this to be every
+# fourth or sixth, or read a parameter specifying which, which would allow
+# me to have really granular graphs of the last month and a more coarse
+# graph of things beyond that.
+times2 = times1[::3]
+# We add the most recent time on, just so we have a good idea of what our
+# current balance is like.
+if times1[-1:] != times2[-1:]:
+    times2 += times1[-1:]
+
+# Now we get a list of the account names.
+c.execute("select distinct person, shareid from balance order by person asc, shareid asc")
+accounts = list(c)
+account_headers = ["%s: %s" % a for a in accounts]
+
+print "HTTP/1.1 200 OK"
+print "Content-Type: text/csv"
+print
+print "," + account_headers.join(",")
+
+# Now we iterate through all the times
+for time in times2:
+    # We print out the time first
+    print strftime("%Y/%m/%d %H:%M", time) + ",",
+    # Then we select the values of each account for the current time and write
+    # them out in order. The trailing comma should be ok.
+    for (person, shareid) in accounts:
+        c.execute("select available from balance where checktime = ? and person = ? and shareid = ?", (time, person, shareid))
+        available, = c.fetchone()
+        available = str(available)
+        print available[:-2] + "." + available[-2:] + ",",
+    print
+
+
+
+
 
