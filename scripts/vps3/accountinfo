@@ -26,7 +26,7 @@ account_headers = ["%s: %s" % a for a in accounts]
 print "HTTP/1.1 200 OK"
 print "Content-Type: text/plain"
 print
-print "," + ",".join(accont_headers)
+print "," + ",".join(account_headers)
 
 # Now we iterate through all the times
 for time in times2:
