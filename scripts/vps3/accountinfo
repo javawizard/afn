@@ -24,7 +24,7 @@ accounts = list(c)
 account_headers = ["%s: %s" % a for a in accounts]
 
 print "HTTP/1.1 200 OK"
-print "Content-Type: text/plain"
+print "Content-Type: text/csv"
 print
 print "," + ",".join(account_headers)
 
