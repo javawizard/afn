@@ -1,0 +1,6 @@
+#!/bin/bash
+
+vncserver :1 -depth 24 -geometry 800x600 -alwaysshared &
+sleep 2
+DISPLAY=:1 metacity &
+
