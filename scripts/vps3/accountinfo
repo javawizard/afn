@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sqlite3
-from time import strftime
+from time import strftime, localtime
 
 db = sqlite3.connect("/home/jcp/ucreditu/db")
 
@@ -31,7 +31,7 @@ print "," + ",".join(account_headers)
 # Now we iterate through all the times
 for time in times2:
     # We print out the time first
-    print strftime("%Y/%m/%d %H:%M", time) + ",",
+    print strftime("%Y/%m/%d %H:%M", localtime(time)) + ",",
     # Then we select the values of each account for the current time and write
     # them out in order. The trailing comma should be ok.
     for (person, shareid) in accounts:
