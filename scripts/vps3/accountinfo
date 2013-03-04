@@ -36,8 +36,12 @@ for time in times2:
     # them out in order. The trailing comma should be ok.
     for (person, shareid) in accounts:
         c.execute("select available from balance where checktime = ? and person = ? and shareid = ?", (time, person, shareid))
-        available, = c.fetchone()
-        available = str(available)
+        a = c.fetchall()
+        if a:
+            available = a[0][0]
+            available = str(available)
+        else:
+            available = ""
         print available[:-2] + "." + available[-2:] + ",",
     print
 
