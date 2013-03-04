@@ -13,6 +13,7 @@ import Data.Time.Clock.POSIX
 import System.Process (system)
 import Control.Concurrent
 import Control.Monad
+import Data.Maybe (fromJust)
 
 main = do
     args <- getArgs
@@ -20,10 +21,12 @@ main = do
     waitTime <- readIO (args !! 1) :: IO Int
     run db "create table if not exists balance (person text, shareid text, sharename text, checktime integer, available integer, total integer)" []
     commit db
-    password <- getPass'
     -- [(username, [(q, a), (q, a), (q, a)]), (username, [...]), ...]
     accountInfos <- liftM read $ readFile "/home/jcp/ucreditu/questions" :: IO [(String, [(String, String)])]
-    questions <- liftM read $ readFile "/home/jcp/ucreditu/questions"
+    passwords <- forM accountInfos $ \(username, _) -> do
+        putStrLn $ "Account " ++ username ++ ":"
+        password <- getPass'
+        return (username, password)
     putStrLn "Running."
     let loop = do
         flip catch (\e -> putStrLn $ "Exception happened: " ++ show e) $ do
@@ -33,7 +36,7 @@ main = do
                 putStrLn "Starting session"
                 accounts <- runSession defaultSession defaultCaps $ do
                     liftIO $ putStrLn $ "Logging into " ++ show username
-                    login username questions password
+                    login username questions $ fromJust $ lookup username passwords
                     liftIO $ putStrLn "Getting accounts"
                     accounts <- getAccounts
                     logout
