@@ -4,3 +4,15 @@ And I'm not going to worry about how to select exactly which messages to downloa
 
 So, we have a table that can store things that we're to display, which I think I'll be calling events for now.
 
+Each row contains sufficient information to identify the view to which the event belongs.
+
+Each row/event also has an id.
+
+And I'm alternating between events and messages; they both mean the same thing.
+
+So, each message has a message id. The first message ever inserted into the table has id 1, the second has id 2, and so on.
+
+A quick aside: every where a range of messages is sent from the client to the server or vice versa, the start id is always exclusive and the end is always inclusive. This is a radical departure from most programming languages, but it makes a number of things more elegant.
+
+So one can pass a lower bound of 0 to get messages from the beginning of time.
+
