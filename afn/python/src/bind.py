@@ -1,6 +1,7 @@
 
 from abc import abstractmethod as abstract, ABCMeta as ABC
 from collections import namedtuple
+import collections
 
 class SyntheticError(Exception):
     pass
@@ -63,6 +64,13 @@ class Bindable(object):
     def validate_change(self, change):
         """
         """
+    
+    def post_change(self, change):
+        if self._binder:
+            self._binder.submit_change(change)
+        else:
+            self.validate_change(change)
+            self.receive_change(change)
     
     @property
     def is_synthetic(self):
@@ -160,11 +168,7 @@ class Value(Bindable):
     
     @value.setter
     def value(self, value):
-        if self._binder:
-            self._binder.submit_change(SetValue(value))
-        else:
-            self.validate_change(SetValue(value))
-            self.receive_change(SetValue(value))
+        self.post_change(SetValue(value))
     
     def get_value(self):
         return self._value
@@ -179,9 +183,47 @@ class Value(Bindable):
             raise ValidationError
 
 
-class Dict(Bindable):
+class Dict(Bindable, collections.MutableMapping):
     def __init__(self):
-        pass
+        self._dict = {}
+    
+    def get_value(self):
+        return self._dict
+    
+    def validate_change(self, change):
+        if not isinstance(change, (SetValue, ModifyDict)):
+            raise ValidationError
+    
+    def receive_change(self, change):
+        changes = change.changes
+        for c in changes:
+            if isinstance(c, SetKey):
+                self._dict[c.key] = c.value
+            elif isinstance(c, DeleteKey):
+                del self._dict[c.key]
+    
+    # TODO: Could consider splitting off the storage backend and the
+    # MutableMapping backend into separate pieces, with the former implementing
+    # just Bindable and the latter being a synthetic translator between the
+    # bindings system and MutableMapping's functions
+    
+    def __setitem__(self, key, value):
+        self.post_change(ModifyDict(changes=[SetKey(key, value)]))
+    
+    def __delitem__(self, key):
+        self.post_change(ModifyDict(changes=[DeleteKey(key)]))
+    
+    def __getitem__(self, key):
+        return self._dict.__getitem__(key)
+    
+    def __len__(self):
+        return self._dict.__len__()
+    
+    def __iter__(self):
+        return self._dict.__iter__()
+    
+    def __contains__(self, key):
+        return self._dict.__contains__(key)
 
 
 
