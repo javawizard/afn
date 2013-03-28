@@ -196,12 +196,17 @@ class Dict(Bindable, collections.MutableMapping):
             raise ValidationError
     
     def receive_change(self, change):
-        changes = change.changes
-        for c in changes:
-            if isinstance(c, SetKey):
-                self._dict[c.key] = c.value
-            elif isinstance(c, DeleteKey):
-                del self._dict[c.key]
+        if isinstance(change, ModifyDict):
+            changes = change.changes
+            for c in changes:
+                if isinstance(c, SetKey):
+                    self._dict[c.key] = c.value
+                elif isinstance(c, DeleteKey):
+                    del self._dict[c.key]
+        else:
+            self._dict = {}
+            for k, v in change.value.iteritems():
+                self._dict[k] = v
     
     # TODO: Could consider splitting off the storage backend and the
     # MutableMapping backend into separate pieces, with the former implementing
