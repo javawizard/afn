@@ -185,6 +185,7 @@ class Value(Bindable):
 
 class Dict(Bindable, collections.MutableMapping):
     def __init__(self):
+        Bindable.__init__(self)
         self._dict = {}
     
     def get_value(self):
