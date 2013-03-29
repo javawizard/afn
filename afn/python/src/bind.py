@@ -1,6 +1,22 @@
 
 from abc import ABCMeta as ABC, abstractmethod as abstract
 import weakref
+from collections import namedtuple
+import collections
+
+class SyntheticError(Exception):
+    pass
+
+class ValidationError(Exception):
+    pass
+
+SetValue = namedtuple("SetValue", ["value"])
+SyntheticValue = namedtuple("SyntheticValue", [])
+
+ModifyDict = namedtuple("ModifyDict", ["changes"])
+SetKey = namedtuple("SetKey", ["key", "value"])
+DeleteKey = namedtuple("DeleteKey", ["name"])
+
 
 class Bindable(object):
     __metaclass__ = ABC
@@ -16,6 +32,14 @@ class Bindable(object):
     @abstract
     def perform_change(self, change):
         pass
+    
+    @property
+    def is_synthetic(self):
+        try:
+            self.get_value()
+            return False
+        except SyntheticError:
+            return True
 
 
 class Binder(object):
@@ -44,11 +68,40 @@ class Binder(object):
             self.bindable.perform_change(change)
         for binder in self.binders:
             binder.perform_change(change, visited=visited)
+    
+    def get_value(self, skip_self=False, visited=None):
+        if visited is None:
+            visited = []
+        if self in visited:
+            raise SyntheticError
+        visited.append(self)
+        if not skip_self:
+            try:
+                return self.bindable.get_value()
+            except SyntheticError:
+                pass
+        for binder in self.binders:
+            try:
+                return binder.get_value(visited=visited)
+            except SyntheticError:
+                pass
+        raise SyntheticError
+    
+    @property
+    def is_synthetic(self):
+        try:
+            self.get_value()
+            return False
+        except SyntheticError:
+            return True
+    
+    def validate_bind(self, other):
+        pass
+    
+    def perform_bind(self, other, self_strong, other_strong):
+        pass
 
 
-def validate_bind(binder_a, binder_b):
-    pass
 
 
-def perform_bind(binder_a, binder_b, strong_a, strong_b):
-    pass
+
