@@ -22,6 +22,28 @@ class Binder(object):
     def __init__(self, bindable):
         self.bindable = bindable
         self.binders = []
+    
+    def validate_change(self, change, skip_self=False, visited=None):
+        if visited is None:
+            visited = []
+        if self in visited:
+            return
+        visited.append(self)
+        if not skip_self:
+            self.bindable.validate_change(change)
+        for binder in self.binders:
+            binder.validate_change(change, visited=visited)
+    
+    def perform_change(self, change, skip_self=False, visited=None):
+        if visited is None:
+            visited = []
+        if self in visited:
+            return
+        visited.append(self)
+        if not skip_self:
+            self.bindable.perform_change(change)
+        for binder in self.binders:
+            binder.perform_change(change, visited=visited)
 
 
 def validate_bind(binder_a, binder_b):
