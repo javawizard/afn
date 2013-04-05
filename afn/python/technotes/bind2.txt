@@ -1,0 +1,60 @@
+
+Initial transactional bindings system prototype implemented! Now for how to do this with synthetic values...
+
+Synthetic bindables can access values, and when a change is posted to them their binder's get_value function should already have been updated to return the new value. And same with reverts, the reversion function should only be called once get_value returns the reverted value; anything else will screw up how things like list boxes display items. Then bindables that aren't synthetic must not call get_value, or at least if they do they might end up getting their own value, which will most likely cause no end of headaches.
+
+Which is fine until we get bindables that change whether they're synthetic.
+
+So we have a change, SyntheticValue or something, that's issued by a bindable to say that it's becoming synthetic, which the binder will ignore if something else has a value as it doesn't affect anything else on the circuit if the entire circuit isn't going synthetic. If it is, though, then the change gets sent around.
+
+So, transactions... With synthetic values, the things we need to figure out how they work are binding, unbinding, performing a concrete to synthetic change, performing a synthetic to concrete change, performing a normal concrete change... That should be about it.
+
+When we bind, if we're both synthetic, we add ourselves to each other's lists and we're done. To revert, we remove ourselves from each other's lists.
+
+If a is concrete and b is synthetic, we get b's list of binders to post changes to before linking the two. Then we link the two and add our unlinking to the log. Then we post the change to a's current value to all of b's binders, adding their reversions to the log. Then we return.
+
+Hm, that doesn't properly update the binder's value to reflect its newly-synthetic nature. We'd need to unlink first to do that.
+
+So maybe we just use the log for making the individual changes, and our reversion is to unlink first, which will cause the binder's get_value to become synthetic, and then we call all of the reversion functions. That sounds like it'll work.
+
+And the case where b is concrete but a is synthetic is basically the same.
+
+(Reversions, by the way, must /not/ cause any changes to be issued to the binder; they should only affect the object they're supposed to revert.)
+
+So then what if they're both concrete? We'll assume we're to keep a's value.
+
+So, we link them together. Hm, we need to figure out how, when we're passing around the new value, to make sure that get_value gets the value from the side whose value we're supposed to keep... But my idea of having an explicit circuit object that we use to track which one's value we're using won't really work, because then that creates a strong reference to whatever has the concrete value, which won't work if we actually want a weak reference to it...
+
+Er, wait, this will actually work fine, we just need to remember to update b's concrete binders first.
+
+So, we link them together, but only after getting a list of b's binders. Then we update b's concrete binders first, and stuff their reversions into a log. Then we update b's synthetic binders, and stuff them into a separate log. We put all of those, and the undo-linking action, into another log that, on reversion, first unlinks them, then posts changes to the concrete binders that we actually managed to update, then posts changes to the synthetic binders.
+
+That'll work.
+
+So then unbinding...
+
+Basically we unlink both of the sides. And if both the sides were synthetic, then nothing changes, and we don't need to post any value changes.
+
+OH WAIT, problem: with the logic for binding and reverting binds, we need to see what b's value is before we post a's change, and somehow make a copy of said value... Maybe we need a standardized way to make a persistent copy of it or something, needs some thought. But we need to be able to update b's value back to... Wait a sec, the reversion actions of the things in b we've modified should do that for us, so when we revert its concrete bindables that'll update the value for us. Yeah, we're already fine, we don't need that.
+
+So, both sides being synthetic means nothing changes, and the undo action is to add both sides back to each other.
+
+If a is concrete and b is synthetic after being unlinked, then b's becoming synthetic, so we issue synthetic notifications to all of its bindables in a row (none will be concrete so we don't need to worry about that). Then our reversion action is to link them back together, then notify b's binders of the reversion, which should set their values back to whatever they were. (Which also means that construction of reversion actions for synthetic binders must not depend on get_value when constructing the reversion action, as it'll already have the new value. But for a list box, the reversion would just tell the list to refresh itself, which would work as they've been relinked so it'll see the value of the one that was concrete.)
+
+Same with a being synthetic but b being concrete, but vice versa.
+
+If they're both concrete, then we also don't need to do anything, because they're both keeping their existing values. To revert, we just relink them, and if everything's been reverted in the proper order then they should already have the same value so we don't need to let either one know about the other's value.
+
+So that sounds good. Then updating values when the binder's concrete just involves passing around the value to concrete binders first, then passing to synthetic binders, adn that should be it.
+
+I'll work on how synthetic-to-concrete and concrete-to-synthetic transitions work tomorrow, as well as what happens when an individual thingie becomes synthetic but there's still a concrete thingie present.
+
+
+
+
+
+
+
+
+
+
