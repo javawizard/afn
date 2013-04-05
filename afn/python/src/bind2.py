@@ -217,7 +217,6 @@ class MemoryDict(Bindable):
         return self._dict
     
     def perform_change(self, change):
-        print "Change %r to %r" % (change, self)
         if isinstance(change, ModifyKey):
             if change.key in self._dict:
                 old = self._dict[change.key]
