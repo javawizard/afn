@@ -75,19 +75,7 @@ class Binder(object):
             return False
         except SyntheticError:
             return True
-    
-    def notify_change(self, change):
-        with Log() as l:
-            for binder in self.get_binders():
-                if binder != self:
-                    l.add(binder.bindable.perform_change(change))
-    
-    def perform_change(self, change):
-        with Log() as l:
-            for binder in self.get_binders():
-                l.add(binder.bindable.perform_change(change))
-            return l
-    
+        
     def bind(self, other):
         if other in self.binders: # Already bound, don't do anything
             return Log()
@@ -154,6 +142,26 @@ class Binder(object):
                 for binder in synthetic.get_binders():
                     l2.add(binder.bindable.perform_change(LostValue()))
             return l1
+
+    def notify_change(self, change, to_self=False):
+        if isinstance(change, LostValue) and not self.is_synthetic:
+            # We're now synthetic but another binder on our circuit is still
+            # concrete, so don't do anything
+            return Log()
+        with Log() as l1:
+            l2, l3 = Log, Log()
+            l1.then(l2)
+            l1.then(l3)
+            for binder in self.get_binders():
+                if (to_self or binder != self) and not binder.is_synthetic:
+                    l2.add(binder.bindable.perform_change(change))
+            for binder in self.get_binders():
+                if (to_self or binder != self) and binder.is_synthetic:
+                    l3.add(binder.bindable.perform_change(change))
+            return l1
+    
+    def perform_change(self, change):
+        self.notify_change(change, to_self=True)
 
 
 class Value(Bindable):
