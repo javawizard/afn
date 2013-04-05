@@ -67,38 +67,44 @@ class IdHash(object):
         return self.__hash__() != other.__hash__()
 
 
-class StrongRef(object):
-    __slots__ = ["value"]
-    
-    def __init__(self, value):
-        self.value = value
-    
-    def __call__(self):
-        return self.value
-
-
 class StrongWeakSet(collections.MutableSet):
-    # Set of IdHash of StrongRef and WeakRef
     def __init__(self):
-        self._set = set()
+        self._weak = weakref.WeakSet()
+        self._strong = set()
     
-    def add(self, item):
-        pass
+    def add(self, item, weak=False):
+        # This is thread-safe; since we have a strong reference to the item,
+        # it won't just suddenly disappear from _weak if it's in there
+        if item in self._weak or item in self._strong:
+            pass
+        if weak:
+            self._weak.add(item)
+        else:
+            self._strong.add(item)
+    
+    def is_weak(self, item):
+        return item in self._weak
     
     def discard(self, item):
-        pass
+        self._weak.discard(item)
+        self._strong.discard(item)
     
     def __len__(self):
-        pass
+        return len(self._weak) + len(self._strong)
     
     def __iter__(self):
-        for ref in self._list[:]:
-            value = ref()
-            if value is None:
-                
+        for w in self._weak:
+            yield w
+        for s in self._strong:
+            yield s
     
-    def __contains__(self):
-        pass
+    def __contains__(self, item):
+        return item in self._strong or item in self._weak
+    
+    def __str__(self):
+        return "<StrongWeakSet: strong: %r, weak: %r>" % (self._strong, set(self._weak))
+    
+    __repr__ = __str__
 
 
 class Bindable(object):
@@ -109,6 +115,14 @@ class Bindable(object):
         raise NotImplementedError
     
     @property
+    def binder(self):
+        try:
+            return self._binder
+        except AttributeError:
+            self._binder = Binder(self)
+            return self._binder
+    
+    @property
     def is_synthetic(self):
         try:
             self.get_value()
@@ -116,10 +130,19 @@ class Bindable(object):
         except SyntheticError:
             return True
 
+# BIG NOTE ABOUT WEAK REFERENCES: Do /not/ weakly bind to a concrete binder
+# from a synthetic one. Or in other words, if a binder that's weakly bound to
+# is the last concrete binder in its circuit and it goes away, the rest of the
+# circuit will /not/ be notified that it's now synthetic (there are far too
+# many threading issues involved in doing this), so make sure that there's at
+# least one concrete binder on the strong side of the circuit, or that both
+# sides are synthetic. I might consider having warnings be printed out if the
+# situation is detected, but they still won't be 100% reliable due to threading
+# issues.
 
 class Binder(object):
     def __init__(self, bindable):
-        self.binders = []
+        self.binders = StrongWeakSet()
         self.bindable = bindable
     
     def get_binders(self, binders=None):
@@ -147,7 +170,7 @@ class Binder(object):
         except SyntheticError:
             return True
         
-    def bind(self, other):
+    def bind(self, other, self_weak=False, other_weak=False):
         if other in self.binders: # Already bound, throw an exception
             raise Exception("Already bound")
         with Log() as l1:
@@ -163,12 +186,12 @@ class Binder(object):
                 # value and not the value of the binder we linked to
                 keep_value = keep.get_value()
             # Link and add a reversion step that unlinks
-            self.binders.append(other)
-            other.binders.append(self)
+            self.binders.add(other, other_weak)
+            other.binders.add(self, self_weak)
             @l1.then
             def _():
-                other.binders.remove(self)
-                self.binders.remove(other)
+                other.binders.discard(self)
+                self.binders.discard(other)
             # If keep's synthetic, then other must be as well, so we're done.
             # If not, though, then we need to pass the new value to all of
             # update's former binders.
@@ -194,12 +217,13 @@ class Binder(object):
         if other not in self.binders: # Not bound, throw an exception
             raise Exception("Not bound")
         with Log() as l1:
-            self.binders.remove(other)
-            other.binders.remove(self)
+            self_weak, other_weak = other.binders.is_weak(self), self.binders.is_weak(other)
+            self.binders.discard(other)
+            other.binders.discard(self)
             @l1.then
             def _():
-                other.binders.append(self)
-                self.binders.append(other)
+                other.binders.add(self, self_weak)
+                self.binders.add(other, other_weak)
             if (self.is_synthetic and not other.is_synthetic) or (other.is_synthetic and not self.is_synthetic):
                 # If they're both synthetic then we don't need to do anything
                 # else as we were already synthetic before we unbound. If
@@ -235,17 +259,50 @@ class Binder(object):
         return self.notify_change(change, to_self=True)
 
 
-def bind(a, b):
-    return a.binder.bind(b.binder)
+def bind(a, b, a_weak=False, b_weak=False):
+    return a.binder.bind(b.binder, a_weak, b_weak)
+
+s_bind_s = bind
+
+def s_bind_w(a, b):
+    return bind(a, b, False, True)
+
+def w_bind_s(a, b):
+    return bind(a, b, True, False)
+
+def w_bind_w(a, b):
+    return bind(a, b, True, True)
 
 
 def unbind(a, b):
     return a.binder.unbind(b.binder)
 
 
-class Value(Bindable):
+class SyntheticBindable(Bindable):
+    # Bindable that can take on any sort of type, and exists mainly to serve
+    # as a placeholder to bind other things to
+    def get_value(self):
+        raise SyntheticError
+    
+    def perform_change(self, change):
+        return Log()
+
+
+class PyValueMixin(Bindable):
+    # Mixin that exposes a Python-friendly interface for value bindables, in
+    # the form of get and set functions and a value property
+    def get(self):
+        return self.binder.get_value()
+    
+    def set(self, value):
+        self.binder.perform_change(SetValue(value))
+    
+    value = property(get, set)
+
+
+class MemoryValue(Bindable, PyValueMixin):
+    # Concrete value that stores its value in memory
     def __init__(self, value):
-        self.binder = Binder(self)
         self._value = value
     
     def get_value(self):
@@ -260,20 +317,19 @@ class Value(Bindable):
         def undo():
             self._value = old
         return undo
-    
-    @property
-    def value(self):
-        return self._value
-    
-    @value.setter
-    def value(self, new_value):
-        self.binder.perform_change(SetValue(new_value))
+
+
+class PyValue(SyntheticBindable, PyValueMixin):
+    # Synthetic value that allows the convenient interface of PyValueMixin to
+    # be used with anything that can be bound to it
+    def __init__(self, bindable):
+        if bindable is not None:
+            s_bind_w(bindable, self)
 
 
 class MemoryDict(Bindable):
     # Dictionary bindable that stores things in memory
     def __init__(self):
-        self.binder = Binder(self)
         self._dict = {}
     
     def get_value(self):
@@ -322,9 +378,6 @@ class MemoryDict(Bindable):
 class PyDict(Bindable, collections.MutableMapping):
     # Synthetic bindable that exposes a collections.MutableMapping-compatible
     # interface for any other dictionary bindable
-    def __init__(self):
-        self.binder = Binder(self)
-    
     def get_value(self):
         raise SyntheticError
     
@@ -360,7 +413,6 @@ class PyDict(Bindable, collections.MutableMapping):
 
 class MemoryList(Bindable):
     def __init__(self):
-        self.binder = Binder(self)
         self._list = []
     
     def get_value(self):
@@ -399,22 +451,8 @@ class MemoryList(Bindable):
         return undo
 
 
-class SyntheticBindable(Bindable):
-    # Bindable that can take on any sort of type, and exists mainly to serve
-    # as a placeholder to bind other things to
-    def __init__(self):
-        self.binder = Binder(self)
-    
-    def get_value(self):
-        raise SyntheticError
-    
-    def perform_change(self, change):
-        return lambda: None
-
-
 class _ValueUnwrapperValue(Bindable):
     def __init__(self, controller):
-        self.binder = Binder(self)
         self.controller = controller
         self._last_value = None
     
@@ -454,7 +492,6 @@ class ValueUnwrapperController(object):
 
 class _DictControllerKey(Bindable):
     def __init__(self, controller, key):
-        self.binder = Binder(self)
         self.controller = controller
         self._key = key
     
@@ -483,7 +520,6 @@ class _DictControllerKey(Bindable):
 
 class _DictControllerValue(Bindable):
     def __init__(self, controller):
-        self.binder = Binder(self)
         self.controller = controller
     
     def get_value(self):
@@ -508,7 +544,6 @@ class _DictControllerValue(Bindable):
 
 class _DictControllerDict(Bindable):
     def __init__(self, controller):
-        self.binder = Binder(self)
         self.controller = controller
     
     def get_value(self):
