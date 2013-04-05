@@ -1,5 +1,6 @@
 
 from collections import namedtuple
+import collections
 
 SetValue = namedtuple("SetValue", ["value"])
 # Change that indicates that our circuit is becoming synthetic. SetValue will
@@ -173,6 +174,7 @@ class Value(Bindable):
         return self._value
     
     def perform_change(self, change):
+        # We're concrete, so we'll never see a LostValue change
         if not isinstance(change, SetValue):
             raise TypeError("Need a SetValue instance")
         self._value = change.value
@@ -186,7 +188,8 @@ class Value(Bindable):
         self.binder.perform_change(SetValue(new_value))
 
 
-class Dict(Bindable):
+class MemoryDict(Bindable):
+    # Dictionary bindable that stores things in memory
     def __init__(self):
         self.binder = Binder(self)
         self._dict = {}
@@ -225,7 +228,38 @@ class Dict(Bindable):
         return undo
 
 
-class List(Bindable):
+class PyDict(Bindable, collections.MutableMapping):
+    # Synthetic bindable that exposes a collections.MutableMapping-compatible
+    # interface for any other dictionary bindable
+    def __init__(self):
+        self.binder = Binder(self)
+    
+    def get_value(self):
+        raise SyntheticError
+    
+    def perform_change(self, change):
+        pass
+    
+    def __getitem__(self, key):
+        return self.binder.get_value()[key]
+    
+    def __setitem__(self, key, value):
+        self.binder.perform_change(ModifyKey(key, value))
+    
+    def __delitem__(self, key):
+        self.binder.perform_change(DeleteKey(key))
+    
+    def __len__(self):
+        return len(self.binder.get_value())
+    
+    def __iter__(self):
+        return self.binder.get_value().__iter__()
+    
+    def __contains__(self, key):
+        return self.binder.get_value().__contains__(key)
+
+
+class MemoryList(Bindable):
     def __init__(self):
         self.binder = Binder(self)
         self._list = []

@@ -45,9 +45,29 @@ Same with a being synthetic but b being concrete, but vice versa.
 
 If they're both concrete, then we also don't need to do anything, because they're both keeping their existing values. To revert, we just relink them, and if everything's been reverted in the proper order then they should already have the same value so we don't need to let either one know about the other's value.
 
-So that sounds good. Then updating values when the binder's concrete just involves passing around the value to concrete binders first, then passing to synthetic binders, adn that should be it.
+So that sounds good. Then updating values when the binder's concrete just involves passing around the value to concrete binders first, then passing to synthetic binders, and that should be it.
 
 I'll work on how synthetic-to-concrete and concrete-to-synthetic transitions work tomorrow, as well as what happens when an individual thingie becomes synthetic but there's still a concrete thingie present.
+
+
+
+So, perform_change and notify_change are almost the same, the main difference being that perform_change lets our own bindable know about the change while notify_change doesn't.
+
+So then we call notify_change when we're becoming synthetic. We never call perform_change for this as we can't just request a bindable become synthetic, it just happens when it happens.
+
+So when we're becoming synthetic we notify_change with a LostValue instance, and when we're concrete again we notify_change with a SetValue indicating what our new value is. In either case, we should have already updated our get_value return value before calling notify_change, and when reverting, we should do whatever we need to to update our own get_value value /before/ calling the revert function returned from notify_change.
+
+So when we get notified that we're becoming synthetic but the circuit itself is still concrete (get_value will have been updated already to make us synthetic, so we can just ask ourselves, the binder, if we're synthetic to find out), we don't do anything.
+
+When we get notified that we're becoming synthetic and the circuit is now synthetic (we'll pretend double notifications don't happen here, because they shouldn't if people are writing things sanely), we send around a LostValue change (which is just the change that was passed into us) and we're done.
+
+When we get notified that we now have a value and we were synthetic before, we also send around that value change.
+
+When we get notified of a new value and we're already concrete, we also just send around the change, but we need to make sure to send it to concrete bindables first.
+
+So actually, I think everything just behaves the same, with the exception that we don't send around a "we're becoming synthetic" notification when we're becoming synthetic. There might be some problems with properly reverting a "we're becoming concrete" bit, though, dealing with the fact that we need to revert ourselves first, but actually that's not a problem because this is notify_change, which means we've already updated our own value by the time it gets called. So we should be good.
+
+
 
 
 
