@@ -26,10 +26,14 @@ class Log(object):
         return self
     
     def add(self, function):
+        if not callable(function):
+            raise Exception("Need a callable object, not %r" % function)
         # Functions added this way are performed last to first
         self.functions.append(function)
     
     def then(self, function):
+        if not callable(function):
+            raise Exception("Need a callable object, not %r" % function)
         # Functions added this way are performed first to last
         self.functions.insert(0, function)
     
@@ -196,7 +200,11 @@ class Value(Bindable):
         # We're concrete, so we'll never see a LostValue change
         if not isinstance(change, SetValue):
             raise TypeError("Need a SetValue instance")
+        old = self._value
         self._value = change.value
+        def undo():
+            self._value = old
+        return undo
     
     @property
     def value(self):
@@ -266,7 +274,7 @@ class PyDict(Bindable, collections.MutableMapping):
         raise SyntheticError
     
     def perform_change(self, change):
-        pass
+        return lambda: None
     
     def __getitem__(self, key):
         return self.binder.get_value()[key]
@@ -334,6 +342,58 @@ class MemoryList(Bindable):
         else:
             raise TypeError("Need a list-related change")
         return undo
+
+
+class SyntheticBindable(Bindable):
+    # Bindable that can take on any sort of type, and exists mainly to serve
+    # as a placeholder to bind other things to
+    def __init__(self):
+        self.binder = Binder(self)
+    
+    def get_value(self):
+        raise SyntheticError
+    
+    def perform_change(self, change):
+        return lambda: None
+
+
+class _ValueUnwrapperValue(Bindable):
+    def __init__(self, controller):
+        self.binder = Binder(self)
+        self.controller = controller
+        self._last_value = None
+    
+    def get_value(self):
+        raise SyntheticError
+    
+    def perform_change(self, change):
+        # FIXME: Need to have proper revert support here
+        with Log() as l:
+            if isinstance(change, SetValue):
+                if self._last_value is not None:
+                    l.add(unbind(self.controller.binding, self._last_value))
+                old_last_value = self._last_value
+                self._last_value = change.value
+                @l.add
+                def _():
+                    self._last_value = old_last_value
+                l.add(bind(self.controller.binding, change.value))
+            elif isinstance(change, LostValue):
+                if self._last_value is not None:
+                    l.add(unbind(self.controller.binding, self._last_value))
+                old_last_value = self._last_value
+                self._last_value = None
+                @l.add
+                def _():
+                    self._last_value = old_last_value
+            else:
+                raise TypeError("Need a SetValue, not %r" % change)
+
+
+class ValueUnwrapperController(object):
+    def __init__(self):
+        self.value = _ValueUnwrapperValue(self)
+        self.binding = SyntheticBindable()
 
 
 
