@@ -19,6 +19,9 @@ class SyntheticError(Exception):
 
 
 class Log(object):
+    def __init__(self):
+        self.functions = []
+    
     def __enter__(self):
         return self
     
@@ -31,7 +34,7 @@ class Log(object):
         self.functions.insert(0, function)
     
     def __exit__(self, exc_type, *args):
-        if exc_type:
+        if exc_type is not None:
             self()
     
     def __call__(self):
@@ -45,6 +48,14 @@ class Bindable(object):
     
     def get_value(self):
         raise NotImplementedError
+    
+    @property
+    def is_synthetic(self):
+        try:
+            self.get_value()
+            return False
+        except SyntheticError:
+            return True
 
 
 class Binder(object):
@@ -58,7 +69,7 @@ class Binder(object):
         if self not in binders:
             binders.add(self)
             for b in self.binders:
-                b.do_get_binders(binders)
+                b.get_binders(binders)
         return binders
     
     def get_value(self):
@@ -112,11 +123,11 @@ class Binder(object):
                 l1.then(l2)
                 l1.then(l3)
                 for binder in update_binders:
-                    if not binder.is_synthetic:
-                        l2.add(binder.perform_change(SetValue(keep_value)))
+                    if not binder.bindable.is_synthetic:
+                        l2.add(binder.bindable.perform_change(SetValue(keep_value)))
                 for binder in update_binders:
-                    if binder.is_synthetic:
-                        l3.add(binder.perform_change(SetValue(keep_value)))
+                    if binder.bindable.is_synthetic:
+                        l3.add(binder.bindable.perform_change(SetValue(keep_value)))
             # That should be it. Then we just return l1.
             return l1
     
@@ -150,19 +161,19 @@ class Binder(object):
             # concrete, so don't do anything
             return Log()
         with Log() as l1:
-            l2, l3 = Log, Log()
+            l2, l3 = Log(), Log()
             l1.then(l2)
             l1.then(l3)
             for binder in self.get_binders():
-                if (to_self or binder != self) and not binder.is_synthetic:
+                if (to_self or binder != self) and not binder.bindable.is_synthetic:
                     l2.add(binder.bindable.perform_change(change))
             for binder in self.get_binders():
-                if (to_self or binder != self) and binder.is_synthetic:
+                if (to_self or binder != self) and binder.bindable.is_synthetic:
                     l3.add(binder.bindable.perform_change(change))
             return l1
     
     def perform_change(self, change):
-        self.notify_change(change, to_self=True)
+        return self.notify_change(change, to_self=True)
 
 
 class Value(Bindable):
@@ -198,6 +209,7 @@ class MemoryDict(Bindable):
         return self._dict
     
     def perform_change(self, change):
+        print "Change %r to %r" % (change, self)
         if isinstance(change, ModifyKey):
             if change.key in self._dict:
                 old = self._dict[change.key]
@@ -214,8 +226,12 @@ class MemoryDict(Bindable):
                 del self._dict[change.key]
                 def undo():
                     self._dict[change.key] = old
-            else: # Delete a non-existent key; no-op
-                undo = lambda: None
+            else: # Delete a non-existent key; throw an exception. Not sure at
+                # the moment if we should just ignore it instead... Main
+                # advantage to throwing a proper exception is that then
+                # PyDict.__del__ correctly throws an exception when trying to
+                # delete a key that doesn't actually exist.
+                raise KeyError(change.key)
         elif isinstance(change, SetValue):
             old = self._dict.copy()
             self._dict.clear()
@@ -226,6 +242,11 @@ class MemoryDict(Bindable):
         else:
             raise TypeError("Need a ModifyKey or DeleteKey")
         return undo
+    
+    def __str__(self):
+        return "<MemoryDict %s: %r>" % (hex(id(self)), self._dict)
+    
+    __repr__ = __str__
 
 
 class PyDict(Bindable, collections.MutableMapping):
