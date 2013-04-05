@@ -176,6 +176,14 @@ class Binder(object):
         return self.notify_change(change, to_self=True)
 
 
+def bind(a, b):
+    a.binder.bind(b.binder)
+
+
+def unbind(a, b):
+    a.binder.unbind(b.binder)
+
+
 class Value(Bindable):
     def __init__(self, value):
         self.binder = Binder(self)
