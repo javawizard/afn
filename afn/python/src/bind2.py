@@ -288,9 +288,9 @@ class PyDict(Bindable, collections.MutableMapping):
     
     def __str__(self):
         try:
-            return "<PyDict %s: %r>" % (hash(id(self)), self.binder.get_value())
+            return "<PyDict %s: %r>" % (hex(id(self)), self.binder.get_value())
         except SyntheticError:
-            return "<PyDict %s: synthetic>" % hash(id(self))
+            return "<PyDict %s: synthetic>" % hex(id(self))
     
     __repr__ = __str__
 
