@@ -285,6 +285,14 @@ class PyDict(Bindable, collections.MutableMapping):
     
     def __contains__(self, key):
         return self.binder.get_value().__contains__(key)
+    
+    def __str__(self):
+        try:
+            return "<PyDict %s: %r>" % (hash(id(self)), self.binder.get_value())
+        except SyntheticError:
+            return "<PyDict %s: synthetic>" % hash(id(self))
+    
+    __repr__ = __str__
 
 
 class MemoryList(Bindable):
