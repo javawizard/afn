@@ -181,11 +181,11 @@ class Binder(object):
 
 
 def bind(a, b):
-    a.binder.bind(b.binder)
+    return a.binder.bind(b.binder)
 
 
 def unbind(a, b):
-    a.binder.unbind(b.binder)
+    return a.binder.unbind(b.binder)
 
 
 class Value(Bindable):
@@ -388,6 +388,7 @@ class _ValueUnwrapperValue(Bindable):
                     self._last_value = old_last_value
             else:
                 raise TypeError("Need a SetValue, not %r" % change)
+            return l
 
 
 class ValueUnwrapperController(object):
