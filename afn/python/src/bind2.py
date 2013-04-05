@@ -397,6 +397,111 @@ class ValueUnwrapperController(object):
         self.binding = SyntheticBindable()
 
 
+class _DictControllerKey(Bindable):
+    def __init__(self, controller, key):
+        self.binder = Binder(self)
+        self.controller = controller
+        self._key = key
+    
+    def get_value(self):
+        return self._key
+    
+    def perform_change(self, change):
+        with Log() as l:
+            # Update the key. We use l.then instead of l.add as this updates
+            # the get_value() value of our _DictControllerValue, which must be
+            # changed back before we notify any of its binders of the
+            # reversion.
+            old_key = self._key
+            self._key = change.value
+            @l.then
+            def _():
+                self._key = old_key
+            if not self.controller.dict.binder.is_synthetic:
+                c = SetValue(self.controller.value.get_value())
+                # Notify, not perform; we don't want the value itself trying
+                # to perform the change, which would cause it to try to replace
+                # the value in the dict, which is pointless.
+                l.then(self.controller.value.binder.notify_change(c))
+            return l
+
+
+class _DictControllerValue(Bindable):
+    def __init__(self, controller):
+        self.binder = Binder(self)
+        self.controller = controller
+    
+    def get_value(self):
+        # Will throw SyntheticError if it's synthetic, which we'll propagate
+        d = self.controller.dict.binder.get_value()
+        if self.controller.key._key in d:
+            return d[self.controller.key._key]
+        else:
+            return self.controller._sentinel
+    
+    def perform_change(self, change):
+        if self.controller.dict.binder.is_synthetic:
+            # Dict is synthetic, nothing to change
+            return Log()
+        if change.value == self.controller._sentinel:
+            c = DeleteKey(self.controller.key._key)
+        else:
+            c = ModifyKey(self.controller.key._key, change.value)
+        # Just notify the dict of the change.
+        return self.controller.dict.binder.notify_change(c)
+
+
+class _DictControllerDict(Bindable):
+    def __init__(self, controller):
+        self.binder = Binder(self)
+        self.controller = controller
+    
+    def get_value(self):
+        raise SyntheticError
+    
+    def perform_change(self, change):
+        if isinstance(change, LostValue):
+            # Becoming synthetic. Tell the value that we're becoming synthetic,
+            # and we're done.
+            return self.controller.value.binder.notify_change(LostValue())
+        elif isinstance(change, (ModifyKey, DeleteKey)):
+            if change.key != self.controller.key._key:
+                # Change to a key that we're not looking at; do nothing
+                return Log()
+            # Change to the key we're looking at
+            if isinstance(change, ModifyKey):
+                # Key has a value or changed values; notify the value of our
+                # change
+                return self.controller.value.binder.notify_change(SetValue(change.value))
+            else:
+                # Key was deleted; set to the sentinel
+                return self.controller.value.binder.notify_change(SetValue(self.controller._sentinel))
+        elif isinstance(change, SetValue):
+            # Figure out what our own key is in the given dict, and notify the
+            # value of it. Note that this could result in double notification
+            # if we keep getting set to a new dict with our value the same both
+            # times, but I don't think double notifications should be a problem
+            # for now.
+            # TODO: Split this into multiple statements, this line is way too
+            # long
+            return self.controller.value.binder.notify_change(SetValue(change.value.get(self.controller.key._key, self.controller._sentinel)))
+        else:
+            raise TypeError
+
+
+class DictController(object):
+    # key is the key to start out with. sentinel is the value to expose (and to
+    # watch for) when the key doesn't exist (or to delete the key). I may add
+    # support later for not having a sentinel, i.e. setting to a nonexistent
+    # key either fails validation or automatically creates it, probably by
+    # default the former with an option to use the latter. 
+    def __init__(self, key, sentinel=None):
+        self.dict = _DictControllerDict(self)
+        self.value = _DictControllerValue(self)
+        self.key = _DictControllerKey(self, key)
+        self._sentinel = sentinel
+
+
 
 
 
