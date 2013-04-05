@@ -2,6 +2,9 @@
 from collections import namedtuple
 
 SetValue = namedtuple("SetValue", ["value"])
+# Change that indicates that our circuit is becoming synthetic. SetValue will
+# be issued when it becomes concrete again.
+LostValue = namedtuple("LostValue", [])
 
 ModifyKey = namedtuple("ModifyKey", ["key", "value"])
 DeleteKey = namedtuple("DeleteKey", ["key"])
@@ -10,12 +13,21 @@ InsertItem = namedtuple("InsertItem", ["index", "item"])
 ReplaceItem = namedtuple("ReplaceItem", ["index", "item"])
 DeleteItem = namedtuple("DeleteItem", ["index"])
 
+class SyntheticError(Exception):
+    pass
+
+
 class Log(object):
     def __enter__(self):
         return self
     
     def add(self, function):
+        # Functions added this way are performed last to first
         self.functions.append(function)
+    
+    def then(self, function):
+        # Functions added this way are performed first to last
+        self.functions.insert(0, function)
     
     def __exit__(self, exc_type, *args):
         if exc_type:
@@ -39,44 +51,109 @@ class Binder(object):
         self.binders = []
         self.bindable = bindable
     
-    def get_binders(self):
-        binders = set()
-        self.do_get_binders(binders)
+    def get_binders(self, binders=None):
+        if binders is None:
+            binders = set()
+        if self not in binders:
+            binders.add(self)
+            for b in self.binders:
+                b.do_get_binders(binders)
         return binders
     
-    def do_get_binders(self, binders):
-        if self in binders:
-            return
-        binders.add(self)
-        for b in self.binders:
-            b.do_get_binders(binders)
+    def get_value(self):
+        for binder in self.get_binders():
+            try:
+                return binder.bindable.get_value()
+            except SyntheticError:
+                pass
+        raise SyntheticError
+    
+    @property
+    def is_synthetic(self):
+        try:
+            self.get_value()
+            return False
+        except SyntheticError:
+            return True
+    
+    def notify_change(self, change):
+        with Log() as l:
+            for binder in self.get_binders():
+                if binder != self:
+                    l.add(binder.bindable.perform_change(change))
     
     def perform_change(self, change):
         with Log() as l:
             for binder in self.get_binders():
-                l.add(binder.do_perform_change(change))
+                l.add(binder.bindable.perform_change(change))
             return l
-    
-    def do_perform_change(self, change):
-        return self.bindable.perform_change(change)
-    
-    def get_value(self):
-        return self.bindable.get_value()
     
     def bind(self, other):
         if other in self.binders: # Already bound, don't do anything
             return Log()
-        with Log() as l:
-            # Update other's value to our value
-            l.add(other.perform_change(SetValue(self.get_value())))
-            # Add ourselves to each other's binder lists
+        with Log() as l1:
+            # Figure out whose value to keep; it's basically other's if we're
+            # synthetic but other isn't, and self's otherwise
+            if self.is_synthetic and not other.is_synthetic:
+                keep, update = other, self
+            else:
+                keep, update = self, other
+            update_binders = update.get_binders()
+            if not keep.is_synthetic:
+                # We get the value before linking to make sure we get our own
+                # value and not the value of the binder we linked to
+                keep_value = keep.get_value()
+            # Link and add a reversion step that unlinks
             self.binders.append(other)
             other.binders.append(self)
-            @l.add
+            @l1.then
             def _():
                 other.binders.remove(self)
                 self.binders.remove(other)
-            return l
+            # If keep's synthetic, then other must be as well, so we're done.
+            # If not, though, then we need to pass the new value to all of
+            # update's former binders.
+            if not keep.is_synthetic:
+                # Note that, no matter where we get an exception, concrete
+                # binders /must/ be reverted before synthetic ones (so that the
+                # synthetic ones see an already-reverted value from their
+                # binder's get_value()), so we leave it up to l1's with
+                # statement to revert anything we do here.
+                l2, l3 = Log(), Log()
+                l1.then(l2)
+                l1.then(l3)
+                for binder in update_binders:
+                    if not binder.is_synthetic:
+                        l2.add(binder.perform_change(SetValue(keep_value)))
+                for binder in update_binders:
+                    if binder.is_synthetic:
+                        l3.add(binder.perform_change(SetValue(keep_value)))
+            # That should be it. Then we just return l1.
+            return l1
+    
+    def unbind(self, other):
+        if other not in self.binders: # Not bound, don't do anything
+            return Log()
+        with Log() as l1:
+            self.binders.remove(other)
+            other.binders.remove(self)
+            @l1.then
+            def _():
+                other.binders.append(self)
+                self.binders.append(other)
+            if (self.is_synthetic and not other.is_synthetic) or (other.is_synthetic and not self.is_synthetic):
+                # If they're both synthetic then we don't need to do anything
+                # else as we were already synthetic before we unbound. If
+                # they're both concrete then both of them will keep their
+                # values so we don't need to do anything. But if one is newly
+                # synthetic, then we need to let it know that it's now
+                # synthetic.
+                synthetic = self if self.is_synthetic else other
+                l2 = Log()
+                l1.then(l2)
+                for binder in synthetic.get_binders():
+                    l2.add(binder.bindable.perform_change(LostValue()))
+            return l1
 
 
 class Value(Bindable):
