@@ -1,6 +1,7 @@
 
 from collections import namedtuple
 import collections
+import weakref
 
 SetValue = namedtuple("SetValue", ["value"])
 # Change that indicates that our circuit is becoming synthetic. SetValue will
@@ -44,6 +45,60 @@ class Log(object):
     def __call__(self):
         for f in reversed(self.functions):
             f()
+
+
+class IdHash(object):
+    __slots__ = ["value"]
+    
+    def __init__(self, value):
+        self.value = value
+    
+    def __hash__(self):
+        return id(self.value)
+    
+    def __eq__(self, other):
+        if not isinstance(other, IdHash):
+            return NotImplemented
+        return self.__hash__() == other.__hash__()
+    
+    def __ne__(self, other):
+        if not isinstance(other, IdHash):
+            return NotImplemented
+        return self.__hash__() != other.__hash__()
+
+
+class StrongRef(object):
+    __slots__ = ["value"]
+    
+    def __init__(self, value):
+        self.value = value
+    
+    def __call__(self):
+        return self.value
+
+
+class StrongWeakSet(collections.MutableSet):
+    # Set of IdHash of StrongRef and WeakRef
+    def __init__(self):
+        self._set = set()
+    
+    def add(self, item):
+        pass
+    
+    def discard(self, item):
+        pass
+    
+    def __len__(self):
+        pass
+    
+    def __iter__(self):
+        for ref in self._list[:]:
+            value = ref()
+            if value is None:
+                
+    
+    def __contains__(self):
+        pass
 
 
 class Bindable(object):
@@ -93,8 +148,8 @@ class Binder(object):
             return True
         
     def bind(self, other):
-        if other in self.binders: # Already bound, don't do anything
-            return Log()
+        if other in self.binders: # Already bound, throw an exception
+            raise Exception("Already bound")
         with Log() as l1:
             # Figure out whose value to keep; it's basically other's if we're
             # synthetic but other isn't, and self's otherwise
@@ -136,8 +191,8 @@ class Binder(object):
             return l1
     
     def unbind(self, other):
-        if other not in self.binders: # Not bound, don't do anything
-            return Log()
+        if other not in self.binders: # Not bound, throw an exception
+            raise Exception("Not bound")
         with Log() as l1:
             self.binders.remove(other)
             other.binders.remove(self)
