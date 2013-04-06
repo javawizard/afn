@@ -55,4 +55,10 @@ class DCheckButton(object):
         self.label = _PropertyValue(self.widget, "label")
         self.active = _PropertyValue(self.widget, "active")
 
+
+class DEntry(object):
+    def __init__(self):
+        self.widget = gtk.Entry()
+        self.text = _PropertyValue(self.widget, "text")
+
     
