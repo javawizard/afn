@@ -60,6 +60,6 @@ class DEntry(object):
     def __init__(self):
         self.widget = gtk.Entry()
         self.text = _PropertyValue(self.widget, "text")
-        self.placeholder = _PropertyValue(self.widget, "placeholder-text")
+        #self.placeholder = _PropertyValue(self.widget, "placeholder-text")
 
     
