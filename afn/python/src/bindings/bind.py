@@ -411,6 +411,17 @@ class PyDict(SyntheticBindable, PyDictMixin):
     __repr__ = __str__
 
 
+class EmptyDict(Bindable):
+    def get_value(self):
+        return {}
+    
+    def perform_change(self, change):
+        if isinstance(change, SetValue) and len(change.value) == 0:
+            return Log()
+        else:
+            raise Exception("instances of EmptyDict can't be modified")
+
+
 class MemoryList(Bindable):
     def __init__(self):
         self._list = []
