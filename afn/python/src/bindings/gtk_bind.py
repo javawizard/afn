@@ -1,5 +1,5 @@
 
-import gtk
+from gi.repository import Gtk as gtk
 from bindings import bind
 
 class BlockHandler(object):
@@ -60,5 +60,6 @@ class DEntry(object):
     def __init__(self):
         self.widget = gtk.Entry()
         self.text = _PropertyValue(self.widget, "text")
+        self.placeholder = _PropertyValue(self.widget, "placeholder-text")
 
     
