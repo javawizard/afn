@@ -300,7 +300,7 @@ class PyValueMixin(Bindable):
     value = property(get, set)
 
 
-class MemoryValue(Bindable, PyValueMixin):
+class MemoryValue(PyValueMixin, Bindable):
     # Concrete value that stores its value in memory
     def __init__(self, value):
         self._value = value
@@ -327,7 +327,27 @@ class PyValue(SyntheticBindable, PyValueMixin):
             s_bind_w(bindable, self)
 
 
-class MemoryDict(Bindable):
+class PyDictMixin(Bindable, collections.MutableMapping):
+    def __getitem__(self, key):
+        return self.binder.get_value()[key]
+    
+    def __setitem__(self, key, value):
+        self.binder.perform_change(ModifyKey(key, value))
+    
+    def __delitem__(self, key):
+        self.binder.perform_change(DeleteKey(key))
+    
+    def __len__(self):
+        return len(self.binder.get_value())
+    
+    def __iter__(self):
+        return self.binder.get_value().__iter__()
+    
+    def __contains__(self, key):
+        return self.binder.get_value().__contains__(key)
+
+
+class MemoryDict(PyDictMixin, Bindable):
     # Dictionary bindable that stores things in memory
     def __init__(self):
         self._dict = {}
@@ -375,33 +395,13 @@ class MemoryDict(Bindable):
     __repr__ = __str__
 
 
-class PyDict(Bindable, collections.MutableMapping):
+class PyDict(SyntheticBindable, PyDictMixin):
     # Synthetic bindable that exposes a collections.MutableMapping-compatible
     # interface for any other dictionary bindable
-    def get_value(self):
-        raise SyntheticError
-    
-    def perform_change(self, change):
-        return lambda: None
-    
-    def __getitem__(self, key):
-        return self.binder.get_value()[key]
-    
-    def __setitem__(self, key, value):
-        self.binder.perform_change(ModifyKey(key, value))
-    
-    def __delitem__(self, key):
-        self.binder.perform_change(DeleteKey(key))
-    
-    def __len__(self):
-        return len(self.binder.get_value())
-    
-    def __iter__(self):
-        return self.binder.get_value().__iter__()
-    
-    def __contains__(self, key):
-        return self.binder.get_value().__contains__(key)
-    
+    def __init__(self, bindable=None):
+        if bindable is not None:
+            s_bind_w(bindable, self)
+
     def __str__(self):
         try:
             return "<PyDict %s: %r>" % (hex(id(self)), self.binder.get_value())
@@ -490,7 +490,7 @@ class ValueUnwrapperController(object):
         self.binding = SyntheticBindable()
 
 
-class _DictControllerKey(Bindable):
+class _DictControllerKey(PyValueMixin, Bindable):
     def __init__(self, controller, key):
         self.controller = controller
         self._key = key
@@ -518,7 +518,7 @@ class _DictControllerKey(Bindable):
             return l
 
 
-class _DictControllerValue(Bindable):
+class _DictControllerValue(PyValueMixin, Bindable):
     def __init__(self, controller):
         self.controller = controller
     
