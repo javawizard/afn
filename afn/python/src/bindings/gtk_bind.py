@@ -34,16 +34,16 @@ class _GetSetConnectValue(bind.PyValueMixin, bind.Bindable):
             self.binder.notify_change(bind.SetValue(new_value))
             self.last_value = new_value
         except: # Validation error
-            with BlockHandler(self, self.handler):
+            with BlockHandler(self.widget, self.handler):
                 self.setter(self.last_value)
     
     def perform_change(self, change):
         old = self.last_value
-        with BlockHandler(self, self.handler):
+        with BlockHandler(self.widget, self.handler):
             self.setter(change.value)
             self.last_value = change.value
         def undo():
-            with BlockHandler(self, self.handler):
+            with BlockHandler(self.widget, self.handler):
                 self.button.widget.set_state(old)
                 self.last_value = old
         return undo
@@ -52,7 +52,7 @@ class _GetSetConnectValue(bind.PyValueMixin, bind.Bindable):
 class DCheckButton(object):
     def __init__(self):
         self.widget = gtk.CheckButton("")
-        self.label = _GetSetConnectValue(self.widget.get_label, self.widget.set_label, "notify::label")
-        self.active = _GetSetConnectValue(self.widget.get_active, self.widget.set_active, "toggled")
+        self.label = _GetSetConnectValue(self.widget, self.widget.get_label, self.widget.set_label, "notify::label")
+        self.active = _GetSetConnectValue(self.widget, self.widget.get_active, self.widget.set_active, "toggled")
 
     
