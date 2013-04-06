@@ -2,51 +2,57 @@
 import gtk
 from bindings import bind
 
-class _DCheckButtonActive(bind.PyValueMixin, bind.Bindable):
-    def __init__(self, button):
-        self.button = button
-        self.last_value = self.button.widget.get_active()
-        self.toggled_handler = self.button.widget.connect("toggled", self.on_toggled)
+class BlockHandler(object):
+    def __init__(self, widget, handler):
+        self.widget = widget
+        self.handler = handler
+    
+    def __enter__(self):
+        self.widget.handler_block(self.handler)
+    
+    def __exit__(self, *args):
+        self.widget.handler_unblock(self.handler)
+
+class _GetSetConnectValue(bind.PyValueMixin, bind.Bindable):
+    # Takes a function used to get the current value, a function used to modify
+    # the value, and the name of a signal that will fire when the value is
+    # changed for us (or None for write-only properties)
+    def __init__(self, widget, getter, setter, signal):
+        self.widget = widget
+        self.getter = getter
+        self.setter = setter
+        self.last_value = getter()
+        self.handler = None
+        self.handler = widget.connect(signal, self.handle_signal)
     
     def get_value(self):
         return self.last_value
     
-    def on_toggled(self, button):
-        new_state = button.widget.get_active()
+    def handle_signal(self, *args):
+        new_value = self.getter()
         try:
-            self.binder.notify_change(bind.SetValue(new_state))
-            self.last_value = new_state
-        except:
-            try:
-                self.button.widget.handler_block(self.toggled_handler)
-                self.button.widget.set_state(self.last_value)
-            finally:
-                self.button.widget.handler_unblock(self.toggled_handler)
+            self.binder.notify_change(bind.SetValue(new_value))
+            self.last_value = new_value
+        except: # Validation error
+            with BlockHandler(self, self.handler):
+                self.setter(self.last_value)
     
     def perform_change(self, change):
         old = self.last_value
-        try:
-            self.button.widget.handler_block(self.toggled_handler)
-            self.button.widget.set_state(change.value)
-        finally:
-            self.button.widget.handler_unblock(self.toggled_handler)
+        with BlockHandler(self, self.handler):
+            self.setter(change.value)
+            self.last_value = change.value
         def undo():
-            try:
-                self.button.widget.handler_block(self.toggled_handler)
+            with BlockHandler(self, self.handler):
                 self.button.widget.set_state(old)
-            finally:
-                self.button.widget.handler_unblock(self.toggled_handler)
+                self.last_value = old
         return undo
             
-
-class _DCheckButtonLabel(bind.PyValueMixin, bind.Bindable):
-    def __init__(self, button):
-        self.button = button
 
 class DCheckButton(object):
     def __init__(self):
         self.widget = gtk.CheckButton("")
-        self.label = _DCheckButtonLabel(self)
-        self.active = _DCheckButtonActive(self)
+        self.label = _GetSetConnectValue(self.widget.get_label, self.widget.set_label, "notify::label")
+        self.active = _GetSetConnectValue(self.widget.get_active, self.widget.set_active, "toggled")
 
     
