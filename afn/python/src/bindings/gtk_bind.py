@@ -40,11 +40,11 @@ class _PropertyValue(bind.PyValueMixin, bind.Bindable):
     def perform_change(self, change):
         old = self.last_value
         with BlockHandler(self.widget, self.handler):
-            self.set_property(self.property, change.value)
+            self.widget.set_property(self.property, change.value)
             self.last_value = change.value
         def undo():
             with BlockHandler(self.widget, self.handler):
-                self.set_property(self.property, old)
+                self.widget.set_property(self.property, old)
                 self.last_value = old
         return undo
             
