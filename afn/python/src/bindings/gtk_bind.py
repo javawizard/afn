@@ -77,20 +77,33 @@ class PropertyDict(bind.PyDictMixin, bind.Bindable):
                 raise Exception("Can't set non-existent property %r" % change.key)
         else:
             raise TypeError
+
+
+class DWidget(object):
+    def __init__(self, widget):
+        self.widget = widget
+        self.props = PropertyDict(self.widget)
+        self.child_props = bind.MemoryDict()
+
+
+class DContainer(DWidget):
+    pass
+
+
+
    
 
-class DCheckButton(object):
+class DCheckButton(DWidget):
     def __init__(self):
-        self.widget = gtk.CheckButton("")
-        self.props = PropertyDict(self.widget)
+        DWidget.__init__(self, gtk.CheckButton(""))
 #        self.label = _PropertyValue(self.widget, "label")
 #        self.active = _PropertyValue(self.widget, "active")
 
 
-class DEntry(object):
+class DEntry(DWidget):
     def __init__(self):
-        self.widget = gtk.Entry()
-        self.props = PropertyDict(self.widget)
+        DWidget.__init__(self, gtk.Entry())
+        self.text = bind.value_for_dict_key(self.props, "text")
 #        self.text = _PropertyValue(self.widget, "text")
         #self.placeholder = _PropertyValue(self.widget, "placeholder-text")
 
