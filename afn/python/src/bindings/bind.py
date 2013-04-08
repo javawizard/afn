@@ -15,6 +15,8 @@ InsertItem = namedtuple("InsertItem", ["index", "item"])
 ReplaceItem = namedtuple("ReplaceItem", ["index", "item"])
 DeleteItem = namedtuple("DeleteItem", ["index"])
 
+NoValue = namedtuple("NoValue", [])
+
 class SyntheticError(Exception):
     pass
 
@@ -113,22 +115,22 @@ class SimpleMapping(collections.Mapping):
         self.iter_function = iter_function
     
     def __getitem__(self, key):
-	    return self.get_function(key)
-	
-	def __len__(self):
-	    i = 0
-	    for _ in self.iter_function():
-	        i += 1
-	    return i
-	
-	def __iter__(self):
-	    return self.iter_function()
-	
-	def __contains__(self, key):
-	    for k in self.iter_function():
-	        if k == key:
-	            return True
-	    return False
+        return self.get_function(key)
+    
+    def __len__(self):
+        i = 0
+        for _ in self.iter_function():
+            i += 1
+        return i
+    
+    def __iter__(self):
+        return self.iter_function()
+    
+    def __contains__(self, key):
+        for k in self.iter_function():
+            if k == key:
+                return True
+        return False
 
 
 class Bindable(object):
@@ -620,11 +622,28 @@ class DictController(object):
     # support later for not having a sentinel, i.e. setting to a nonexistent
     # key either fails validation or automatically creates it, probably by
     # default the former with an option to use the latter. 
-    def __init__(self, key, sentinel=None):
+    def __init__(self, key, sentinel=NoValue()):
         self.dict = _DictControllerDict(self)
         self.value = _DictControllerValue(self)
         self.key = _DictControllerKey(self, key)
         self._sentinel = sentinel
+
+
+def value_for_dict_key(d, key, sentinel=NoValue()):
+    controller = DictController(key, sentinel)
+    s_bind_s(d, controller.dict)
+    return controller.value
+
+
+def value_for_weak_dict_key(d, key, sentinel=NoValue()):
+    controller = DictController(key, sentinel)
+    s_bind_w(d, controller.dict)
+    return controller.value
+
+
+
+
+
 
 
 

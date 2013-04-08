@@ -1,5 +1,5 @@
 
-from gi.repository import Gtk as gtk
+from gi.repository import Gtk as gtk, GObject as gobject
 from bindings import bind
 from functools import partial
 
@@ -18,7 +18,8 @@ class BlockHandler(object):
 class PropertyDict(bind.PyDictMixin, bind.Bindable):
     def __init__(self, widget):
         self.widget = widget
-        self.prop_names = [p.name for p in widget.props]
+        # Only support primitive values for now
+        self.prop_names = [p.name for p in widget.props if p.flags & gobject.PARAM_READABLE]
         self.handlers = {}
         self.last_values = dict((p, self.widget.get_property(p)) for p in self.prop_names)
         self.connect()
@@ -118,14 +119,16 @@ class _PropertyValue(bind.PyValueMixin, bind.Bindable):
 class DCheckButton(object):
     def __init__(self):
         self.widget = gtk.CheckButton("")
-        self.label = _PropertyValue(self.widget, "label")
-        self.active = _PropertyValue(self.widget, "active")
+        self.props = PropertyDict(self.widget)
+#        self.label = _PropertyValue(self.widget, "label")
+#        self.active = _PropertyValue(self.widget, "active")
 
 
 class DEntry(object):
     def __init__(self):
         self.widget = gtk.Entry()
-        self.text = _PropertyValue(self.widget, "text")
+        self.props = PropertyDict(self.widget)
+#        self.text = _PropertyValue(self.widget, "text")
         #self.placeholder = _PropertyValue(self.widget, "placeholder-text")
 
     
