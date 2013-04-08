@@ -107,6 +107,30 @@ class StrongWeakSet(collections.MutableSet):
     __repr__ = __str__
 
 
+class SimpleMapping(collections.Mapping):
+    def __init__(self, get_function, iter_function):
+        self.get_function = get_function
+        self.iter_function = iter_function
+    
+    def __getitem__(self, key):
+	    return self.get_function(key)
+	
+	def __len__(self):
+	    i = 0
+	    for _ in self.iter_function():
+	        i += 1
+	    return i
+	
+	def __iter__(self):
+	    return self.iter_function()
+	
+	def __contains__(self, key):
+	    for k in self.iter_function():
+	        if k == key:
+	            return True
+	    return False
+
+
 class Bindable(object):
     def perform_change(self, change):
         raise NotImplementedError
