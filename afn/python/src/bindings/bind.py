@@ -460,7 +460,15 @@ class EmptyDict(Bindable):
             raise Exception("instances of EmptyDict can't be modified")
 
 
-class MemoryList(Bindable):
+class PyListMixin(Bindable, collections.MutableSequence):
+    def __getitem__(self, index):
+        return self.binder.get_value()[index]
+    
+    def __len__(self):
+        return len(self.binder.get_value())
+
+
+class MemoryList(PyListMixin, Bindable):
     def __init__(self):
         self._list = []
     

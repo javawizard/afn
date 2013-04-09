@@ -80,20 +80,35 @@ class PropertyDict(bind.PyDictMixin, bind.Bindable):
             raise TypeError
 
 
-#class ChildList(bind.PyListMixin, bind.Bindable):
-#    def __init__(self, dwidget):
-#        self.dwidget = dwidget
-#        self.widget = dwidget.widget
-#        self.children = []
-#    
-#    def get_value(self):
-#        # TODO: Figure out how to not copy and instead return a read-only
-#        # wrapper, maybe use SimpleSequence to do so
-#        return self.children[:]
-#    
-#    def perform_change(self, change):
-#        if isinstance(change, InsertItem):
-#            s
+class ChildList(bind.PyListMixin, bind.Bindable):
+    def __init__(self, dwidget):
+        self.dwidget = dwidget
+        self.widget = dwidget.widget
+        self.children = []
+    
+    def get_value(self):
+        # TODO: Figure out how to not copy and instead return a read-only
+        # wrapper, maybe use SimpleSequence to do so
+        return self.children[:]
+    
+    def perform_change(self, change):
+        if isinstance(change, bind.InsertItem):
+            if change.item.widget.parent:
+                raise Exception("Can't add a widget that already has a parent")
+            self.children.insert(change.index, change.item)
+            self.widget.add(change.item.widget)
+            self.widget.reorder_item(change.item.widget, change.index)
+            return lambda: self.perform_change(bind.DeleteItem(change.index))
+        elif isinstance(change, bind.ReplaceItem):
+            with bind.Log() as l:
+                l.add(self.perform_change(bind.DeleteItem(change.index)))
+                l.add(self.perform_change(bind.InsertItem(change.index, change.item)))
+                return l
+        elif isinstance(change, bind.DeleteItem):
+            item = self.children[change.index]
+            del self.children[change.index]
+            self.widget.remove(item.widget)
+            return lambda: self.perform_change(bind.InsertItem(change.index, item))
 
 
 class DWidget(object):
