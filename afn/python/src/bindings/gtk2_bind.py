@@ -123,7 +123,7 @@ class DWidget(object):
 class DContainer(DWidget):
     def __init__(self, widget):
         DWidget.__init__(self, widget)
-#        self.children = ChildList(self)
+        self.children = ChildList(self)
 
 
 class DCheckButton(DWidget):

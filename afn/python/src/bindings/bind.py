@@ -466,6 +466,15 @@ class PyListMixin(Bindable, collections.MutableSequence):
     
     def __len__(self):
         return len(self.binder.get_value())
+    
+    def __setitem__(self, index, item):
+        self.binder.perform_change(ReplaceItem(index, item))
+    
+    def __delitem__(self, index):
+        self.binder.perform_change(DeleteItem(index))
+    
+    def insert(self, index, item):
+        self.binder.perform_change(InsertItem(index, item))
 
 
 class MemoryList(PyListMixin, Bindable):
