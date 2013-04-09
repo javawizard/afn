@@ -735,35 +735,33 @@ def value_for_weak_dict_key(d, key, sentinel=NoValue()):
 
 class _ListTranslatorList(MemoryList):
     def __init__(self, from_function):
+        MemoryList.__init__(self)
         self.from_function = from_function
         self.items = []
-    
-    def get_value(self):
-        return self.items[:]
     
     def perform_change(self, change):
         with Log() as l:
             if isinstance(change, InsertItem):
-                l.then(list_insert(self.items, change.index, change.item))
+                l.then(MemoryList.perform_change(self, change))
                 translated_change = InsertItem(change.index, self.from_function(change.item))
                 l.then(MemoryList.perform_change(self.other, translated_change))
                 l.then(self.other.binder.notify_change(translated_change))
             elif isinstance(change, ReplaceItem):
-                l.then(list_replace(self.items, change.index, change.item))
+                l.then(MemoryList.perform_change(self, change))
                 translated_change = ReplaceItem(change.index, self.from_function(change.item))
                 l.then(MemoryList.perform_change(self.other, translated_change))
                 l.then(self.other.binder.notify_change(translated_change))
             elif isinstance(change, DeleteItem):
-                l.then(list_delete(self.items, change.index))
+                l.then(MemoryList.perform_change(self, change))
                 l.then(MemoryList.perform_change(self.other, change))
                 l.then(self.other.binder.notify_change(change))
             elif isinstance(change, SetValue):
                 # TODO: Really ought to split this out for other widgets too lazy
                 # to do any special processing to make use of
                 for n in reversed(range(len(self.get_value()))):
-                    l.add(self.perform_change(bind.DeleteItem(n)))
+                    l.add(self.perform_change(DeleteItem(n)))
                 for i, v in enumerate(change.value):
-                    l.add(self.perform_change(bind.InsertItem(i, v)))
+                    l.add(self.perform_change(InsertItem(i, v)))
             else:
                 raise TypeError
             return l
