@@ -760,7 +760,7 @@ class _ListTranslatorList(MemoryList):
             elif isinstance(change, SetValue):
                 # TODO: Really ought to split this out for other widgets too lazy
                 # to do any special processing to make use of
-                for n in reversed(range(len(self.children))):
+                for n in reversed(range(len(self.get_value()))):
                     l.add(self.perform_change(bind.DeleteItem(n)))
                 for i, v in enumerate(change.value):
                     l.add(self.perform_change(bind.InsertItem(i, v)))
