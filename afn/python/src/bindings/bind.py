@@ -717,10 +717,8 @@ def value_for_weak_dict_key(d, key, sentinel=NoValue()):
 
 
 class _ListTranslatorList(MemoryList):
-    def __init__(self, translator, from_function, to_function):
-        self.translator = translator
+    def __init__(self, from_function):
         self.from_function = from_function
-        self.to_function = to_function
         self.items = []
     
     def get_value(self):
@@ -728,7 +726,29 @@ class _ListTranslatorList(MemoryList):
     
     def perform_change(self, change):
         with Log() as l:
-            
+            if isinstance(change, InsertItem):
+                l.then(list_insert(self.items, change.index, change.item))
+                translated_change = InsertItem(change.index, self.from_function(change.item))
+                l.then(MemoryList.perform_change(self.other, translated_change))
+                l.then(self.other.binder.notify_change(translated_change))
+            elif isinstance(change, ReplaceItem):
+                l.then(list_replace(self.items, change.index, change.item))
+                translated_change = ReplaceItem(change.index, self.from_function(change.item))
+                l.then(MemoryList.perform_change(self.other, translated_change))
+                l.then(self.other.binder.notify_change(translated_change))
+            elif isinstance(change, DeleteItem):
+                l.then(list_delete(self.items, change.index))
+                l.then(MemoryList.perform_change(self.other, change))
+                l.then(self.other.binder.notify_change(change))
+            return l
+
+
+class ListTranslator(object):
+    def __init__(self, a_to_b, b_to_a):
+        self.a = _ListTranslatorList(a_to_b)
+        self.b = _ListTranslatorList(b_to_a)
+        self.a.other = self.b
+        self.b.other = self.a
 
 
 
