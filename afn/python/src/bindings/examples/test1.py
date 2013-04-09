@@ -11,8 +11,10 @@ values.extend([bind.MemoryValue(False), bind.MemoryValue(False), bind.MemoryValu
 
 w = gtk2_bind.DWindow()
 w.title.set("test1")
+vbox = gtk2_bind.DVBox()
+w.children.append(vbox)
 
 lt = bind.ListTranslator(view, None)
 bind.s_bind_w(values, lt.a)
-bind.s_bind_w(lt.b, w.children)
+bind.s_bind_w(lt.b, vbox.children)
 

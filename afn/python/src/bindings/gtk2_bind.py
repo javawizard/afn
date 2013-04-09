@@ -151,6 +151,12 @@ class DCheckButton(DWidget):
         self.checked = self.active
 
 
+class DButton(DWidget):
+    def __init__(self):
+        DWidget.__init__(self, gtk.Button(""))
+        self.label = bind.value_for_dict_key(self.props, "label")
+
+
 class DEntry(DWidget):
     def __init__(self):
         DWidget.__init__(self, gtk.Entry())
