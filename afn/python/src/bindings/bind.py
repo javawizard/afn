@@ -757,6 +757,15 @@ class _ListTranslatorList(MemoryList):
                 l.then(list_delete(self.items, change.index))
                 l.then(MemoryList.perform_change(self.other, change))
                 l.then(self.other.binder.notify_change(change))
+            elif isinstance(change, SetValue):
+                # TODO: Really ought to split this out for other widgets too lazy
+                # to do any special processing to make use of
+                for n in reversed(range(len(self.children))):
+                    l.add(self.perform_change(bind.DeleteItem(n)))
+                for i, v in enumerate(change.value):
+                    l.add(self.perform_change(bind.InsertItem(i, v)))
+            else:
+                raise TypeError
             return l
 
 
