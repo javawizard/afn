@@ -7,7 +7,7 @@ def view(v):
     return c
 
 values = bind.MemoryList()
-values.extend(bind.MemoryValue(False), bind.MemoryValue(False), bind.MemoryValue(True))
+values.extend([bind.MemoryValue(False), bind.MemoryValue(False), bind.MemoryValue(True)])
 
 w = gtk2_bind.DWindow()
 w.title.set("test1")
