@@ -133,6 +133,18 @@ class SimpleMapping(collections.Mapping):
         return False
 
 
+class SimpleSequence(collections.Sequence):
+    def __init__(self, get_function, len_function):
+        self.get_function
+        self.len_function
+    
+    def __len__(self):
+        return self.len_function()
+    
+    def __getitem__(self, index):
+        return self.get_function(index)
+
+
 class Bindable(object):
     def perform_change(self, change):
         raise NotImplementedError

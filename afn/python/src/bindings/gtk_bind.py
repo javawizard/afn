@@ -79,32 +79,87 @@ class PropertyDict(bind.PyDictMixin, bind.Bindable):
             raise TypeError
 
 
+class ChildList(bind.PyListMixin, bind.Bindable):
+    def __init__(self, dwidget):
+        self.dwidget = dwidget
+        self.widget = dwidget.widget
+        self.children = []
+    
+    def get_value(self):
+        # TODO: Figure out how to not copy and instead return a read-only
+        # wrapper, maybe use SimpleSequence to do so
+        return self.children[:]
+    
+    def perform_change(self, change):
+        if isinstance(change, InsertItem):
+            s
+
+
 class DWidget(object):
     def __init__(self, widget):
         self.widget = widget
+        widget.show()
         self.props = PropertyDict(self.widget)
         self.child_props = bind.MemoryDict()
+        self.sensitive = bind.value_for_dict_key(self.props, "")
 
 
 class DContainer(DWidget):
-    pass
+    def __init__(self, widget):
+        DWidget.__init__(self, widget)
+        self.children = ChildList(self)
 
-
-
-   
 
 class DCheckButton(DWidget):
     def __init__(self):
         DWidget.__init__(self, gtk.CheckButton(""))
-#        self.label = _PropertyValue(self.widget, "label")
-#        self.active = _PropertyValue(self.widget, "active")
+        self.label = bind.value_for_dict_key(self.props, "label")
+        self.active = bind.value_for_dict_key(self.props, "active")
+        self.checked = self.active
 
 
 class DEntry(DWidget):
     def __init__(self):
         DWidget.__init__(self, gtk.Entry())
         self.text = bind.value_for_dict_key(self.props, "text")
-#        self.text = _PropertyValue(self.widget, "text")
-        #self.placeholder = _PropertyValue(self.widget, "placeholder-text")
+        self.placeholder = bind.value_for_dict_key(self.props, "placeholder-text")
+
+
+class DWindow(DContainer):
+    def __init__(self):
+        DContainer.__init__(self, gtk.Window())
+        self.title = bind.value_for_dict_key(self.props, "title")
+
+
+class DBox(DContainer):
+    def __init__(self, widget):
+        DContainer.__init__(self, widget)
+        self.homogeneous = bind.value_for_dict_key(self.props, "homogeneous")
+
+
+class DHBox(DBox):
+    def __init__(self):
+        DBox.__init__(self, gtk.HBox())
+
+
+class DVBox(DBox):
+    def __init__(self):
+        DBox.__init__(self, gtk.VBox())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
