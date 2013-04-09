@@ -112,6 +112,20 @@ class ChildList(bind.PyListMixin, bind.Bindable):
             del self.children[change.index]
             self.widget.remove(item.widget)
             return lambda: self.perform_change(bind.InsertItem(change.index, item))
+        elif isinstance(change, bind.SetValue):
+            # TODO: Really ought to split this out for other widgets too lazy
+            # to do any special processing to make use of
+            with bind.Log() as l:
+                for n in reversed(range(len(self.children))):
+                    l.add(self.perform_change(bind.DeleteItem(n)))
+                for i, v in enumerate(change.value):
+                    l.add(self.perform_change(bind.InsertItem(i, v)))
+                return l
+        else:
+            raise TypeError
+    
+    __str__ = bind.list_str
+    __repr__ = bind.list_str
 
 
 class DWidget(object):
