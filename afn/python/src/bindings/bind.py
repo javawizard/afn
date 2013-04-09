@@ -517,6 +517,52 @@ class MemoryList(PyListMixin, Bindable):
         return undo
 
 
+def list_insert(target_list, index, item):
+    target_list.insert(index, item)
+    def undo():
+        del target_list[index]
+    return undo
+
+
+def list_delete(target_list, index):
+    item = target_list[index]
+    del target_list[index]
+    def undo():
+        target_list.insert(index, item)
+    return undo
+
+
+def list_replace(target_list, index, item):
+    old_item = target_list[index]
+    target_list[index] = item
+    def undo():
+        target_list[index] = old_item
+    return undo
+
+
+def dict_modify(target_dict, key, value):
+    if key in target_dict:
+        old_value = target_dict[key]
+        target_dict[key] = value
+        def undo():
+            target_dict[key] = old_value
+        return undo
+    else:
+        target_dict[key] = value
+        def undo():
+            del target_dict[key]
+
+
+def dict_delete(target_dict, key):
+    if key not in target_dict:
+        raise KeyError(key)
+    old_value = target_dict[key]
+    del target_dict[key]
+    def undo():
+        target_dict[key] = old_value
+    return undo
+
+
 class _ValueUnwrapperValue(Bindable):
     def __init__(self, controller):
         self.controller = controller
@@ -669,6 +715,20 @@ def value_for_weak_dict_key(d, key, sentinel=NoValue()):
     s_bind_w(d, controller.dict)
     return controller.value
 
+
+class _ListTranslatorList(MemoryList):
+    def __init__(self, translator, from_function, to_function):
+        self.translator = translator
+        self.from_function = from_function
+        self.to_function = to_function
+        self.items = []
+    
+    def get_value(self):
+        return self.items[:]
+    
+    def perform_change(self, change):
+        with Log() as l:
+            
 
 
 
