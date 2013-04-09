@@ -95,9 +95,12 @@ class ChildList(bind.PyListMixin, bind.Bindable):
         if isinstance(change, bind.InsertItem):
             if change.item.widget.parent:
                 raise Exception("Can't add a widget that already has a parent")
+            if isinstance(self.widget, gtk.Bin) and len(self.children) == 1:
+                raise Exception("Can't add more than one child to a bin")
             self.children.insert(change.index, change.item)
             self.widget.add(change.item.widget)
-            self.widget.reorder_item(change.item.widget, change.index)
+            if change.index < (len(self.children) - 1):
+                self.widget.reorder_child(change.item.widget, change.index)
             return lambda: self.perform_change(bind.DeleteItem(change.index))
         elif isinstance(change, bind.ReplaceItem):
             with bind.Log() as l:
