@@ -822,9 +822,13 @@ class _ListGenericViewModel(MemoryList):
     def perform_change(self, change):
         with Log() as l:
             l.then(MemoryList.perform_change(self, change))
+            l.then(self.rearrange())
+    
+    def rearrange(self):
+        with Log() as l:
             arranged_values = self.generic_view.arrange_function(self.get_value())
             l.then(MemoryList.perform_change(self.generic_view.view, SetValue(arranged_values)))
-            l.then(self.generic_view.view.binder.notify_change(SetValue(arranged_values)))
+            l.then(self.generic_view.view.binder.notify_change(SetValue(arranged_values)))            
 
 
 class _ListGenericViewView(MemoryList):
@@ -840,6 +844,18 @@ class ListGenericView(object):
         self.arrange_function = arrange_function
         self.model = _ListGenericViewModel(self)
         self.view = _ListGenericViewView(self)
+    
+    def rearrange(self):
+        self.model.rearrange()
+
+
+class ListGenericFilter(object):
+    def __init__(self):
+        ListGenericView.__init__(self, self.arrange)
+        self.filter_values = []
+    
+    def arrange(self, items):
+        
 
 
 
