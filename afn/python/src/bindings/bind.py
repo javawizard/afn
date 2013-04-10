@@ -775,6 +775,73 @@ class ListTranslator(object):
         self.b.other = self.a
 
 
+class _ListFilterModel(bind.MemoryList):
+    def __init__(self, list_filter):
+        self.filter = list_filter
+        self.filter_values = []
+        
+    
+    def perform_change(self, change):
+        with Log() as l:
+            if isinstance(change, InsertItem):
+                l.then(MemoryList.perform_change(self, change))
+                v = _ListFilterValue(self.filter, )
+            return l
+
+
+class _ListFilterValue(bind.MemoryValue):
+    def __init__(self, list_filter):
+        self.filter = list_filter
+    
+    def perform_change(self, change):
+        pass
+    
+
+class _ListFilterView(bind.MemoryList):
+    def __init__(self, list_filter):
+        self.list_filter = list_filter
+    
+    def perform_change(self, change):
+        raise Exception("List filter views can't be modified")
+
+
+def ListFilter(object):
+    # Function accepts values in the model list and returns Value objects
+    # wrapping booleans that indicate whether the item is to be present in
+    # the view list
+    def __init__(self, function):
+        self.function = function
+        self.model = _ListFilterModel(self)
+        self.view = _ListFilterView(self)
+
+
+class _ListGenericViewModel(MemoryList):
+    def __init__(self, generic_view):
+        self.generic_view = generic_view
+    
+    def perform_change(self, change):
+        with Log() as l:
+            l.then(MemoryList.perform_change(self, change))
+            arranged_values = self.generic_view.arrange_function(self.get_value())
+            l.then(MemoryList.perform_change(self.generic_view.view, SetValue(arranged_values)))
+            l.then(self.generic_view.view.binder.notify_change(SetValue(arranged_values)))
+
+
+class _ListGenericViewView(MemoryList):
+    def __init__(self, generic_view):
+        self.generic_view = generic_view
+    
+    def perform_change(self, change):
+        raise Exception("Can't modify the view of a ListGenericView")
+
+
+class ListGenericView(object):
+    def __init__(self, arrange_function):
+        self.arrange_function = arrange_function
+        self.model = _ListGenericViewModel(self)
+        self.view = _ListGenericViewView(self)
+
+
 
 
 
