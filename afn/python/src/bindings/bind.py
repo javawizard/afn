@@ -298,7 +298,7 @@ class Binder(object):
 
 
 def bind(a, b, a_weak=False, b_weak=False):
-    return a.binder.bind(b.binder, a_weak, b_weak)
+    return b.binder.bind(a.binder, b_weak, a_weak)
 
 s_bind_s = bind
 
@@ -432,7 +432,7 @@ class PyValue(SyntheticBindable, PyValueMixin):
     # be used with anything that can be bound to it
     def __init__(self, bindable):
         if bindable is not None:
-            s_bind_w(bindable, self)
+            w_bind_s(self, bindable)
 
 
 class PyDictMixin(Bindable, collections.MutableMapping):
@@ -506,7 +506,7 @@ class PyDict(SyntheticBindable, PyDictMixin):
     # interface for any other dictionary bindable
     def __init__(self, bindable=None):
         if bindable is not None:
-            s_bind_w(bindable, self)
+            w_bind_s(self, bindable)
 
 
 class EmptyDict(Bindable):
@@ -580,6 +580,18 @@ class MemoryList(PyListMixin, Bindable):
         return undo
 
 
+class ListenerBindable(Bindable):
+    def __init__(self, listener):
+        self.listener = listener
+    
+    def get_value(self):
+        raise SyntheticError
+    
+    def perform_change(self, change):
+        if self.listener is not None:
+            self.listener(change)
+
+
 class _ValueUnwrapperValue(Bindable):
     def __init__(self, controller):
         self.controller = controller
@@ -599,7 +611,7 @@ class _ValueUnwrapperValue(Bindable):
                 @l.add
                 def _():
                     self._last_value = old_last_value
-                l.add(bind(self.controller.binding, change.value))
+                l.add(bind(change.value, self.controller.binding))
             elif isinstance(change, LostValue):
                 if self._last_value is not None:
                     l.add(unbind(self.controller.binding, self._last_value))
@@ -723,13 +735,13 @@ class DictController(object):
 
 def value_for_dict_key(d, key, sentinel=NoValue()):
     controller = DictController(key, sentinel)
-    s_bind_s(d, controller.dict)
+    s_bind_s(controller.dict, d)
     return controller.value
 
 
 def value_for_weak_dict_key(d, key, sentinel=NoValue()):
     controller = DictController(key, sentinel)
-    s_bind_w(d, controller.dict)
+    w_bind_s(controller.dict, d)
     return controller.value
 
 
@@ -775,87 +787,7 @@ class ListTranslator(object):
         self.b.other = self.a
 
 
-class _ListFilterModel(bind.MemoryList):
-    def __init__(self, list_filter):
-        self.filter = list_filter
-        self.filter_values = []
-        
-    
-    def perform_change(self, change):
-        with Log() as l:
-            if isinstance(change, InsertItem):
-                l.then(MemoryList.perform_change(self, change))
-                v = _ListFilterValue(self.filter, )
-            return l
 
-
-class _ListFilterValue(bind.MemoryValue):
-    def __init__(self, list_filter):
-        self.filter = list_filter
-    
-    def perform_change(self, change):
-        pass
-    
-
-class _ListFilterView(bind.MemoryList):
-    def __init__(self, list_filter):
-        self.list_filter = list_filter
-    
-    def perform_change(self, change):
-        raise Exception("List filter views can't be modified")
-
-
-def ListFilter(object):
-    # Function accepts values in the model list and returns Value objects
-    # wrapping booleans that indicate whether the item is to be present in
-    # the view list
-    def __init__(self, function):
-        self.function = function
-        self.model = _ListFilterModel(self)
-        self.view = _ListFilterView(self)
-
-
-class _ListGenericViewModel(MemoryList):
-    def __init__(self, generic_view):
-        self.generic_view = generic_view
-    
-    def perform_change(self, change):
-        with Log() as l:
-            l.then(MemoryList.perform_change(self, change))
-            l.then(self.rearrange())
-    
-    def rearrange(self):
-        with Log() as l:
-            arranged_values = self.generic_view.arrange_function(self.get_value())
-            l.then(MemoryList.perform_change(self.generic_view.view, SetValue(arranged_values)))
-            l.then(self.generic_view.view.binder.notify_change(SetValue(arranged_values)))            
-
-
-class _ListGenericViewView(MemoryList):
-    def __init__(self, generic_view):
-        self.generic_view = generic_view
-    
-    def perform_change(self, change):
-        raise Exception("Can't modify the view of a ListGenericView")
-
-
-class ListGenericView(object):
-    def __init__(self, arrange_function):
-        self.arrange_function = arrange_function
-        self.model = _ListGenericViewModel(self)
-        self.view = _ListGenericViewView(self)
-    
-    def rearrange(self):
-        self.model.rearrange()
-
-
-class ListGenericFilter(object):
-    def __init__(self):
-        ListGenericView.__init__(self, self.arrange)
-        self.filter_values = []
-    
-    def arrange(self, items):
-        
 
 
 
