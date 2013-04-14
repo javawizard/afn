@@ -134,7 +134,8 @@ class DWidget(object):
         widget.show()
         self.props = PropertyDict(self.widget)
         self.child_props = bind.MemoryDict()
-        self.sensitive = bind.value_for_dict_key(self.props, "")
+        self.sensitive = bind.value_for_dict_key(self.props, "sensitive")
+        self.visible = bind.value_for_dict_key(self.props, "visible")
 
 
 class DContainer(DWidget):

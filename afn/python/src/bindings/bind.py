@@ -787,7 +787,42 @@ class ListTranslator(object):
         self.b.other = self.a
 
 
+class _BinaryViewerParam(MemoryValue):
+    def __init__(self, viewer, value):
+        MemoryValue.__init__(self, value)
+        self.viewer = viewer
+    
+    def perform_change(self, change):
+        with Log() as l:
+            l.then(MemoryValue.perform_change(self, change))
+            l.then(self.viewer.recalculate())
+            return l
 
+
+class _BinaryViewerOutput(MemoryValue):
+    def __init__(self, viewer):
+        MemoryValue.__init__(self, None)
+        self.viewer = viewer
+    
+    def perform_change(self, change):
+        raise Exception("Can't modify the output of a binary viewer")
+
+
+class BinaryViewer(object):
+    def __init__(self, function, a, b):
+        self.function = function
+        self.a = _BinaryViewerParam(self, a)
+        self.b = _BinaryViewerParam(self, b)
+        self.output = _BinaryViewerOutput(self)
+        self.recalculate()
+    
+    def recalculate(self):
+        a_value, b_value = self.a.value, self.b.value
+        result = self.function(a_value, b_value)
+        with Log() as l:
+            l.then(MemoryValue.perform_change(self.output, SetValue(result)))
+            l.then(self.output.binder.notify_change(SetValue(result)))
+            return l
 
 
 
