@@ -10,3 +10,8 @@ So, let's not support nested transactions for now, and let's also not support or
 
 Throwing an exception will, however, abort the transaction.
 
+So, we'll have a class called Transaction that has a global field which is a thread local which holds the current transaction. And we also have a global field which is the number of transactions that have happened so far, which I'm going to start out as 1 (so the first transaction to actually commit is 2, I might change that later).
+
+Then we have a class called TVar which has fields for the actual value, and methods for setting and getting the value, which ask Transaction if there's a current transaction (and for now throw an exception if there isn't) and get the value from there.
+
+So let's see how that goes.
