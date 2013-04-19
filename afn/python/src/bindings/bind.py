@@ -297,10 +297,11 @@ class Binder(object):
         return self.notify_change(change, to_self=True)
 
 
-def bind(s, m, s_weak=False, m_weak=False):
+def bind(s, m, s_weak=True, m_weak=False):
     return m.binder.bind(s.binder, m_weak, s_weak)
 
-s_bind_s = bind
+def s_bind_s(s, m):
+    return bind(s, m, False, False)
 
 def s_bind_w(s, m):
     return bind(s, m, False, True)
