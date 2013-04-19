@@ -166,6 +166,13 @@ class DEntry(DWidget):
         bind.key_bind(self, "placeholder", self.props, "placeholder")
 
 
+class DLabel(DWidget):
+    def __init__(self):
+        DWidget.__init__(self, gtk.Label())
+        bind.key_bind(self, "label", self.props, "label")
+        bind.key_bind(self, "text", self, "label")
+
+
 class DWindow(DContainer):
     def __init__(self):
         DContainer.__init__(self, gtk.Window())
@@ -186,6 +193,16 @@ class DHBox(DBox):
 class DVBox(DBox):
     def __init__(self):
         DBox.__init__(self, gtk.VBox())
+
+
+class DScrolledWindow(DContainer):
+    def __init__(self):
+        DContainer.__init__(self, gtk.ScrolledWindow())
+
+
+class DViewport(DContainer):
+    def __init__(self):
+        DContainer.__init__(self, gtk.Viewport())
 
 
 
