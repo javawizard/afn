@@ -131,11 +131,11 @@ class ChildPropertyDict(bind.PyDictMixin, bind.Bindable):
             if change.key in self.prop_names:
                 old_value = self.widget.child_get_property(self.child, change.key)
                 with BlockHandler(self.widget, self.handlers[change.key]):
-                    self.widget.child_set_property(change.key, change.value)
+                    self.widget.child_set_property(self.child, change.key, change.value)
                     self.last_values[change.key] = change.value
                 def undo():
                     with BlockHandler(self.widget, self.handlers[change.key]):
-                        self.widget.set_property(change.key, old_value)
+                        self.widget.child_set_property(self.child, change.key, old_value)
                         self.last_values[change.key] = old_value
                 return undo
             else:
