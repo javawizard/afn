@@ -3,12 +3,10 @@ from bindings import bind, gtk2_bind as g
 
 def task_view(task):
     text_box = g.DEntry()
-    completed_box = g.DCheckButton()
-    completed_box.child_props["expand"] = False
+    completed_box = g.make(g.DCheckButton(), child_props={"expand": False})
     bind.key_bind(text_box, "text", task, "text")
     bind.key_bind(completed_box, "active", task, "completed")
-    panel = g.DHBox()
-    panel.children.extend([text_box, completed_box])
+    panel = g.make(g.DHBox(), children=[text_box, completed_box])
     visible = bind.BinaryViewer(lambda s, c: (s or (not c)), False, False)
     bind.w_bind_s(visible.a, bind.value_for_weak_dict_key(show_all, "active"))
     # TODO: Binding to task_completed seems not to work, tasks don't disappear
