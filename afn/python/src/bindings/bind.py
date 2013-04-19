@@ -609,6 +609,10 @@ class MemoryList(Bindable):
         return undo
 
 
+class PyList(MemoryList, PyListMixin):
+    pass
+
+
 class ListenerBindable(Bindable):
     def __init__(self, listener):
         self.listener = listener
