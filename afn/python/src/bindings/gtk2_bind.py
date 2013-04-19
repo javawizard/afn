@@ -243,6 +243,20 @@ class DEntry(DWidget):
         DWidget.__init__(self, gtk.Entry())
         bind.key_bind(self, "text", self.props, "text")
         bind.key_bind(self, "placeholder", self.props, "placeholder")
+        self._delayed = bind.DelayController()
+        bind.bind(self._delayed.model, bind.MemoryValue())
+        bind.bind(self._delayed.view, bind.value_for_dict_key(self, "text"))
+        bind.bind(self._delayed.model, bind.value_for_dict_key(self, "delayed_text"))
+        self._delayed.save()
+        self.widget.connect("focus-out-event", lambda *args: self._delayed.save())
+        self.widget.connect("activate", lambda *args: self._delayed.save())
+        self.widget.conect("key-press-event", self._key_press)
+    
+    def _key_press(self, widget, event):
+        if event.keyval == gtk.keysyms.Escape:
+            self._delayed.cancel()
+    
+    
 
 
 class DLabel(DWidget):
