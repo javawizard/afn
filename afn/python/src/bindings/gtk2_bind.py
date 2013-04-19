@@ -80,6 +80,70 @@ class PropertyDict(bind.PyDictMixin, bind.Bindable):
             raise TypeError
 
 
+class ChildPropertyDict(bind.PyDictMixin, bind.Bindable):
+    def __init__(self, widget, child):
+        self.widget = widget
+        self.child = child
+        self.prop_names = [p.name for p in widget.list_child_properties() if p.flags & gobject.PARAM_READABLE]
+        self.handlers = {}
+        self.last_values = dict((p, self.widget.child_get_property(child, p)) for p in self.prop_names)
+        self.connect()
+    
+    def connect(self):
+        if self.handlers:
+            raise Exception("Already connected")
+        for prop_name in self.prop_names:
+            self.handlers[prop_name] = self.widget.connect("child-notify::" + prop_name, partial(self.signal, prop_name))
+    
+    def disconnect(self):
+        if not self.handlers:
+            raise Exception("Not connected")
+        for handler in self.handlers.values():
+            self.widget.disconnect(handler)
+    
+    def get_value(self):
+        return bind.SimpleMapping(self._get_function, lambda: iter(self.prop_names))
+    
+    def _get_function(self, key):
+        if key not in self.prop_names:
+            raise KeyError(key)
+        return self.widget.child_get_property(self.child, key)
+    
+    def signal(self, prop_name, *args):
+        try:
+            old_value = self.last_values[prop_name]
+            new_value = self.widget.child_get_property(self.child, prop_name)
+            self.binder.notify_change(bind.ModifyKey(prop_name, new_value))
+            self.last_values[prop_name] = new_value
+        except:
+            with BlockHandler(self.widget, self.handlers[prop_name]):
+                self.widget.child_set_property(self.child, prop_name, old_value)
+                self.last_values[prop_name] = old_value
+            raise
+    
+    def perform_change(self, change):
+        if isinstance(change, bind.SetValue):
+            raise Exception("Can't make a ChildPropertyDict the target of a "
+                            "binding circuit; this might be chnaged in the future.")
+        elif isinstance(change, bind.DeleteKey):
+            raise Exception("Can't delete keys from ChildPropertyDicts")
+        elif isinstance(change, bind.ModifyKey):
+            if change.key in self.prop_names:
+                old_value = self.widget.child_get_property(self.child, change.key)
+                with BlockHandler(self.widget, self.handlers[change.key]):
+                    self.widget.child_set_property(change.key, change.value)
+                    self.last_values[change.key] = change.value
+                def undo():
+                    with BlockHandler(self.widget, self.handlers[change.key]):
+                        self.widget.set_property(change.key, old_value)
+                        self.last_values[change.key] = old_value
+                return undo
+            else:
+                raise Exception("Can't set non-existent child property %r" % change.key)
+        else:
+            raise TypeError
+
+
 class ChildList(bind.PyListMixin, bind.Bindable):
     def __init__(self, dwidget):
         self.dwidget = dwidget
