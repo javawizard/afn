@@ -826,6 +826,9 @@ class BinaryViewer(object):
 
 
 class _DelayModel(PyValueMixin, SyntheticBindable):
+    def __init__(self, controller):
+        self.controller = controller
+    
     def perform_change(self, change):
         if self.controller.synchronized.get():
             return self.controller.view.binder.notify_change(change)
@@ -834,6 +837,9 @@ class _DelayModel(PyValueMixin, SyntheticBindable):
 
 
 class _DelayView(PyValueMixin, SyntheticBindable):
+    def __init__(self, controller):
+        self.controller = controller
+    
     def perform_change(self, change):
         return self.controller.synchronized.binder.perform_change(SetValue(False))
 
