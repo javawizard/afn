@@ -825,6 +825,44 @@ class BinaryViewer(object):
             return l
 
 
+class _DelayModel(PyValueMixin, SyntheticBindable):
+    def perform_change(self, change):
+        if self.controller.synchronized.get():
+            return self.controller.view.binder.notify_change(change)
+        else:
+            return Log()
+
+
+class _DelayView(PyValueMixin, SyntheticBindable):
+    def perform_change(self, change):
+        return self.controller.synchronized.binder.perform_change(SetValue(False))
+
+
+class DelayController(object):
+    def __init__(self):
+        self.model = _DelayModel(self)
+        self.view = _DelayView(self)
+        self.synchronized = MemoryValue(True)
+    
+    def save(self):
+        if self.synchronized.get():
+            return Log()
+        else:
+            with Log() as l:
+                l.add(self.model.binder.perform_change(SetValue(self.view.binder.get_value())))
+                l.add(self.synchronized.binder.perform_change(SetValue(True)))
+                return l
+    
+    def cancel(self):
+        if self.synchronized.get():
+            return Log()
+        else:
+            with Log() as l:
+                l.add(self.view.binder.perform_change(SetValue(self.model.binder.get_value())))
+                l.add(self.synchronized.binder.perform_change(SetValue(True)))
+                return l
+
+
 
 
 
