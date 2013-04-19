@@ -458,7 +458,7 @@ class PyDictMixin(Bindable, collections.MutableMapping):
     __repr__ = dict_str
 
 
-class MemoryDict(PyDictMixin, Bindable):
+class MemoryDict(Bindable):
     # Dictionary bindable that stores things in memory
     def __init__(self):
         self._dict = {}
@@ -488,7 +488,14 @@ class MemoryDict(PyDictMixin, Bindable):
                 # advantage to throwing a proper exception is that then
                 # PyDict.__del__ correctly throws an exception when trying to
                 # delete a key that doesn't actually exist.
-                raise KeyError(change.key)
+                # UPDATE: Ignoring for now, as this causes problems with
+                # DictController (setting the value to the delete-key sentinel
+                # when it's already set to the sentinel causes a duplicate
+                # DeleteKey to be issued to whatever's bound to the
+                # controller's dict). But I've yet to see anything actually
+                # relying on __del__ throwing an exception, so this should be
+                # fine. And I'll revisit this if it becomes a problem later.
+                undo = Log()
         elif isinstance(change, SetValue):
             old = self._dict.copy()
             self._dict.clear()
@@ -501,12 +508,34 @@ class MemoryDict(PyDictMixin, Bindable):
         return undo
 
 
-class PyDict(SyntheticBindable, PyDictMixin):
+class PyDict(MemoryDict, PyDictMixin):
     # Synthetic bindable that exposes a collections.MutableMapping-compatible
     # interface for any other dictionary bindable
     def __init__(self, bindable=None):
+        MemoryDict.__init__(self)
         if bindable is not None:
             w_bind_s(self, bindable)
+
+
+class AttributeDict(MemoryDict):
+    def __getattr__(self, key):
+        try:
+            return self.get_value()[key]
+        except KeyError as e:
+            raise AttributeError(e.args[0])
+    
+    def __setattr__(self, key, value):
+        if key == "_dict" or key == "_binder":
+            # Used by superclasses
+            object.__setattr__(self, key, value)
+        else:
+            self.binder.perform_change(ModifyKey(key, value))
+    
+    def __delattr__(self, key):
+        self.binder.perform_change(DeleteKey(key))
+    
+    def __dir__(self):
+        return self.get_value().items()
 
 
 class EmptyDict(Bindable):
@@ -540,7 +569,7 @@ class PyListMixin(Bindable, collections.MutableSequence):
     __repr__ = list_str
 
 
-class MemoryList(PyListMixin, Bindable):
+class MemoryList(Bindable):
     def __init__(self):
         self._list = []
     

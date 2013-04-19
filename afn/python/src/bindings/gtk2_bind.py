@@ -128,14 +128,15 @@ class ChildList(bind.PyListMixin, bind.Bindable):
     __repr__ = bind.list_str
 
 
-class DWidget(object):
+class DWidget(bind.AttributeDict):
     def __init__(self, widget):
+        bind.AttributeDict.__init__(self)
         self.widget = widget
         widget.show()
         self.props = PropertyDict(self.widget)
-        self.child_props = bind.MemoryDict()
-        self.sensitive = bind.value_for_dict_key(self.props, "sensitive")
-        self.visible = bind.value_for_dict_key(self.props, "visible")
+        self.child_props = bind.PyDict()
+        bind.key_bind(self, "sensitive", self.props, "sensitive")
+        bind.key_bind(self, "visible", self.props, "visible")
 
 
 class DContainer(DWidget):
@@ -147,34 +148,34 @@ class DContainer(DWidget):
 class DCheckButton(DWidget):
     def __init__(self):
         DWidget.__init__(self, gtk.CheckButton(""))
-        self.label = bind.value_for_dict_key(self.props, "label")
-        self.active = bind.value_for_dict_key(self.props, "active")
-        self.checked = self.active
+        bind.key_bind(self, "label", self.props, "label")
+        bind.key_bind(self, "active", self.props, "active")
+        bind.key_bind(self, "checked", self, "active")
 
 
 class DButton(DWidget):
     def __init__(self):
         DWidget.__init__(self, gtk.Button(""))
-        self.label = bind.value_for_dict_key(self.props, "label")
+        bind.key_bind(self, "label", self.props, "label")
 
 
 class DEntry(DWidget):
     def __init__(self):
         DWidget.__init__(self, gtk.Entry())
-        self.text = bind.value_for_dict_key(self.props, "text")
-        self.placeholder = bind.value_for_dict_key(self.props, "placeholder-text")
+        bind.key_bind(self, "text", self.props, "text")
+        bind.key_bind(self, "placeholder", self.props, "placeholder")
 
 
 class DWindow(DContainer):
     def __init__(self):
         DContainer.__init__(self, gtk.Window())
-        self.title = bind.value_for_dict_key(self.props, "title")
+        bind.key_bind(self, "title", self.props, "title")
 
 
 class DBox(DContainer):
     def __init__(self, widget):
         DContainer.__init__(self, widget)
-        self.homogeneous = bind.value_for_dict_key(self.props, "homogeneous")
+        bind.key_bind(self, "homogeneous", self.props, "homogeneous")
 
 
 class DHBox(DBox):
