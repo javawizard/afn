@@ -284,6 +284,14 @@ class DViewport(DContainer):
         DContainer.__init__(self, gtk.Viewport())
 
 
+def make(widget, props={}, child_props={}, children=[]):
+    widget.props.update(props)
+    widget.child_props.update(child_props)
+    if children:
+        widget.children.extend(children)
+    return widget
+
+
 
 
 

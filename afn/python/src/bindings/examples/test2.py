@@ -1,12 +1,13 @@
 
-from bindings import bind, gtk2_bind
+from bindings import bind, gtk2_bind as g
 
 def task_view(task):
-    text_box = gtk2_bind.DEntry()
-    completed_box = gtk2_bind.DCheckButton()
+    text_box = g.DEntry()
+    completed_box = g.DCheckButton()
+    completed_box.child_props["expand"] = False
     bind.key_bind(text_box, "text", task, "text")
     bind.key_bind(completed_box, "active", task, "completed")
-    panel = gtk2_bind.DHBox()
+    panel = g.DHBox()
     panel.children.extend([text_box, completed_box])
     visible = bind.BinaryViewer(lambda s, c: (s or (not c)), False, False)
     bind.w_bind_s(visible.a, bind.value_for_weak_dict_key(show_all, "active"))
@@ -18,14 +19,16 @@ def task_view(task):
 
 tasks = bind.PyList()
 
-w = gtk2_bind.DWindow()
+w = g.DWindow()
 w.title = "test2"
 
-show_all = gtk2_bind.DCheckButton()
+show_all = g.DCheckButton()
 show_all.label = "Show all tasks"
 show_all.active = False
+show_all.child_props["expand"] = False
 
-add = gtk2_bind.DButton()
+add = g.DButton()
+add.child_props["expand"] = False
 add.label = "Add"
 def on_add(*args):
     t = bind.PyDict()
@@ -34,14 +37,10 @@ def on_add(*args):
     tasks.append(t)
 add.widget.connect("clicked", on_add)
 
-task_vbox = gtk2_bind.DVBox()
-task_viewport = gtk2_bind.DViewport()
-task_viewport.children.append(task_vbox)
-task_scroll = gtk2_bind.DScrolledWindow()
-task_scroll.children.append(task_viewport)
-main_vbox = gtk2_bind.DVBox()
-main_vbox.children.extend([show_all, task_scroll, add])
-w.children.append(main_vbox)
+task_vbox = g.make(g.DVBox(), child_props={"expand": False})
+task_parent_vbox = g.make(g.DVBox(), children=[task_vbox, g.make(g.DLabel(), child_props={"expand": True})])
+task_scroll = g.make(g.DScrolledWindow(), children=[g.make(g.DViewport(), children=[task_parent_vbox])])
+w.children.append(g.make(g.DVBox(), children=[show_all, task_scroll, add]))
 
 lt = bind.ListTranslator(task_view, None)
 bind.s_bind_s(lt.a, tasks)
