@@ -149,6 +149,7 @@ class ChildList(bind.PyListMixin, bind.Bindable):
         self.dwidget = dwidget
         self.widget = dwidget.widget
         self.children = []
+        self.child_prop_dicts = []
     
     def get_value(self):
         # TODO: Figure out how to not copy and instead return a read-only
@@ -165,6 +166,14 @@ class ChildList(bind.PyListMixin, bind.Bindable):
             self.widget.add(change.item.widget)
             if change.index < (len(self.children) - 1):
                 self.widget.reorder_child(change.item.widget, change.index)
+            # Create a ChildPropertyDict for this child
+            self.child_prop_dicts.insert(change.index, ChildPropertyDict(self.widget, change.item.widget))
+            # Copy all of the child's current child properties that we know about
+            for k in self.child_prop_dicts[change.index].keys():
+                if k in change.item.child_props:
+                    self.child_prop_dicts[change.index][k] = change.item.child_props[k]
+            # Then bind the child dict to the child's child dict
+            bind.bind(change.item.child_props, self.child_prop_dicts[change.index]) 
             return lambda: self.perform_change(bind.DeleteItem(change.index))
         elif isinstance(change, bind.ReplaceItem):
             with bind.Log() as l:
@@ -174,6 +183,12 @@ class ChildList(bind.PyListMixin, bind.Bindable):
         elif isinstance(change, bind.DeleteItem):
             item = self.children[change.index]
             del self.children[change.index]
+            # Unbind our ChildPropertyDict from the widget's child dict
+            bind.unbind(item.child_props, self.child_prop_dicts[change.index])
+            # Disconnect our ChildPropertyDict and then delete it
+            self.child_prop_dicts[change.index].disconnect()
+            del self.child_prop_dicts[change.index]
+            # Then remove the actual widget
             self.widget.remove(item.widget)
             return lambda: self.perform_change(bind.InsertItem(change.index, item))
         elif isinstance(change, bind.SetValue):
