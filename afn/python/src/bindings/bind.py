@@ -297,19 +297,19 @@ class Binder(object):
         return self.notify_change(change, to_self=True)
 
 
-def bind(a, b, a_weak=False, b_weak=False):
-    return b.binder.bind(a.binder, b_weak, a_weak)
+def bind(s, m, s_weak=False, m_weak=False):
+    return m.binder.bind(s.binder, m_weak, s_weak)
 
 s_bind_s = bind
 
-def s_bind_w(a, b):
-    return bind(a, b, False, True)
+def s_bind_w(s, m):
+    return bind(s, m, False, True)
 
-def w_bind_s(a, b):
-    return bind(a, b, True, False)
+def w_bind_s(s, m):
+    return bind(s, m, True, False)
 
-def w_bind_w(a, b):
-    return bind(a, b, True, True)
+def w_bind_w(s, m):
+    return bind(s, m, True, True)
 
 
 def unbind(a, b):
@@ -867,6 +867,16 @@ class DelayController(object):
                 l.add(self.view.binder.perform_change(SetValue(self.model.binder.get_value())))
                 l.add(self.synchronized.binder.perform_change(SetValue(True)))
                 return l
+
+
+def key_bind(s, s_key, m, m_key, s_weak=True, m_weak=False):
+    s_controller = DictController(s_key)
+    m_controller = DictController(m_key)
+    with Log() as l:
+        l.add(bind(m_controller.dict, m, s_weak, m_weak))
+        l.add(bind(s_controller.dict, s, m_weak, s_weak))
+        l.add(bind(s_controller.value, m_controller.value, s_weak, m_weak))
+        return l
 
 
 
