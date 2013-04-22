@@ -912,6 +912,21 @@ def key_bind(s, s_key, m, m_key, s_weak=True, m_weak=False):
         l.add(bind(s_controller.value, m_controller.value, s_weak, m_weak))
         return l
 
+def v_key_bind(s, m, m_key, s_weak=True, m_weak=False):
+    m_controller = DictController(m_key)
+    with Log() as l:
+        l.add(bind(m_controller.dict, m, s_weak, m_weak))
+        l.add(bind(s, m_controller.value, s_weak, m_weak))
+        return l
+
+
+def key_bind_v(s, s_key, m, s_weak=True, m_weak=False):
+    s_controller = DictController(s_key)
+    with Log() as l:
+        l.add(bind(s_controller.dict, s, m_weak, s_weak))
+        l.add(bind(s_controller.value, m, s_weak, m_weak))
+        return l
+
 
 
 

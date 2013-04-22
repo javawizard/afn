@@ -248,11 +248,11 @@ class DEntry(DWidget):
         bind.bind(self._delayed.view, bind.value_for_dict_key(self, "text"))
         bind.bind(self._delayed.model, bind.value_for_dict_key(self, "delayed_text"))
         self._delayed.save()
-        self.widget.connect("focus-out-event", self._focus_out)
-        self.widget.connect("activate", lambda *args: self._delayed.save())
+        self.widget.connect("focus-out-event", self._save_and_false)
+        self.widget.connect("activate", self._save_and_false)
         self.widget.connect("key-press-event", self._key_press)
     
-    def _focus_out(self, *args):
+    def _save_and_false(self, *args):
         self._delayed.save()
         return False
     
