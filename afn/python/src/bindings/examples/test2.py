@@ -36,7 +36,8 @@ if task_file.exists:
 else:
     tasks = bind.PyList()
 
-w = g.make(g.DWindow(), props={"title": task_file.name + " - Task List", "width-request": 350, "height-request": 400})
+w = g.make(g.DWindow(), props={"title": task_file.name + " - Task List"})
+w.widget.resize(420, 470)
 
 show_all = g.make(g.DCheckButton(), props={"label": "Show all tasks"}, child_props={"expand": True})
 add = g.make(g.DButton(), props={"label": "Add"}, child_props={"expand": False})
@@ -54,6 +55,7 @@ save.widget.connect("clicked", on_save)
 task_vbox = g.make(g.DVBox(), child_props={"expand": False})
 task_parent_vbox = g.make(g.DVBox(), children=[task_vbox, g.make(g.DLabel(), child_props={"expand": True})])
 task_scroll = g.make(g.DScrolledWindow(), children=[g.make(g.DViewport(), children=[task_parent_vbox])])
+task_scroll.props.update({"hscrollbar-policy": gtk.POLICY_AUTOMATIC, "vscrollbar-policy": gtk.POLICY_AUTOMATIC})
 control_panel = g.make(g.DHBox(), child_props={"expand": False}, children=[show_all, add, save])
 w.children.append(g.make(g.DVBox(), children=[control_panel, task_scroll]))
 
