@@ -87,17 +87,20 @@ class ChildPropertyDict(bind.PyDictMixin, bind.Bindable):
         self.prop_names = [p.name for p in widget.list_child_properties() if p.flags & gobject.PARAM_READABLE]
         self.handlers = {}
         self.last_values = dict((p, self.widget.child_get_property(child, p)) for p in self.prop_names)
+        self.connected = False
         self.connect()
     
     def connect(self):
-        if self.handlers:
+        if self.connected:
             raise Exception("Already connected")
+        self.connected = True
         for prop_name in self.prop_names:
             self.handlers[prop_name] = self.widget.connect("child-notify::" + prop_name, partial(self.signal, prop_name))
     
     def disconnect(self):
-        if not self.handlers:
+        if not self.connected:
             raise Exception("Not connected")
+        self.connected = False
         for handler in self.handlers.values():
             self.widget.disconnect(handler)
     
@@ -211,7 +214,8 @@ class DWidget(bind.AttributeDict):
     def __init__(self, widget):
         bind.AttributeDict.__init__(self)
         self.widget = widget
-        widget.show()
+        if not hasattr(type(self), "_do_not_show"):
+            widget.show()
         self.props = PropertyDict(self.widget)
         self.child_props = bind.PyDict()
         bind.key_bind(self, "sensitive", self.props, "sensitive")
@@ -300,6 +304,30 @@ class DScrolledWindow(DContainer):
 class DViewport(DContainer):
     def __init__(self):
         DContainer.__init__(self, gtk.Viewport())
+
+
+class DMenu(DContainer):
+    _do_not_show = True
+    def __init__(self):
+        DContainer.__init__(self, gtk.Menu())
+
+
+class DMenuItem(DWidget):
+    def __init__(self, widget=None):
+        DWidget.__init__(self, widget or gtk.MenuItem())
+        bind.key_bind(self, "label", self.props, "label")
+
+
+class DCheckMenuItem(DMenuItem):
+    def __init__(self, widget=None):
+        DMenuItem.__init__(self, widget or gtk.CheckMenuItem())
+        bind.key_bind(self, "active", self.props, "active")
+        bind.key_bind(self, "checked", self, "active")
+
+
+class DMenuBar(DContainer):
+    def __init__(self):
+        DContainer.__init__(self, gtk.MenuBar())
 
 
 def make(widget, props={}, child_props={}, children=[]):
