@@ -87,17 +87,20 @@ class ChildPropertyDict(bind.PyDictMixin, bind.Bindable):
         self.prop_names = [p.name for p in widget.list_child_properties() if p.flags & gobject.PARAM_READABLE]
         self.handlers = {}
         self.last_values = dict((p, self.widget.child_get_property(child, p)) for p in self.prop_names)
+        self.connected = False
         self.connect()
     
     def connect(self):
-        if self.handlers:
+        if self.connected:
             raise Exception("Already connected")
+        self.connected = True
         for prop_name in self.prop_names:
             self.handlers[prop_name] = self.widget.connect("child-notify::" + prop_name, partial(self.signal, prop_name))
     
     def disconnect(self):
-        if not self.handlers:
+        if not self.connected:
             raise Exception("Not connected")
+        self.connected = False
         for handler in self.handlers.values():
             self.widget.disconnect(handler)
     
