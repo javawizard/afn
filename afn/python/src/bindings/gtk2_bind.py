@@ -330,6 +330,14 @@ class DMenuBar(DContainer):
         DContainer.__init__(self, gtk.MenuBar())
 
 
+class DAlignment(DContainer):
+    def __init__(self):
+        DContainer.__init__(self, gtk.Alignment())
+        for p in ["bottom-padding", "left-padding", "right-padding",
+                   "top-padding", "xalign", "xscale", "yalign", "yscale"]:
+            bind.key_bind(self, p.replace("-", "_"), self.props, p)
+
+
 def make(widget, props={}, child_props={}, children=[]):
     widget.props.update(props)
     widget.child_props.update(child_props)
