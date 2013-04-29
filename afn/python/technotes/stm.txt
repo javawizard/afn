@@ -40,6 +40,10 @@ Ok so then when we retry, we lock on the global lock, then check all the variabl
 
 That sounds good.
 
+(Oh, about the database thing: if we're only supporting a single connection to a single database, then that database doesn't need to have a commit() that doesn't fail; we can commit it before we modify our own variables, and if it fails, then immediately retry, and if it succeeds, then actually commit our changes. Although I need to think about that to make sure that'll really work, but it should.)
+
+So then orElse just runs the blocks given to it each in its own transaction, and if any of them retries, it proceeds to the next, and if they all retry, it retries and combines the list of TVars that they all requested to block on together and uses that as the list of TVars that it should block on.
+
 
 
 
