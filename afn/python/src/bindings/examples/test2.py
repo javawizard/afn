@@ -2,19 +2,21 @@
 from bindings import bind, gtk2_bind as g, bind_utils
 import sys, json
 from afn.fileutils import File
-import gtk
+import gtk, pango
 
 class TaskItemView(g.DHBox):
     def __init__(self, task):
         g.DHBox.__init__(self)
         self.task = task
-        label = g.make(g.DLabel(), props={"xalign": 0})
+        label = g.make(g.DLabel(), props={"xalign": 0, "ellipsize": pango.ELLIPSIZE_END})
         completed_box = g.make(g.DCheckButton(), child_props={"expand": False})
         edit_button = g.make(g.DButton(), props={"label": "Edit"}, child_props={"expand": False})
         edit_button.widget.connect("clicked", self.show_editor)
         add_button = g.make(g.DButton(), props={"label": "Add"}, child_props={"expand": False})
         add_button.widget.connect("clicked", lambda *args: create_task(task["children"]))
         bind.key_bind(label, "label", task, "text")
+        # Show the full text in the tooltip
+        bind.key_bind(label.props, "tooltip-text", task, "text")
         bind.key_bind(completed_box, "active", task, "completed")
         self.children += [label, completed_box, edit_button, add_button]
         visible = bind.BinaryViewer(lambda s, c: (s or (not c)), False, False)
