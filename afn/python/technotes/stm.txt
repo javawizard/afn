@@ -1,0 +1,51 @@
+Thinking about a Python STM implementation...
+
+And I might even reimplement the bindings system on top of it, so that we don't have to deal with this stupid reversion crap anymore; we just make binding modifications irrevocable, as it were, and require transactions (or nested transactions) to be used when reversion is necessary.
+
+This will be going out on a huge limb, though, as it'll most likely require a new, from-scratch GUI toolkit that's STM-aware to go along with it. That might take some time.
+
+So, the STM implementation...
+
+I want it to have proper retry support.
+
+I want it to have proper nested transaction support, even without using orElse, so that one can, within a transaction, invoke a particular piece of code and if it aborts (by throwing an exception), its changes are reverted and the rest of the transaction doesn't see them.
+
+I want atomic dictionaries and lists, which I can do by having copy-on-write trees and building dictionaries and lists on top of those, similar to the effect one would get with a TVar (Map k v) and TVar (Seq v) in Haskell. The implementation could perhaps be taken from Apache Commons Collections, which has various tree-based implementations of lists and dictionaries.
+
+I also would love to have integration with external transactional facilities such as database management systems. Provided I can find a database that guarantees that it won't throw any serialization exceptions from a transaction's commit() method (and only throw them during actual writes) or provides a function for pre-checking to see if a transaction can commit, this should be straightforward: track a single database transaction alongside an STM transaction and then commit when the STM transaction is to be committed. That should work.
+
+So let's see...
+
+The base transaction needs to store the transaction count at which it started. It also needs to store the values of all variables that have been accessed or written during the transaction. (I might separate these two out, as variables that have been accessed but not written don't need to be written again... although they do need to be checked for modifications again; failing to do so would create some serialization problems, same as ones with read committed in postgresql that serializable fixes.)
+
+And I think that's all it needs to store.
+
+So to start a transaction, we lock, then store the current transaction count, then unlock, and set a thread local indicating our current transaction.
+
+To commit, we lock, then check to see if each variable (variables store both their current committed value and the last transaction count at which they were modified) has since been modified by another transaction. If so, we retry immediately. If not, we change all variables' current committed values to their values as stored in our transaction and then unlock.
+
+So that's all good. Then nested transactions...
+
+A nested transaction has a pointer to the transaction one level above it. Creating a new nested transaction simply involves constructing one with a pointer to the transaction above it and updating the threadlocal. Modifying TVars in a nested transaction entails checking the transaction's value map to see if we have the value already; if so, just return it. If not, ask the underlying transaction for its value and store it. And when writing them, just store it regardless. Aborting a nested transaction simply involves pointing the threadlocal at its parent and letting it be garbage collected. Committing a nested transaction involves copying the modifications it made into its parent, then pointing the threadlocal back at its parent.
+
+So that all seems well and good. Now what about retry()?
+
+Well, I got thinking, we could use blocking queues with size limits of 1 for modification notifications. So how it would work is this: when a transaction retries and we have a list of all of the TVars it's accessed since it started, we create a BlockingQueue with a size limit of 1, acquire the global lock, then iterate over the list of variables we've accessed and add the queue to each one's list of queues that it should notify when it's modified. Then we release the lock, and block indefinitely for an object from the queue. Then, whenever a transaction commits, while it's got the global lock held and is updating each variable's value, it offers an object (probably just a singleton I'll have in some static final field) to each of the variable's queues, which will unblock any transactions waiting on modifications to that variable.
+
+Note that in order for this to work, we have to check even variables we just read but didn't modify when committing against their last changed transaction number to ensure that they haven't been changed since the transaction started. But come to think of it, we'd need to do that anyway to prevent serialization faults, which I think I mentioned above; if state a transaction's read has since been modified, then its results to be committed won't be reliable anyway.
+
+Oh, interesting, so that means we need to perform the above check, making sure variables haven't been modified since we started the transaction, when we retry as well, so that we make sure a change didn't happen while we were in the middle of the transaction that might have caused it to succeed.
+
+Ok so then when we retry, we lock on the global lock, then check all the variables we've accessed to see if they've been changed since our start-of-transaction number, and if they have, we just do a traditional immediate retry. If they haven't, then we create a BlockingQueue and add it to their lists and so on.
+
+That sounds good.
+
+
+
+
+
+
+
+
+
+
