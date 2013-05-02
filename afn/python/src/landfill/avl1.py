@@ -4,6 +4,7 @@ class Empty(object):
     def __init__(self):
         self.height = 0
         self.balance = 0
+        self.weight = 0
     def __str__(self):
         return "Empty()"
     __repr__ = __str__
@@ -19,6 +20,7 @@ class Node(object):
         # Positive numbers indicate left-heavy trees, negative numbers indicate
         # right-heavy trees
         self.balance = self.left.height - self.right.height
+        self.weight = self.left.weight + 1 + self.right.weight
     def __str__(self):
         return "Node(%r, %r, %r)" % (self.left, self.value, self.right)
     __repr__ = __str__
@@ -51,5 +53,32 @@ def balance(node):
         if left_balance == -1:
             node = Node(rotate_left(node.left), node.value, node.right)
         return rotate_right(node)
+
+
+def list_insert(node, index, value):
+    if isinstance(node, Empty):
+        # Empty, so just return a node with our value. TODO: Could check that
+        # the index is == 0; if it's greater, then the original insertion index
+        # is greater than the length of the list plus one, which doesn't make
+        # sense.
+        return Node(empty, value, empty)
+    if index < node.left.weight: # Go left
+        return balance(Node(list_insert(node.left, index, value), node.value, node.right))
+    elif index > node.left.weight: # Go right, but subtract left.weight + 1
+        # from the index
+        return balance(Node(node.left, node.value, list_insert(node.right, index - 1 - node.left.weight, value)))
+    else: # Node's supposed to be inserted here
+        return balance(Node(empty, value, node))
+
+
+
+
+
+
+
+
+
+
+
 
 
