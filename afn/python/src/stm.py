@@ -111,7 +111,7 @@ class BaseTransaction(Transaction):
             # the vars' queues.
             with global_lock:
                 for var in self.vars:
-                    var.queues.remove(var)
+                    var.queues.remove(q)
             # And then we retry immediately.
             raise RetryImmediately
 
@@ -199,6 +199,10 @@ def atomically(function):
             # Before we go, restore the current transaction to whatever it was
             # before we started.
             stm_state.current = transaction.parent
+
+
+def retry():
+    raise RetryLater
 
 
 
