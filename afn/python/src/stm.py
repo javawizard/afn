@@ -12,6 +12,11 @@ class RetryLater(BaseException):
 class State(Local):
     def __init__(self):
         self.current = None
+    
+    def get_current(self):
+        if not self.current:
+            raise Exception("No current transaction")
+        return self.current
 
 stm_state = State()
 global_lock = Lock()
@@ -131,18 +136,18 @@ class NestedTransaction(Transaction):
 
 
 class TVar(object):
-    def __init__(self, value):
+    def __init__(self, value=None):
         self.queues = set()
-        self.real_value = value
+        self._real_value = value
         self.modified = 0
     
     def get(self):
         # Ask the current transaction for our value.
-        return stm_state.current.get_value(self)
+        return stm_state.get_current().get_value(self)
     
     def set(self, value):
         # Set the specified value into the current transaction.
-        stm_state.current.set_value(self, value)
+        stm_state.get_current().set_value(self, value)
     
     value = property(get, set)
     
