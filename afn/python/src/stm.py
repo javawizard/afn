@@ -205,6 +205,20 @@ def retry():
     raise RetryLater
 
 
+def or_else(*args):
+    for function in args:
+        # Try to run each function in sequence, in its own transaction so that
+        # if it raises RetryLater (or any other exception) its effects will be
+        # undone.
+        try:
+            return atomically(function)
+        except RetryLater:
+            # Requested a retry, so move on to the next alternative
+            pass
+    # All of the alternatives retried, so retry ourselves.
+    retry()
+
+
 
 
 
