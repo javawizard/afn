@@ -80,7 +80,7 @@ def list_delete(node, index):
         elif node.right is empty:
             return node.left
         else:
-            new_value, new_right = pop_leftmost(node.right, index - node.left.weight - 1)
+            new_value, new_right = pop_leftmost(node.right)
             return balance(Node(node.left, new_value, new_right))
 
 
