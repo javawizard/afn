@@ -15,7 +15,9 @@ def draw_node(graph, node):
     if node is avl.empty:
         graph.add_node(pydot.Node(node_id, label="<empty>"))
     else:
-        graph.add_node(pydot.Node(node_id, label=repr(node.value)))
+        graph.add_node(pydot.Node(node_id, label=repr(node.value) + 
+                                  "\nbalance: %s\nheight: %s\nweight: %s" %
+                                  (node.balance, node.height, node.weight)))
         graph.add_edge(pydot.Edge(node_id, draw_node(graph, node.left)))
         graph.add_edge(pydot.Edge(node_id, draw_node(graph, node.right)))
     return node_id
