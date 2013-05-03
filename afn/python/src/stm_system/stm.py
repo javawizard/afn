@@ -1,5 +1,5 @@
 
-from threading import local as _Local, Lock
+from threading import local as _Local, Lock as _Lock
 from Queue import Queue, Full
 
 class _RetryImmediately(BaseException):
@@ -19,7 +19,7 @@ class _State(_Local):
         return self.current
 
 _stm_state = _State()
-_global_lock = Lock()
+_global_lock = _Lock()
 _last_transaction = 0
 
 
