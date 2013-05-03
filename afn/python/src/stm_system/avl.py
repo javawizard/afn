@@ -1,6 +1,6 @@
 from collections import MutableSequence
 
-class Empty(object):
+class _Empty(object):
     def __init__(self):
         self.height = 0
         self.balance = 0
@@ -8,7 +8,7 @@ class Empty(object):
     def __str__(self):
         return "Empty()"
     __repr__ = __str__
-empty = Empty()
+empty = _Empty()
 
 
 class Node(object):
@@ -38,6 +38,14 @@ def rotate_right(node):
     b = node.left.right
     c = node.right
     return Node(a, node.left.value, Node(b, node.value, c))
+
+
+def pop_leftmost(node):
+    if node.left is empty:
+        return node.value, node.right
+    else:
+        value, new_left = pop_leftmost(node.left)
+        return value, balance(new_left)
 
 
 def balance(node):
