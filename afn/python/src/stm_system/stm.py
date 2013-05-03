@@ -307,14 +307,14 @@ def atomically(function):
     
     or_else can also be used to make non-blocking variants of blocking
     functions. For example, given a queue with a blocking get() function, we
-    can get the queue's value or, if it does currently have a value available,
-    return None with:
+    can get the queue's value or, if it does not currently have a value
+    available, return None with:
     
         or_else(queue.get, lambda: None)
     
     If all of the transactions passed to or_else retry, or_else itself retries.
     
-    aThe return value of atomically() is the return value of the function that
+    The return value of atomically() is the return value of the function that
     was passed to it.
     """
     while True:
