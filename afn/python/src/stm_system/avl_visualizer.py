@@ -13,10 +13,10 @@ def visualize(node, png_path):
 def draw_node(graph, node):
     node_id = str(next_id())
     if node is avl.empty:
-        graph.add_node(pydot.Node(node_id, label="<empty>"))
+        graph.add_node(pydot.Node(node_id, label="<empty>", fontsize="9"))
     else:
-        graph.add_node(pydot.Node(node_id, label=repr(node.value) + 
-                                  "\nbalance: %s\nheight: %s\nweight: %s" %
+        graph.add_node(pydot.Node(node_id, label='"' + repr(node.value) + 
+                                  "\\nbalance: %s\\nheight: %s\\nweight: %s\"" %
                                   (node.balance, node.height, node.weight)))
         graph.add_edge(pydot.Edge(node_id, draw_node(graph, node.left)))
         graph.add_edge(pydot.Edge(node_id, draw_node(graph, node.right)))

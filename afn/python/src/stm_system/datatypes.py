@@ -48,8 +48,10 @@ def list_insert(node, index, value):
     elif index > node.left.weight: # Go right, but subtract left.weight + 1
         # from the index
         return balance(Node(node.left, node.value, list_insert(node.right, index - 1 - node.left.weight, value)))
-    else: # Node's supposed to be inserted here
-        return balance(Node(empty, value, node))
+    else: # Node's supposed to be inserted here, so insert it into our left
+        # child as the node at its weight'th index, or its last node
+        return balance(Node(list_insert(node.left, node.left.weight, value), node.value, node.right))
+            
 
 
 def list_replace(node, index, value):

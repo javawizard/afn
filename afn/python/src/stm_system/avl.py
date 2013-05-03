@@ -48,6 +48,13 @@ def pop_leftmost(node):
         return value, balance(new_left)
 
 
+def insert_rightmost(node, value):
+    if node is empty:
+        return Node(empty, value, empty)
+    else:
+        return balance(Node(node.left, node.value, insert_rightmost(node.right, value)))
+
+
 def balance(node):
     if node.balance >= -1 and node.balance <= 1:
         return node
