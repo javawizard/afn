@@ -61,6 +61,10 @@ def balance(node):
         if left_balance == -1:
             node = Node(rotate_left(node.left), node.value, node.right)
         return rotate_right(node)
+    else:
+        raise Exception("Balance factor off (this is a bug in the AVL "
+                        "tree implementation): %r for node %r" %
+                        (node.balance, node))
 
 
 
