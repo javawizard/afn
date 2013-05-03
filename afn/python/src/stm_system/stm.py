@@ -208,6 +208,9 @@ class TVar(object):
     
     TVars are the main primitives used within the STM system. They can only be
     read or written from within a call to atomically().
+    
+    More complex datatypes (such as TList, TDict, and TObject) are available in
+    the tlist, tdict, and tobject modules, respectively.
     """
     __slots__ = ["_queues", "_real_value", "_modified"]
     
