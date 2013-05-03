@@ -62,7 +62,7 @@ class _BaseTransaction(_Transaction):
         # started (and raise _RetryImmediately if it has), then return its real
         # value.
         with _global_lock:
-            if var.modified > self.start:
+            if var._modified > self.start:
                 raise _RetryImmediately
             return var._real_value
     
@@ -75,7 +75,7 @@ class _BaseTransaction(_Transaction):
             # sure nothing it used changed in the mean time.
             with _global_lock:
                 for var in self.vars:
-                    if var.modified > self.start:
+                    if var._modified > self.start:
                         # Var was modified since we started, so we need to
                         # retry against its new value.
                         raise _RetryImmediately
@@ -97,21 +97,21 @@ class _BaseTransaction(_Transaction):
             # we need to retry.
             with _global_lock:
                 for var in self.vars:
-                    if var.modified > self.start:
+                    if var._modified > self.start:
                         # Yep, one changed. Retry immediately.
                         raise _RetryImmediately
                 # Nope, none of them have changed. So now we create a queue,
                 # then add it to all of the vars we need to watch.
                 q = Queue(1)
                 for var in self.vars:
-                    var.queues.add(q)
+                    var._queues.add(q)
             # Then we wait.
             q.get()
             # One of the vars was modified. Now we go remove ourselves from
             # the vars' queues.
             with _global_lock:
                 for var in self.vars:
-                    var.queues.remove(q)
+                    var._queues.remove(q)
             # And then we retry immediately.
             raise _RetryImmediately
 
@@ -136,10 +136,12 @@ class _NestedTransaction(_Transaction):
 
 
 class TVar(object):
+    __slots__ = ["_queues, _real_value, _modified"]
+    
     def __init__(self, value=None):
-        self.queues = set()
+        self._queues = set()
         self._real_value = value
-        self.modified = 0
+        self._modified = 0
     
     def get(self):
         # Ask the current transaction for our value.
@@ -154,9 +156,9 @@ class TVar(object):
     def _update_real_value(self, value, modified):
         # Update our real value and modified transaction
         self._real_value = value
-        self.modified = modified
+        self._modified = modified
         # Then notify all of the queues registered to us.
-        for q in self.queues:
+        for q in self._queues:
             try:
                 q.put(None, False)
             except Full:
