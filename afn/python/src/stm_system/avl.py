@@ -6,7 +6,7 @@ class _Empty(object):
         self.balance = 0
         self.weight = 0
     def __str__(self):
-        return "Empty()"
+        return "empty"
     __repr__ = __str__
 empty = _Empty()
 

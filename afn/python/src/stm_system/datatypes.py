@@ -93,7 +93,7 @@ def list_get(node, index):
         return node.value
 
 
-class TList(object):
+class TList(MutableSequence):
     def __init__(self):
         self.var = stm.TVar(empty)
     
@@ -113,7 +113,7 @@ class TList(object):
         self.var.set(list_insert(self.var.get(), index, value))
     
     def __str__(self):
-        return "TList(%r)" % list(self)
+        return "TList(%r)" % stm.atomically(lambda: list(self))
     
     __repr__ = __str__
 
