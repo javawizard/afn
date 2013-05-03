@@ -136,7 +136,7 @@ class _NestedTransaction(_Transaction):
 
 
 class TVar(object):
-    __slots__ = ["_queues, _real_value, _modified"]
+    __slots__ = ["_queues", "_real_value", "_modified"]
     
     def __init__(self, value=None):
         self._queues = set()
