@@ -13,7 +13,9 @@ from stm_system import stm
 
 def dict_insert(node, key, value):
     if node is empty:
-        # Empty, so just return a node with our value.
+        # Empty (we never found a matching value, so the specified value isn't
+        # already present), so we just return a new value containing the value
+        # we were called with.
         return Node(empty, (key, value), empty)
     if key < node.value[0]: # Key is less than this node's key, so go left
         return balance(Node(dict_insert(node.left, key, value), node.value, node.right))
@@ -26,11 +28,13 @@ def dict_insert(node, key, value):
 def dict_delete(node, key):
     if node is empty:
         raise KeyError
-    if key < node.value[0]:
+    if key < node.value[0]: # Go left
         return balance(Node(dict_delete(node.left, key), node.value, node.right))
-    elif key > node.value[0]:
+    elif key > node.value[0]: # Go right
         return balance(Node(node.left, node.value, dict_delete(node.right, key)))
-    else: # We're supposed to delete this node
+    else: # We're supposed to delete this node. The logic here is identical to
+        # that of tlist.list_delete; see that function's documentation for
+        # info and comments on how this one's works.
         if node.left is empty and node.right is empty:
             return empty
         elif node.left is empty:
@@ -45,11 +49,11 @@ def dict_delete(node, key):
 def dict_get(node, key):
     if node is empty:
         raise KeyError
-    if key < node.value[0]:
+    if key < node.value[0]: # Go left
         return dict_get(node.left, key)
-    elif key > node.value[0]:
+    elif key > node.value[0]: # Go right
         return dict_get(node.right, key)
-    else:
+    else: # Found the key; just return the value part of its tuple
         return node.value[1]
 
 
@@ -64,6 +68,24 @@ def dict_iter(node, value_slice):
 
 
 class TDict(MutableMapping):
+    """
+    A transactional list.
+    
+    Internally, transactional dicts are maintained with a single TVar holding a
+    copy-on-write binary tree annotated with dict keys. Insertion (and
+    appending), removal, and lookup are therefore all O(log n) operations.
+    len() is O(1), as is iter(), iterkeys(), iteritems(), and itervalues().
+    
+    One nice property of using a copy-on-write binary tree is iteration: the
+    iterator returned from iter(tdict) is a snapshot of the dict's keys at that
+    point in time. The dict can therefore be safely modified during iteration,
+    without affecting the keys produced by the iteration. The same is, of
+    course, true of iterkeys, iteritems, and itervalues.
+    
+    All of TDict's functions must be called within an STM transaction, with the
+    exception of __str__/__repr__, which, for the sake of convenience,
+    wrap themselves in a call to stm.atomically() internally. 
+    """
     def __init__(self):
         self.var = stm.TVar(empty)
     
@@ -99,6 +121,9 @@ class TDict(MutableMapping):
     
     def items(self):
         return list(self.iteritems())
+    
+    def __str__(self):
+        return "TDict(%r)" % stm.atomically(lambda: dict(self))
 
 
 

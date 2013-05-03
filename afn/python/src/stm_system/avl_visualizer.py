@@ -1,3 +1,10 @@
+"""
+A simple module to draw graphs of AVL trees to png files.
+
+Just call visualize(some_node, "some_file.png") to draw some_node (which should
+be an avl.Node, or avl.empty)'s hierarchical representation to some_file.png.
+Quite useful for debugging tree-related issues.
+"""
 
 import pydot
 from stm_system import avl

@@ -21,31 +21,41 @@ def _list_insert(node, index, value):
 
 
 def _list_replace(node, index, value):
-    if node is _empty:
+    if node is _empty: # Walked right off the right end of the tree, so the
+        # index is too high (or walked off the left end of the tree if the
+        # index was less than 0)
         raise IndexError
-    if index < node.left.weight:
+    if index < node.left.weight: # Index is less than the number of children we
+        # have on our left, so the item we're looking for is on our left side
         return Node(_list_replace(node.left, index, value), node.value, node.right)
-    elif index > node.left.weight:
+    elif index > node.left.weight: # Same, but it's on our right side. Note
+        # that we subtract the number of items on the left (that we're skipping)
+        # as well as 1 for ourselves from the index before passing it down.
         return Node(node.left, node.value, _list_replace(node.right, index - node.left.weight - 1, value))
-    else:
+    else: # We're the node they're looking for
         return Node(node.left, value, node.right)
 
 
 def _list_delete(node, index):
     if node is _empty:
         raise IndexError
-    if index < node.left.weight:
+    if index < node.left.weight: # Go left
         return balance(Node(_list_delete(node.left, index), node.value, node.right))
-    elif index > node.left.weight:
+    elif index > node.left.weight: # Go right
         return balance(Node(node.left, node.value, _list_delete(node.right, index - node.left.weight - 1)))
     else: # We're supposed to delete this node
         if node.left is _empty and node.right is _empty:
+            # No children; just return empty
             return _empty
         elif node.left is _empty:
+            # Only a right child; return it
             return node.right
         elif node.right is _empty:
+            # Only a left child; return it
             return node.left
         else:
+            # Both a left and a right child, slightly more tricky. What we do
+            # is pop the next item in the list and replace ourselves with it.
             new_value, new_right = pop_leftmost(node.right)
             return balance(Node(node.left, new_value, new_right))
 
@@ -53,11 +63,11 @@ def _list_delete(node, index):
 def _list_get(node, index):
     if node is _empty:
         raise IndexError
-    if index < node.left.weight:
+    if index < node.left.weight: # Go left
         return _list_get(node.left, index)
-    elif index > node.left.weight:
+    elif index > node.left.weight: # Go right
         return _list_get(node.right, index - node.left.weight - 1)
-    else:
+    else: # Found the node, so return its value
         return node.value
 
 
