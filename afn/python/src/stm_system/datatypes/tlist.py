@@ -61,6 +61,16 @@ def list_get(node, index):
         return node.value
 
 
+def list_iter(node):
+    if node is empty:
+        return
+    for child in list_iter(node.left):
+        yield child
+    yield node.value
+    for child in list_iter(node.right):
+        yield child
+
+
 class TList(MutableSequence):
     def __init__(self):
         self.var = stm.TVar(empty)
@@ -83,4 +93,9 @@ class TList(MutableSequence):
     def __str__(self):
         return "TList(%r)" % stm.atomically(lambda: list(self))
     
+    def __iter__(self):
+        return list_iter(self.var.get())
+    
     __repr__ = __str__
+
+
