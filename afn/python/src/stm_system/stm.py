@@ -1,5 +1,5 @@
 
-from threading import local as Local, Lock
+from threading import local as _Local, Lock
 from Queue import Queue, Full
 
 class _RetryImmediately(BaseException):
@@ -9,7 +9,7 @@ class _RetryLater(BaseException):
     pass
 
 
-class _State(Local):
+class _State(_Local):
     def __init__(self):
         self.current = None
     
@@ -64,7 +64,7 @@ class _BaseTransaction(_Transaction):
         with _global_lock:
             if var.modified > self.start:
                 raise _RetryImmediately
-            return var.real_value
+            return var._real_value
     
     def run(self, function):
         global _last_transaction
@@ -84,10 +84,10 @@ class _BaseTransaction(_Transaction):
                 _last_transaction += 1
                 modified = _last_transaction
                 # Then we update the real values of all of the TVars. Note that
-                # TVar.update_real_value takes care of notifying the TVar's
+                # TVar._update_real_value takes care of notifying the TVar's
                 # queues for us.
                 for var, value in self.vars.iteritems():
-                    var.update_real_value(value, modified)
+                    var._update_real_value(value, modified)
                 # And we're done!
                 return result
         except _RetryLater:
@@ -151,7 +151,7 @@ class TVar(object):
     
     value = property(get, set)
     
-    def update_real_value(self, value, modified):
+    def _update_real_value(self, value, modified):
         # Update our real value and modified transaction
         self._real_value = value
         self.modified = modified
@@ -161,12 +161,6 @@ class TVar(object):
                 q.put(None, False)
             except Full:
                 pass 
-    
-    # We do this mainly to prevent real_value from being accidentally directly
-    # written.
-    @property
-    def real_value(self):
-        return self._real_value
 
 
 def atomically(function):
