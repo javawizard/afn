@@ -11,7 +11,7 @@ def visualize(node, png_path):
     graph.write_png(png_path)
 
 def draw_node(graph, node):
-    node_id = next_id()
+    node_id = str(next_id())
     if node is avl.empty:
         graph.add_node(pydot.Node(node_id, label="<empty>"))
     else:
