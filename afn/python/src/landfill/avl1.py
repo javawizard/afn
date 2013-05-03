@@ -1,4 +1,5 @@
 
+from collections import MutableSequence
 
 class Empty(object):
     def __init__(self):
@@ -69,6 +70,48 @@ def list_insert(node, index, value):
         return balance(Node(node.left, node.value, list_insert(node.right, index - 1 - node.left.weight, value)))
     else: # Node's supposed to be inserted here
         return balance(Node(empty, value, node))
+
+
+def list_replace(node, index, value):
+    if isinstance(node, Empty):
+        raise IndexError
+    if index < node.left.weight:
+        return Node(list_replace(node.left, index, value), node.value, node.right)
+    elif index > node.left.weight:
+        return Node(node.left, node.value, list_replace(node.right, index - node.left.weight - 1, value))
+    else:
+        return Node(node.left, value, node.right)
+
+
+def list_get(node, index):
+    if isinstance(node, Empty):
+        raise IndexError
+    if index < node.left.weight:
+        return list_get(node.left, index)
+    elif index > node.left.weight:
+        return list_get(node.right, index - node.left.weight - 1)
+    else:
+        return node.value
+
+
+class TList(object):
+    def __init__(self):
+        self.var = TVar(empty)
+    
+    def __getitem__(self, index):
+        return list_get(self.var.get(), index)
+    
+    def __setitem__(self, index, value):
+        self.var.set(list_replace(self.var.get(), index, value))
+    
+    def __delitem__(self, index):
+        raise NotImplementedError
+    
+    def __len__(self):
+        return self.var.get().weight
+    
+    def insert(self, index, value):
+        self.var.set(list_insert(self.var.get(), index, value))
 
 
 
