@@ -2,6 +2,11 @@
 from collections import namedtuple
 import collections
 import weakref
+from stm_system.datatypes.tlist import TList
+from stm_system.datatypes.tdict import TDict
+from stm_system.datatypes.tset import TSet
+from stm_system.datatypes.tobject import TObject
+from stm_system import stm
 
 SetValue = namedtuple("SetValue", ["value"])
 # Change that indicates that our circuit is becoming synthetic. SetValue will
@@ -30,21 +35,16 @@ class IdHash(object):
     def __hash__(self):
         return id(self.value)
     
-    def __eq__(self, other):
+    def __cmp__(self, other):
         if not isinstance(other, IdHash):
             return NotImplemented
-        return self.__hash__() == other.__hash__()
-    
-    def __ne__(self, other):
-        if not isinstance(other, IdHash):
-            return NotImplemented
-        return self.__hash__() != other.__hash__()
+        return cmp(self.__hash__(), other.__hash__())
 
 
 class StrongWeakSet(collections.MutableSet):
     def __init__(self):
-        self._weak = weakref.WeakSet()
-        self._strong = set()
+        self._weak = TSet(backing_type=weakref.WeakSet)
+        self._strong = TSet(backing_type=set)
     
     def add(self, item, weak=False):
         # This is thread-safe; since we have a strong reference to the item,
@@ -76,11 +76,13 @@ class StrongWeakSet(collections.MutableSet):
         return item in self._strong or item in self._weak
     
     def __str__(self):
-        return "<StrongWeakSet: strong: %r, weak: %r>" % (self._strong, set(self._weak))
+        return "<StrongWeakSet: strong: %r, weak: %r>" % (self._strong, self._weak)
     
     __repr__ = __str__
 
 
+# Probably not needed anymore, since copies of TDicts are O(1). TODO: Actually
+# implement TDict.copy() to just create a copy with the same current root node.
 class SimpleMapping(collections.Mapping):
     def __init__(self, get_function, iter_function):
         self.get_function = get_function
@@ -105,6 +107,7 @@ class SimpleMapping(collections.Mapping):
         return False
 
 
+# Same note as SimpleMapping about not being needed
 class SimpleSequence(collections.Sequence):
     def __init__(self, get_function, len_function):
         self.get_function
@@ -126,6 +129,7 @@ class Bindable(object):
     
     @property
     def binder(self):
+        # TODO: Make sure we don't need to subclass TObject for this to work
         try:
             return self._binder
         except AttributeError:
@@ -157,7 +161,7 @@ class Binder(object):
     
     def get_binders(self, binders=None):
         if binders is None:
-            binders = set()
+            binders = TSet()
         if self not in binders:
             binders.add(self)
             for b in self.binders:
@@ -181,9 +185,10 @@ class Binder(object):
             return True
         
     def bind(self, other, self_weak=False, other_weak=False):
-        if other in self.binders: # Already bound, throw an exception
-            raise Exception("Already bound")
-        with Log() as l1:
+        @stm.atomically
+        def _():
+            if other in self.binders: # Already bound, throw an exception
+                raise Exception("Already bound")
             # Figure out whose value to keep; it's basically other's if we're
             # synthetic but other isn't, and self's otherwise
             if self.is_synthetic and not other.is_synthetic:
@@ -198,42 +203,26 @@ class Binder(object):
             # Link and add a reversion step that unlinks
             self.binders.add(other, other_weak)
             other.binders.add(self, self_weak)
-            @l1.then
-            def _():
-                other.binders.discard(self)
-                self.binders.discard(other)
             # If keep's synthetic, then other must be as well, so we're done.
             # If not, though, then we need to pass the new value to all of
             # update's former binders.
             if not keep.is_synthetic:
-                # Note that, no matter where we get an exception, concrete
-                # binders /must/ be reverted before synthetic ones (so that the
-                # synthetic ones see an already-reverted value from their
-                # binder's get_value()), so we leave it up to l1's with
-                # statement to revert anything we do here.
-                l2, l3 = Log(), Log()
-                l1.then(l2)
-                l1.then(l3)
                 for binder in update_binders:
                     if not binder.bindable.is_synthetic:
-                        l2.add(binder.bindable.perform_change(SetValue(keep_value)))
+                        binder.bindable.perform_change(SetValue(keep_value))
                 for binder in update_binders:
                     if binder.bindable.is_synthetic:
-                        l3.add(binder.bindable.perform_change(SetValue(keep_value)))
-            # That should be it. Then we just return l1.
-            return l1
+                        binder.bindable.perform_change(SetValue(keep_value))
+            # That should be it.
     
     def unbind(self, other):
-        if other not in self.binders: # Not bound, throw an exception
-            raise Exception("Not bound")
-        with Log() as l1:
+        @stm.atomically
+        def _():
+            if other not in self.binders: # Not bound, throw an exception
+                raise Exception("Not bound")
             self_weak, other_weak = other.binders.is_weak(self), self.binders.is_weak(other)
             self.binders.discard(other)
             other.binders.discard(self)
-            @l1.then
-            def _():
-                other.binders.add(self, self_weak)
-                self.binders.add(other, other_weak)
             if (self.is_synthetic and not other.is_synthetic) or (other.is_synthetic and not self.is_synthetic):
                 # If they're both synthetic then we don't need to do anything
                 # else as we were already synthetic before we unbound. If
@@ -242,51 +231,45 @@ class Binder(object):
                 # synthetic, then we need to let it know that it's now
                 # synthetic.
                 synthetic = self if self.is_synthetic else other
-                l2 = Log()
-                l1.then(l2)
                 for binder in synthetic.get_binders():
-                    l2.add(binder.bindable.perform_change(LostValue()))
-            return l1
+                    binder.bindable.perform_change(LostValue())
 
     def notify_change(self, change, to_self=False):
-        if isinstance(change, LostValue) and not self.is_synthetic:
-            # We're now synthetic but another binder on our circuit is still
-            # concrete, so don't do anything
-            return Log()
-        with Log() as l1:
-            l2, l3 = Log(), Log()
-            l1.then(l2)
-            l1.then(l3)
+        @stm.atomically
+        def _():
+            if isinstance(change, LostValue) and not self.is_synthetic:
+                # We're now synthetic but another binder on our circuit is still
+                # concrete, so don't do anything
+                return
             for binder in self.get_binders():
                 if (to_self or binder != self) and not binder.bindable.is_synthetic:
-                    l2.add(binder.bindable.perform_change(change))
+                    binder.bindable.perform_change(change)
             for binder in self.get_binders():
                 if (to_self or binder != self) and binder.bindable.is_synthetic:
-                    l3.add(binder.bindable.perform_change(change))
-            return l1
+                    binder.bindable.perform_change(change)
     
     def perform_change(self, change):
-        return self.notify_change(change, to_self=True)
+        self.notify_change(change, to_self=True)
 
 
 def bind(s, m, s_weak=True, m_weak=False):
-    return m.binder.bind(s.binder, m_weak, s_weak)
+    m.binder.bind(s.binder, m_weak, s_weak)
 
 def s_bind_s(s, m):
-    return bind(s, m, False, False)
+    bind(s, m, False, False)
 
 def s_bind_w(s, m):
-    return bind(s, m, False, True)
+    bind(s, m, False, True)
 
 def w_bind_s(s, m):
-    return bind(s, m, True, False)
+    bind(s, m, True, False)
 
 def w_bind_w(s, m):
-    return bind(s, m, True, True)
+    bind(s, m, True, True)
 
 
 def unbind(a, b):
-    return a.binder.unbind(b.binder)
+    a.binder.unbind(b.binder)
 
 
 class SyntheticBindable(Bindable):
@@ -296,74 +279,34 @@ class SyntheticBindable(Bindable):
         raise SyntheticError
     
     def perform_change(self, change):
-        return Log()
+        pass
 
 
 def value_str(value_bindable):
-    try:
-        return "<%s: %r>" % (type(value_bindable).__name__, value_bindable.binder.get_value())
-    except SyntheticError:
-        return "<%s: synthetic>" % type(value_bindable).__name__
-
-
-def list_insert(target_list, index, item):
-    target_list.insert(index, item)
-    def undo():
-        del target_list[index]
-    return undo
-
-
-def list_delete(target_list, index):
-    item = target_list[index]
-    del target_list[index]
-    def undo():
-        target_list.insert(index, item)
-    return undo
-
-
-def list_replace(target_list, index, item):
-    old_item = target_list[index]
-    target_list[index] = item
-    def undo():
-        target_list[index] = old_item
-    return undo
+    @stm.atomically
+    def _():
+        try:
+            return "<%s: %r>" % (type(value_bindable).__name__, value_bindable.binder.get_value())
+        except SyntheticError:
+            return "<%s: synthetic>" % type(value_bindable).__name__
 
 
 def list_str(list_bindable):
-    try:
-        return "<%s: %r>" % (type(list_bindable).__name__, list(list_bindable.binder.get_value()))
-    except SyntheticError:
-        return "<%s: synthetic>" % type(list_bindable).__name__
-
-
-def dict_modify(target_dict, key, value):
-    if key in target_dict:
-        old_value = target_dict[key]
-        target_dict[key] = value
-        def undo():
-            target_dict[key] = old_value
-        return undo
-    else:
-        target_dict[key] = value
-        def undo():
-            del target_dict[key]
-
-
-def dict_delete(target_dict, key):
-    if key not in target_dict:
-        raise KeyError(key)
-    old_value = target_dict[key]
-    del target_dict[key]
-    def undo():
-        target_dict[key] = old_value
-    return undo
+    @stm.atomically
+    def _():
+        try:
+            return "<%s: %r>" % (type(list_bindable).__name__, list(list_bindable.binder.get_value()))
+        except SyntheticError:
+            return "<%s: synthetic>" % type(list_bindable).__name__
 
 
 def dict_str(dict_bindable):
-    try:
-        return "<%s: %r>" % (type(dict_bindable).__name__, dict(dict_bindable.binder.get_value()))
-    except SyntheticError:
-        return "<%s: synthetic>" % type(dict_bindable).__name__
+    @stm.atomically
+    def _():
+        try:
+            return "<%s: %r>" % (type(dict_bindable).__name__, dict(dict_bindable.binder.get_value()))
+        except SyntheticError:
+            return "<%s: synthetic>" % type(dict_bindable).__name__
 
 
 class PyValueMixin(Bindable):
@@ -384,20 +327,16 @@ class PyValueMixin(Bindable):
 class MemoryValue(PyValueMixin, Bindable):
     # Concrete value that stores its value in memory
     def __init__(self, value):
-        self._value = value
+        self._var = stm.TVar(value)
     
     def get_value(self):
-        return self._value
+        return self._var.get()
     
     def perform_change(self, change):
         # We're concrete, so we'll never see a LostValue change
         if not isinstance(change, SetValue):
             raise TypeError("Need a SetValue instance")
-        old = self._value
-        self._value = change.value
-        def undo():
-            self._value = old
-        return undo
+        self._var.set(change.value)
 
 
 class PyValue(SyntheticBindable, PyValueMixin):
@@ -434,28 +373,19 @@ class PyDictMixin(Bindable, collections.MutableMapping):
 class MemoryDict(Bindable):
     # Dictionary bindable that stores things in memory
     def __init__(self):
-        self._dict = {}
+        self._dict = TDict()
     
     def get_value(self):
+        # TODO: return self._dict.copy(), which will be O(1) once I properly
+        # implement it
         return self._dict
     
     def perform_change(self, change):
         if isinstance(change, ModifyKey):
-            if change.key in self._dict:
-                old = self._dict[change.key]
-                self._dict[change.key] = change.value
-                def undo():
-                    self._dict[change.key] = old
-            else:
-                self._dict[change.key] = change.value
-                def undo():
-                    del self._dict[change.key]
+            self._dict[change.key] = change.value
         elif isinstance(change, DeleteKey):
             if change.key in self._dict:
-                old = self._dict[change.key]
                 del self._dict[change.key]
-                def undo():
-                    self._dict[change.key] = old
             else: # Delete a non-existent key; throw an exception. Not sure at
                 # the moment if we should just ignore it instead... Main
                 # advantage to throwing a proper exception is that then
@@ -468,17 +398,15 @@ class MemoryDict(Bindable):
                 # controller's dict). But I've yet to see anything actually
                 # relying on __del__ throwing an exception, so this should be
                 # fine. And I'll revisit this if it becomes a problem later.
-                undo = Log()
+                pass
         elif isinstance(change, SetValue):
-            old = self._dict.copy()
+            # TODO: Might want to have TDict.update check to see if the other
+            # dictionary is also a TDict and, if so, just copy its node, and if
+            # not, invoke the superclass update implementation
             self._dict.clear()
             self._dict.update(change.value)
-            def undo():
-                self._dict.clear()
-                self._dict.update(old)
         else:
             raise TypeError("Need a ModifyKey or DeleteKey")
-        return undo
 
 
 class PyDict(MemoryDict, PyDictMixin):
@@ -517,7 +445,7 @@ class EmptyDict(Bindable):
     
     def perform_change(self, change):
         if isinstance(change, SetValue) and len(change.value) == 0:
-            return Log()
+            return
         else:
             raise Exception("instances of EmptyDict can't be modified")
 
@@ -544,42 +472,24 @@ class PyListMixin(Bindable, collections.MutableSequence):
 
 class MemoryList(Bindable):
     def __init__(self):
-        self._list = []
+        self._list = TList()
     
     def get_value(self):
+        # TODO: Add a copy() to TList and use this, which'll be O(1)
         return self._list
     
     def perform_change(self, change):
         if isinstance(change, InsertItem):
-            if change.index < 0 or change.index > len(self._list):
-                raise IndexError("Insert index out of range")
             self._list.insert(change.index, change.item)
-            def undo():
-                del self._list[change.index]
         elif isinstance(change, ReplaceItem):
-            if change.index < 0 or change.index >= len(self._list):
-                raise IndexError("Replace index out of range")
-            old = self._list[change.index]
             self._list[change.index] = change.item
-            def undo():
-                self._list[change.index] = old
         elif isinstance(change, DeleteItem):
-            if change.index < 0 or change.index >= len(self._list):
-                raise IndexError("Delete index out of range")
-            old = self._list[change.index]
             del self._list[change.index]
-            def undo():
-                self._list.insert(change.index, old)
         elif isinstance(change, SetValue):
-            old = self._list[:]
             self._list[:] = []
             self._list.extend(change.value)
-            def undo():
-                self._list[:] = []
-                self._list.extend(old)
         else:
             raise TypeError("Need a list-related change")
-        return undo
 
 
 class PyList(MemoryList, PyListMixin):
@@ -598,8 +508,9 @@ class ListenerBindable(Bindable):
             self.listener(change)
 
 
-class _ValueUnwrapperValue(Bindable):
+class _ValueUnwrapperValue(Bindable, TObject):
     def __init__(self, controller):
+        TObject.__init__(self)
         self.controller = controller
         self._last_value = None
     
@@ -607,28 +518,23 @@ class _ValueUnwrapperValue(Bindable):
         raise SyntheticError
     
     def perform_change(self, change):
-        # FIXME: Need to have proper revert support here
-        with Log() as l:
+        @stm.atomically
+        def _():
             if isinstance(change, SetValue):
                 if self._last_value is not None:
-                    l.add(unbind(self.controller.binding, self._last_value))
-                old_last_value = self._last_value
+                    unbind(self.controller.binding, self._last_value)
                 self._last_value = change.value
-                @l.add
-                def _():
-                    self._last_value = old_last_value
-                l.add(bind(change.value, self.controller.binding))
+                # FIXME: Need to figure out what type of binding we're supposed
+                # to be doing here (strong/weak), maybe allow the
+                # ValueUnwrapperController constructor to specify, or just do
+                # as-is for now, I dunno...
+                bind(change.value, self.controller.binding)
             elif isinstance(change, LostValue):
                 if self._last_value is not None:
-                    l.add(unbind(self.controller.binding, self._last_value))
-                old_last_value = self._last_value
+                    unbind(self.controller.binding, self._last_value)
                 self._last_value = None
-                @l.add
-                def _():
-                    self._last_value = old_last_value
             else:
                 raise TypeError("Need a SetValue, not %r" % change)
-            return l
 
 
 class ValueUnwrapperController(object):
@@ -637,8 +543,9 @@ class ValueUnwrapperController(object):
         self.binding = SyntheticBindable()
 
 
-class _DictControllerKey(PyValueMixin, Bindable):
+class _DictControllerKey(PyValueMixin, Bindable, TObject):
     def __init__(self, controller, key):
+        TObject.__init__(self)
         self.controller = controller
         self._key = key
     
@@ -646,23 +553,15 @@ class _DictControllerKey(PyValueMixin, Bindable):
         return self._key
     
     def perform_change(self, change):
-        with Log() as l:
-            # Update the key. We use l.then instead of l.add as this updates
-            # the get_value() value of our _DictControllerValue, which must be
-            # changed back before we notify any of its binders of the
-            # reversion.
-            old_key = self._key
+        @stm.atomically
+        def _():
             self._key = change.value
-            @l.then
-            def _():
-                self._key = old_key
             if not self.controller.dict.binder.is_synthetic:
                 c = SetValue(self.controller.value.get_value())
                 # Notify, not perform; we don't want the value itself trying
                 # to perform the change, which would cause it to try to replace
                 # the value in the dict, which is pointless.
-                l.then(self.controller.value.binder.notify_change(c))
-            return l
+                self.controller.value.binder.notify_change(c)
 
 
 class _DictControllerValue(PyValueMixin, Bindable):
@@ -680,13 +579,13 @@ class _DictControllerValue(PyValueMixin, Bindable):
     def perform_change(self, change):
         if self.controller.dict.binder.is_synthetic:
             # Dict is synthetic, nothing to change
-            return Log()
+            return
         if change.value == self.controller._sentinel:
             c = DeleteKey(self.controller.key._key)
         else:
             c = ModifyKey(self.controller.key._key, change.value)
         # Just notify the dict of the change.
-        return self.controller.dict.binder.notify_change(c)
+        self.controller.dict.binder.notify_change(c)
 
 
 class _DictControllerDict(Bindable):
@@ -700,19 +599,19 @@ class _DictControllerDict(Bindable):
         if isinstance(change, LostValue):
             # Becoming synthetic. Tell the value that we're becoming synthetic,
             # and we're done.
-            return self.controller.value.binder.notify_change(LostValue())
+            self.controller.value.binder.notify_change(LostValue())
         elif isinstance(change, (ModifyKey, DeleteKey)):
             if change.key != self.controller.key._key:
                 # Change to a key that we're not looking at; do nothing
-                return Log()
+                return
             # Change to the key we're looking at
             if isinstance(change, ModifyKey):
                 # Key has a value or changed values; notify the value of our
                 # change
-                return self.controller.value.binder.notify_change(SetValue(change.value))
+                self.controller.value.binder.notify_change(SetValue(change.value))
             else:
                 # Key was deleted; set to the sentinel
-                return self.controller.value.binder.notify_change(SetValue(self.controller._sentinel))
+                self.controller.value.binder.notify_change(SetValue(self.controller._sentinel))
         elif isinstance(change, SetValue):
             # Figure out what our own key is in the given dict, and notify the
             # value of it. Note that this could result in double notification
@@ -721,7 +620,7 @@ class _DictControllerDict(Bindable):
             # for now.
             # TODO: Split this into multiple statements, this line is way too
             # long
-            return self.controller.value.binder.notify_change(SetValue(change.value.get(self.controller.key._key, self.controller._sentinel)))
+            self.controller.value.binder.notify_change(SetValue(change.value.get(self.controller.key._key, self.controller._sentinel)))
         else:
             raise TypeError
 
@@ -755,34 +654,33 @@ class _ListTranslatorList(MemoryList):
     def __init__(self, from_function):
         MemoryList.__init__(self)
         self.from_function = from_function
-        self.items = []
     
     def perform_change(self, change):
-        with Log() as l:
+        @stm.atomically
+        def _():
             if isinstance(change, InsertItem):
-                l.then(MemoryList.perform_change(self, change))
+                MemoryList.perform_change(self, change)
                 translated_change = InsertItem(change.index, self.from_function(change.item))
-                l.then(MemoryList.perform_change(self.other, translated_change))
-                l.then(self.other.binder.notify_change(translated_change))
+                MemoryList.perform_change(self.other, translated_change)
+                self.other.binder.notify_change(translated_change)
             elif isinstance(change, ReplaceItem):
-                l.then(MemoryList.perform_change(self, change))
+                MemoryList.perform_change(self, change)
                 translated_change = ReplaceItem(change.index, self.from_function(change.item))
-                l.then(MemoryList.perform_change(self.other, translated_change))
-                l.then(self.other.binder.notify_change(translated_change))
+                MemoryList.perform_change(self.other, translated_change)
+                self.other.binder.notify_change(translated_change)
             elif isinstance(change, DeleteItem):
-                l.then(MemoryList.perform_change(self, change))
-                l.then(MemoryList.perform_change(self.other, change))
-                l.then(self.other.binder.notify_change(change))
+                MemoryList.perform_change(self, change)
+                MemoryList.perform_change(self.other, change)
+                self.other.binder.notify_change(change)
             elif isinstance(change, SetValue):
                 # TODO: Really ought to split this out for other widgets too lazy
                 # to do any special processing to make use of
                 for n in reversed(range(len(self.get_value()))):
-                    l.add(self.perform_change(DeleteItem(n)))
+                    self.perform_change(DeleteItem(n))
                 for i, v in enumerate(change.value):
-                    l.add(self.perform_change(InsertItem(i, v)))
+                    self.perform_change(InsertItem(i, v))
             else:
                 raise TypeError
-            return l
 
 
 class ListTranslator(object):
@@ -799,10 +697,10 @@ class _BinaryViewerParam(MemoryValue):
         self.viewer = viewer
     
     def perform_change(self, change):
-        with Log() as l:
-            l.then(MemoryValue.perform_change(self, change))
-            l.then(self.viewer.recalculate())
-            return l
+        @stm.atomically
+        def _():
+            MemoryValue.perform_change(self, change)
+            self.viewer.recalculate()
 
 
 class _BinaryViewerOutput(MemoryValue):
@@ -823,12 +721,12 @@ class BinaryViewer(object):
         self.recalculate()
     
     def recalculate(self):
-        a_value, b_value = self.a.value, self.b.value
-        result = self.function(a_value, b_value)
-        with Log() as l:
-            l.then(MemoryValue.perform_change(self.output, SetValue(result)))
-            l.then(self.output.binder.notify_change(SetValue(result)))
-            return l
+        @stm.atomically
+        def _():
+            a_value, b_value = self.a.value, self.b.value
+            result = self.function(a_value, b_value)
+            MemoryValue.perform_change(self.output, SetValue(result))
+            self.output.binder.notify_change(SetValue(result))
 
 
 class _DelayModel(PyValueMixin, SyntheticBindable):
@@ -837,9 +735,7 @@ class _DelayModel(PyValueMixin, SyntheticBindable):
     
     def perform_change(self, change):
         if self.controller.synchronized.get():
-            return self.controller.view.binder.notify_change(change)
-        else:
-            return Log()
+            self.controller.view.binder.notify_change(change)
 
 
 class _DelayView(PyValueMixin, SyntheticBindable):
@@ -847,7 +743,7 @@ class _DelayView(PyValueMixin, SyntheticBindable):
         self.controller = controller
     
     def perform_change(self, change):
-        return self.controller.synchronized.binder.perform_change(SetValue(False))
+        self.controller.synchronized.binder.perform_change(SetValue(False))
 
 
 class DelayController(object):
@@ -858,46 +754,46 @@ class DelayController(object):
     
     def save(self):
         if self.synchronized.get():
-            return Log()
+            return
         else:
-            with Log() as l:
-                l.add(self.model.binder.perform_change(SetValue(self.view.binder.get_value())))
-                l.add(self.synchronized.binder.perform_change(SetValue(True)))
-                return l
+            @stm.atomically
+            def _():
+                self.model.binder.perform_change(SetValue(self.view.binder.get_value()))
+                self.synchronized.binder.perform_change(SetValue(True))
     
     def cancel(self):
         if self.synchronized.get():
-            return Log()
+            return
         else:
-            with Log() as l:
-                l.add(self.view.binder.perform_change(SetValue(self.model.binder.get_value())))
-                l.add(self.synchronized.binder.perform_change(SetValue(True)))
-                return l
+            @stm.atomically
+            def _():
+                self.view.binder.perform_change(SetValue(self.model.binder.get_value()))
+                self.synchronized.binder.perform_change(SetValue(True))
 
 
 def key_bind(s, s_key, m, m_key, s_weak=True, m_weak=False):
-    s_controller = DictController(s_key)
-    m_controller = DictController(m_key)
-    with Log() as l:
-        l.add(bind(m_controller.dict, m, s_weak, m_weak))
-        l.add(bind(s_controller.dict, s, m_weak, s_weak))
-        l.add(bind(s_controller.value, m_controller.value, s_weak, m_weak))
-        return l
+    @stm.atomically
+    def _():
+        s_controller = DictController(s_key)
+        m_controller = DictController(m_key)
+        bind(m_controller.dict, m, s_weak, m_weak)
+        bind(s_controller.dict, s, m_weak, s_weak)
+        bind(s_controller.value, m_controller.value, s_weak, m_weak)
 
 def v_key_bind(s, m, m_key, s_weak=True, m_weak=False):
-    m_controller = DictController(m_key)
-    with Log() as l:
-        l.add(bind(m_controller.dict, m, s_weak, m_weak))
-        l.add(bind(s, m_controller.value, s_weak, m_weak))
-        return l
+    @stm.atomically
+    def _():
+        m_controller = DictController(m_key)
+        bind(m_controller.dict, m, s_weak, m_weak)
+        bind(s, m_controller.value, s_weak, m_weak)
 
 
 def key_bind_v(s, s_key, m, s_weak=True, m_weak=False):
-    s_controller = DictController(s_key)
-    with Log() as l:
-        l.add(bind(s_controller.dict, s, m_weak, s_weak))
-        l.add(bind(s_controller.value, m, s_weak, m_weak))
-        return l
+    @stm.atomically
+    def _():
+        s_controller = DictController(s_key)
+        bind(s_controller.dict, s, m_weak, s_weak)
+        bind(s_controller.value, m, s_weak, m_weak)
 
 
 

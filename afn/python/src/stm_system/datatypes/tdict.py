@@ -27,7 +27,7 @@ def _dict_insert(node, key, value):
 
 def _dict_delete(node, key):
     if node is empty:
-        raise KeyError
+        raise KeyError(key)
     if key < node.value[0]: # Go left
         return balance(Node(_dict_delete(node.left, key), node.value, node.right))
     elif key > node.value[0]: # Go right
@@ -48,7 +48,7 @@ def _dict_delete(node, key):
 
 def _dict_get(node, key):
     if node is empty:
-        raise KeyError
+        raise KeyError(key)
     if key < node.value[0]: # Go left
         return _dict_get(node.left, key)
     elif key > node.value[0]: # Go right
