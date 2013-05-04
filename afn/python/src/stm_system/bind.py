@@ -21,34 +21,6 @@ class SyntheticError(Exception):
     pass
 
 
-class Log(object):
-    def __init__(self):
-        self.functions = []
-    
-    def __enter__(self):
-        return self
-    
-    def add(self, function):
-        if not callable(function):
-            raise Exception("Need a callable object, not %r" % function)
-        # Functions added this way are performed last to first
-        self.functions.append(function)
-    
-    def then(self, function):
-        if not callable(function):
-            raise Exception("Need a callable object, not %r" % function)
-        # Functions added this way are performed first to last
-        self.functions.insert(0, function)
-    
-    def __exit__(self, exc_type, *args):
-        if exc_type is not None:
-            self()
-    
-    def __call__(self):
-        for f in reversed(self.functions):
-            f()
-
-
 class IdHash(object):
     __slots__ = ["value"]
     
