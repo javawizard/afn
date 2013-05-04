@@ -99,7 +99,7 @@ class TList(MutableSequence):
     exception of __str__/__repr__, which, for the sake of convenience,
     wrap themselves in a call to stm.atomically() internally. 
     """
-    def __init__(self, initial_values):
+    def __init__(self, initial_values=[]):
         self.var = stm.TVar(_empty)
         if initial_values:
             # TODO: This could probably be made to be O(n) instead of
