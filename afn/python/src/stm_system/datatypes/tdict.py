@@ -69,7 +69,7 @@ def _dict_iter(node, value_slice):
 
 class TDict(MutableMapping):
     """
-    A transactional list.
+    A transactional dictionary.
     
     Internally, transactional dicts are maintained with a single TVar holding a
     copy-on-write binary tree annotated with dict keys. Insertion (and
