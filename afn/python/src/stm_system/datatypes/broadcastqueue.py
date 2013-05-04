@@ -25,6 +25,7 @@ class _Item(object):
         self.value = value
         self.next = stm.TVar()
 
+
 class BroadcastQueue(tobject.TObject):
     """
     A queue that can have multiple endpoints from which items can be consumed.
