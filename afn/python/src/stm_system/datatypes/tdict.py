@@ -11,27 +11,27 @@ from stm_system import stm
 # something, and also indicate a new "key" to use to recursively search. Needs
 # some more thought.
 
-def dict_insert(node, key, value):
+def _dict_insert(node, key, value):
     if node is empty:
         # Empty (we never found a matching value, so the specified value isn't
         # already present), so we just return a new value containing the value
         # we were called with.
         return Node(empty, (key, value), empty)
     if key < node.value[0]: # Key is less than this node's key, so go left
-        return balance(Node(dict_insert(node.left, key, value), node.value, node.right))
+        return balance(Node(_dict_insert(node.left, key, value), node.value, node.right))
     elif key > node.value[0]: # Key is greater than this node's key, so go right
-        return balance(Node(node.left, node.value, dict_insert(node.right, key, value)))
+        return balance(Node(node.left, node.value, _dict_insert(node.right, key, value)))
     else: # Key is equal to this node's key, so just replace this node's value
         return Node(node.left, (key, value), node.right)            
 
 
-def dict_delete(node, key):
+def _dict_delete(node, key):
     if node is empty:
         raise KeyError
     if key < node.value[0]: # Go left
-        return balance(Node(dict_delete(node.left, key), node.value, node.right))
+        return balance(Node(_dict_delete(node.left, key), node.value, node.right))
     elif key > node.value[0]: # Go right
-        return balance(Node(node.left, node.value, dict_delete(node.right, key)))
+        return balance(Node(node.left, node.value, _dict_delete(node.right, key)))
     else: # We're supposed to delete this node. The logic here is identical to
         # that of tlist.list_delete; see that function's documentation for
         # info and comments on how this one's works.
@@ -46,24 +46,24 @@ def dict_delete(node, key):
             return balance(Node(node.left, new_value, new_right))
 
 
-def dict_get(node, key):
+def _dict_get(node, key):
     if node is empty:
         raise KeyError
     if key < node.value[0]: # Go left
-        return dict_get(node.left, key)
+        return _dict_get(node.left, key)
     elif key > node.value[0]: # Go right
-        return dict_get(node.right, key)
+        return _dict_get(node.right, key)
     else: # Found the key; just return the value part of its tuple
         return node.value[1]
 
 
-def dict_iter(node, value_slice):
+def _dict_iter(node, value_slice):
     if node is empty:
         return
-    for child in dict_iter(node.left, value_slice):
+    for child in _dict_iter(node.left, value_slice):
         yield child
     yield node.value[value_slice]
-    for child in dict_iter(node.right, value_slice):
+    for child in _dict_iter(node.right, value_slice):
         yield child
 
 
@@ -90,16 +90,16 @@ class TDict(MutableMapping):
         self.var = stm.TVar(empty)
     
     def __getitem__(self, key):
-        return dict_get(self.var.get(), key)
+        return _dict_get(self.var.get(), key)
     
     def __setitem__(self, key, value):
-        self.var.set(dict_insert(self.var.get(), key, value))
+        self.var.set(_dict_insert(self.var.get(), key, value))
     
     def __delitem__(self, key):
-        self.var.set(dict_delete(self.var.get(), key))
+        self.var.set(_dict_delete(self.var.get(), key))
     
     def __iter__(self):
-        return dict_iter(self.var.get(), 0)
+        return _dict_iter(self.var.get(), 0)
     
     def __len__(self):
         return self.var.get().weight
@@ -111,13 +111,13 @@ class TDict(MutableMapping):
         return list(self.iterkeys())
     
     def itervalues(self):
-        return dict_iter(self.var.get(), 1)
+        return _dict_iter(self.var.get(), 1)
     
     def values(self):
         return list(self.itervalues())
     
     def iteritems(self):
-        return dict_iter(self.var.get(), slice(None))
+        return _dict_iter(self.var.get(), slice(None))
     
     def items(self):
         return list(self.iteritems())
