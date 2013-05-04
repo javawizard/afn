@@ -60,10 +60,10 @@ def dict_get(node, key):
 def dict_iter(node, value_slice):
     if node is empty:
         return
-    for child in dict_iter(node.left):
+    for child in dict_iter(node.left, value_slice):
         yield child
     yield node.value[value_slice]
-    for child in dict_iter(node.right):
+    for child in dict_iter(node.right, value_slice):
         yield child
 
 
