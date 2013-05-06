@@ -1,0 +1,77 @@
+So I need a good name for my gui toolkit...
+
+Was thinking like, the binder toolkit, or the data toolkit, but those are all
+rather similar to gtk... 
+
+Hm so, I'm just going to call it the toolkit for now, and I'll think up a proper name later.
+
+So, first, drawing...
+
+I'm thinking I'll just have a sort of write-only cairo wrapper that adds things to be drawn to a queue. At the end of the redraw, the queue is run against an actual cairo context, and things are drawn.
+
+And then we add events to set and restore the clip as we draw child widgets to make sure widgets don't draw outside of their own bounds.
+
+That'll work for now.
+
+Then, events, focus, that sort of thing.
+
+So, events... Let's think about click events first.
+
+And let's not worry about sending mouse-ups to widgets that received the matching mouse-down for now.
+
+So, when a window gets a mouse event, it dispatches it to its single child.
+
+When a child with several side-by-side widgets gets a mouse event, it checks each of them in turn to see if the event is within that child's bounds. If it is, it hands the event off to the child for handling. If it's not, it moves on to the next child for handling.
+
+When a button, say, receives an event, it handles it accordingly, changing its pressed state and such.
+
+Hm, so, that doesn't handle how to hand events off up to the parent that the child doesn't want to process, and it also doesn't handle filtering events through transparent areas and such (including irregularly-shaped widgets, like buttons).
+
+Ok so, what if we had a child raise, say, Unhandled if it wasn't want to handle a particular event?
+
+And we'll suppose that, for now, we hand events to a widget in its own coordinate space, so then the widget doesn't need to have any knowledge of our own coordinate space.
+
+So widgets are shaped like rectangles, but they can, in effect, act like they have a custom shape by checking to see if an event's within their bounds and throwing Unhandled if it's not.
+
+Although in that case, how do we differentiate between "It's within my bounds, but I don't know what it is" and "It's not within my bounds; try the next child"?
+
+Maybe we have two exceptions, Unhandled and Elsewhere. Unhandled means "Hey, this is an event for me, but I don't know what it is" and Elsewhere means "Hey, this event isn't for me".
+
+This seems a bit overcomplicated though...
+
+You know what, let's just have Unhandled for now, and worry about Elsewhere later.
+
+Which might not play well with panels and such whose children don't completely cover them, but let's not think about that for now.
+
+(Also, mouse move events might want to be given in terms of an offset from the corresponding mousedown event, along, perhaps, with where that mousedown happened, and maybe the mousedown itself so that we can tack additional information on to it. I was thinking of how to implement the ability for a window's background to be dragged to drag the window itself and it occurred to me that that'd make things a bit easier.)
+
+So, we iterate through each of our children and see if the event's inside of them, and if it is, we give the event to the child. And then we catch Unhandled (which will also be thrown if we don't have any children, or if the event doesn't fall inside any of them) and process the event ourselves, or re-raise Unhandled.
+
+So that would work.
+
+Except that it doesn't offer a good way to deliver mousedrag and mouseup events to the same thing that we delivered mousedown events to.
+
+Whereas if we somehow had a recursive function for returning the widget (or thing that's supposed to receive an event) within a given point, then that would work, because at the window level, we get the widget to deliver a mousedown event to and store it, and then subsequent mousemove events we deliver to that widget, as well as mouseup, and then everything after that we go back to the usual widget detection.
+
+Ok, I suppose we could do that for now.
+
+Hm so, I'm braindumping a bunch to #opengroove. I'll revisit this page in a bit.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
