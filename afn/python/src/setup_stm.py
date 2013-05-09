@@ -13,7 +13,7 @@ programs.
 TObject class, etc...
 
 Let's take the usual example of a bank account system. A simple transfer
-function could look like::
+function using STM could look like::
 
     def transfer(source, target, amount):
         if source.balance < amount:
