@@ -49,6 +49,7 @@ class BroadcastQueue(tobject.TObject):
     a no-op.
     """
     def __init__(self):
+        tobject.TObject.__init__(self)
         self._var = stm.TVar(None)
     
     def put(self, value):
@@ -78,6 +79,7 @@ class BroadcastEndpoint(tobject.TObject):
     instance.
     """
     def __init__(self, var):
+        tobject.TObject.__init__(self)
         self._var = var
     
     def get(self, block=True):
