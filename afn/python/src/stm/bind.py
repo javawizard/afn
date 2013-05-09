@@ -1,3 +1,7 @@
+"""
+A prototype rewrite of the bindings system to use STM. This will likely be
+moved into a separate package at some point in the near future.
+"""
 
 from collections import namedtuple
 import collections
