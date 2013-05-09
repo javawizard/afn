@@ -1,5 +1,5 @@
 
-from stm_system import stm
+import stm
 from collections import MutableSet
 
 class TSet(MutableSet):
@@ -10,7 +10,7 @@ class TSet(MutableSet):
     on every write, so it's woefully inefficient. I'll be changing it to use
     the AVL trees that TList and TDict use soon, but I need to figure out how
     to properly implement weak sets in terms of them first. (I could always
-    just have weak nodse pointing to dereferenced objects collected only during
+    just have weak nodes pointing to dereferenced objects collected only during
     iteration, but then the iterators can't be completely isolated from the set
     itself, so that needs some thought.)
     """

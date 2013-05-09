@@ -1,7 +1,7 @@
 
-from stm_system.avl import Node, empty, balance, pop_leftmost
+from stm.avl import Node, empty, balance, pop_leftmost
 from collections import MutableMapping
-from stm_system import stm
+import stm
 
 # TODO: I'm pretty sure the first half or so of tdict and tlist can be merged
 # together; I just need to figure out how to properly deal with the fact that

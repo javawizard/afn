@@ -1,5 +1,5 @@
 
-from stm_system.datatypes import tdict
+from stm import tdict
 
 class TObject(object):
     """

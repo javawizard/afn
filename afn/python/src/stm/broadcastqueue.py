@@ -4,8 +4,8 @@ A queue with multiple endpoints from which items can be consumed.
 See the documentation for the BroadcastQueue class for more information.
 """
 
-from stm_system import stm
-from stm_system.datatypes import tobject
+import stm
+from stm import tobject
 
 class Empty(Exception):
     """

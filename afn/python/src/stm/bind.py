@@ -2,11 +2,11 @@
 from collections import namedtuple
 import collections
 import weakref
-from stm_system.datatypes.tlist import TList
-from stm_system.datatypes.tdict import TDict
-from stm_system.datatypes.tset import TSet
-from stm_system.datatypes.tobject import TObject
-from stm_system import stm
+from stm.tlist import TList
+from stm.tdict import TDict
+from stm.tset import TSet
+from stm.tobject import TObject
+import stm
 
 SetValue = namedtuple("SetValue", ["value"])
 # Change that indicates that our circuit is becoming synthetic. SetValue will

@@ -1,7 +1,7 @@
 
-from stm_system.avl import Node, empty as _empty, balance, pop_leftmost
+from stm.avl import Node, empty as _empty, balance, pop_leftmost
 from collections import MutableSequence
-from stm_system import stm
+import stm
 
 def _list_insert(node, index, value):
     if node is _empty:
