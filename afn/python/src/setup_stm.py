@@ -6,7 +6,7 @@ This package provides a software transactional memory system implemented in
 pure Python.
 
 `Software transactional memory <http://en.wikipedia.org/wiki/Software_transactional_temory>`_
-is a mechanism that replaces locks, conditions, and such for writing concurrent
+is a system that replaces locks, conditions, and such for writing concurrent
 programs.
 
 ...TODO: introduction to STM classes/functions, the atomically function, the
