@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ln -s setup_$1.py setup.py
+ln setup_$1.py setup.py
 shift
 python setup.py "$@"
 rm setup.py
