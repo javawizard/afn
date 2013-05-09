@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ln -s setup_$1.py `dirname $0`/src/setup.py
+ln -s setup_$1.py setup.py
 shift
-python `dirname $0`/src/setup.py "$@"
-rm `dirname $0`/src/setup.py
+python setup.py "$@"
+rm setup.py
  
