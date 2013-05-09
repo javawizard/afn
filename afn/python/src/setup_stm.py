@@ -81,7 +81,7 @@ system call. I'll write up some examples for ``or_else`` later.
 """
 
 setup(name="stm",
-      version="0.1.1",
+      version="0.1.2",
       description="A pure-Python software transactional memory system",
       long_description=info,
       author="Alexander Boyd",
