@@ -6,3 +6,38 @@ So, if we had a model like that, and if we were only going one way with this, so
 
 Which is fine, but it doesn't cover propagating changes the other way.
 
+
+
+Ok, off to some other stuff for now.
+
+So, one thing I don't like about the current bindings system is that it requires synthetic observers to keep stuff in memory to bind/unbind to/from. For example, the value bindable in a value unwrapper is synthetic and exists purely to bind its contained value to the bindable property of its unwrapper, which is a nullary synthetic bindable. But since changes only note the new value, not the old, it has to keep track of the old value so that it can unbind it when a new value comes in.
+
+So, my thought was to have all changes note any relevant old values. SetValue, as it's used by ValueBinder, then has an old and a new, DeleteKey has an old, SetKey has an old and a new, and the new AddKey has a new. And so on and so forth.
+
+So then, ValueUnwrapperValue's perform_change becomes (where bindable is the unwrapper's bindable):
+
+    unbind(bindable, change.old)
+    bind(bindable, change.new)
+
+Of course, then we need to deal with synthetic bindables.
+
+My thought is we then have GainedValue and LostValue; the former indicates that we're now concrete and the latter indicates that we're now synthetic. The latter would also include an object representing the circuit's value just prior to losing its value.
+
+(And I'd probably have a decorator for perform_change that you can use to tell it to translate LostValue and GainedValue for, say, a dictionary into a list of AddKey and DeleteKey messages, to make handling logic simpler.)
+
+So then bindables would need to provide actual copies of their contents in LostValue and GainedValue and such. So perhaps we have get_value() return a copy of our own value, instead of something that can change.
+
+Hm, this all needs more thought, as it's getting quite complex quite fast.
+
+
+
+
+
+
+
+
+
+
+
+
+
