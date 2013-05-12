@@ -1,0 +1,8 @@
+So it's interesting to think about what things would be like if we actually had each bindable thing run in essentially its own thread, under an STM system where a transaction can be run in such a way that it produces a list of variables that were read, and all of them can be blocked on as soon as the transaction is over, in such a way that one can run a transaction and get its return value, then block until its return value might change and re-run the transaction.
+
+(We'd probably need both the list of vars accessed and the id of the transaction that it received when it committed, so that when we try to block, we can scan and see if any of the variables have changed in the mean time, and if they have, re-run immediately.)
+
+So, if we had a model like that, and if we were only going one way with this, so no two-way updates, then when we say x = y, we just have x read y's value and keep running the transaction over and over again and update x's value every time it changes.
+
+Which is fine, but it doesn't cover propagating changes the other way.
+
