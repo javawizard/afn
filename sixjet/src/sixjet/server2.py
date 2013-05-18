@@ -97,7 +97,9 @@ class SixjetServer(PyServiceProvider):
     
     def flush(self):
         try:
+            print "Before flush"
             self.backend.write(self.states)
+            print "After flush"
         except Exception as e:
             print "Exception happened:"
             traceback.print_exc()
