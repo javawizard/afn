@@ -2,6 +2,18 @@
 from parallel import Parallel
 from time import sleep
 
+DATA_A = 0x01
+# The data pin for relay bank B
+DATA_B = 0x02
+# The clock pin. Setting this high causes the values currently on DATA_A and
+# DATA_B to be shifted into the shift registers controlling relay banks A and
+# B, respectively.
+CLOCK = 0x08
+# The strobe pin. Setting this high causes the values written to the device
+# to be actually sent to the relays.
+STROBE = 0x10
+
+
 class ParallelBackend(object):
     def __init__(self, write_function):
         self.write_function = write_function
@@ -11,7 +23,7 @@ class ParallelBackend(object):
         Sets the parallel port's data pins to the specified state, which should be
         a number from 0 to 255, then waits a bit.
         """
-        self.loop.ensure_event_thread()
+        # self.loop.ensure_event_thread()
         self.write_function(data)
         sleep(0.0032) # 3.2 milliseconds; increase if needed
     
@@ -20,7 +32,7 @@ class ParallelBackend(object):
         Writes the jet states stored in jet_states to the parallel port.
         """
         self.jet_states = states
-        self.loop.ensure_event_thread()
+        # self.loop.ensure_event_thread()
         # The sixjet board is basically made up of two 74HC595 8-bit shift
         # registers. For those not familiar with shift registers, they're basically
         # a queue of bits; new bits can be pushed in at one end, and when the queue
