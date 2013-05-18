@@ -15,7 +15,7 @@ class ParallelBackend(object):
         self.write_function(data)
         sleep(0.0032) # 3.2 milliseconds; increase if needed
     
-    def write_jets(self, states):
+    def write(self, states):
         """ 
         Writes the jet states stored in jet_states to the parallel port.
         """
