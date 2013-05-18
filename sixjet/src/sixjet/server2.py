@@ -96,7 +96,11 @@ class SixjetServer(PyServiceProvider):
         self.loop.join()
     
     def flush(self):
-        self.backend.write(self.states)
+        try:
+            self.backend.write(self.states)
+        except Exception as e:
+            print "Exception happened:"
+            traceback.print_exc()
     
     # And now for the functions that are published via Autobus.
     
