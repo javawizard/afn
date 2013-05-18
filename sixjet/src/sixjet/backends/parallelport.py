@@ -3,6 +3,9 @@ from parallel import Parallel
 from time import sleep
 
 class ParallelBackend(object):
+    def __init__(self, write_function):
+        self.write_function = write_function
+    
     def set_parallel_data(self, data):
         """
         Sets the parallel port's data pins to the specified state, which should be
@@ -12,10 +15,11 @@ class ParallelBackend(object):
         self.write_function(data)
         sleep(0.0032) # 3.2 milliseconds; increase if needed
     
-    def write_jets(self):
+    def write_jets(self, states):
         """ 
         Writes the jet states stored in jet_states to the parallel port.
         """
+        self.jet_states = states
         self.loop.ensure_event_thread()
         # The sixjet board is basically made up of two 74HC595 8-bit shift
         # registers. For those not familiar with shift registers, they're basically
