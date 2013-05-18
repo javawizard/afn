@@ -181,7 +181,7 @@ class SixjetServer(PyServiceProvider):
 if __name__ == "__main__":
     sys.argv
     with Bus() as bus:
-        server = SixjetServer(ParallelBackend(Parallel()), bus)
+        server = SixjetServer(ParallelBackend(Parallel().setData), bus)
         server.start()
         wait_for_interrupt()
         print "Shutting down server..."
