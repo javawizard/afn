@@ -25,7 +25,7 @@ class ParallelBackend(object):
         """
         # self.loop.ensure_event_thread()
         self.write_function(data)
-        sleep(0.0042) # 4.2 milliseconds; increase if needed
+        # sleep(0.0042) # 4.2 milliseconds; increase if needed
     
     def write(self, states):
         """ 
@@ -56,6 +56,7 @@ class ParallelBackend(object):
         # So, to write out the data... 
         # Clear the parallel port
         self.set_parallel_data(0)
+        sleep(0.02)
         # Iterate over all the jets in reverse order. We reverse the ordering here
         # since the first bit written out will end up shifted to the last position
         # in the shift register, so we want to write the last bit first.
@@ -63,17 +64,23 @@ class ParallelBackend(object):
             # Set lines A and B to the jets we're writing
             values = (DATA_A if a else 0) | (DATA_B if b else 0)
             self.set_parallel_data(values)
+            sleep(0.02)
             # Do it an extra time just to see if it helps some issues I've been
             # seeing with data occasionally getting clocked in wrong
             self.set_parallel_data(values)
+            sleep(0.02)
             # Set clock high
             self.set_parallel_data(values | CLOCK)
+            sleep(0.02)
             # Set clock low
             self.set_parallel_data(values)
+            sleep(0.02)
         # Set strobe high
         self.set_parallel_data(STROBE)
+        sleep(0.02)
         # Set strobe low
         self.set_parallel_data(0)
+        sleep(0.02)
 
 
 
