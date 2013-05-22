@@ -25,7 +25,7 @@ class ParallelBackend(object):
         """
         # self.loop.ensure_event_thread()
         self.write_function(data)
-        sleep(0.0042) # 4.2 milliseconds; increase if needed
+        sleep(0.0026) # 2.6 milliseconds; increase if needed
     
     def write(self, states):
         self.write_actual(states)
