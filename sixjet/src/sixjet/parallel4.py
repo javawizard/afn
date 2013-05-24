@@ -3,6 +3,7 @@ from parallel import Parallel
 from autobus2 import Bus
 from time import sleep
 import time
+from sixjet.sink4 import Sink
 
 DATA_A = 0x01
 # The data pin for relay bank B
@@ -15,11 +16,10 @@ CLOCK = 0x08
 # to be actually sent to the relays.
 STROBE = 0x10
 
-class ParallelSink(object):
-    def __init__(self, server,
+class ParallelSink(Sink):
+    def __init__(self,
                  state_names=[[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
                  data_pins=[DATA_A, DATA_B], strobe_pin=STROBE, clock_pin=CLOCK):
-        self.server = server
         self.state_names = state_names
         self.flat_state_names = [name for l in state_names for name in l]
         self.data_pins = data_pins
@@ -27,24 +27,6 @@ class ParallelSink(object):
         self.clock_pin = clock_pin
         self.port = Parallel()
         self.write_function = self.port.setData
-        self.service_dict = {}
-    
-    def receive_change(self, connection, info, name, old, new):
-        if new is None:
-            if name in self.service_dict:
-                del self.service_dict[name]
-        else:
-            self.service_dict[name] = new
-        self.compute_and_write()
-    
-    def compute_and_write(self):
-        print "Before flush: %s" % time.ctime()
-        state_dict = {}
-        for states in self.service_dict.values():
-            for k, v in states.iteritems():
-                state_dict[k] = max(state_dict.get(k, 0), v)
-        self.write_dict(state_dict)
-        print "After flush: %s" % time.ctime()
     
     def set_parallel_data(self, data):
         """
@@ -54,10 +36,10 @@ class ParallelSink(object):
         self.write_function(data)
         sleep(0.0005) # 500 microseconds; increase if needed
     
-    def write_dict(self, state_dict):
-        self.write([[state_dict.get(name, 0) for name in group] for group in self.state_names])
+    def write(self, state_dict):
+        self.write_list([[state_dict.get(name, 0) for name in group] for group in self.state_names])
     
-    def write(self, states):
+    def write_list(self, states):
         self.write_actual(states)
         self.write_actual(states)
     
@@ -84,11 +66,7 @@ class ParallelSink(object):
 
 
 def main():
-    with Bus() as bus:
-        sink = ParallelSink()
-        proxy = bus.get_service_proxy({"sixjet.provides": "states"}, multiple=True)
-        proxy.watch_object("sixjet.states", sink.receive_change)
-        bus.wait_for_interrupt()
+    ParallelSink().main()
 
 
 
