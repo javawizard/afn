@@ -65,7 +65,7 @@ class ParallelSink(Sink):
         self.set_parallel_data(0)
 
 
-def main():
+if __name__ == "__main__":
     ParallelSink().main()
 
 
