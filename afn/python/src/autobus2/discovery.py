@@ -73,7 +73,7 @@ class BroadcastDiscoverer(object):
             message = None
             try:
                 message, (host, port) = self.receiver.recvfrom(16384)
-            except SocketError:
+            except (SocketError, SocketTimeout):
                 pass
             if not self.running:
                 net.shutdown(self.sender)
@@ -235,7 +235,7 @@ class BroadcastPublisher(Publisher):
             message = None
             try:
                 message = self.receiver.recvfrom(16384)[0]
-            except SocketError:
+            except (SocketError, SocketTimeout):
                 pass
             if not self.running:
                 net.shutdown(self.sender)
