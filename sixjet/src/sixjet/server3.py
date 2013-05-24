@@ -3,7 +3,10 @@ from stm import atomically, retry, or_else
 from stm.tdict import TDict
 from stm.tlist import TList
 from stm.tobject import TObject
-from parallel import Parallel
+try:
+    from parallel import Parallel
+except:
+    Parallel = None
 from time import sleep
 from threading import Thread
 from autobus2 import Bus, wait_for_interrupt
@@ -31,9 +34,10 @@ class StopException(Exception):
 
 class FixedProvider(TObject):
     def __init__(self):
+        TObject.__init__(self)
         self.states = TDict()
     
-    def get_states(self):
+    def get_state(self):
         return self.states
 
 
@@ -41,20 +45,23 @@ class ComplexProvider(object):
     def __init__(self):
         self.provider_list = TList()
 
-    def get_states(self):
+    def get_state(self):
         states = TDict()
         for provider in self.provider_list:
-            for k, v in provider.states:
+            for k, v in provider.get_state().iteritems():
                 states[k] = max(states.get(k, 0), v)
         return states
 
 
 class Server(TObject, ComplexProvider):
     def __init__(self):
+        TObject.__init__(self)  
         ComplexProvider.__init__(self)
         self.running = True
     
     def wait_for_new_state(self, last_state, names):
+        if not self.running:
+            raise StopException
         server_state = self.get_state()
         new_state = TDict()
         for k in names:
@@ -150,6 +157,7 @@ class ConsoleSink(object):
     def __init__(self, server, map=default_map,
                  names=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
                  levels=".123456789^"):
+        self.server = server
         self.map = map
         self.names = names
         self.levels = levels
@@ -161,7 +169,7 @@ class ConsoleSink(object):
     def wait_for_new_state(self):
         # None of our fields are modified after construction, so we're ok
         # accessing them from within a transaction
-        new_state = self.server.wait_for_new_state(self.last_state, self.flat_state_names)
+        new_state = self.server.wait_for_new_state(self.last_state, self.names)
         return dict(new_state)
     
     def run(self):
@@ -176,7 +184,7 @@ class ConsoleSink(object):
     def write(self, states):
         text = self.map
         for i, name in enumerate(self.names):
-            text.replace(string.letters[i], self.levels(int((len(self.levels) - 1) * states.get(name, 0))))
+            text = text.replace(string.letters[i], self.levels[int((len(self.levels) - 1) * states.get(name, 0))])
         print time.ctime()
         print text
 
@@ -279,7 +287,7 @@ class Flasher(object):
         self.delay = delay
         self.provider_list = provider_list
         for n in names:
-            self.provider[n] = 1
+            self.provider.states[n] = 1
         provider_list.append(self.provider)
     
     def schedule(self):
@@ -298,7 +306,7 @@ def main():
         ConsoleSink(server).start()
         autobus_service = SixjetService()
         atomically(lambda: server.provider_list.append(autobus_service))
-        bus.create_service({}, autobus_service)
+        bus.create_service({"type": "sixjet"}, autobus_service)
         wait_for_interrupt()
     @atomically
     def _():
