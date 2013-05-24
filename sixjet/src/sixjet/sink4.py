@@ -9,6 +9,7 @@ class Sink(object):
         self.service_dict = {}
     
     def receive_change(self, connection, info, name, old, new):
+        print "Changed!"
         if new is None:
             if name in self.service_dict:
                 del self.service_dict[name]
