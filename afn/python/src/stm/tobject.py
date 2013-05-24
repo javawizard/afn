@@ -12,6 +12,8 @@ class TObject(object):
         object.__setattr__(self, "_tobject_dict", tdict.TDict())
     
     def __getattr__(self, name):
+        if name == "_tobject_dict":
+            return object.__getattribute__(self, name)
         return self._tobject_dict[name]
     
     def __setattr__(self, name, value):
