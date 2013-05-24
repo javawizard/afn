@@ -6,12 +6,30 @@ from stm.tobject import TObject
 from parallel import Parallel
 from time import sleep
 from threading import Thread
+from autobus2 import Bus, wait_for_interrupt
+from autobus2.providers import PyServiceProvider, PyEvent, PyObject, publish
+from autobus2.net import InputThread, OutputThread
+import string
+import time
+
+default_map = """
+     a         b
+          g
+
+    l   m   n   h
+f                   c
+    k   p   o   i
+
+          j
+     e         d
+"""
+
 
 class StopException(Exception):
     pass
 
 
-class Provider(TObject):
+class FixedProvider(TObject):
     def __init__(self):
         self.states = TDict()
     
@@ -19,18 +37,22 @@ class Provider(TObject):
         return self.states
 
 
-class Server(TObject):
+class ComplexProvider(object):
     def __init__(self):
-        # List of Provider instances
         self.provider_list = TList()
-        self.running = True
-    
+
     def get_states(self):
         states = TDict()
         for provider in self.provider_list:
             for k, v in provider.states:
                 states[k] = max(states.get(k, 0), v)
         return states
+
+
+class Server(TObject, ComplexProvider):
+    def __init__(self):
+        ComplexProvider.__init__(self)
+        self.running = True
     
     def wait_for_new_state(self, last_state, names):
         server_state = self.get_state()
@@ -122,5 +144,173 @@ class ParallelSink(object):
             self.set_parallel_data(values)
         self.set_parallel_data(self.strobe_pin)
         self.set_parallel_data(0)
+
+
+class ConsoleSink(object):
+    def __init__(self, server, map=default_map,
+                 names=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+                 levels=".123456789^"):
+        self.map = map
+        self.names = names
+        self.levels = levels
+        self.last_state = atomically(TDict)
+    
+    def start(self):
+        Thread(target=self.run).start()
+
+    def wait_for_new_state(self):
+        # None of our fields are modified after construction, so we're ok
+        # accessing them from within a transaction
+        new_state = self.server.wait_for_new_state(self.last_state, self.flat_state_names)
+        return dict(new_state)
+    
+    def run(self):
+        while True:
+            try:
+                new_state = atomically(self.wait_for_new_state)
+                self.write(new_state)
+            except StopException:
+                self.write({})
+                return
+    
+    def write(self, states):
+        text = self.map
+        for i, name in enumerate(self.names):
+            text.replace(string.letters[i], self.levels(int((len(self.levels) - 1) * states.get(name, 0))))
+        print time.ctime()
+        print text
+
+
+class SixjetService(ComplexProvider, PyServiceProvider):
+    """
+    TODO: Update the following; this class is now nothing more than an Autobus
+    interface into the Server class, which does the heavy lifting.
+    
+    A sixjet server. Server instances listen on both a specified port for
+    native sixjet commands and on an Autobus 2 service. They are created with
+    a function that will be used to write bytes to the parallel port; you'll
+    typically pass an instance of parallel.Parallel's setData method, but any
+    function accepting an integer will do.
+    """
+    flash_time = PyObject("flash_time", "The time that jets will stay on when "
+            "flashed with the flash method, in seconds. This can be set with "
+            "set_flash_time.")
+    
+    def __init__(self):
+        """
+        Creates a new sixjet server. backend is the instance of backends.Backend
+        that will be used to write jets. service_extra is an optionally-empty
+        set of values that will be added to the Autobus 2's service info
+        dictionary. (Keys such as type will be added automatically, but such
+        keys present in service_extra will override the ones added
+        automatically.)
+        
+        bus is the Autobus bus to use. You can usually just use:
+        
+        from autobus2 import Bus
+        with Bus() as bus:
+            server = SixjetServer(..., bus, ...)
+            ...
+        
+        and things will work.
+        """
+        PyServiceProvider.__init__(self, True)
+        ComplexProvider.__init__(self)
+        self.flash_time = 0.25
+        self.fixed_provider = atomically(FixedProvider)
+        atomically(lambda: self.provider_list.append(self.fixed_provider))
+    
+    @publish
+    def on(self, *jets):
+        """
+        Turns the specified jets on.
+        """
+        @atomically
+        def _():
+            for n in jets:
+                self.fixed_provider.states[n] = 1
+    
+    @publish
+    def off(self, *jets):
+        """
+        Turns the specified jets off.
+        """
+        @atomically
+        def _():
+            for n in jets:
+                self.fixed_provider.states[n] = 0
+    
+    @publish
+    def flash(self, *jets):
+        """
+        Turns the specified jets on, then turns them off after the number of
+        seconds specified by the flash_time object on this service. The flash
+        time can be adjusted by calling set_flash_time or update_flash_time.
+        I'll probably add a mechanism later for specifying a custom flash time
+        when calling flash.
+        """
+        flasher = atomically(lambda: Flasher(jets, self.flash_time, self.provider_list))
+        flasher.schedule()
+    
+    @publish
+    def set_flash_time(self, new_time):
+        """
+        Sets the flash time to the specified number of seconds, which can be a
+        floating-point number.
+        """
+        self.flash_time = new_time
+    
+    @publish
+    def get_flash_time(self):
+        return self.flash_time
+    
+    @publish
+    def update_flash_time(self, delta):
+        """
+        Adds the specified number of seconds to the current flash time. This
+        can be negative to subtract from the current flash time.
+        """
+        self.flash_time += delta
+
+
+class Flasher(object):
+    def __init__(self, names, delay, provider_list):
+        self.provider = FixedProvider()
+        self.delay = delay
+        self.provider_list = provider_list
+        for n in names:
+            self.provider[n] = 1
+        provider_list.append(self.provider)
+    
+    def schedule(self):
+        Thread(target=self.thread_main).start()
+    
+    def thread_main(self):
+        sleep(self.delay)
+        @atomically
+        def _():
+            self.provider_list.remove(self.provider)
+
+
+def main():
+    with Bus() as bus:
+        server = atomically(Server)
+        ConsoleSink(server).start()
+        autobus_service = SixjetService()
+        atomically(lambda: server.provider_list.append(autobus_service))
+        bus.create_service({}, autobus_service)
+        wait_for_interrupt()
+    @atomically
+    def _():
+        server.running = False
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
 
 
