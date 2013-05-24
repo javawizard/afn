@@ -18,7 +18,8 @@ STROBE = 0x10
 
 class ParallelSink(Sink):
     def __init__(self,
-                 state_names=[[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
+                 state_names=[["1", "2", "3", "4", "5", "6", "7", "8"],
+                              ["9", "10", "11", "12", "13", "14", "15", "16"]],
                  data_pins=[DATA_A, DATA_B], strobe_pin=STROBE, clock_pin=CLOCK):
         Sink.__init__(self)
         self.state_names = state_names
