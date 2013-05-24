@@ -83,8 +83,6 @@ class ParallelSink(object):
         self.set_parallel_data(0)
 
 
-def receive_change():
-
 def main():
     with Bus() as bus:
         sink = ParallelSink()
