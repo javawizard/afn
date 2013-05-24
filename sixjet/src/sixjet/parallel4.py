@@ -20,6 +20,7 @@ class ParallelSink(Sink):
     def __init__(self,
                  state_names=[[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
                  data_pins=[DATA_A, DATA_B], strobe_pin=STROBE, clock_pin=CLOCK):
+        Sink.__init__(self)
         self.state_names = state_names
         self.flat_state_names = [name for l in state_names for name in l]
         self.data_pins = data_pins
@@ -40,6 +41,7 @@ class ParallelSink(Sink):
         self.write_list([[state_dict.get(name, 0) for name in group] for group in self.state_names])
     
     def write_list(self, states):
+        print "Writing: %r" % states
         self.write_actual(states)
         self.write_actual(states)
     
