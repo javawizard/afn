@@ -10,12 +10,15 @@ class Sink(object):
     
     def receive_change(self, connection, info, name, old, new):
         print "Changed!"
-        if new is None:
-            if name in self.service_dict:
-                del self.service_dict[name]
-        else:
-            self.service_dict[name] = new
-        self.compute_and_write()
+        try:
+            if new is None:
+                if name in self.service_dict:
+                    del self.service_dict[name]
+            else:
+                self.service_dict[name] = new
+            self.compute_and_write()
+        except BaseException as e:
+            print "Exception: %r" % e
     
     def compute_and_write(self):
         print "Before flush: %s" % time.ctime()
