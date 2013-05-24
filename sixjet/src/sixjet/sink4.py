@@ -24,8 +24,10 @@ class Sink(object):
         print "Before flush: %s" % time.ctime()
         state_dict = {}
         for states in self.service_dict.values():
+            print states
             for k, v in states.iteritems():
                 state_dict[k] = max(state_dict.get(k, 0), v)
+        print state_dict
         self.write(state_dict)
         print "After flush: %s" % time.ctime()
     
