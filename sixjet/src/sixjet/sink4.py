@@ -1,6 +1,6 @@
 
 from parallel import Parallel
-from autobus2 import Bus
+from autobus2 import Bus, wait_for_interrupt
 from time import sleep
 import time
 
@@ -32,7 +32,7 @@ class Sink(object):
         with Bus() as bus:
             proxy = bus.get_service_proxy({"sixjet.provides": "states"}, multiple=True)
             proxy.watch_object("sixjet.states", self.receive_change)
-            bus.wait_for_interrupt()
+            wait_for_interrupt()
 
 
 
