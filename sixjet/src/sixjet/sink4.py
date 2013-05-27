@@ -37,7 +37,7 @@ class Sink(object):
     def main(self):
         with Bus() as bus:
             proxy = bus.get_service_proxy({"sixjet.provides": "states"}, multiple=True)
-            proxy.watch_object("sixjet.states", self.receive_change)
+            proxy.watch_object("sixjet_states", self.receive_change)
             wait_for_interrupt()
 
 
