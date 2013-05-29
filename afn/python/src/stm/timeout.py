@@ -39,7 +39,7 @@ def make_timeout(seconds):
     are somewhat involved, and I'll hopefully write more here about them soon.
     """
     if stm._stm_state.current:
-        raise Exception("Timeout vars cannot be created inside a transaction.")
+        raise Exception("Timeout vars cannot be created inside a transaction")
     var = stm.atomically(lambda: stm.TVar(False))
     def run():
         time.sleep(seconds)
