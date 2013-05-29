@@ -46,7 +46,7 @@ So my internet's rather sketchy, so I'll wait until it's working properly again 
 
 
 account = TVar(0)
-@stm.always_succeeds
+@stm.invariant
 def _():
     if account.get() < 0:
         raise Exception("Attempting to overdraw account")
