@@ -1,0 +1,65 @@
+Registers the specified function as an invariant. The function will be run
+immeditely, and an exception thrown if it throws one. The function will then be
+run at the end of this transaction and at the end of every subsequent
+transaction, and if it throws an exception, the transaction will be aborted and
+the exception propagated out.
+
+This might seem like a bad idea from a performance standpoint, but it's
+actually not as bad as it seems: each time an invariant is run, the STM system
+keeps track of which TVars it read, and only at the end of transactions that
+modified those TVars are the relevant invariants checked again. Furthermore,
+a reference to the invariant function is held only as long as those TVars
+survive; once they are no longer accessible, the invariant is garbage collected
+and never used again.
+
+
+
+Hm, how would we go about actually implementing this?
+
+Well, let's see...
+
+Each TVar needs to have a list of invariants or something attached to it, which are the invariants that pertain to it.
+
+So presumably all of the TVars that an invariant function itself needs access to will be passed into it via function closure or a functools.partial object or something, so just holding a reference to the invariant will hold a reference to whatever variables it actually needs to check.
+
+So if the TVars themselves were the only things that held references to invariants... Would that work?
+
+Well...
+
+Suppose we have a World object that, in its constructor, is allocated a certain amount of money and assigns it to, say, the "world bank", which is a field. Worlds keep a list of players, each of which has some money. Then the World adds an invariant that sums up all of the players' money and the world bank's money and makes sure that it's the same as the amount of money added to the world bank while constructing the World instance, which would be passed down by function closure.
+
+So the TVar holding the world bank's money will have a reference to that invariant, as it will have read the world bank's value to make sure things worked.
+
+Now let's say we drop the World right then and there. That'll also drop the TVar, which refers to the invariant, which refers back to the TVar, but nothing else refers to them, so the whole cycle (and then the World instance) will be collected.
+
+And the invariant will hold a reference to the entire world by function closure so that it can access the player list, so once those players go away it no longer references them.
+
+And let's say the world goes away but one of the players remain... Hm, it'll still hold a reference to the world. So we might have to be careful about that. But as long as they remove the player from the world (one could argue that there's not much use of a player without the world containing it, and actually by virtue of the fact that it's still a member of the world, it should continue to obey the world's monetary regulations even though nothing else references the world, so this actually makes sense), things will work just fine. And as I just mentioned in my parenthetical thought, keeping a reference around to the world actually seems like the correct thing to do.
+
+So, we collect a list of TVars that an invariant accesses while it's running and then track, on the current transaction, that those are to be added to the underlying TVars' invariant lists. Then we add them once the transaction commits.
+
+During the next transaction, we run the whole thing all over again, and keep track of both the previous list of TVars that the invariant accessed and the list it accessed this time. Then, on commit, we remove it from all of the TVars mentioned in the old list and add it to the ones mentioned in the new list.
+
+And so then at the end of a transaction, just before we commit it (before we've acquired the lock, though), we look at all of the TVars we've accessed and make a list of all of the invariants that they reference, and then run them all as above, and then while we're committing (while we've acquired the lock) we update the lists for each transaction individually.
+
+So my internet's rather sketchy, so I'll wait until it's working properly again to implement this, so that I can read up on what's his face (I think it's Tim Harris or something)'s paper that describes how attempts to retry in an invariant work, what happens if an invariant modifies a TVar, and so on.
+
+
+account = TVar(0)
+@stm.always_succeeds
+def _():
+    if account.get() < 0:
+        raise Exception("Attempting to overdraw account")
+
+def transfer(source, target, amount):
+    source.set(source.get() - amount)
+    target.set(target.get() + amount)
+
+
+
+
+
+
+
+
+

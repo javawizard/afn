@@ -1,0 +1,7 @@
+Adding weakref support to the STM system...
+
+The idea is we have a class, TWeakRef, that functions much like Python's weakref.ref, but works inside transactions. More specifically, the state of a TWeakRef (i.e. whether or not its value has been garbage collected) is guaranteed to stay the same across an entire transaction.
+
+In reality, all it does is checks, on its first access during a given transaction, whether or not the weakref currently has a value. Then, on each subsequent access during the same transaction, it checks to see if that's changed, and if it has, it throws RetryImmediately. That guarantees that a given transaction will see consistent state for all of its weakrefs during a given transaction.
+
+Then, the underlying weak references are created with hooks that notify a queue (one queue per TWeakRef, as with TVars) when they're collected.
