@@ -45,6 +45,7 @@ def make_timeout(seconds):
         time.sleep(seconds)
         stm.atomically(lambda: var.set(True))
     Thread(name="stm.timeout for %s seconds" % seconds, target=run).start()
+    return var
 
 
 def wait_for_true(var):
