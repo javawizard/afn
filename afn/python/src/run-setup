@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm -r build dist MANIFEST
 ln setup_$1.py setup.py
 shift
 python setup.py "$@"
