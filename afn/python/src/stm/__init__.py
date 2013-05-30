@@ -4,8 +4,9 @@ A pure-Python software transactional memory system.
 Have a look at the documentation for atomically() for more information.
 """
 
-from threading import local as _Local, Lock as _Lock
+from threading import local as _Local, Lock as _Lock, Thread as _Thread
 from Queue import Queue, Full
+import weakref as weakref_module
 
 class _RetryImmediately(BaseException):
     """
@@ -44,6 +45,9 @@ class _State(_Local):
                             "calling most likely needs to be wrapped in a "
                             "call to stm.atomically().")
         return self.current
+    
+    def get_base(self):
+        return self.get_current().get_base_transaction()
 
 _stm_state = _State()
 # Lock that we lock on while committing transactions
@@ -114,18 +118,26 @@ class _BaseTransaction(_Transaction):
     def __init__(self):
         _Transaction.__init__(self)
         self.parent = None
+        self.check_values = set()
+        self.retry_values = set()
+        self.created_weakrefs = set()
+        self.live_weakrefs = set()
         # Store off the transaction id we're starting at, so that we know if
         # things have changed since we started.
         with _global_lock:
             self.start = _last_transaction
+    
+    def get_base_transaction(self):
+        return self
     
     def get_real_value(self, var):
         # Just check to make sure the variable hasn't been modified since we
         # started (and raise _RetryImmediately if it has), then return its real
         # value.
         with _global_lock:
-            if var._modified > self.start:
-                raise _RetryImmediately
+            var._check_clean()
+            self.check_values.add(var)
+            self.retry_values.add(var)
             return var._real_value
     
     def run(self, function):
@@ -136,11 +148,8 @@ class _BaseTransaction(_Transaction):
             # _Transaction appears to have run successfully. Now we need to make
             # sure nothing it used changed in the mean time.
             with _global_lock:
-                for var in self.vars:
-                    if var._modified > self.start:
-                        # Var was modified since we started, so we need to
-                        # retry against its new value.
-                        raise _RetryImmediately
+                for item in self.check_values:
+                    item._check_clean()
                 # Nothing changed, so we're good to commit. First we make
                 # ourselves a new id.
                 _last_transaction += 1
@@ -150,6 +159,10 @@ class _BaseTransaction(_Transaction):
                 # queues for us.
                 for var, value in self.vars.iteritems():
                     var._update_real_value(value, modified)
+                # And then we tell all TWeakRefs created during this
+                # transaction to mature
+                for ref in self.created_weakrefs:
+                    ref._make_mature()
                 # And we're done!
                 return result
         except _RetryLater:
@@ -158,22 +171,20 @@ class _BaseTransaction(_Transaction):
             # been modified since we started, which could change whether or not
             # we need to retry.
             with _global_lock:
-                for var in self.vars:
-                    if var._modified > self.start:
-                        # Yep, one changed. Retry immediately.
-                        raise _RetryImmediately
+                for item in self.check_values:
+                    item._check_clean()
                 # Nope, none of them have changed. So now we create a queue,
                 # then add it to all of the vars we need to watch.
                 q = Queue(1)
-                for var in self.vars:
-                    var._queues.add(q)
+                for item in self.retry_values:
+                    item._add_retry_queue(q)
             # Then we wait.
             q.get()
             # One of the vars was modified. Now we go remove ourselves from
             # the vars' queues.
             with _global_lock:
-                for var in self.vars:
-                    var._queues.remove(q)
+                for item in self.retry_values:
+                    item._remove_retry_queue(q)
             # And then we retry immediately.
             raise _RetryImmediately
 
@@ -187,6 +198,9 @@ class _NestedTransaction(_Transaction):
     def __init__(self, parent):
         _Transaction.__init__(self)
         self.parent = parent
+    
+    def get_base_transaction(self):
+        return self.parent.get_base_transaction()
     
     def get_real_value(self, var):
         # Just get the value from our parent.
@@ -244,7 +258,20 @@ class TVar(object):
     
     value = property(get, set)
     
+    def _check_clean(self):
+        # Check to see if our underlying value has been modified since the
+        # start of this transaction, which should be a BaseTransaction
+        if self._modified > _stm_state.get_base().start:
+            raise _RetryImmediately
+    
+    def _add_retry_queue(self, q):
+        self._queues.add(q)
+    
+    def _remove_retry_queue(self, q):
+        self._queues.remove(q)
+    
     def _update_real_value(self, value, modified):
+        # NOTE: This is always called while the global lock is acquired
         # Update our real value and modified transaction
         self._real_value = value
         self._modified = modified
@@ -254,6 +281,113 @@ class TVar(object):
                 q.put(None, False)
             except Full:
                 pass 
+
+
+class TWeakRef(object):
+    """
+    A transactional weak reference with a simple guarantee: the state of a
+    given weak reference (i.e. whether or not it's been garbage collected yet)
+    remains the same over the course of a given transaction. More specifically,
+    if a TWeakRef's referent is garbage collected in the middle of a
+    transaction that previously read the reference as alive, the transaction
+    will be immediately aborted and restared from the top.
+    
+    A callback function can be specified when creating a TWeakRef; this
+    function will be called in its own transaction when the value referred to
+    by the TWeakRef is garbage collected, if the TWeakRef itself is still
+    alive. Note that this function will only be called if the transaction in
+    which the TWeakRef is created commits successfully.
+    """
+    def __init__(self, value, callback=None):
+        self._queues = set()
+        self._mature = False
+        self._ref = value
+        self._queues = set()
+        # NOTE: callback will only be called if this transaction commits
+        # successfully
+        self._callback = callback
+        _stm_state.get_base().created_weakrefs.add(self)
+    
+    def get(self):
+        """
+        Returns the value that this weak reference refers to, or None if its
+        value has been garbage collected.
+        
+        This will always return the same value over the course of a given
+        transaction.
+        """
+        if self._mature:
+            value = self._ref()
+            if value is None and self in _stm_state.get_base().live_weakrefs:
+                # Ref was live at some point during the past transaction but
+                # isn't anymore
+                raise _RetryImmediately
+            # Value isn't inconsistent. Add it to the retry list (so that we'll
+            # retry if we get garbage collected) and the check list (so that
+            # we'll be checked for consistency again at the end of the
+            # transaction).
+            _stm_state.get_base().check_values.add(self)
+            _stm_state.get_base().retry_values.add(self)
+            # Then, if we're live, add ourselves to the live list, so that if
+            # we later die in the transaction, we'll properly detect an
+            # inconsistency
+            if value is not None:
+                _stm_state.get_base().live_weakrefs.add(self)
+            # Then return our value.
+            return value
+        else:
+            # We were just created during this transaction, so we haven't
+            # matured (and had our ref wrapped in an actual weak reference), so
+            # return our value.
+            return self._ref
+    
+    def _check_clean(self):
+        """
+        Raises _RetryImmediately if we're mature, our referant has been
+        garbage collected, and we're in our base transaction's live_weakrefs
+        list (which indicates that we previously read our referant as live
+        during this transaction).
+        """
+        if self._mature and self._ref() is None and self in _stm_state.get_base().live_weakrefs:
+            # Ref was live during the transaction but has since been
+            # dereferenced
+            raise _RetryImmediately
+    
+    def _make_mature(self):
+        """
+        Matures this weak reference, setting self._mature to True (which causes
+        all future calls to self.get to add ourselves to the relevant
+        transaction's retry and check lists) and replacing our referant with
+        an actual weakref.ref wrapper around it. This is called right at the
+        end of the transaction in which this TWeakRef was created (and
+        therefore only if it commits successfully) to make it live.
+        """
+        self._mature = True
+        self._ref = weakref_module.ref(self._ref, self._on_value_dead)
+    
+    def _on_value_dead(self, ref):
+        """
+        Function passed to the underlying weakref.ref object to be called when
+        it's collected. It spawns a thread (to avoid locking up whatever thread
+        garbage collection is happening on) that notifies all of this
+        TWeakRef's retry queues and then runs self._callback in a transaction.
+        """
+        def run():
+            with _global_lock:
+                for q in self._queues:
+                    try:
+                        q.put(None, False)
+                    except Full:
+                        pass
+            if self._callback is not None:
+                atomically(self._callback)
+        _Thread(name="%r dead value notifier" % self, target=run).start()
+    
+    def _add_retry_queue(self, q):
+        self._queues.add(q)
+    
+    def _remove_retry_queue(self, q):
+        self._queues.remove(q)
 
 
 def atomically(function):
