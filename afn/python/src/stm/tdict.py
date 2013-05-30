@@ -47,10 +47,10 @@ class TDict(MutableMapping):
                     self[k] = v
     
     def __getitem__(self, key):
-        return avl.get(self.var.get(), _selector, key, lambda: KeyError(key))
+        return avl.get(self.var.get(), _selector, key, lambda: KeyError(key))[1]
     
     def __setitem__(self, key, value):
-        self.var.set(avl.insert(self.var.get(), _selector, key, value, lambda: KeyError(key), True, True))
+        self.var.set(avl.insert(self.var.get(), _selector, key, (key, value), lambda: KeyError(key), True, True))
     
     def __delitem__(self, key):
         self.var.set(avl.delete(self.var.get(), _selector, key, lambda: KeyError(key)))
