@@ -1,70 +1,15 @@
 
-from stm.avl import Node, empty, balance, pop_leftmost
+from stm import avl
 from collections import MutableMapping
 import stm
 
-# TODO: I'm pretty sure the first half or so of tdict and tlist can be merged
-# together; I just need to figure out how to properly deal with the fact that
-# tlist has to rewrite indexes when descending into right nodes. Perhaps have a
-# function we pass to avl's hypothetical insert, delete, etc. functions that
-# hand back whether we should go left, right, or whether we found a match or
-# something, and also indicate a new "key" to use to recursively search. Needs
-# some more thought.
-
-def _dict_insert(node, key, value):
-    if node is empty:
-        # Empty (we never found a matching value, so the specified value isn't
-        # already present), so we just return a new value containing the value
-        # we were called with.
-        return Node(empty, (key, value), empty)
-    if key < node.value[0]: # Key is less than this node's key, so go left
-        return balance(Node(_dict_insert(node.left, key, value), node.value, node.right))
-    elif key > node.value[0]: # Key is greater than this node's key, so go right
-        return balance(Node(node.left, node.value, _dict_insert(node.right, key, value)))
-    else: # Key is equal to this node's key, so just replace this node's value
-        return Node(node.left, (key, value), node.right)            
-
-
-def _dict_delete(node, key):
-    if node is empty:
-        raise KeyError(key)
-    if key < node.value[0]: # Go left
-        return balance(Node(_dict_delete(node.left, key), node.value, node.right))
-    elif key > node.value[0]: # Go right
-        return balance(Node(node.left, node.value, _dict_delete(node.right, key)))
-    else: # We're supposed to delete this node. The logic here is identical to
-        # that of tlist.list_delete; see that function's documentation for
-        # info and comments on how this one's works.
-        if node.left is empty and node.right is empty:
-            return empty
-        elif node.left is empty:
-            return node.right
-        elif node.right is empty:
-            return node.left
-        else:
-            new_value, new_right = pop_leftmost(node.right)
-            return balance(Node(node.left, new_value, new_right))
-
-
-def _dict_get(node, key):
-    if node is empty:
-        raise KeyError(key)
-    if key < node.value[0]: # Go left
-        return _dict_get(node.left, key)
-    elif key > node.value[0]: # Go right
-        return _dict_get(node.right, key)
-    else: # Found the key; just return the value part of its tuple
-        return node.value[1]
-
-
-def _dict_iter(node, value_slice):
-    if node is empty:
-        return
-    for child in _dict_iter(node.left, value_slice):
-        yield child
-    yield node.value[value_slice]
-    for child in _dict_iter(node.right, value_slice):
-        yield child
+def _selector(node, key):
+    if key < node.value[0]:
+        return avl.LEFT
+    elif key > node.value[0]:
+        return avl.RIGHT
+    else:
+        return avl.STOP
 
 
 class TDict(MutableMapping):
@@ -86,20 +31,33 @@ class TDict(MutableMapping):
     exception of __str__/__repr__, which, for the sake of convenience,
     wrap themselves in a call to stm.atomically() internally. 
     """
-    def __init__(self):
-        self.var = stm.TVar(empty)
+    def __init__(self, initial_values=None):
+        self.var = stm.TVar(avl.empty)
+        if initial_values:
+            # Optimize to O(1) if we're cloning another TDict
+            if isinstance(initial_values, TDict):
+                self.var.set(initial_values.var.get())
+            # Initializing from another dict-like object
+            elif hasattr(initial_values, "keys"):
+                for k in initial_values.keys():
+                    self[k] = initial_values[k]
+            # Initializing from a sequence of 2-tuples
+            else:
+                for k, v in initial_values:
+                    self[k] = v
     
     def __getitem__(self, key):
-        return _dict_get(self.var.get(), key)
+        return avl.get(self.var.get(), _selector, key, lambda: KeyError(key))
     
     def __setitem__(self, key, value):
-        self.var.set(_dict_insert(self.var.get(), key, value))
+        self.var.set(avl.insert(self.var.get(), _selector, key, value, lambda: KeyError(key), True, True))
     
     def __delitem__(self, key):
-        self.var.set(_dict_delete(self.var.get(), key))
+        self.var.set(avl.delete(self.var.get(), _selector, key, lambda: KeyError(key)))
     
     def __iter__(self):
-        return _dict_iter(self.var.get(), 0)
+        for k, _ in avl.traverse(self.var.get()):
+            yield k
     
     def __len__(self):
         return self.var.get().weight
@@ -111,19 +69,22 @@ class TDict(MutableMapping):
         return list(self.iterkeys())
     
     def itervalues(self):
-        return _dict_iter(self.var.get(), 1)
+        for _, v in avl.traverse(self.var.get()):
+            yield v
     
     def values(self):
         return list(self.itervalues())
     
     def iteritems(self):
-        return _dict_iter(self.var.get(), slice(None))
+        return avl.traverse(self.var.get())
     
     def items(self):
         return list(self.iteritems())
     
     def __str__(self):
         return "TDict(%r)" % stm.atomically(lambda: dict(self))
+    
+    __repr__ = __str__
 
 
 

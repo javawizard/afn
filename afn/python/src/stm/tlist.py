@@ -38,15 +38,19 @@ class TList(MutableSequence):
     def __init__(self, initial_values=[]):
         self.var = stm.TVar(avl.empty)
         if initial_values:
-            # TODO: This could probably be made to be O(n) instead of
-            # O(n log n) like it is right now
-            self.extend(initial_values)
+            # Optimize to O(1) if we're cloning another TList
+            if isinstance(initial_values, TList):
+                self.var.set(initial_values.var.get())
+            else:
+                # TODO: This could probably be made to be O(n) instead of
+                # O(n log n) like it is right now
+                self.extend(initial_values)
     
     def __getitem__(self, index):
         return avl.get(self.var.get(), _selector, index, lambda: IndexError(index))
     
     def __setitem__(self, index, value):
-        self.var.set(avl.replace(self.var.get(), _selector, index, value, lambda: IndexError(index)))
+        self.var.set(avl.insert(self.var.get(), _selector, index, value, lambda: IndexError(index), True, False))
     
     def __delitem__(self, index):
         self.var.set(avl.delete(self.var.get(), _selector, index, lambda: IndexError(index)))
@@ -55,7 +59,7 @@ class TList(MutableSequence):
         return self.var.get().weight
     
     def insert(self, index, value):
-        self.var.set(avl.insert(self.var.get(), _selector, index, value, lambda: IndexError(index)))
+        self.var.set(avl.insert(self.var.get(), _selector, index, value, lambda: IndexError(index), False, True))
     
     def __str__(self):
         return "TList(%r)" % stm.atomically(lambda: list(self))
