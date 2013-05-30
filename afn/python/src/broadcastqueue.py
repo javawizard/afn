@@ -21,6 +21,9 @@ class _Link(object):
 
 class BroadcastQueue(object):
     """
+    NOTE: This has been superseded by stm/broadcastqueue.py. Look there for
+    future improvements.
+    
     A queue-like object that allows multiple "endpoints", each of which
     provides separate read access to the queue. Whenever an item is added to
     the queue, it becomes available at every endpoint separately.

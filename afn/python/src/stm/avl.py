@@ -109,7 +109,12 @@ def pop_leftmost(node):
 
 def balance(node):
     """
-    Balances the specified node according to the rules of AVL.
+    Returns a node providing the same in-order traversal as the specified node
+    while adhering to the rules of AVL.
+    
+    Note that this only balances the tree at the current level; balance must be
+    called every level up as a tree is being built to preserve the rules of AVL
+    across the entire tree.
     """
     # If the node is only off by one level, we just leave it be.
     if node.balance >= -1 and node.balance <= 1:
