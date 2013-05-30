@@ -4,11 +4,16 @@ from collections import MutableSequence
 import stm
 
 def _selector(node, index):
-    if index < node.left.weight:
+    if index < node.left.weight: # Index is less than the number of children
+        # the left node has, so go left
         return avl.LEFT, index
-    elif index > node.left.weight:
+    elif index > node.left.weight: # Index is greater than the number of
+        # children the left node has, so go right, but subtract the left node's
+        # weight as well as 1 (for our own value) so that we're speaking in
+        # terms of indexes as our right node would know them
         return avl.RIGHT, index - 1 - node.left.weight
-    else:
+    else: # Index is equal to the number of children the left node has, so it
+        # refers to this node
         return avl.STOP
 
 
