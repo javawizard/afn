@@ -1,5 +1,5 @@
 """
-An AVL tree implementation internally used by TList and TDict.
+An AVL tree implementation internally used by TList, TDict, and TSet.
 
 This module provides an implementation of the AVL self-balancing binary tree
 algorithm. TList and TDict use the trees provided by this module to store their
@@ -23,7 +23,13 @@ takes a node that may be out of balance by one level and returns a balanced
 version of that node.
 """
 
-from collections import MutableSequence
+class LookupError(Exception):
+    """
+    An exception that's used as the default one to throw from the various
+    functions that throw exceptions when they drop off the edge of the tree
+    without having found a node to process.
+    """
+
 
 class _Empty(object):
     """
@@ -39,6 +45,9 @@ class _Empty(object):
     __repr__ = __str__
 empty = _Empty()
 
+LEFT = "LEFT"
+STOP = "STOP"
+RIGHT = "RIGHT"
 
 class Node(object):
     """
@@ -142,6 +151,89 @@ def balance(node):
         raise Exception("Balance factor off (this is a bug in the AVL "
                         "tree implementation): %r for node %r" %
                         (node.balance, node))
+
+# selectors are of the form selector(node, key) -> (direction, new_key)
+# node is the node to look at, key is the key passed in.
+# direction is LEFT, STOP, or RIGHT, new_key is the key to pass to the next
+# recursive call to the selector.
+
+def insert(node, selector, key, value, exception=LookupError):
+    if node is empty:
+        return Node(empty, value, empty)
+    direction, new_key = selector(node, key)
+    if direction is LEFT: # Insert into the left subtree
+        return balance(Node(insert(node.left, selector, new_key, value, exception), node.value, node.right))
+    elif direction is RIGHT: # Insert into the right subtree
+        return balance(Node(node.left, node.value, insert(node.right, selector, new_key, value, exception)))
+    else: # Insert here; insert as the rightmost child of our left subtree
+        return balance(Node(insert(node.left, lambda n, k: RIGHT, None, value, exception), node.value, node.right))
+
+
+def replace(node, selector, key, value, exception=LookupError):
+    # We're just replacing a node in the tree, so we don't need to do any
+    # balancing
+    if node is empty: # Walked right off the end of the tree
+        raise exception()
+    direction, new_key = selector(node, key)
+    if direction is LEFT:
+        return Node(replace(node.left, selector, new_key, value, exception), node.value, node.right)
+    elif direction is RIGHT:
+        return Node(node.left, node.value, replace(node.right, selector, new_key, value, exception))
+    else:
+        return Node(node.left, value, node.right)    
+
+
+def delete(node, selector, key, exception=LookupError):
+    if node is empty:
+        raise exception()
+    direction, new_key = selector(node, key)
+    if direction is LEFT:
+        return balance(Node(delete(node.left, selector, new_key, exception), node.value, node.right))
+    elif direction is RIGHT:
+        return balance(Node(node.left, node.value, delete(node.right, selector, new_key, exception)))
+    else: # We're supposed to delete this node
+        if node.left is empty and node.right is empty:
+            # No children; just return empty
+            return empty
+        elif node.left is empty:
+            # Only a right child; return it
+            return node.right
+        elif node.right is empty:
+            # Only a left child; return it
+            return node.left
+        else:
+            # Both a left and a right child, slightly more tricky. What we do
+            # is pop the next item in the list and replace ourselves with it.
+            new_value, new_right = pop_leftmost(node.right)
+            return balance(Node(node.left, new_value, new_right))
+
+
+def get(node, selector, key, exception=LookupError):
+    if node is empty:
+        raise exception()
+    direction, new_key = selector(node, key)
+    if direction is LEFT:
+        return get(node.left, selector, new_key, exception)
+    elif direction is RIGHT:
+        return get(node.right, selector, new_key, exception)
+    else: # Found the node
+        return node.value
+
+
+def traverse(node):
+    if node is empty:
+        return
+    for child in traverse(node.left):
+        yield child
+    yield node.value
+    for child in traverse(node.right):
+        yield child
+
+
+
+
+
+
 
 
 
