@@ -295,8 +295,21 @@ class TWeakRef(object):
     A callback function can be specified when creating a TWeakRef; this
     function will be called in its own transaction when the value referred to
     by the TWeakRef is garbage collected, if the TWeakRef itself is still
-    alive. Note that this function will only be called if the transaction in
-    which the TWeakRef is created commits successfully.
+    alive. Note that, for various reasons which I hope to outline here at some
+    point, the callback function may or may not be called if the transaction
+    creating the TWeakRef is aborted. If a callback that only runs when the
+    transaction is not aborted is needed, one can do something like:
+    
+        should_run = TVar(False)
+        should_run.set(True)
+        def callback():
+            if should_run.get():
+                actual_callback()
+        ref = TWeakRef(some_value, callback)
+    
+    Which takes advantage of the fact that TVars created during an aborted
+    transaction retain the value they were constructed with (which is
+    well-defined behavior that will never change).
     """
     def __init__(self, value, callback=None):
         self._queues = set()
