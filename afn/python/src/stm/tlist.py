@@ -14,7 +14,7 @@ def _selector(node, index):
         return avl.RIGHT, index - 1 - node.left.weight
     else: # Index is equal to the number of children the left node has, so it
         # refers to this node
-        return avl.STOP
+        return avl.STOP, index
 
 
 class TList(MutableSequence):

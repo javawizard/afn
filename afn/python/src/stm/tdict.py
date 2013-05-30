@@ -5,11 +5,11 @@ import stm
 
 def _selector(node, key):
     if key < node.value[0]:
-        return avl.LEFT
+        return avl.LEFT, key
     elif key > node.value[0]:
-        return avl.RIGHT
+        return avl.RIGHT, key
     else:
-        return avl.STOP
+        return avl.STOP, key
 
 
 class TDict(MutableMapping):
