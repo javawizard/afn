@@ -23,14 +23,6 @@ takes a node that may be out of balance by one level and returns a balanced
 version of that node.
 """
 
-class LookupError(Exception):
-    """
-    An exception that's used as the default one to throw from the various
-    functions that throw exceptions when they drop off the edge of the tree
-    without having found a node to process.
-    """
-
-
 class _Empty(object):
     """
     Class of empty nodes. There is a singleton instance of this class, empty,
@@ -157,7 +149,7 @@ def balance(node):
 # direction is LEFT, STOP, or RIGHT, new_key is the key to pass to the next
 # recursive call to the selector.
 
-def insert(node, selector, key, value, exception=LookupError, replace, append):
+def insert(node, selector, key, value, exception, replace, append):
     # If replace is true, then when we encounter STOP we replace the current
     # node with the value and return. Otherwise, we append the value as the
     # in-order predecessor to the node we hit STOP on.
@@ -186,7 +178,7 @@ def insert(node, selector, key, value, exception=LookupError, replace, append):
             return balance(Node(insert(node.left, lambda n, k: RIGHT, None, value, exception, False, True), node.value, node.right))
 
 
-def delete(node, selector, key, exception=LookupError):
+def delete(node, selector, key, exception):
     if node is empty:
         raise exception()
     direction, new_key = selector(node, key)
@@ -211,7 +203,7 @@ def delete(node, selector, key, exception=LookupError):
             return balance(Node(node.left, new_value, new_right))
 
 
-def get(node, selector, key, exception=LookupError):
+def get(node, selector, key, exception):
     if node is empty:
         raise exception()
     direction, new_key = selector(node, key)
