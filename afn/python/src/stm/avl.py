@@ -157,30 +157,33 @@ def balance(node):
 # direction is LEFT, STOP, or RIGHT, new_key is the key to pass to the next
 # recursive call to the selector.
 
-def insert(node, selector, key, value, exception=LookupError):
-    if node is empty:
-        return Node(empty, value, empty)
+def insert(node, selector, key, value, exception=LookupError, replace, append):
+    # If replace is true, then when we encounter STOP we replace the current
+    # node with the value and return. Otherwise, we append the value as the
+    # in-order predecessor to the node we hit STOP on.
+    # If append is true, then if we walk off the end of the tree we just
+    # return a new node with the value. Otherwise, we throw an exception.
+    # list insertion uses (false, true), list replacement uses (true, false),
+    # and dict insertion uses (true, true).
+    if node is empty: # Walked off the end of the tree
+        if append:
+            return Node(empty, value, empty)
+        else:
+            raise exception()
     direction, new_key = selector(node, key)
     if direction is LEFT: # Insert into the left subtree
-        return balance(Node(insert(node.left, selector, new_key, value, exception), node.value, node.right))
+        return balance(Node(insert(node.left, selector, new_key, value, exception, replace, append), node.value, node.right))
     elif direction is RIGHT: # Insert into the right subtree
-        return balance(Node(node.left, node.value, insert(node.right, selector, new_key, value, exception)))
-    else: # Insert here; insert as the rightmost child of our left subtree
-        return balance(Node(insert(node.left, lambda n, k: RIGHT, None, value, exception), node.value, node.right))
-
-
-def replace(node, selector, key, value, exception=LookupError):
-    # We're just replacing a node in the tree, so we don't need to do any
-    # balancing
-    if node is empty: # Walked right off the end of the tree
-        raise exception()
-    direction, new_key = selector(node, key)
-    if direction is LEFT:
-        return Node(replace(node.left, selector, new_key, value, exception), node.value, node.right)
-    elif direction is RIGHT:
-        return Node(node.left, node.value, replace(node.right, selector, new_key, value, exception))
-    else:
-        return Node(node.left, value, node.right)    
+        return balance(Node(node.left, node.value, insert(node.right, selector, new_key, value, exception, replace, append)))
+    else: # Insert here
+        if replace:
+            # Replace our value
+            return Node(node.left, value, node.right)
+        else:
+            # Insert as the in-order predecessor of this node. TODO: Make sure
+            # we don't have any use cases for inserting as the in-order
+            # successor, and if we do, make an option for that
+            return balance(Node(insert(node.left, lambda n, k: RIGHT, None, value, exception, False, True), node.value, node.right))
 
 
 def delete(node, selector, key, exception=LookupError):
