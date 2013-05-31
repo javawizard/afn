@@ -150,6 +150,30 @@ def balance(node):
 # recursive call to the selector.
 
 def insert(node, selector, key, value, exception, replace, append):
+    """
+    Inserts a newly-created node with the specified value into the specified
+    root node, returning the new root node.
+    
+    selector is the selector function; I'll write more on this later,
+    but it's the function that decides where in
+    the tree to insert the specified value. key is passed into the selector
+    function. exception is a function that, if called, should /return/ (not
+    raise) an exception that will be thrown if the node cannot be inserted
+    (for example, if append is False and the selector walks off the end of the
+    tree). replace is True to replace the value of the node we stop at if
+    selector returns STOP before we walk off the end of the tree, or False to
+    insert the value as the in-order predecessor of the node for which the
+    selector returns STOP. append is True to add the node where we stop if
+    we walk off the end of the tree, or False to throw an exception instead.
+    
+    replace and append tend to be somewhat confusing, and I'd like to write up
+    a better explanation at some point. It should, however, help to mention
+    that list insertion uses false and true, respectively, while list
+    replacement uses true and false (indeed, this is the only difference
+    between list insertion and replacement inside tlist.TList; the contents of
+    their respective methods are otherwise identical) and dict assignment uses
+    true and true. 
+    """
     # If replace is true, then when we encounter STOP we replace the current
     # node with the value and return. Otherwise, we append the value as the
     # in-order predecessor to the node we hit STOP on.
