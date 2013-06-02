@@ -29,6 +29,9 @@ class _DictControllerValue(Bindable):
     def __init__(self, controller):
         self.controller = controller
     
+    def get_value(self):
+        return self.controller.dict.binder.get_value().get(self.controller.key.get_value(), self.controller._sentinel)
+    
     def perform_change(self, change):
         if self.controller.dict.binder.has_value():
             if change.old == self.controller._sentinel and change.new == self.controller._sentinel:
@@ -119,6 +122,22 @@ def v_bind_k(v, m, m_key, v_strong=False, m_strong=True):
 
 def v_bind_v(v, m, v_strong=False, m_strong=True):
     bind(v, m, v_strong=False, m_strong=True)
+
+
+class _ListControllerIndex(Value):
+    def __init__(self, controller):
+        self.controller = controller
+    
+    def perform_chance(self, change):
+        
+
+
+class ListController(object):
+    def __init__(self, sentinel=None):
+        self.index = _ListControllerIndex(self)
+        self.value = _ListControllerValue(self)
+        self.list = _ListControllerList(self)
+
 
 
 
