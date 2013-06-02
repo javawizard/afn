@@ -78,21 +78,48 @@ class DictController(object):
         self.dict = _DictControllerDict(self)
 
 
-class _ValueUnwrapperValue(Bindable):
-    def __init__(self, controller):
+class _ValueUnwrapperModel(Bindable):
+    def __init__(self, controller, v_strong, m_strong):
         self.controller = controller
+        self.v_strong = v_strong
+        self.m_strong = m_strong
     
     def perform_change(self, change):
         if isinstance(change, (LostValue, ReplaceValue)):
-            v_unbind_v(self.controller.bindable, change.old)
+            v_unbind_v(self.controller.view, change.old, self.v_strong, self.m_strong)
         if isinstance(change, (ReplaceValue, GainedValue)):
-            v_bind_v(self.controller.bindable, change.new)
+            v_bind_v(self.controller.view, change.new, self.v_strong, self.m_strong)
 
 
 class ValueUnwrapper(object):
-    def __init__(self):
-        self.value = _ValueUnwrapperValue(self)
-        self.bindable = SyntheticBindable()
+    def __init__(self, v_strong=False, m_strong=True):
+        self.model = _ValueUnwrapperModel(self, v_strong, m_strong)
+        self.view = SyntheticBindable()
+
+
+def k_bind_k(v, v_key, m, m_key, v_strong=False, m_strong=True):
+    v_controller = DictController(v_key)
+    m_controller = DictController(m_key)
+    bind(m_controller.dict, m, v_strong, m_strong)
+    bind(v, v_controller.dict, v_strong, m_strong)
+    bind(v_controller.value, m_controller.value, v_strong, m_strong)
+
+
+def k_bind_v(v, v_key, m, v_strong=False, m_strong=True):
+    v_controller = DictController(v_key)
+    bind(v, v_controller.dict, v_strong, m_strong)
+    bind(v_controller.value, m, v_strong, m_strong)
+
+
+def v_bind_k(v, m, m_key, v_strong=False, m_strong=True):
+    m_controller = DictController(m_key)
+    bind(m_controller.dict, m, v_strong, m_strong)
+    bind(v, m_controller.value, v_strong, m_strong)
+
+
+def v_bind_v(v, m, v_strong=False, m_strong=True):
+    bind(v, m, v_strong=False, m_strong=True)
+
 
 
 
