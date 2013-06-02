@@ -2,14 +2,22 @@
 from stm import atomically, TVar
 from stm.tdict import TDict
 from stm.tlist import TList
+from collections import namedtuple
+
+# Values of value bindables, keys and values of dict bindables, and values of
+# list bindables must never have nothing as their value
+nothing = 0
+class NothingType(object):
+    def __init__(self):
+        if nothing != 0:
+            raise Exception("NothingType is a singleton type; use "
+                            "stm.bind2.nothing for the singleton instance.")
+nothing = NothingType()
 
 Bindable = None
-LostValue = None
-GainedValue = None
-ReplaceValue = None
-AddKey = None
-ReplaceKey = None
-DeleteKey = None
+ReplaceValue = namedtuple("ReplaceValue", ["old", "new"])
+ReplaceKey = namedtuple("ReplaceKey", ["old", "new"])
+ReplaceIndex = namedtuple("ReplaceIndex", ["old", "new"])
 Value = None
 
 
@@ -39,10 +47,10 @@ class _DictControllerValue(Bindable):
                 return
             elif change.old == self.controller._sentinel:
                 # Key needs to be added
-                change = AddKey(self.controller.key.binder.get_value(), change.new)
+                change = ReplaceKey(self.controller.key.binder.get_value(), nothing, change.new)
             elif change.new == self.controller._sentinel:
                 # Key needs to be deleted
-                change = DeleteKey(self.controller.key.binder.get_value(), change.old)
+                change = ReplaceKey(self.controller.key.binder.get_value(), change.old, nothing)
             else:
                 # Key needs to be replaced
                 change = ReplaceKey(self.controller.key.binder.get_value(), change.old, change.new)
