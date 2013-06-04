@@ -6,18 +6,18 @@ import traceback
 
 class EventLoop(object):
     def __init__(self):
-        self.queue = broadcastqueue.BroadcastQueue()
-        self.endpoint = self.queue.new_endpoint()
+        self._queue = broadcastqueue.BroadcastQueue()
+        self._endpoint = self._queue.new_endpoint()
     
     def schedule(self, function):
         # In or out of STM
         if function is None:
             raise ValueError("function cannot be None")
-        stm.atomically(lambda: self.queue.put(function))
+        stm.atomically(lambda: self._queue.put(function))
     
     def stop(self):
         # In or out of STM
-        stm.atomically(lambda: self.queue.put(None))
+        stm.atomically(lambda: self._queue.put(None))
     
     def start(self):
         # Outside of STM only
@@ -33,7 +33,7 @@ class EventLoop(object):
         if stm._stm_state.current:
             raise Exception("This must be called outside of a transaction.")
         while True:
-            next_event = stm.atomically(self.endpoint.get)
+            next_event = stm.atomically(self._endpoint.get)
             if next_event is None:
                 print "Event loop exiting"
                 return
