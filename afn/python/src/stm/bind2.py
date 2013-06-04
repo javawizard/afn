@@ -87,19 +87,6 @@ class DictController(object):
             raise SyntheticError
 
 
-class _ValueUnwrapperModel(Bindable):
-    def __init__(self, controller, v_strong, m_strong):
-        self.controller = controller
-        self.v_strong = v_strong
-        self.m_strong = m_strong
-    
-    def perform_change(self, change):
-        if isinstance(change, (LostValue, ReplaceValue)):
-            v_unbind_v(self.controller.view, change.old, self.v_strong, self.m_strong)
-        if isinstance(change, (ReplaceValue, GainedValue)):
-            v_bind_v(self.controller.view, change.new, self.v_strong, self.m_strong)
-
-
 class ValueUnwrapper(object):
     def __init__(self, v_strong=False, m_strong=True):
         self._v_strong = v_strong
