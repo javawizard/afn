@@ -19,74 +19,72 @@ ReplaceValue = namedtuple("ReplaceValue", ["old", "new"])
 ReplaceKey = namedtuple("ReplaceKey", ["old", "new"])
 ReplaceIndex = namedtuple("ReplaceIndex", ["old", "new"])
 Value = None
+SyntheticError = None
 
-
-class _DictControllerKey(Value):
-    def __init__(self, controller):
-        self.controller = controller
-    
-    def perform_change(self, change):
-        Value.perform_change(self, change)
-        if self.controller.dict.binder.has_value():
-            old_value = self.controller.dict.binder.get_value().get(change.old, self.controller._sentinel)
-            new_value = self.controller.dict.binder.get_value().get(change.new, self.controller._sentinel)
-            self.controller.value.binder.notify_change(ReplaceValue(old_value, new_value))
-
-
-class _DictControllerValue(Bindable):
-    def __init__(self, controller):
-        self.controller = controller
+class CustomBindable(Bindable):
+    def __init__(self, perform_change_function=None, get_value_function=None):
+        self.perform_change_function = perform_change_function
+        self.get_value_function = get_value_function
     
     def get_value(self):
-        return self.controller.dict.binder.get_value().get(self.controller.key.get_value(), self.controller._sentinel)
+        if self.get_value_function:
+            return self.get_value_function()
+        else:
+            raise SyntheticError
     
     def perform_change(self, change):
-        if self.controller.dict.binder.has_value():
-            if change.old == self.controller._sentinel and change.new == self.controller._sentinel:
-                # Nothing to change
-                return
-            elif change.old == self.controller._sentinel:
-                # Key needs to be added
-                change = ReplaceKey(self.controller.key.binder.get_value(), nothing, change.new)
-            elif change.new == self.controller._sentinel:
-                # Key needs to be deleted
-                change = ReplaceKey(self.controller.key.binder.get_value(), change.old, nothing)
-            else:
-                # Key needs to be replaced
-                change = ReplaceKey(self.controller.key.binder.get_value(), change.old, change.new)
-            self.controller.dict.binder.notify_change(change)
-
-
-class _DictControllerDict(Bindable):
-    def __init__(self, controller):
-        self.controller = controller
-    
-    def perform_change(self, change):
-        # FIXME: Need to make sure the key we're looking at never becomes the
-        # sentinel; need to check during AddKey/ReplaceKey and
-        # GainedValue/ReplaceValue
-        key = self.controller.key.binder.get_value()
-        if isinstance(change, LostValue):
-            self.controller.value.binder.notify_change(LostValue(change.old.get(key, self.controller._sentinel)))
-        elif isinstance(change, GainedValue):
-            self.controller.value.binder.notify_change(GainedValue(change.new.get(key, self.controller._sentinel)))
-        elif isinstance(change, ReplaceValue):
-            self.controller.value.binder.notify_change(ReplaceValue(change.old.get(key, self.controller._sentinel), change.new.get(key, self.controller._sentinel)))
-        elif change.key == key:
-            if isinstance(change, AddKey):
-                self.controller.value.binder.notify_change(ReplaceValue(self.controller._sentinel, change.new))
-            elif isinstance(change, ReplaceKey):
-                self.controller.value.binder.notify_change(ReplaceValue(change.old, change.new))
-            elif isinstance(change, DeleteKey):
-                self.controller.value.binder.notify_change(ReplaceValue(change.old, self.controller._sentinel))
+        if self.perform_change_function:
+            self.perform_change_function(change)
 
 
 class DictController(object):
     def __init__(self, key, sentinel=None):
         self._sentinel = sentinel
-        self.key = _DictControllerKey(self)
-        self.value = _DictControllerValue(self)
-        self.dict = _DictControllerDict(self)
+        self._actual_key = key
+        self.key = CustomBindable(self._key_perform, self._key_get)
+        self.value = CustomBindable(self._value_perform, self._value_get)
+        self.dict = CustomBindable(self._dict_perform)
+    
+    def _dict_perform(self, change):
+        if isinstance(change, ReplaceValue):
+            # If we don't have a dict, use nothing. If we do but it doesn't
+            # have our key, use the sentinel. If it does, use its value.
+            old = nothing if change.old is nothing else change.old.get(self._actual_key, self._sentinel)
+            new = nothing if change.new is nothing else change.new.get(self._actual_key, self._sentinel)
+            self.value.binder.notify(ReplaceValue(old, new))
+        elif change.key == self._actual_key: # ReplaceKey
+            old = self._sentinel if change.old is nothing else change.old
+            new = self._sentinel if change.new is nothing else change.new
+            self.value.binder.notify(ReplaceValue(old, new))
+    
+    def _key_perform(self, change):
+        if self.dict.binder.has_value:
+            # Dict has a value, so notify our value of the value of the new
+            # key in the dict
+            dict_contents = self.dict.binder.get_value()
+            old = dict_contents.get(change.old, self._sentinel)
+            new = dict_contents.get(change.new, self._sentinel)
+            self.value.binder.notify(ReplaceValue(old, new))
+    
+    def _key_get(self):
+        return self._actual_key
+    
+    def _value_perform(self, change):
+        if self.dict.binder.has_value:
+            # Set the dict's key to the new value, translating _sentinel to
+            # nothing to add/delete keys that are being set to the sentinel
+            old = nothing if change.old == self._sentinel else change.old
+            new = nothing if change.new == self._sentinel else change.new
+            self.dict.binder.notify(ReplaceKey(self._actual_key, old, new))
+    
+    def _value_get(self):
+        if self.dict.binder.has_value:
+            # If the dict has a value, return the value for our key, or the
+            # sentinel if the key doesn't exist
+            return self.dict.binder.get_value().get(self._actual_key, self._sentinel)
+        else:
+            # No dict, so no value
+            raise SyntheticError
 
 
 class _ValueUnwrapperModel(Bindable):
