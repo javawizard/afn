@@ -102,47 +102,179 @@ class _ValueUnwrapperModel(Bindable):
 
 class ValueUnwrapper(object):
     def __init__(self, v_strong=False, m_strong=True):
-        self.model = _ValueUnwrapperModel(self, v_strong, m_strong)
-        self.view = SyntheticBindable()
+        self._v_strong = v_strong
+        self._m_strong = m_strong
+        self.model = CustomBindable(self._perform)
+        self.view = CustomBindable()
+    
+    def _perform(self, change):
+        # Just unbind from the old value if we have one, then bind to the new
+        if change.old is not nothing:
+            v_unbind_v(self.view, change.old, self._v_strong, self._m_strong)
+        if change.new is not nothing:
+            v_bind_v(self.view, change.old, self._v_strong, self._m_strong)
+
+
+def model_key(model, key):
+    """
+    Returns a value viewing the specified key of the specified model, which
+    should be a dictionary of some sort. The returned value holds a strong
+    reference to the model, but not the other way around.
+    """
+    return key_as_value(model, key, True, False)
+
+
+def view_key(view, key):
+    """
+    Returns a value viewing the specified key of the specified view, which
+    should be a dictionary of some sort. The passed in view will hold a strong
+    reference to the returned value, but not the other way around.
+    """
+    return key_as_value(view, key, False, True)
+
+
+def key_as_value(dictionary, key, dict_strong, value_strong):
+    """
+    Returns a value viewing the specified key of the specified dictionary. If
+    dict_strong is True, the returned value will hold a strong reference to the
+    specified dictionary. If value_strong is True, the specified dictionary
+    will (once this call returns) hold a strong reference to the returned
+    value.
+    """
+    controller = DictController(key)
+    v_bind_v(controller.dict, dictionary, value_strong, dict_strong)
+    return controller.value    
 
 
 def k_bind_k(v, v_key, m, m_key, v_strong=False, m_strong=True):
-    v_controller = DictController(v_key)
-    m_controller = DictController(m_key)
-    bind(m_controller.dict, m, v_strong, m_strong)
-    bind(v, v_controller.dict, v_strong, m_strong)
-    bind(v_controller.value, m_controller.value, v_strong, m_strong)
+    v_value = key_as_value(v, v_key, v_strong, m_strong)
+    m_value = key_as_value(m, m_key, m_strong, v_strong)
+    v_bind_v(v_value, m_value, v_strong, m_strong)
 
 
 def k_bind_v(v, v_key, m, v_strong=False, m_strong=True):
-    v_controller = DictController(v_key)
-    bind(v, v_controller.dict, v_strong, m_strong)
-    bind(v_controller.value, m, v_strong, m_strong)
+    v_bind_v(key_as_value(v, v_key, v_strong, m_strong), m, v_strong, m_strong)
 
 
 def v_bind_k(v, m, m_key, v_strong=False, m_strong=True):
-    m_controller = DictController(m_key)
-    bind(m_controller.dict, m, v_strong, m_strong)
-    bind(v, m_controller.value, v_strong, m_strong)
+    v_bind_v(v, key_as_value(m, m_key, m_strong, v_strong), v_strong, m_strong)
 
 
 def v_bind_v(v, m, v_strong=False, m_strong=True):
-    bind(v, m, v_strong=False, m_strong=True)
+    bind(v, m, v_strong, m_strong)
 
 
-class _ListControllerIndex(Value):
-    def __init__(self, controller):
-        self.controller = controller
+class BinaryCombinator(Bindable):
+    def __init__(self, a=None, b=None):
+        self._value = nothing
+        self.a = CustomBindable(self._component_perform)
+        self.b = CustomBindable(self._component_perform)
+        if a:
+            v_bind_v(self.a, a)
+        if b:
+            v_bind_v(self.b, b)
+        self._recompute()
     
-    def perform_chance(self, change):
-        
+    def _compute(self, a_value, b_value):
+        raise NotImplementedError
+    
+    def get_value(self):
+        return self._value
+    
+    def perform_change(self, change):
+        raise Exception("Binary combinators' outputs cannot be modified")
+    
+    def _component_perform(self, change):
+        old = self._value
+        self._recompute()
+        self.binder.notify(ReplaceValue(old, self._value))
+    
+    def _recompute(self):
+        try:
+            a_value = self.a.binder.get_value()
+            b_value = self.b.binder.get_value()
+        except SyntheticError:
+            self._value = nothing
+            return
+        self._value = self._compute(a_value, b_value)
 
 
-class ListController(object):
-    def __init__(self, sentinel=None):
-        self.index = _ListControllerIndex(self)
-        self.value = _ListControllerValue(self)
-        self.list = _ListControllerList(self)
+class UnaryCombinator(Bindable):
+    def __init__(self, a=None):
+        self._value = nothing
+        self.a = CustomBindable(self._component_perform)
+        if a:
+            v_bind_v(self.a, a)
+        self._recompute()
+    
+    def _compute(self, a_value):
+        raise NotImplementedError
+    
+    def get_value(self):
+        return self._value
+    
+    def perform_change(self):
+        raise Exception("Unary combinators' outputs cannot be modified")
+    
+    def _component_perform(self, change):
+        old = self._value
+        self._recompute()
+        self.binder.notify(ReplaceValue(old, self._value))
+    
+    def _recompute(self):
+        try:
+            a_value = self.a.binder.get_value()
+        except SyntheticError:
+            self._value = nothing
+            return
+        self._value = self._compute(a_value)
+
+
+class And(BinaryCombinator):
+    def _compute(self, a, b):
+        return a and b
+
+
+class Or(BinaryCombinator):
+    def _compute(self, a, b):
+        return a or b
+
+
+class Not(UnaryCombinator):
+    def _compute(self, a):
+        return not a
+
+
+class Add(BinaryCombinator):
+    def _compute(self, a, b):
+        return a + b
+
+
+class Subtract(BinaryCombinator):
+    def _compute(self, a, b):
+        return a - b
+
+
+class Multiply(BinaryCombinator):
+    def _compute(self, a, b):
+        return a * b
+
+
+class Divide(BinaryCombinator):
+    def _compute(self, a, b):
+        return a / b
+
+
+class Translate(UnaryCombinator):
+    def __init__(self, function, a):
+        UnaryCombinator.__init__(a)
+        self._function = function
+    
+    def _compute(self, a):
+        return self._function(a)
+
+
+
 
 
 
