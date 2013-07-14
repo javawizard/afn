@@ -8,6 +8,9 @@ from threading import local as _Local, Lock as _Lock, Thread as _Thread
 from Queue import Queue, Full
 import weakref as weakref_module
 
+__all__ = ["TVar", "TWeakRef", "atomically", "retry", "or_else"]
+
+
 class _RetryImmediately(BaseException):
     """
     Raised when a transaction needs to retry immediately. This happens when an
