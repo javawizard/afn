@@ -39,8 +39,9 @@ class Process(object):
         # Wait for this process to finish, then return self
         pass
     
-    def check(self):
-        # Throw exception if nonzero exit code, otherwise return self
+    def check(self, exit_codes=[0]):
+        # Throw exception if exit code not in exit_codes, otherwise return
+        # self
         pass
     
     def get_output(self):
