@@ -574,12 +574,12 @@ class File(object):
         what it previously was upon being exited. One can use this to replace
         something like:
         
-        old_dir = os.getcwd() # A fileutils version of this will be coming soon
+        old_dir = File()
         new_dir.cd()
         try:
             ...stuff...
         finally:
-            File(old_dir).cd() # Or os.chdir(old_dir)
+            old_dir.cd()
         
         with the much nicer:
         
