@@ -295,24 +295,56 @@ class File(object):
         """
         return os.path.basename(self._path)
     
+    def get_path(self, relative_to=None, separator=None):
+        """
+        Gets the path to the file represented by this File object.
+        
+        If relative_to is specified, the returned path will be a relative path,
+        the path of this file relative to the specified one. Otherwise, the
+        returned path will be absolute.
+        
+        If separator (which must be a string) is specified, it will be used as
+        the separator to place between path components in the returned path.
+        Otherwise, os.path.sep will be used as the separator. 
+        """
+        if separator is None:
+            separator = os.path.sep
+        return separator.join(self.get_path_components(relative_to))
+    
     @property
     def path(self):
         """
-        The pathname of this File object, in a format native to the operating
-        system in use. This pathname can then be used with Python's traditional
-        file-related utilities.
+        The absolute path to the file represented by this File object, in a
+        format native to the operating system in use. This pathname can then be
+        used with Python's traditional file-related utilities.
+        
+        This property simply returns self.get_path(). See the documentation for
+        that method for more complex ways of creating paths (including
+        obtaining relative paths).
         """
-        return self._path
+        return self.get_path()
+    
+    def get_path_components(self, relative_to=None):
+        """
+        Returns a list of the components in this file's path, including (on
+        POSIX-compliant systems) an empty leading component for absolute paths.
+        
+        If relative_to is specified, the returned set of components will
+        represent a relative path, the path of this file relative to the
+        specified one. Otherwise, the returned components will represent an
+        absolute path.
+        """
+        if relative_to is None:
+            return self._path.split(os.path.sep)
+        else:
+            return os.path.relpath(self._path, File(relative_to)._path).split(os.sep)
     
     @property
     def path_components(self):
         """
-        A list of the components of the pathname of this file. This is
-        currently the same as self.path.split(os.path.sep).
-        
-        The same warning about the path property applies here.
+        A property that simply returns self.get_path_components().
         """
-        return self._path.split(os.path.sep)
+        return self.get_path_components()
     
     def copy_to(self, other, overwrite=False):
         """
@@ -649,18 +681,12 @@ class File(object):
     
     def relative_path(self, relative_to=None):
         """
-        Returns the path of self, relative to the specified File object or
-        filename. The idea is that:
-        
-        File("a/b/c", some_file.relative_path("a/b/c"))
-        
-        would be the same as some_file.
-        
-        If relative_to is not specified, the working directory is used instead.
+        An obsolete alias for self.get_path(relative_to=...), except that, if
+        relative_to is None, the working directory will be used instead.
         """
         if relative_to is None:
-            relative_to = File().path
-        return os.path.relpath(self._path, relative_to.path)
+            relative_to = File()
+        return self.get_path(relative_to)
     
     def ancestor_of(self, other):
         """
