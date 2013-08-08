@@ -931,7 +931,7 @@ class _AsWorking(object):
 
 def create_temporary_folder(suffix="", prefix="tmp", parent=None,
                             delete_on_exit=False):
-    parent = parent or File(tempfile.gettempdir())
+    parent = File(parent or tempfile.gettempdir())
     folder = File(tempfile.mkdtemp(suffix, prefix, parent.path))
     folder.delete_on_exit = delete_on_exit
     return folder
