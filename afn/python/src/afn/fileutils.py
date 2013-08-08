@@ -32,7 +32,7 @@ _delete_on_exit = set()
 @atexit.register
 def _():
     for f in _delete_on_exit:
-        f.delete(True)
+        f.delete(contents=True, silent=True)
 
 
 def file_or_none(f):
@@ -663,7 +663,7 @@ class File(object):
         with closing(zip_module.ZipFile(self._path, "r")) as zipfile:
             zipfile.extractall(folder.path)
     
-    def delete(self, contents=False):
+    def delete(self, contents=False, silent=False):
         """
         Deletes this file.
         
@@ -671,8 +671,15 @@ class File(object):
         recursively delete the folder's contents; if it's False, an exception
         will be thrown instead. This is intended mostly as a sanity check to
         prevent folders with contents from being unintentionally deleted.
+        
+        If the file does not exist and silent is False, an exception will be
+        thrown. If the file does not exist but silent is True, this function
+        simply does nothing.
         """
-        if self.is_file or self.is_link:
+        if not self.exists:
+            if silent:
+                raise Exception("This file does not exist.")
+        elif self.is_file or self.is_link:
             os.remove(self._path)
         else:
             if contents:
