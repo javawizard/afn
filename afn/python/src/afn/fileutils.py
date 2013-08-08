@@ -21,10 +21,18 @@ import hashlib
 from functools import partial as _partial
 import glob as _glob
 import urllib2
+import atexit
+import tempfile
 
 SKIP = "skip"
 RECURSE = "recurse"
 YIELD = "yield"
+
+_delete_on_exit = set()
+@atexit.register
+def _():
+    for f in _delete_on_exit:
+        f.delete(True)
 
 
 def file_or_none(f):
@@ -688,27 +696,24 @@ class File(object):
             relative_to = File()
         return self.get_path(relative_to)
     
-    def ancestor_of(self, other):
+    def ancestor_of(self, other, including_self=False):
         """
         Returns true if this file is an ancestor of the specified file. A file
         is an ancestor of another file if that other file's parent is this
         file, or its parent's parent is this file, and so on.
         
-        Note that if self == other, False will be returned.
+        If including_self is True, the file is considered to be an ancestor of
+        itself. Otherwise, only its immediate parent, and its parent's parent,
+        and so on are considered to be ancestors.s
         """
-        parent = File(other).parent
-        while parent is not None:
-            if parent == self:
-                return True
-            parent = parent.parent
-        return False
+        return self in File(other).ancestors(including_self)
     
-    def descendant_of(self, other):
+    def descendant_of(self, other, including_self=False):
         """
         Returns true if this file is a descendant of the specified file. This
-        is equivalent to File(other).ancestor_of(self).
+        is equivalent to File(other).ancestor_of(self, including_self).
         """
-        return File(other).ancestor_of(self)
+        return File(other).ancestor_of(self, including_self)
     
     def link_to(self, other):
         """
@@ -734,6 +739,35 @@ class File(object):
         if not self.is_link:
             return None
         return os.readlink(self._path)
+    
+    @property
+    def delete_on_exit(self):
+        """
+        A boolean indicating whether or not this file (which may be a file or a
+        folder) should be deleted on interpreter shutdown. This is False by
+        default, but may be set to True to request that a particular file be
+        deleted on exit, and potentially set back to False to cancel such a
+        request.
+        
+        Note that such files are not absolutely guaranteed to be deleted on
+        exit. Deletion is handled via an atexit hook, so files will not be
+        deleted if, for example, the interpreter crashes or os._exit() is
+        called.
+        
+        The value of this property is shared among all File instances pointing
+        to a given path. For example:
+        
+            File("test").delete_on_exit = True # Instance 1
+            print File("test").delete_on_exit # Instance 2, prints "True"
+        """
+        return self in _delete_on_exit
+    
+    @delete_on_exit.setter
+    def delete_on_exit(self, value):
+        if value:
+            _delete_on_exit.add(self)
+        else:
+            _delete_on_exit.discard(self)
     
     def list_xattrs(self):
         """
@@ -867,6 +901,9 @@ class File(object):
             return NotImplemented
         return cmp(os.path.normcase(self.path), os.path.normcase(other.path))
     
+    def __hash__(self):
+        return hash(os.path.normcase(self.path))
+    
     def __nonzero__(self):
         """
         Returns True. File objects are always true values; to test for their
@@ -890,6 +927,14 @@ class _AsWorking(object):
     
     def __exit__(self, *args):
         os.chdir(self.old_path)
+
+
+def create_temporary_folder(suffix="", prefix="tmp", parent=None,
+                            delete_on_exit=False):
+    parent = parent or File(tempfile.gettempdir())
+    folder = File(tempfile.mkdtemp(suffix, prefix, parent.path))
+    folder.delete_on_exit = delete_on_exit
+    return folder
 
     
 
