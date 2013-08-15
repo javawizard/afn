@@ -227,6 +227,9 @@ class File(object):
         """
         return File(os.path.join(self.path, *names))
     
+    # Just for fun...
+    __div__ = child
+    
     def glob(self, glob):
         """
         Expands the specified path relative to self and returns a list of all
@@ -370,6 +373,15 @@ class File(object):
         with other.open("wb") as write_to:
             for block in self.read_blocks():
                 write_to.write(block)
+    
+    def copy_into(self, other, overwrite=False):
+        """
+        Copies this file to an identically named file inside the specified
+        folder. This is just shorthand for self.copy_to(other.child(self.name))
+        which, from experience, seems to be by far the most common use case for
+        the copy_to function.
+        """
+        self.copy_to(other.child(self.name), overwrite)
     
     def download_from(self, url, overwrite=False):
         """
