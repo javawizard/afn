@@ -723,7 +723,7 @@ class File(object):
         
         If including_self is True, the file is considered to be an ancestor of
         itself. Otherwise, only its immediate parent, and its parent's parent,
-        and so on are considered to be ancestors.s
+        and so on are considered to be ancestors.
         """
         return self in File(other).ancestors(including_self)
     
