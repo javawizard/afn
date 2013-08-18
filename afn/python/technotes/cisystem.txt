@@ -1,0 +1,18 @@
+Notes on a continuous integration system I'd like to write at some point.
+
+I was thinking it should be a set of libraries on top of each other. Particularly, I want one layer for distributing things to run out to various machines that can run without any sort of UI or system that persists descriptions of jobs to run.
+
+And what got me thinking about that was something we do at my work. For obvious reasons I won't go into details about it, but there's one bit where a command line tool is used to run a jenkins job and report back on its success, and the only reason Jenkins needs to be involved is to distribute out the various tasks that the command-line tool needs to run to appropriate machines.
+
+That sort of thing doesn't really need Jenkins at all, and just needs the layer that sends out jobs to different machines.
+
+So I was thinking perhaps machines use something like autobus right now to connect, which would allow additional machines to be put into the network of machines to use without having to configure anything. Although there probably should be some sort of supervising thingie in case only certain machines are to be used.
+
+But the API, from the perspective of one creating tasks that need to be run, should be roughly the same.
+
+So a task is... well, what?
+
+Maybe just a command to run, for now, that gets its own directory. And perhaps it has an associated persistent name that allows a command's directory to be reused when possible. Or something like that.
+
+But what about plugins? Jenkins has, after all, support for automatically cloning SCM repositories into a directory before running a command, and that sort of thing should probably be part of the lower layer so that it can be used by things that just need that bit.
+

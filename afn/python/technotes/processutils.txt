@@ -1,0 +1,65 @@
+Ideas for a processing library, similar to subprocessing but more flexible.
+
+Not sure how I'm going to deal with the Windows issue of inheriting file descriptors. Maybe I'll just ignore it for now and just use the same hacks subprocess does.
+
+So, I'm thinking it'd have classes for building up a process specification and then classes representing running processes.
+
+So one of the builder classes would be Command, which you use like:
+
+Command(["echo", "hi"])
+
+Or something like that. Or maybe just:
+
+Command("echo", "hi")
+
+and then keyword arguments could be used to lay out more specific things about it.
+
+Then there'd be a class Pipe, where you could do:
+
+Pipe(Command("cat", "some-file"), Command("grep", "something"))
+
+And probably a function on a common parent class of all of the builder classes named pipe that does something similar:
+
+Command("cat", "some-file").pipe(Command("grep", "something"))
+
+Then there'd be a run function on all of those classes that you use to create an actual process:
+
+p = Command("cat", "some-file").pipe(Command("grep", "something")).run()
+
+The resulting process object would have things like wait() and check(), the former of which waits for the process to finish and the latter of which does the same but throws an exception if the process returns a nonzero exit code.
+
+Although perhaps it might be easier to just have one set of classes for now, and have them be mutable, so one could do:
+
+p1 = Process("cat", "some-file")
+p2 = Process("grep", "something")
+p1.pipe(p2)
+p1.start()
+p2.start()
+
+Although that makes it more verbose to start a process.
+
+Oh, and, if I go with the builder thing, I'd probably have __or__ = pipe, so:
+
+Command("cat", "some-file") | Command("grep", "something")
+
+Which would be neat.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,12 @@
+
+
+I'm considering rewriting fileutils to have separate classes for things like absolute paths, relative paths, and so on.
+
+So there'd be a parent class (I'll call it File for now, although for backward compatibility I'd likely name it something else).
+
+And there'd be two subclasses, AbsoluteFile and RelativeFile.
+
+File would be a class cluster that creates an AbsoluteFile or RelativeFile depending on whether the path its given is absolute or relative.
+
+AbsoluteFile would always absoluteify the path it's given, and RelativeFile would always construct a relative path. (Its constructor would likely take a relative_to argument, to be used to relativize absolute paths, which would perhaps default to the working directory.)
+
