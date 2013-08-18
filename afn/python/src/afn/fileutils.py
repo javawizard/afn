@@ -760,6 +760,23 @@ class File(object):
             return None
         return os.readlink(self._path)
     
+    def dereference(self, deep=False):
+        """
+        Dereference the symbolic link represented by this file and return a
+        File object pointing to the symbolic link's referent.
+        
+        If this file is not a symbolic link, self will be returned.
+        """
+        if not self.is_link:
+            return self
+        # Resolve the link relative to itself in case it points to a relative
+        # path
+        target = File(self.path, self.link_target)
+        if deep:
+            return target.dereference(deep=True)
+        else:
+            return target
+    
     @property
     def delete_on_exit(self):
         """
