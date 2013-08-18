@@ -677,28 +677,29 @@ class File(object):
     
     def delete(self, contents=False, silent=False):
         """
-        Deletes this file.
+        Deletes this file or folder, recursively deleting children if
+        necessary.
         
-        If this is a non-empty folder, contents must be True in order to
-        recursively delete the folder's contents; if it's False, an exception
-        will be thrown instead. This is intended mostly as a sanity check to
-        prevent folders with contents from being unintentionally deleted.
+        The contents parameter has no effect, and is present for backward
+        compatibility.
         
         If the file does not exist and silent is False, an exception will be
         thrown. If the file does not exist but silent is True, this function
         simply does nothing.
+        
+        Note that symbolic links are never recursed into, and are instead
+        themselves removed.
         """
         if not self.exists:
-            if silent:
+            if not silent:
                 raise Exception("This file does not exist.")
-        elif self.is_file or self.is_link:
-            os.remove(self._path)
+        elif self.is_folder and not self.is_link:
+            for child in self.children:
+                child.delete()
+            os.rmdir(self.path)
         else:
-            if contents:
-                shutil.rmtree(self._path)
-            else:
-                os.rmdir(self._path)
-    
+            os.remove(self._path)
+
     def delete_folder(self, contents=False):
         """
         This has been merged into the delete method and as such should no
