@@ -697,7 +697,7 @@ class File(object):
         compatibility.
         
         If the file does not exist and ignore_missing is False, an exception
-        will be thrown. If the file does not exist but ignore_existing is True,
+        will be thrown. If the file does not exist but ignore_missing is True,
         this function simply does nothing.
         
         Note that symbolic links are never recursed into, and are instead
