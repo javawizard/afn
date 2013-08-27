@@ -279,7 +279,7 @@ class File(object):
             return None
         return f
     
-    def ancestors(self, including_self=False):
+    def get_ancestors(self, including_self=False):
         """
         Returns a list of all of the ancestors of this file, with self.parent
         first. If including_self is True, self will be first, self.parent will
@@ -294,6 +294,17 @@ class File(object):
             results.append(current)
             current = current.parent
         return results
+    
+    @property
+    def ancestors(self):
+        """
+        A list of all of the ancestors of this file, with self.parent first.
+        
+        This property simply returns self.get_ancestors(). Have a look at that
+        method if you need to do more complex things like include self as one
+        of the returned ancestors.
+        """
+        return self.get_ancestors()
     
     @property
     def name(self):
@@ -726,7 +737,7 @@ class File(object):
         itself. Otherwise, only its immediate parent, and its parent's parent,
         and so on are considered to be ancestors.
         """
-        return self in File(other).ancestors(including_self)
+        return self in File(other).get_ancestors(including_self)
     
     def descendant_of(self, other, including_self=False):
         """
