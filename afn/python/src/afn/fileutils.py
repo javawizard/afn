@@ -29,7 +29,7 @@ RECURSE = "recurse"
 YIELD = "yield"
 
 # Set of File objects whose delete_on_exit property has been set to True. These
-# are deleted by the atexit hook.
+# are deleted by the atexit hook registered two lines down.
 _delete_on_exit = set()
 @atexit.register
 def _():
