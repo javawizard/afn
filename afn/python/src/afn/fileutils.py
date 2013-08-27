@@ -704,7 +704,7 @@ class File(object):
         themselves removed.
         """
         if not self.exists:
-            if not silent:
+            if not ignore_missing:
                 raise Exception("This file does not exist.")
         elif self.is_folder and not self.is_link:
             for child in self.children:
