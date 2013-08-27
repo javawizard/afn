@@ -979,6 +979,14 @@ class _AsWorking(object):
 
 def create_temporary_folder(suffix="", prefix="tmp", parent=None,
                             delete_on_exit=False):
+    """
+    Creates a folder (with tmpfile.mkdtemp) with the specified prefix, suffix,
+    and parent folder (or the current platform's default temporary directory if
+    no parent is specified).
+    
+    If delete_on_exit is True, the returned file's delete_on_exit property will
+    be set to True just before returning it.
+    """
     parent = File(parent or tempfile.gettempdir())
     folder = File(tempfile.mkdtemp(suffix, prefix, parent.path))
     folder.delete_on_exit = delete_on_exit
