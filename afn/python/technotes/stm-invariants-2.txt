@@ -1,0 +1,44 @@
+Second attempt at adding invariants to the stm system.
+
+So I vaguely recall that I ran into a problem with my first attempt... Or rather, not a problem, but a situation that made invariants much less appealing than they would otherwise be...
+
+Or I might have just thought about it (I'm avoiding reading my old file on invariants to avoid corrupting my memory with my mistakes I made then, but I'll read it after I write this one and implement it in the stm module)...
+
+But the situation: suppose we have a number of players holding a certain amount of currency each, and there's a world maximum amount of currency that any one player can hold at a time, which is stored in a variable. And then suppose that, when we create each player, we add an invariant that says that the player's money is never more than the world maximum.
+
+The problem was that the invariant holds a reference to the player (for obvious reasons, so that it can, you know, check the player's currency), but the world maximum variable holds a reference to the invariant (as lowering the maximum would threaten the invariant for players who already have the maximum amount of currency), so it would be impossible for any players to be garbage collected, and they would just pile up until memory ran out (assuming that players were fairly short-lived things over the entire life of the world).
+
+So I don't think I had TWeakRef back when I tried to write invariants for the first time, but now that I do, TWeakRef solves the problem.
+
+Basically, you just have the invariant hold a reference to a TWeakRef that points to the player, and that's it.
+
+Then, in the invariant function, you check first thing to see if the weak ref's been collected, and if it has, you just return. Then when it's collected, the invariant will be checked, and then the STM system will notice that the only thing it accessed this time was the TWeakRef itself (because it returned once it noticed the TWeakRef's value went away), so it will add the invariant to the TWeakRef's list of invariants to check and remove it from the world maximum variable's list of invariants to check as it didn't access the world maximum value this time, and since now the only thing referencing the invariant is the TWeakRef and the only thing referencing the TWeakRef is the invariant, both of them will go away, and that's the end of any hint of the corresponding player's existence.
+
+Note, of course, two things. 1: the invariant must not access the world maximum variable before it checks the TWeakRef; if it does, the world maximum variable will continue to hold onto the invariant, so the player will be garbage collected but not the invariant and memory will still run out. 2: A strong reference to the world maximum variable is still held by the invariant because presumably the maximum still applies to a player even if all other references to the world are lost, hence not wrapping the world maximum variable in a TWeakRef as well. (If it's known that the world will never go away without all of the players going away as well, then a TWeakRef to the world maximum variable could be held and things would still work.)
+
+So that fixes that problem, so I think we're good.
+
+So...
+
+Semantics, and particularly invariants' relation to retry and such things.
+
+Harris and SPJ's paper on invariants suggests propagating retry upward, such that if an invariant retries during the initial check (while it's being called from within the function to register invariants) it just propagates the retry up, and if it retries during validation at the end of the transaction, then the transaction retries as per usual.
+
+Which sounds sane enough to me, so that's that done.
+
+So then the list of invariants added during a transaction are stored alongside the list of variables read or written during the transaction and their values, and as such are discarded if the transaction retries or aborts without committing.
+
+So, we need a sort of transaction type, similar to BaseTransaction and NestedTransaction, that we can run invariants in that lets us discard their side effects. In fact, I might be able to use NestedTransaction for that, although it'll need a bit of modification to allow that.
+
+(And of course invariants added to a nested transaction that's discarded, whether because it aborted or because we were using it to run another invariant, are themselves discarded and aren't added to their parent. So particularly, adding an invariant from within an invariant adds the outer invariant and runs the inner invariant once at the beginning to make sure it passes but never runs it again.)
+
+
+
+
+
+
+
+
+
+
+
