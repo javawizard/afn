@@ -28,11 +28,13 @@ SKIP = "skip"
 RECURSE = "recurse"
 YIELD = "yield"
 
+# Set of File objects whose delete_on_exit property has been set to True. These
+# are deleted by the atexit hook registered two lines down.
 _delete_on_exit = set()
 @atexit.register
 def _():
     for f in _delete_on_exit:
-        f.delete(contents=True, silent=True)
+        f.delete(ignore_missing=True)
 
 
 def file_or_none(f):
@@ -279,7 +281,7 @@ class File(object):
             return None
         return f
     
-    def ancestors(self, including_self=False):
+    def get_ancestors(self, including_self=False):
         """
         Returns a list of all of the ancestors of this file, with self.parent
         first. If including_self is True, self will be first, self.parent will
@@ -294,6 +296,17 @@ class File(object):
             results.append(current)
             current = current.parent
         return results
+    
+    @property
+    def ancestors(self):
+        """
+        A list of all of the ancestors of this file, with self.parent first.
+        
+        This property simply returns self.get_ancestors(). Have a look at that
+        method if you need to do more complex things like include self as one
+        of the returned ancestors.
+        """
+        return self.get_ancestors()
     
     @property
     def name(self):
@@ -675,7 +688,7 @@ class File(object):
         with closing(zip_module.ZipFile(self._path, "r")) as zipfile:
             zipfile.extractall(folder.path)
     
-    def delete(self, contents=False, silent=False):
+    def delete(self, contents=False, ignore_missing=False):
         """
         Deletes this file or folder, recursively deleting children if
         necessary.
@@ -683,15 +696,15 @@ class File(object):
         The contents parameter has no effect, and is present for backward
         compatibility.
         
-        If the file does not exist and silent is False, an exception will be
-        thrown. If the file does not exist but silent is True, this function
-        simply does nothing.
+        If the file does not exist and ignore_missing is False, an exception
+        will be thrown. If the file does not exist but ignore_missing is True,
+        this function simply does nothing.
         
         Note that symbolic links are never recursed into, and are instead
         themselves removed.
         """
         if not self.exists:
-            if not silent:
+            if not ignore_missing:
                 raise Exception("This file does not exist.")
         elif self.is_folder and not self.is_link:
             for child in self.children:
@@ -723,10 +736,11 @@ class File(object):
         file, or its parent's parent is this file, and so on.
         
         If including_self is True, the file is considered to be an ancestor of
-        itself. Otherwise, only its immediate parent, and its parent's parent,
+        itself, i.e. True will be returned in the case that self == other.
+        Otherwise, only the file's immediate parent, and its parent's parent,
         and so on are considered to be ancestors.
         """
-        return self in File(other).ancestors(including_self)
+        return self in File(other).get_ancestors(including_self)
     
     def descendant_of(self, other, including_self=False):
         """
@@ -760,10 +774,15 @@ class File(object):
             return None
         return os.readlink(self._path)
     
-    def dereference(self, deep=False):
+    def dereference(self, recursive=False):
         """
         Dereference the symbolic link represented by this file and return a
         File object pointing to the symbolic link's referent.
+        
+        If recursive is False, a File object pointing directly to the referent
+        will be returned. If recursive is True, the referent itself will be
+        recursively dereferenced, and the returned File will be guaranteed not
+        to be a link.
         
         If this file is not a symbolic link, self will be returned.
         """
@@ -772,8 +791,8 @@ class File(object):
         # Resolve the link relative to itself in case it points to a relative
         # path
         target = File(self.path, self.link_target)
-        if deep:
-            return target.dereference(deep=True)
+        if recursive:
+            return target.dereference(recursive=True)
         else:
             return target
     
@@ -968,6 +987,14 @@ class _AsWorking(object):
 
 def create_temporary_folder(suffix="", prefix="tmp", parent=None,
                             delete_on_exit=False):
+    """
+    Creates a folder (with tmpfile.mkdtemp) with the specified prefix, suffix,
+    and parent folder (or the current platform's default temporary directory if
+    no parent is specified).
+    
+    If delete_on_exit is True, the returned file's delete_on_exit property will
+    be set to True just before returning it.
+    """
     parent = File(parent or tempfile.gettempdir())
     folder = File(tempfile.mkdtemp(suffix, prefix, parent.path))
     folder.delete_on_exit = delete_on_exit
