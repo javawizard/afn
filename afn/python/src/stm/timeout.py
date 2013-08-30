@@ -19,7 +19,7 @@ class _TimeoutThread(Thread):
         # be interrupted half-way through (indeed, threading.Condition
         # basically uses a busywait with exponentially increasing delays), so
         # we'll do the next best thing: check every second to see if we've lost
-        # out reference to the variable to change and return.
+        # our reference to the variable to change and return if we did.
         # 
         # The main upside of this is that we guarantee that the transaction
         # will be interrupted precisely when the timeout expires, not up to
