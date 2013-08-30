@@ -29,3 +29,9 @@ syntax: regexp
 ^landfill-hs-public/src/simplehttp$
 syntax: regexp
 ^landfill-hs-public/cabal-dev$
+syntax: regexp
+^afn/python/src/build$
+syntax: regexp
+^afn/python/src/dist$
+syntax: regexp
+^afn/python/src/MANIFEST$
