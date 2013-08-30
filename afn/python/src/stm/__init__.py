@@ -229,7 +229,7 @@ class TVar(object):
     More complex datatypes (such as TList, TDict, and TObject) are available in
     the tlist, tdict, and tobject modules, respectively.
     """
-    __slots__ = ["_queues", "_real_value", "_modified"]
+    __slots__ = ["_queues", "_real_value", "_modified", "__weakref__"]
     
     def __init__(self, value=None):
         """
