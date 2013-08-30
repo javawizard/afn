@@ -89,6 +89,11 @@ class BroadcastEndpoint(tobject.TObject):
         If block is True and there aren't any items currently available on this
         endpoint, this function retries. If block is False, the Empty exception
         is raised instead.
+        
+        To only block for up to a specific number of seconds, use the
+        stm.timeout module. For example:
+        
+            item = stm.timeout.with_delay(10, some_endpoint.get)
         """
         if self._var.get() is None:
             if block:
