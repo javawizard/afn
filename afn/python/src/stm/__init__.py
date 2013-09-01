@@ -148,48 +148,55 @@ class _BaseTransaction(_Transaction):
         try:
             # First we actually run the transaction.
             result = function()
-            # _Transaction appears to have run successfully. Now we need to make
-            # sure nothing it used changed in the mean time.
-            with _global_lock:
-                for item in self.check_values:
-                    item._check_clean()
-                # Nothing changed, so we're good to commit. First we make
-                # ourselves a new id.
-                _last_transaction += 1
-                modified = _last_transaction
-                # Then we update the real values of all of the TVars. Note that
-                # TVar._update_real_value takes care of notifying the TVar's
-                # queues for us.
-                for var, value in self.vars.iteritems():
-                    var._update_real_value(value, modified)
-                # And then we tell all TWeakRefs created during this
-                # transaction to mature
-                for ref in self.created_weakrefs:
-                    ref._make_mature()
-                # And we're done!
-                return result
+            # _Transaction appears to have run successfully, so commit it.
+            self.commit()
+            # And we're done!
+            return result
         except _RetryLater:
-            # Received a retry request that made it all the way up to the top.
-            # First, check to see if any of the variables we've accessed have
-            # been modified since we started, which could change whether or not
-            # we need to retry.
-            with _global_lock:
-                for item in self.check_values:
-                    item._check_clean()
-                # Nope, none of them have changed. So now we create a queue,
-                # then add it to all of the vars we need to watch.
-                q = Queue(1)
-                for item in self.retry_values:
-                    item._add_retry_queue(q)
-            # Then we wait.
-            q.get()
-            # One of the vars was modified. Now we go remove ourselves from
-            # the vars' queues.
-            with _global_lock:
-                for item in self.retry_values:
-                    item._remove_retry_queue(q)
-            # And then we retry immediately.
-            raise _RetryImmediately
+            self.retry_block()
+    
+    def commit(self):
+        with _global_lock:
+            # First, we need to make
+            # sure nothing it used changed in the mean time.
+            for item in self.check_values:
+                item._check_clean()
+            # Nothing changed, so we're good to commit. First we make
+            # ourselves a new id.
+            _last_transaction += 1
+            modified = _last_transaction
+            # Then we update the real values of all of the TVars. Note that
+            # TVar._update_real_value takes care of notifying the TVar's
+            # queues for us.
+            for var, value in self.vars.iteritems():
+                var._update_real_value(value, modified)
+            # And then we tell all TWeakRefs created during this
+            # transaction to mature
+            for ref in self.created_weakrefs:
+                ref._make_mature()
+    
+    def retry_block(self):
+        # Received a retry request that made it all the way up to the top.
+        # First, check to see if any of the variables we've accessed have
+        # been modified since we started, which could change whether or not
+        # we need to retry.
+        with _global_lock:
+            for item in self.check_values:
+                item._check_clean()
+            # Nope, none of them have changed. So now we create a queue,
+            # then add it to all of the vars we need to watch.
+            q = Queue(1)
+            for item in self.retry_values:
+                item._add_retry_queue(q)
+        # Then we wait.
+        q.get()
+        # One of the vars was modified. Now we go remove ourselves from
+        # the vars' queues.
+        with _global_lock:
+            for item in self.retry_values:
+                item._remove_retry_queue(q)
+        # And then we retry immediately.
+        raise _RetryImmediately
 
 
 class _NestedTransaction(_Transaction):
@@ -214,9 +221,12 @@ class _NestedTransaction(_Transaction):
         # _RetryImmediately, _RetryLater, or otherwise) copy our values into
         # our parent.
         result = function()
+        self.commit()
+        return result
+    
+    def commit(self):
         for var, value in self.vars.iteritems():
             self.parent.set_value(var, value)
-        return result
 
 
 class TVar(object):
