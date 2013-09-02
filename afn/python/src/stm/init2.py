@@ -168,6 +168,27 @@ class _GenericTransaction(object):
         self.parent.block_child(self)
 
 
+class _MasterTransaction(_GenericTransaction):
+    # Subclass that does a few things:
+    # Has a lock called self.lock
+    # Locks on said lock in get_value
+    # Doesn't allow variables to be modified directly, instead requires a
+    # nested SerialTransaction (so changes can only be made with commit_child,
+    # and values can only be read with get_value with a non-null
+    # if_not_modified_since)
+    # Implements proper blocking logic in block_child
+    def __init__(self, *args):
+        _GenericTransaction.__init__(*args)
+        self.lock = _Lock()
+
+
+class _UserTransaction(_GenericTransaction):
+    # Subclass that does a few things:
+    # Doesn't have a lock; requires all access to be serialized
+    # Does allow variables to be directly accessed and modified
+    # Doesn't implement blocking; block_child simply (re-)raises RetryLater
+
+
 class TVar(object):
     __slots__ = ["__weakref__"]
     

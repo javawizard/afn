@@ -156,6 +156,7 @@ class _BaseTransaction(_Transaction):
             self.retry_block()
     
     def commit(self):
+        global _last_transaction
         with _global_lock:
             # First, we need to make
             # sure nothing it used changed in the mean time.
@@ -430,41 +431,10 @@ def atomically(function):
     propagated out, and all of the changes made to TVars during the course of
     the transaction will be reverted.
     
-    If a transaction detects state that it cannot yet continue with, it can
-    call retry(). Conceptually, one could think of retry() as causing the
-    transaction to immediately abort and restart from the top. However, the
-    actual implementation causes the transaction to block until at least one of
-    the variables it accessed has been modified; it then immediately restarts.
-    
-    One can use retry() to obtain blocking behavior by doing something like
-    this:
-    
-        if resources_available.get() > 0:
-            resources_available.set(resources_available.get() - 1)
-        else:
-            retry()
-    
-    This will block until there is at least one resource available, and then
-    atomically decrement the number of resources remaining.
-    
-    Note that inconsistent state (i.e. state produced when a transaction has
-    only run half-way to completion) will never be seen by any other
-    transaction, so such situations do not need to be accounted for in retry()
-    logic.
-    
     atomically() fully supports nested transactions. If a nested transaction
     throws an exception, the changes it made are reverted, and the exception
     propagated out of the call to atomically().
-    
-    Two alternative transactions, both of which may retry(), can be combined
-    together such that the first to succeed (i.e. not retry) is executed and
-    the value it produces returned with or_else(). This can be used to obtain
-    behavior similar to the Unix system call select(). For example, to read a
-    value from either q1 or q2, whichever produces a value first, and block
-    until either one has a value:
-    
-        value = or_else(q1.get, q2.get)
-    
+        
     or_else can also be used to make non-blocking variants of blocking
     functions. For example, given a queue with a blocking get() function, we
     can get the queue's value or, if it does not currently have a value
@@ -510,8 +480,26 @@ def atomically(function):
 
 def retry():
     """
-    Retries the current transaction. See the documentation for atomically()
-    for more information.
+    Provides support for transactions that block.
+    
+    This function, when called, indicates to the STM system that the caller has
+    detected state with which it isn't yet ready to continue (for example, a
+    queue from which an item is to be read is actually empty). The current
+    transaction will be immediately aborted and automatically restarted once
+    the STM system detects that it would produce a different result.
+    
+    This can be used to make, for example, a blocking queue from a list with a
+    function like the following:
+    
+    def pop_or_block(some_list):
+        if len(some_list) > 0:
+            return some_list.pop()
+        else:
+            retry()
+    
+    Functions making use of retry() can be multiplexed, a la Unix's select
+    system call, with the or_else function. See its documentation for more
+    information.
     """
     raise _RetryLater
 
@@ -519,14 +507,18 @@ def retry():
 def or_else(*args):
     """
     Runs (and returns the value produced by) the first function passed to this
-    function that does not retry, or retries if all of the passed-in functions
+    function that does not retry (see the documentation of the retry()
+    function), or retries if all of the passed-in functions
     retry (or if no arguments are passed in). See the documentation for
-    atomically() for more information.
+    retry() for more information. 
+    
+    
     
     Note that each function passed in is automatically run in its own nested
     transaction, so that the effects of those that end up retrying are reverted
     before the next function is run.
     """
+    _stm_state.current
     for function in args:
         # Try to run each function in sequence, in its own transaction so that
         # if it raises _RetryLater (or any other exception) its effects will be
