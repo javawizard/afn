@@ -605,6 +605,38 @@ def previously(function, toplevel=False):
     before the start of the innermost nested transaction, if any. If toplevel
     is True, the specified function will be run as if it were just before the
     start of the outermost transaction.
+    
+    WARNING: This function doesn't work correctly when toplevel=True (or we're
+    not in a nested transaction) and the calling transaction (or the passed in
+    function) retries at any point. I'll fix this function to work in such
+    circumstances soon, but for now, don't use it in the aforementioned
+    circumstances.
+    
+    (The specific reason for this being broken is twofold:
+    
+        1: If we're running parallel to the toplevel transaction and the passed
+        in function retries, the parallel instance of _BaseTransaction attempts
+        to block inline as if it were processing a toplevel retry, when what
+        we really want to do is catch the retry, merge the parallel
+        transaction's read set into our own (add values obtained by it under
+        their values, unless they're already present in which case use their
+        existing values to preserve modifications we've made), and propagate
+        the retry back out.
+        
+        2: If we're running parallel to the toplevel transaction and the
+        toplevel transaction retries at some point after the call to
+        previously(), it won't block on changes to variables read only during
+        the call to previously() but which, by virtue of the value returned
+        from previously() potentially being taken into account, could have a
+        very large impact on the transaction's result. The fix for this is to
+        merge the parallel transaction's read set into our own if it's a
+        _BaseTransaction once it finishes (and doing so when it's a
+        _NestedTransaction won't hurt anything but isn't necessary.)
+    
+    Both of those will need to be fixed, and I'm pretty sure a single, common
+    fix in the form of a try/finally around the call to the function that
+    merges the parallel transaction's read set into our own would work just
+    fine.)
     """
     if toplevel:
         current = _stm_state.get_base()
