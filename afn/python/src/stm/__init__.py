@@ -114,6 +114,26 @@ class _Transaction(object):
         value.
         """
         self.vars[var] = value
+    
+    def make_previously(self):
+        """
+        Returns a new transaction reflecting the state of this transaction
+        just before it started.
+        
+        BaseTransaction will return another BaseTransaction with the same
+        start attribute, which will cause it to throw RetryImmediately if
+        anything's changed. NestedTransaction will most likely just return
+        another NestedTransaction with the same parent.
+        
+        (Note that this new transaction can only be used until self is
+        committed, and the new transaction should not itself be committed.)
+        
+        This is used mainly for implementing the previously() function; it's
+        implemented by calling this function to obtain a previous transaction,
+        then running the function passed to it in the context of that
+        transaction and then aborting the transaction.
+        """
+        raise NotImplementedError
 
 
 class _BaseTransaction(_Transaction):
