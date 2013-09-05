@@ -1,7 +1,12 @@
 """
 A pure-Python software transactional memory system.
 
-Have a look at the documentation for atomically() for more information.
+This module provides a software transactional memory system for Python. It
+provides full support for isolated transactions, as well as the ability for
+transactions to block as need be.
+
+Have a look at the documentation for the atomically() function and the TVar
+class. Those form the core building blocks of the STM system.
 """
 
 from threading import local as _Local, Lock as _Lock, Thread as _Thread
@@ -309,30 +314,33 @@ class TWeakRef(object):
     A callback function can be specified when creating a TWeakRef; this
     function will be called in its own transaction when the value referred to
     by the TWeakRef is garbage collected, if the TWeakRef itself is still
-    alive. Note that, for various reasons which I hope to outline here at some
-    point, the callback function may or may not be called if the transaction
-    creating the TWeakRef is aborted. If a callback that only runs when the
-    transaction is not aborted is needed, one can do something like:
+    alive. Note that the callback function will only be called if the
+    transaction in which this TWeakRef is created commits successfully.
     
-        should_run = TVar(False)
-        should_run.set(True)
-        def callback():
-            if should_run.get():
-                actual_callback()
-        ref = TWeakRef(some_value, callback)
+    TWeakRefs fully support the retry() function; that is, a function such as
+    the following works as expected, and blocks until the TWeakRef's referent
+    is garbage collected:
     
-    Which takes advantage of the fact that TVars created during an aborted
-    transaction retain the value they were constructed with (which is
-    well-defined behavior that will never change).
+    def block_until_garbage_collected(some_weak_ref):
+        if some_weak_ref.get():
+            retry()
     """
     def __init__(self, value, callback=None):
         self._queues = set()
         self._mature = False
         self._ref = value
         self._queues = set()
-        # NOTE: callback will only be called if this transaction commits
-        # successfully
-        self._callback = callback
+        # Use the TVar hack we previously mentioned in the docstring for
+        # ensuring that the callback is only run if we commit. TODO: Double
+        # check to make sure this is even necessary, as now that I think about
+        # it we only create the underlying weakref when we commit, so we might
+        # already be good to go.
+        callback_check = TVar(False)
+        callback_check.set(True)
+        def actual_callback():
+            if callback_check.get():
+                callback()
+        self._callback = actual_callback
         _stm_state.get_base().created_weakrefs.add(self)
     
     def get(self):
@@ -368,11 +376,18 @@ class TWeakRef(object):
             # return our value.
             return self._ref
     
+    def __call__(self):
+        """
+        An alias for self.get() provided for API compatibility with Python's
+        weakref.ref class.
+        """
+        return self.get()
+    
     def _check_clean(self):
         """
-        Raises _RetryImmediately if we're mature, our referant has been
+        Raises _RetryImmediately if we're mature, our referent has been
         garbage collected, and we're in our base transaction's live_weakrefs
-        list (which indicates that we previously read our referant as live
+        list (which indicates that we previously read our referent as live
         during this transaction).
         """
         if self._mature and self._ref() is None and self in _stm_state.get_base().live_weakrefs:
@@ -384,10 +399,16 @@ class TWeakRef(object):
         """
         Matures this weak reference, setting self._mature to True (which causes
         all future calls to self.get to add ourselves to the relevant
-        transaction's retry and check lists) and replacing our referant with
+        transaction's retry and check lists) and replacing our referent with
         an actual weakref.ref wrapper around it. This is called right at the
         end of the transaction in which this TWeakRef was created (and
         therefore only if it commits successfully) to make it live.
+        
+        The reason we keep around a strong reference until the end of the
+        transaction in which the TWeakRef was created is to prevent a TWeakRef
+        created in a transaction from being collected mid-way through the
+        transaction and causing an immediate retry as a result, which would
+        result in an infinite loop.
         """
         self._mature = True
         self._ref = weakref_module.ref(self._ref, self._on_value_dead)
@@ -435,15 +456,6 @@ def atomically(function):
     throws an exception, the changes it made are reverted, and the exception
     propagated out of the call to atomically().
         
-    or_else can also be used to make non-blocking variants of blocking
-    functions. For example, given a queue with a blocking get() function, we
-    can get the queue's value or, if it does not currently have a value
-    available, return None with:
-    
-        or_else(queue.get, lambda: None)
-    
-    If all of the transactions passed to or_else retry, or_else itself retries.
-    
     The return value of atomically() is the return value of the function that
     was passed to it.
     """
@@ -512,11 +524,22 @@ def or_else(*args):
     retry (or if no arguments are passed in). See the documentation for
     retry() for more information. 
     
+    This function could be considered the STM equivalent of Unix's select()
+    system call. One could, for example, read an item from the first of two
+    queues, q1 and q2, to actually produce an item with something like this:
     
+    item = or_else(q1.get, q2.get)
+    
+    or_else can also be used to make non-blocking variants of blocking
+    functions. For example, given one of our queues above, we can get the first
+    value available from the queue or, if it does not currently have any values
+    available, return None with:
+    
+    item = or_else(q1.get, lambda: None)
     
     Note that each function passed in is automatically run in its own nested
     transaction, so that the effects of those that end up retrying are reverted
-    before the next function is run.
+    and only the effects of the function that succeeds are persisted.
     """
     _stm_state.current
     for function in args:
