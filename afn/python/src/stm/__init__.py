@@ -513,6 +513,8 @@ def retry():
     system call, with the or_else function. See its documentation for more
     information.
     """
+    # Make sure we're in a transaction
+    _stm_state.get_current()
     raise _RetryLater
 
 
@@ -541,7 +543,8 @@ def or_else(*args):
     transaction, so that the effects of those that end up retrying are reverted
     and only the effects of the function that succeeds are persisted.
     """
-    _stm_state.current
+    # Make sure we're in a transaction
+    _stm_state.get_current()
     for function in args:
         # Try to run each function in sequence, in its own transaction so that
         # if it raises _RetryLater (or any other exception) its effects will be
