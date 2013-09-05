@@ -12,6 +12,7 @@ class. Those form the core building blocks of the STM system.
 from threading import local as _Local, Lock as _Lock, Thread as _Thread
 from Queue import Queue, Full
 import weakref as weakref_module
+from contextlib import contextmanager
 
 __all__ = ["TVar", "TWeakRef", "atomically", "retry", "or_else"]
 
@@ -56,6 +57,13 @@ class _State(_Local):
     
     def get_base(self):
         return self.get_current().get_base_transaction()
+    
+    @contextmanager
+    def with_current(self, transaction):
+        old = self.current
+        self.current = transaction
+        yield
+        self.current = old
 
 _stm_state = _State()
 # Lock that we lock on while committing transactions
@@ -143,7 +151,7 @@ class _BaseTransaction(_Transaction):
     so), blocking until vars are modified when a _RetryLater is caught, and so
     forth.
     """
-    def __init__(self):
+    def __init__(self, start=None):
         _Transaction.__init__(self)
         self.parent = None
         self.check_values = set()
@@ -152,8 +160,10 @@ class _BaseTransaction(_Transaction):
         self.live_weakrefs = set()
         # Store off the transaction id we're starting at, so that we know if
         # things have changed since we started.
-        with _global_lock:
-            self.start = _last_transaction
+        if not start:
+            with _global_lock:
+                start = _last_transaction
+        self.start = start
     
     def get_base_transaction(self):
         return self
@@ -223,6 +233,9 @@ class _BaseTransaction(_Transaction):
                 item._remove_retry_queue(q)
         # And then we retry immediately.
         raise _RetryImmediately
+    
+    def make_previously(self):
+        return _BaseTransaction(self.start)
 
 
 class _NestedTransaction(_Transaction):
@@ -253,6 +266,9 @@ class _NestedTransaction(_Transaction):
     def commit(self):
         for var, value in self.vars.iteritems():
             self.parent.set_value(var, value)
+    
+    def make_previously(self):
+        return _NestedTransaction(self.parent)
 
 
 class TVar(object):
@@ -488,26 +504,25 @@ def atomically(function):
         else:
             transaction = _BaseTransaction()
         # Then set it as the current transaction
-        _stm_state.current = transaction
-        # Then run the transaction. _BaseTransaction's implementation takes care
-        # of catching _RetryLater and blocking until one of the vars we read is
-        # modified, then converting it into a _RetryImmediately exception.
-        try:
-            return transaction.run(function)
-        except _RetryImmediately:
-            # We were asked to retry immediately. If we're a _BaseTransaction,
-            # just continue. If we're a _NestedTransaction, propagate the
-            # exception up. TODO: Figure out a way to move this logic into
-            # individual methods on _Transaction that _BaseTransaction and
-            # _NestedTransaction can override accordingly.
-            if isinstance(transaction, _BaseTransaction):
-                continue
-            else:
-                raise
-        finally:
-            # Before we go, restore the current transaction to whatever it was
-            # before we started.
-            _stm_state.current = transaction.parent
+        with _stm_state.with_current(transaction):
+            # Then run the transaction. _BaseTransaction's implementation takes care
+            # of catching _RetryLater and blocking until one of the vars we read is
+            # modified, then converting it into a _RetryImmediately exception.
+            try:
+                return transaction.run(function)
+            # Note that we'll only get _RetryLater thrown here if we're in a
+            # nested transaction, in which case we want it to propagate out, so
+            # we don't catch it here.
+            except _RetryImmediately:
+                # We were asked to retry immediately. If we're a _BaseTransaction,
+                # just continue. If we're a _NestedTransaction, propagate the
+                # exception up. TODO: Figure out a way to move this logic into
+                # individual methods on _Transaction that _BaseTransaction and
+                # _NestedTransaction can override accordingly.
+                if isinstance(transaction, _BaseTransaction):
+                    continue
+                else:
+                    raise
 
 
 def retry():
@@ -576,6 +591,24 @@ def or_else(*args):
             pass
     # All of the alternatives retried, so retry ourselves.
     retry()
+
+
+def previously(function, toplevel=False):
+    """
+    (This function is experimental and will likely change in the future. I'd
+    also like feedback on how useful it is.)
+    
+    Returns the value that the specified function would have returned had it
+    been run in a transaction just before the current transaction started.
+    
+    If toplevel is False, the specified function will be run as if it were just
+    before the start of the innermost nested transaction, if any. If toplevel
+    is True, the specified function will be run as if it were just before the
+    start of the outermost transaction.
+    """
+    transaction = _stm_state.get_current().make_previously()
+    with _stm_state.with_current(transaction):
+        return function()
 
 
 
