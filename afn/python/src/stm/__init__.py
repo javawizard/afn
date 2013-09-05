@@ -606,7 +606,11 @@ def previously(function, toplevel=False):
     is True, the specified function will be run as if it were just before the
     start of the outermost transaction.
     """
-    transaction = _stm_state.get_current().make_previously()
+    if toplevel:
+        current = _stm_state.get_base()
+    else:
+        current = _stm_state.get_current()
+    transaction = current.make_previously()
     with _stm_state.with_current(transaction):
         return function()
 
