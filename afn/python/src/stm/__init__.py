@@ -606,6 +606,10 @@ def previously(function, toplevel=False):
     is True, the specified function will be run as if it were just before the
     start of the outermost transaction.
     """
+    # We don't need any special retry handling in _BaseTransaction like I
+    # thought we would because we're calling the function directly, not calling
+    # transaction.run(function), so we'll get _RetryImmediately and _RetryLater
+    # passed back out to us.
     if toplevel:
         current = _stm_state.get_base()
     else:
@@ -616,8 +620,8 @@ def previously(function, toplevel=False):
             return function()
     finally:
         if isinstance(transaction, _BaseTransaction):
-            current.get_base_transaction().check_values.update(transaction.check_values)
-            current.get_base_transaction().retry_values.update(transaction.retry_values)
+            current.check_values.update(transaction.check_values)
+            current.retry_values.update(transaction.retry_values)
         # If it's a nested transaction, it will have already modified our base
         # by virtue of using our base as its parent, so we don't need to do
         # anything else.
