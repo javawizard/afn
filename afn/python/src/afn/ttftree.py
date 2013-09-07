@@ -9,6 +9,10 @@ with stm.avl), which'll give the ability for, e.g., an ordered list to also
 function as a priority queue.
 """
 
+# Credit goes to http://maniagnosis.crsr.net/2010/11/finger-trees.html for
+# giving my brain just the right information it needed to finally understand
+# 2-3 finger trees 
+
 from collections import Sequence
 
 class Node(Sequence):
@@ -65,10 +69,9 @@ class Tree(object):
     # remove_last() -> Tree
     # add_last(item) -> Tree
     
-    # prepend(tree) -> Tree
     # append(tree) -> Tree
+    # prepend(tree) -> Tree
     pass
-
 
 class Empty(Tree):
     empty = True
@@ -90,6 +93,12 @@ class Empty(Tree):
     
     def add_last(self, item):
         return Single(item)
+    
+    def prepend(self, other):
+        return other
+    
+    def append(self, other):
+        return other
     
     def __repr__(self):
         return "Empty()"
@@ -118,6 +127,12 @@ class Single(Tree):
     
     def add_last(self, new_item):
         return Deep(Digit(self.item), Empty(), Digit(new_item))
+    
+    def prepend(self, other):
+        return other.add_last(self.item)
+    
+    def append(self, other):
+        return other.add_first(self.item)
     
     def __repr__(self):
         return "Single(%r)" % (self.item,)
@@ -178,6 +193,35 @@ class Deep(Tree):
         else:
             node = Node(self.right[0], self.right[1], self.right[2])
             return Deep(self.left, self.spine.add_last(node), Digit(self.right[3], new_item))
+    
+    def prepend(self, other):
+        return other.append(self)
+    
+    def append(self, other):
+        if not isinstance(other, Deep):
+            return other.prepend(self)
+        return Deep(self.left, self._fold_up(self, other), other.right)
+    
+    @staticmethod
+    def _fold_up(left_tree, right_tree):
+        middle_items = list(left_tree.right + right_tree.left)
+        spine = left_tree.spine
+        while middle_items:
+            # Could be optimized to not remove items from the front of a list,
+            # which is a bit slow; perhaps reverse middle_items and pop from
+            # the end of the list, or use a sliding index that we increment as
+            # we go and don't modify the list at all
+            if len(middle_items) == 2:
+                spine = spine.add_last(Node(middle_items[0], middle_items[1]))
+                del middle_items[0:2]
+            elif len(middle_items) == 4:
+                spine = spine.add_last(Node(middle_items[0], middle_items[1]))
+                spine = spine.add_last(Node(middle_items[2], middle_items[3]))
+                del middle_items[0:4]
+            else:
+                spine = spine.add_last(Node(middle_items[0], middle_items[1], middle_items[2]))
+                del middle_items[0:3]
+        return spine.append(right_tree)
     
     def __repr__(self):
         return "Deep(left=%r, spine=%r, right=%r)" % (self.left, self.spine, self.right)
