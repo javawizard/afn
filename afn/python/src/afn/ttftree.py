@@ -204,7 +204,7 @@ class Deep(Tree):
     
     @staticmethod
     def _fold_up(left_tree, right_tree):
-        middle_items = list(left_tree.right + right_tree.left)
+        middle_items = list(left_tree.right) + list(right_tree.left)
         spine = left_tree.spine
         while middle_items:
             # Could be optimized to not remove items from the front of a list,
@@ -221,7 +221,7 @@ class Deep(Tree):
             else:
                 spine = spine.add_last(Node(middle_items[0], middle_items[1], middle_items[2]))
                 del middle_items[0:3]
-        return spine.append(right_tree)
+        return spine.append(right_tree.spine)
     
     def __repr__(self):
         return "Deep(left=%r, spine=%r, right=%r)" % (self.left, self.spine, self.right)
