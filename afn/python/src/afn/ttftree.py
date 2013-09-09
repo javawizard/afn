@@ -26,6 +26,9 @@ class Measure(object):
         self.identity = identity
 
 
+MEASURE_ITEM_COUNT = Measure(lambda v: 1, lambda a, b: a + b, 0)
+
+
 def create_node_measure(measure):
     """
     Given a particular measure, return an identical measure that operates on
@@ -113,8 +116,8 @@ class Tree(object):
     pass
 
 
-def to_tree(sequence):
-    tree = Empty()
+def to_tree(measure, sequence):
+    tree = Empty(measure)
     for value in sequence:
         tree = tree.add_last(value)
     return tree
@@ -207,24 +210,24 @@ class Single(Tree):
         return "<Single: %r>" % (self.item,)
 
 
-def deep_left(maybe_left, spine, right):
+def deep_left(measure, maybe_left, spine, right):
     if not maybe_left:
         if spine.is_empty:
-            return to_tree(right)
+            return to_tree(measure, right)
         else:
-            return Deep(Digit(*spine.get_first()), spine.remove_first(), right)
+            return Deep(measure, Digit(measure, *spine.get_first()), spine.remove_first(), right)
     else:
-        return Deep(maybe_left, spine, right)
+        return Deep(measure, maybe_left, spine, right)
 
 
-def deep_right(left, spine, maybe_right):
+def deep_right(measure, left, spine, maybe_right):
     if not maybe_right:
         if spine.is_empty:
-            return to_tree(left)
+            return to_tree(measure, left)
         else:
-            return Deep(left, spine.remove_last(), Digit(*spine.get_last()))
+            return Deep(measure, left, spine.remove_last(), Digit(measure, *spine.get_last()))
     else:
-        return Deep(left, spine, maybe_right)
+        return Deep(measure, left, spine, maybe_right)
 
 
 class Deep(Tree):
@@ -335,14 +338,14 @@ class Deep(Tree):
         if predicate(left_annotation):
             # Split is in the left measure
             left_items, right_items = self.left.partition_digit(initial_annotation, predicate)
-            return to_tree(left_items), deep_left(right_items, self.spine, self.right)
+            return to_tree(self.measure, left_items), deep_left(self.measure, right_items, self.spine, self.right)
         elif predicate(spine_annotation):
             # Split is somewhere in the spine
             left_spine, right_spine = self.spine.partition(left_annotation, predicate)
-            return deep_right(self.left, left_spine, []), deep_left([], right_spine, self.right)
+            return deep_right(self.measure, self.left, left_spine, []), deep_left(self.measure, [], right_spine, self.right)
         else:
             left_items, right_items = self.right.partition_digit(spine_annotation, predicate)
-            return deep_right(self.left, self.spine, left_items), to_tree(right_items)
+            return deep_right(self.measure, self.left, self.spine, left_items), to_tree(self.measure, right_items)
     
     def __repr__(self):
         return "<Deep: left=%r, spine=%r, right=%r>" % (self.left, self.spine, self.right)

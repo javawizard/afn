@@ -1,0 +1,18 @@
+Library I've been writing (afn/ttftree.py) which implements functional 2-3 finger trees, which has worked out great so far except that now I'm having a bit of mental trouble with splits and I need to reason things out a bit.
+
+So, we need a function that constructs Deep instances, except that it can be called with lists instead of Digits and can accept empty lists.
+
+And it also isn't guaranteed to return a Deep instance.
+
+Hm, it seems somewhat easier to implement one variant of this function where the left digit is a list that might be empty, and another variant for the right list.
+
+So, the left one...
+
+If the left digit has no items, and the spine has no items, the right digit is turned into a tree simply by creating an Empty and appending to it, which I think I might put in a separate function.
+
+If the left digit has no items but the spine has some, an item is popped off of the spine and used as the left digit.
+
+If the left digit has items, a Deep instance is returned using the left, spine, and right values as passed.
+
+Then the variant for when the right side might be empty is identical.
+
