@@ -79,10 +79,12 @@ class Digit(Sequence):
         """
         split_point = 0
         while split_point < len(self):
-            if predicate(self.measure.operator(initial_annotation, self.measure.convert(self[split_point]))):
+            current_annotation = self.measure.operator(initial_annotation, self.measure.convert(self[split_point]))
+            if predicate(current_annotation):
                 break
             else:
                 split_point += 1
+                initial_annotation = current_annotation
         return self._values[:split_point], self._values[split_point:]
     
     def __getitem__(self, index):
@@ -217,7 +219,7 @@ def deep_left(measure, maybe_left, spine, right):
         else:
             return Deep(measure, Digit(measure, *spine.get_first()), spine.remove_first(), right)
     else:
-        return Deep(measure, maybe_left, spine, right)
+        return Deep(measure, Digit(measure, *maybe_left), spine, right)
 
 
 def deep_right(measure, left, spine, maybe_right):
@@ -227,7 +229,7 @@ def deep_right(measure, left, spine, maybe_right):
         else:
             return Deep(measure, left, spine.remove_last(), Digit(measure, *spine.get_last()))
     else:
-        return Deep(measure, left, spine, maybe_right)
+        return Deep(measure, left, spine, Digit(measure, *maybe_right))
 
 
 class Deep(Tree):
@@ -342,7 +344,14 @@ class Deep(Tree):
         elif predicate(spine_annotation):
             # Split is somewhere in the spine
             left_spine, right_spine = self.spine.partition(left_annotation, predicate)
-            return deep_right(self.measure, self.left, left_spine, []), deep_left(self.measure, [], right_spine, self.right)
+            # Rightmost node in right_spine is the one where the predicate
+            # became true (and note that right_spine will never be empty; if it
+            # were, the predicate wouldn't have become true on our spine at
+            # all), so we need to extract it and split it up.
+            split_node = right_spine.get_first()
+            right_spine = right_spine.remove_first()
+            before_digit, after_digit = Digit(self.measure, *split_node).partition_digit(self.measure.operator(left_annotation, left_spine.annotation), predicate)
+            return deep_right(self.measure, self.left, left_spine, before_digit), deep_left(self.measure, after_digit, right_spine, self.right)
         else:
             left_items, right_items = self.right.partition_digit(spine_annotation, predicate)
             return deep_right(self.measure, self.left, self.spine, left_items), to_tree(self.measure, right_items)
