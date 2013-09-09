@@ -67,6 +67,21 @@ class Digit(Sequence):
         self.measure = measure
         self.annotation = reduce(measure.operator, map(measure.convert, values))
     
+    def partition_digit(self, initial_annotation, predicate):
+        """
+        partition_digit(function) => ((...), (...))
+        
+        Note that the two return values are tuples, not Digits, as they may
+        need to be empty.
+        """
+        split_point = 0
+        while split_point < len(self):
+            if predicate(self.measure.operator(initial_annotation, self.measure.convert(self[split_point]))):
+                break
+            else:
+                split_point += 1
+        return self._values[:split_point], self._values[split_point:]
+    
     def __getitem__(self, index):
         if isinstance(index, slice):
             return Digit(self.measure, *self._values[index])
@@ -84,7 +99,7 @@ class Digit(Sequence):
 
 
 class Tree(object):
-    # empty -> bool
+    # is_empty -> bool
     
     # get_first() -> item
     # remove_first() -> Tree
@@ -97,11 +112,20 @@ class Tree(object):
     # prepend(tree) -> Tree
     pass
 
+
+def to_tree(sequence):
+    tree = Empty()
+    for value in sequence:
+        tree = tree.add_last(value)
+    return tree
+
+
 class Empty(Tree):
-    empty = True
+    is_empty = True
     
     def __init__(self, measure):
         self.measure = measure
+        self.annotation = measure.identity
     
     def get_first(self):
         raise ValueError
@@ -131,15 +155,19 @@ class Empty(Tree):
         if False:
             yield None
     
+    def partition(self, initial_annotation, predicate):
+        return self, self
+    
     def __repr__(self):
         return "<Empty>"
 
 
 class Single(Tree):
-    empty = False
+    is_empty = False
     
     def __init__(self, measure, item):
         self.measure = measure
+        self.annotation = measure.convert(item)
         self.item = item
     
     def get_first(self):
@@ -149,7 +177,7 @@ class Single(Tree):
         return Empty(self.measure)
     
     def add_first(self, new_item):
-        return Deep(self.measure, Digit(self.measure, new_item), Empty(self.measure), Digit(self.measure, self.item))
+        return Deep(self.measure, Digit(self.measure, new_item), Empty(create_node_measure(self.measure)), Digit(self.measure, self.item))
     
     def get_last(self):
         return self.item
@@ -158,7 +186,7 @@ class Single(Tree):
         return Empty(self.measure)
     
     def add_last(self, new_item):
-        return Deep(self.measure, Digit(self.measure, self.item), Empty(self.measure), Digit(self.measure, new_item))
+        return Deep(self.measure, Digit(self.measure, self.item), Empty(create_node_measure(self.measure)), Digit(self.measure, new_item))
     
     def prepend(self, other):
         return other.add_last(self.item)
@@ -169,15 +197,42 @@ class Single(Tree):
     def iterate_values(self):
         yield self.item
     
+    def partition(self, initial_annotation, predicate):
+        if predicate(self.measure.operator(initial_annotation, self.annotation)):
+            return Empty(self.measure), self
+        else:
+            return self, Empty(self.measure)
+    
     def __repr__(self):
         return "<Single: %r>" % (self.item,)
 
 
+def deep_left(maybe_left, spine, right):
+    if not maybe_left:
+        if spine.is_empty:
+            return to_tree(right)
+        else:
+            return Deep(Digit(*spine.get_first()), spine.remove_first(), right)
+    else:
+        return Deep(maybe_left, spine, right)
+
+
+def deep_right(left, spine, maybe_right):
+    if not maybe_right:
+        if spine.is_empty:
+            return to_tree(left)
+        else:
+            return Deep(left, spine.remove_last(), Digit(*spine.get_last()))
+    else:
+        return Deep(left, spine, maybe_right)
+
+
 class Deep(Tree):
-    empty = False
+    is_empty = False
     
     def __init__(self, measure, left, spine, right):
         self.measure = measure
+        self.annotation = measure.operator(measure.operator(left.annotation, spine.annotation), right.annotation)
         self.left = left
         self.spine = spine
         self.right = right
@@ -188,7 +243,7 @@ class Deep(Tree):
     def remove_first(self):
         if len(self.left) > 1:
             return Deep(self.measure, self.left[1:], self.spine, self.right)
-        elif not self.spine.empty:
+        elif not self.spine.is_empty:
             return Deep(self.measure, Digit(self.measure, *self.spine.get_first()), self.spine.remove_first(), self.right)
         elif len(self.right) == 1:
             return Single(self.measure, self.right[0])
@@ -212,7 +267,7 @@ class Deep(Tree):
     def remove_last(self):
         if len(self.right) > 1:
             return Deep(self.measure, self.left, self.spine, self.right[:-1])
-        elif not self.spine.empty:
+        elif not self.spine.is_empty:
             return Deep(self.measure, self.left, self.spine.remove_last(), Digit(self.measure, *self.spine.get_last()))
         elif len(self.left) == 1:
             return Single(self.measure, self.left[0])
@@ -234,12 +289,17 @@ class Deep(Tree):
         return other.append(self)
     
     def append(self, other):
+        """
+        Concatenate the specified tree onto the end of this tree.
+        
+        Time complexity: O(log min(m, n)), i.e. logarithmically in the size of
+        the smaller of self and other.
+        """
         if not isinstance(other, Deep):
             return other.prepend(self)
         return Deep(self.measure, self.left, self._fold_up(self, other), other.right)
     
-    @staticmethod
-    def _fold_up(left_tree, right_tree):
+    def _fold_up(self, left_tree, right_tree):
         middle_items = list(left_tree.right) + list(right_tree.left)
         spine = left_tree.spine
         while middle_items:
@@ -267,6 +327,22 @@ class Deep(Tree):
                 yield v
         for v in self.right:
             yield v
+    
+    def partition(self, initial_annotation, predicate):
+        left_annotation = self.measure.operator(initial_annotation, self.left.annotation)
+        spine_annotation = self.measure.operator(left_annotation, self.spine.annotation)
+        # right_annotation = self.measure.operator(spine_annotation, self.right.annotation)
+        if predicate(left_annotation):
+            # Split is in the left measure
+            left_items, right_items = self.left.partition_digit(initial_annotation, predicate)
+            return to_tree(left_items), deep_left(right_items, self.spine, self.right)
+        elif predicate(spine_annotation):
+            # Split is somewhere in the spine
+            left_spine, right_spine = self.spine.partition(left_annotation, predicate)
+            return deep_right(self.left, left_spine, []), deep_left([], right_spine, self.right)
+        else:
+            left_items, right_items = self.right.partition_digit(spine_annotation, predicate)
+            return deep_right(self.left, self.spine, left_items), to_tree(right_items)
     
     def __repr__(self):
         return "<Deep: left=%r, spine=%r, right=%r>" % (self.left, self.spine, self.right)
