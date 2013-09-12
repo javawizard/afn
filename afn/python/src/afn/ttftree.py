@@ -239,7 +239,23 @@ class Tree(object):
     
     # append(tree) -> Tree
     # prepend(tree) -> Tree
-    pass
+    def __add__(self, other):
+        """
+        A wrapper that simply returns self.append(other) unless other is not an
+        instance of Tree, in which case  NotImplemented is returned.
+        """
+        if not isinstance(other, Tree):
+            return NotImplemented
+        return self.append(other)
+    
+    def __radd__(self, other):
+        """
+        A wrapper that simply returns self.prepend(other) unless other is not
+        an instance of Tree, in which case NotImplemented is returned.
+        """
+        if not isinstance(other, Tree):
+            return NotImplemented
+        return self.prepend(other)
 
 
 def to_tree(measure, sequence):
