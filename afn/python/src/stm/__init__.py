@@ -62,8 +62,10 @@ class _State(_Local):
     def with_current(self, transaction):
         old = self.current
         self.current = transaction
-        yield
-        self.current = old
+        try:
+            yield
+        finally:
+            self.current = old
 
 _stm_state = _State()
 # Lock that we lock on while committing transactions
