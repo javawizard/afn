@@ -584,8 +584,8 @@ class Deep(Tree):
         from one set of ordered values to another that maintains the relative
         order of the items given to it. In other words, the predicate function
         is monotonic if, when called on the monoidal value corresponding to
-        every item in this tree, it returned False for the first m of them and
-        then switched to returning True for the remanining n items.)
+        every item in this tree, it returns False for the first m of them and
+        then switches to returning True for the remanining n items.)
         
         See MeasureItemCount's docstring for an example of how to use this
         function.
