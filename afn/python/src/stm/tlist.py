@@ -59,7 +59,7 @@ class TList(MutableSequence):
     # of the operations it mentions under O(log n) actually run in amortized
     # O(log min(n, size - n)) time (which is faster than O(log n)), thus giving
     # rise to amortized O(1) time when used on values at either end of the list
-    # without any special casing.
+    # without any special casing needed.
     def __init__(self, initial_values=[]):
         self.var = stm.TVar(ttftree.Empty(ttftree.MEASURE_ITEM_COUNT))
         if initial_values:
