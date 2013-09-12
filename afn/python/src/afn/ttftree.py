@@ -239,6 +239,13 @@ class Tree(object):
     
     # append(tree) -> Tree
     # prepend(tree) -> Tree
+    def partition(self, predicate):
+        """
+        Convenience function that simply returns
+        self.partition_with(predicate, self.measure.identity).
+        """
+        return self.partition_with(predicate, self.measure.identity)
+    
     def __add__(self, other):
         """
         A wrapper that simply returns self.append(other) unless other is not an
@@ -311,7 +318,7 @@ class Empty(Tree):
         if False:
             yield None
     
-    def partition(self, initial_annotation, predicate):
+    def partition_with(self, predicate, initial_annotation):
         return self, self
     
     def __repr__(self):
@@ -358,7 +365,7 @@ class Single(Tree):
     def iterate_values(self):
         yield self.item
     
-    def partition(self, initial_annotation, predicate):
+    def partition_with(self, predicate, initial_annotation):
         if predicate(self.measure.operator(initial_annotation, self.annotation)):
             return Empty(self.measure), self
         else:
@@ -580,7 +587,7 @@ class Deep(Tree):
         # Then append the right spine and we're done!
         return spine.append(right_tree.spine)
     
-    def partition(self, initial_annotation, predicate):
+    def partition_with(self, predicate, initial_annotation):
         """
         Partitions this tree around the specified monotonic predicate function.
         predicate is a function that takes a value in the monoid under which
@@ -611,7 +618,10 @@ class Deep(Tree):
         See MeasureItemCount's docstring for an example of how to use this
         function.
         
-        Time complexity: O(log n).
+        Time complexity: O(log min(m, n)), where m and n are the sizes of the
+        resulting trees. As a result, splitting a tree with a predicate such
+        that the left or right result tree has only one item (or zero items)
+        runs in O(1) time. 
         """
         # Compute our left digit's annotation with the initial annotation
         # factored in
@@ -630,7 +640,7 @@ class Deep(Tree):
             # Split is somewhere in the spine. Partition the spine itself,
             # which will result in the node in which the split occurs being the
             # first node in the right half of the partition.
-            left_spine, right_spine = self.spine.partition(left_annotation, predicate)
+            left_spine, right_spine = self.spine.partition_with(predicate, left_annotation)
             # Rightmost node in right_spine is the one where the predicate
             # became true (and note that right_spine will never be empty; if it
             # were, the predicate wouldn't have become true on our spine at
