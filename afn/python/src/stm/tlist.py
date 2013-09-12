@@ -40,6 +40,11 @@ class TList(MutableSequence):
         | the two lists    |                                                  |
         | involved         |                                                  |
         +------------------+--------------------------------------------------+
+        | O(log r) where r | Slicing a list, e.g.:                            |
+        | is the size of   |     list[m:n]                                    |
+        | the returned     |                                                  |
+        | list             |                                                  |
+        +------------------+--------------------------------------------------+
     
     One nice property of using a copy-on-write tree is iteration: the iterator
     returned from iter(tlist) is a snapshot of the list at that point in time.
@@ -50,6 +55,11 @@ class TList(MutableSequence):
     exception of __str__/__repr__, which, for the sake of convenience,
     wrap themselves in a call to stm.atomically() internally.
     """
+    # Note: the performance table above is actually somewhat pessimistic: all
+    # of the operations it mentions under O(log n) actually run in amortized
+    # O(log min(n, size - n)) time (which is faster than O(log n)), thus giving
+    # rise to amortized O(1) time when used on values at either end of the list
+    # without any special casing.
     def __init__(self, initial_values=[]):
         self.var = stm.TVar(ttftree.Empty(ttftree.MEASURE_ITEM_COUNT))
         if initial_values:
