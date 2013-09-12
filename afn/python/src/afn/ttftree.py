@@ -13,17 +13,25 @@ function as a priority queue.
 # giving my brain just the right information it needed to finally understand
 # 2-3 finger trees 
 
-# FIXME: At points where we create a new spine, we need its measure to be
-# create_node_measure(self.measure) as it'll contain Nodes of whatever we
-# contain
-
 from collections import Sequence
+
+class TTFTreeError(Exception):
+    pass
+
+
+class TreeIsEmpty(TTFTreeError):
+    def __str__(self):
+        return "This tree is empty"
+
 
 class Measure(object):
     def __init__(self, convert, operator, identity):
         self.convert = convert
         self.operator = operator
         self.identity = identity
+    
+    def __repr__(self):
+        return "<Measure: convert=%r, operator=%r, identity=%r>" % (self.convert, self.operator, self.identity)
 
 
 MEASURE_ITEM_COUNT = Measure(lambda v: 1, lambda a, b: a + b, 0)
@@ -107,10 +115,10 @@ class Tree(object):
     # is_empty -> bool
     
     # get_first() -> item
-    # remove_first() -> Tree
+    # without_first() -> Tree
     # add_first(item) -> Tree
     # get_last() -> item
-    # remove_last() -> Tree
+    # without_last() -> Tree
     # add_last(item) -> Tree
     
     # append(tree) -> Tree
@@ -133,19 +141,19 @@ class Empty(Tree):
         self.annotation = measure.identity
     
     def get_first(self):
-        raise ValueError
+        raise TreeIsEmpty
     
-    def remove_first(self):
-        raise ValueError
+    def without_first(self):
+        raise TreeIsEmpty
     
     def add_first(self, item):
         return Single(self.measure, item)
     
     def get_last(self):
-        raise ValueError
+        raise TreeIsEmpty
     
-    def remove_last(self):
-        raise ValueError
+    def without_last(self):
+        raise TreeIsEmpty
     
     def add_last(self, item):
         return Single(self.measure, item)
@@ -178,7 +186,7 @@ class Single(Tree):
     def get_first(self):
         return self.item
     
-    def remove_first(self):
+    def without_first(self):
         return Empty(self.measure)
     
     def add_first(self, new_item):
@@ -187,7 +195,7 @@ class Single(Tree):
     def get_last(self):
         return self.item
     
-    def remove_last(self):
+    def without_last(self):
         return Empty(self.measure)
     
     def add_last(self, new_item):
@@ -217,7 +225,7 @@ def deep_left(measure, maybe_left, spine, right):
         if spine.is_empty:
             return to_tree(measure, right)
         else:
-            return Deep(measure, Digit(measure, *spine.get_first()), spine.remove_first(), right)
+            return Deep(measure, Digit(measure, *spine.get_first()), spine.without_first(), right)
     else:
         return Deep(measure, Digit(measure, *maybe_left), spine, right)
 
@@ -227,7 +235,7 @@ def deep_right(measure, left, spine, maybe_right):
         if spine.is_empty:
             return to_tree(measure, left)
         else:
-            return Deep(measure, left, spine.remove_last(), Digit(measure, *spine.get_last()))
+            return Deep(measure, left, spine.without_last(), Digit(measure, *spine.get_last()))
     else:
         return Deep(measure, left, spine, Digit(measure, *maybe_right))
 
@@ -245,11 +253,11 @@ class Deep(Tree):
     def get_first(self):
         return self.left[0]
     
-    def remove_first(self):
+    def without_first(self):
         if len(self.left) > 1:
             return Deep(self.measure, self.left[1:], self.spine, self.right)
         elif not self.spine.is_empty:
-            return Deep(self.measure, Digit(self.measure, *self.spine.get_first()), self.spine.remove_first(), self.right)
+            return Deep(self.measure, Digit(self.measure, *self.spine.get_first()), self.spine.without_first(), self.right)
         elif len(self.right) == 1:
             return Single(self.measure, self.right[0])
         elif len(self.right) == 2:
@@ -269,11 +277,11 @@ class Deep(Tree):
     def get_last(self):
         return self.right[-1]
     
-    def remove_last(self):
+    def without_last(self):
         if len(self.right) > 1:
             return Deep(self.measure, self.left, self.spine, self.right[:-1])
         elif not self.spine.is_empty:
-            return Deep(self.measure, self.left, self.spine.remove_last(), Digit(self.measure, *self.spine.get_last()))
+            return Deep(self.measure, self.left, self.spine.without_last(), Digit(self.measure, *self.spine.get_last()))
         elif len(self.left) == 1:
             return Single(self.measure, self.left[0])
         elif len(self.left) == 2:
@@ -349,7 +357,7 @@ class Deep(Tree):
             # were, the predicate wouldn't have become true on our spine at
             # all), so we need to extract it and split it up.
             split_node = right_spine.get_first()
-            right_spine = right_spine.remove_first()
+            right_spine = right_spine.without_first()
             before_digit, after_digit = Digit(self.measure, *split_node).partition_digit(self.measure.operator(left_annotation, left_spine.annotation), predicate)
             return deep_right(self.measure, self.left, left_spine, before_digit), deep_left(self.measure, after_digit, right_spine, self.right)
         else:
