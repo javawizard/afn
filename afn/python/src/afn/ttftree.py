@@ -546,13 +546,9 @@ class Deep(Tree):
             # which is a bit slow; perhaps reverse middle_items and pop from
             # the end of the list, or use a sliding index that we increment as
             # we go and don't modify the list at all
-            if len(middle_items) == 2:
+            if len(middle_items) == 2 or len(middle_items) == 4:
                 spine = spine.add_last(Node(self.measure, middle_items[0], middle_items[1]))
                 del middle_items[0:2]
-            elif len(middle_items) == 4:
-                spine = spine.add_last(Node(self.measure, middle_items[0], middle_items[1]))
-                spine = spine.add_last(Node(self.measure, middle_items[2], middle_items[3]))
-                del middle_items[0:4]
             else:
                 spine = spine.add_last(Node(self.measure, middle_items[0], middle_items[1], middle_items[2]))
                 del middle_items[0:3]
@@ -585,7 +581,7 @@ class Deep(Tree):
         order of the items given to it. In other words, the predicate function
         is monotonic if, when called on the monoidal value corresponding to
         every item in this tree, it returns False for the first m of them and
-        then switches to returning True for the remanining n items.)
+        then switches to returning True for the remaining n items.)
         
         See MeasureItemCount's docstring for an example of how to use this
         function.
