@@ -117,6 +117,10 @@ class MeasureItemCount(Measure):
         mid, right = some_tree.partition(lambda v: v > n)
         left, mid = mid.partition(lambda v: v > m)
         some_tree = left.append(right)
+    
+    A singleton instance of this class is stored in ttftree.MEASURE_ITEM_COUNT.
+    You'll typically want to use that constant instead of constructing a whole
+    new instance of MeasureItemCount.
     """
     def __init__(self):
         Measure.__init__(self)
@@ -514,13 +518,18 @@ class Deep(Tree):
     def prepend(self, other):
         """
         Returns a new tree representing the specified tree's items followed by
-        this tree's items. This is just short for other.append(self). 
+        this tree's items. This is just short for other.append(self).
         """
         return other.append(self)
     
     def append(self, other):
         """
         Concatenate the specified tree onto the end of this tree.
+        
+        Note that this tree and the other tree must use the same measure. If
+        they don't, the resulting tree will pick one of their measures to use
+        arbitrarily, which will likely cause pain and headaches if the two
+        measures aren't designed to work with values produced by each other.
         
         Time complexity: amortized O(log min(m, n)), where m and n are the
         number of items stored in self and other, respectively. As a result,
