@@ -20,11 +20,25 @@ class TTFTreeError(Exception):
 
 
 class TreeIsEmpty(TTFTreeError):
+    """
+    Exception raised from within Empty when things like get_first or
+    without_first are called on it.
+    """
     def __str__(self):
         return "This tree is empty"
 
 
 class Measure(object):
+    """
+    An object used to compute a tree's annotation.
+    
+    Measures consist of a function capable of converting values in a tree to
+    values in a particular monoid (the convert attribute of Measure objects)
+    and the monoid's binary operation (the operator attribute) and identity
+    element (the identity attribute). The value of any given tree is the
+    monoidal sum of the values produced by the conversion function for all
+    values contained within the tree.
+    """
     def __init__(self, convert, operator, identity):
         self.convert = convert
         self.operator = operator
@@ -366,6 +380,22 @@ class Deep(Tree):
     
     def __repr__(self):
         return "<Deep: left=%r, spine=%r, right=%r>" % (self.left, self.spine, self.right)
+
+
+def value_iterator(tree):
+    """
+    A generator function that yields each value from the given tree in
+    succession.
+    
+    Each item is yielded in amortized constant time.
+    
+    The returned iterator only holds references to values that have yet to be
+    produced; values earlier on in the tree will not be held on to, and as such
+    can be garbage collected if nothing else holds references to them.
+    """
+    while not tree.is_empty:
+        yield tree.get_first()
+        tree = tree.without_first()
     
 
 
