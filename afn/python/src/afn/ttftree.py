@@ -39,24 +39,111 @@ class Measure(object):
     monoidal sum of the values produced by the conversion function for all
     values contained within the tree.
     """
+    def convert(self, value):
+        """
+        Converts a value stored in a tree to a value in the monoid on which
+        this measure operates. This will be called for each value added to a
+        tree using this measure, and only values returned from this function
+        (as well as self.identity) will be passed to self.operator().
+        
+        The default implementation raises NotImplementedError.
+        """
+        raise NotImplementedError
+    
+    def operator(self, a, b):
+        """
+        Take two values returned from self.convert() (or possibly
+        self.identity) and combine them according to whatever logic this
+        measure deems appropriate.
+        
+        This is the sum operator of the monoid under which this measure
+        operates. As such, when passed self.identity as either of its
+        arguments, it must return the other argument without any changes.
+        
+        The default implementation raises NotImplementedError.
+        """
+        raise NotImplementedError
+    
+
+class CustomMeasure(Measure):
+    """
+    A class for creating custom measures when one would rather just pass in the
+    convert, operator, and identity functions instead of creating a subclass of
+    Measure.
+    """
     def __init__(self, convert, operator, identity):
         self.convert = convert
         self.operator = operator
         self.identity = identity
     
     def __repr__(self):
-        return "<Measure: convert=%r, operator=%r, identity=%r>" % (self.convert, self.operator, self.identity)
+        return "<CustomMeasure: convert=%r, operator=%r, identity=%r>" % (self.convert, self.operator, self.identity)
 
 
-MEASURE_ITEM_COUNT = Measure(lambda v: 1, lambda a, b: a + b, 0)
-
-
-def create_node_measure(measure):
+class MeasureItemCount(Measure):
     """
-    Given a particular measure, return an identical measure that operates on
-    Node objects containing values accepted by the given measure.
+    A measure that measures the number of items contained within a given tree.
+    
+    Trees annotated with such a measure can be asked for the number of items
+    that they contain in O(1) time by simply referencing the tree's annotation:
+    
+        tree_size = some_tree.annotation
+    
+    They can also be asked to produce their nth item in O(log n) time:
+    
+        left, right = some_tree.partition(lambda v: v > n)
+        nth_value = right.get_first()
+    
+    A value can be inserted just before their nth item in O(log n) time:
+    
+        left, right = some_tree.partition(lambda v: v > n)
+        some_tree = left.add_last(value_to_insert).append(right)
+    
+    The value at the nth position in the tree can be removed in O(log n) time:
+    
+        left, right = some_tree.partition(lambda v: v > n)
+        some_tree = left.append(right.without_first())
+    
+    A subtree consisting of the mth (inclusive) through nth (exclusive) values
+    can be constructed in O(log n) time:
+    
+        mid, right = some_tree.partition(lambda v: v > n)
+        left, mid = mid.partition(lambda v: v > m)
+        subtree = mid
+    
+    And finally, the mth (inclusive) through nth (exclusive) values can be
+    removed in O(log n) time:
+    
+        mid, right = some_tree.partition(lambda v: v > n)
+        left, mid = mid.partition(lambda v: v > m)
+        some_tree = left.append(right)
     """
-    return Measure(lambda node: node.annotation, measure.operator, measure.identity)
+    def __init__(self):
+        Measure.__init__(self)
+        # Optimization: avoid allocating new memory for bound method objects
+        # every time one of our functions is called
+        self.convert = self.convert
+        self.operator = self.operator
+        self.identity = 0
+    
+    def convert(self, value):
+        return 1
+    
+    def operator(self, a, b):
+        return a + b
+    
+
+class _NodeMeasure(Measure):
+    def __init__(self, measure):
+        self.convert = self.convert
+        self.operator = measure.operator
+        self.identity = measure.identity
+    
+    def convert(self, node):
+        return node.annotation
+
+
+MEASURE_ITEM_COUNT = MeasureItemCount()
 
 
 class Node(Sequence):
@@ -126,6 +213,17 @@ class Digit(Sequence):
 
 
 class Tree(object):
+    """
+    A class representing a 2-3 finger tree.
+    
+    Tree is an abstract class, so it can't itself be instantiated. Instead,
+    you'll want to construct an instance of Empty, one of the three subclasses
+    of Tree needed for the 2-3 finger tree algorithm (the other two are Single
+    and Deep), then add items to it as necessary.
+    
+    A convenience function, to_tree, is provided to convert any Python sequence
+    into a Tree instance. 
+    """
     # is_empty -> bool
     
     # get_first() -> item
@@ -141,6 +239,14 @@ class Tree(object):
 
 
 def to_tree(measure, sequence):
+    """
+    Converts a given Python sequence (list, iterator, or anything else that
+    can be the target of a for loop) into a Tree instance.
+    
+    This just creates an Empty instance and adds items to it with its add_last
+    function, taking advantage of the fact that add_last runs in amortized
+    O(1) time. The time complexity of to_tree is therefore O(n).
+    """
     tree = Empty(measure)
     for value in sequence:
         tree = tree.add_last(value)
@@ -148,6 +254,9 @@ def to_tree(measure, sequence):
 
 
 class Empty(Tree):
+    """
+    A subclass of Tree representing the empty tree.
+    """
     is_empty = True
     
     def __init__(self, measure):
@@ -190,6 +299,11 @@ class Empty(Tree):
 
 
 class Single(Tree):
+    """
+    A subclass of Tree representing trees containing a single value.
+    
+    Instances of Single simply store a reference to the item passed to them.
+    """
     is_empty = False
     
     def __init__(self, measure, item):
@@ -204,7 +318,7 @@ class Single(Tree):
         return Empty(self.measure)
     
     def add_first(self, new_item):
-        return Deep(self.measure, Digit(self.measure, new_item), Empty(create_node_measure(self.measure)), Digit(self.measure, self.item))
+        return Deep(self.measure, Digit(self.measure, new_item), Empty(_NodeMeasure(self.measure)), Digit(self.measure, self.item))
     
     def get_last(self):
         return self.item
@@ -213,7 +327,7 @@ class Single(Tree):
         return Empty(self.measure)
     
     def add_last(self, new_item):
-        return Deep(self.measure, Digit(self.measure, self.item), Empty(create_node_measure(self.measure)), Digit(self.measure, new_item))
+        return Deep(self.measure, Digit(self.measure, self.item), Empty(_NodeMeasure(self.measure)), Digit(self.measure, new_item))
     
     def prepend(self, other):
         return other.add_last(self.item)
@@ -235,6 +349,12 @@ class Single(Tree):
 
 
 def deep_left(measure, maybe_left, spine, right):
+    """
+    Same as Deep(measure, maybe_left, spine, right), except that maybe_left can
+    be a list and is permitted to contain no items at all. In such a case, a
+    node will be popped off of the spine and used as the left digit, with
+    to_tree(right) being returned if the spine is actually empty.
+    """
     if not maybe_left:
         if spine.is_empty:
             return to_tree(measure, right)
@@ -245,6 +365,10 @@ def deep_left(measure, maybe_left, spine, right):
 
 
 def deep_right(measure, left, spine, maybe_right):
+    """
+    Symmetrical operation to deep_left that allows its right digit to be a list
+    that's potentially empty.
+    """
     if not maybe_right:
         if spine.is_empty:
             return to_tree(measure, left)
@@ -255,9 +379,37 @@ def deep_right(measure, left, spine, maybe_right):
 
 
 class Deep(Tree):
+    """
+    A subclass of Tree representing trees containing two or more values.
+    
+    Deep instances store two buffers (instances of Digit) representing their
+    first and last 1, 2, 3, or 4 values, and another Tree instance storing
+    groups (specifically Node instances) of all of the values in between.
+    
+    Values added to a Deep instance with add_first and add_last are initially
+    stored in their respective Digit; when the digit becomes full, items are
+    popped off of it and turned into a Node, then pushed onto the nested tree.
+    This is where 2-3 finger trees get their amortized constant time complexity
+    for deque operations: because of the Digit buffers at either end and
+    because Nodes can contain only 2 or 3 items, a call to add_first or
+    add_last can descend into the nested tree at most every other call, and by
+    extension can only descend one more level every /fourth/ call, and so on.
+    
+    Removal is accomplished the same way: if the Digit buffer on the side from
+    which an item is to be removed has only one item, a Node instance is popped
+    off of the nested tree and expanded into the Digit buffer. Thus the same
+    amortized constant time performance guarantees apply to without_first and
+    without_last as well.
+    """
     is_empty = False
     
     def __init__(self, measure, left, spine, right):
+        """
+        Creates a Deep instance using the specified measure (an instance of
+        Measure), left buffer (an instance of Digit), spine (or nested tree; an
+        instance of Tree whose values are Node instances), and right buffer
+        (also an instance of Digit).
+        """
         self.measure = measure
         self.annotation = measure.operator(measure.operator(left.annotation, spine.annotation), right.annotation)
         self.left = left
@@ -265,47 +417,94 @@ class Deep(Tree):
         self.right = right
     
     def get_first(self):
+        """
+        Returns this tree's first value.
+        
+        Time complexity: O(1).
+        """
         return self.left[0]
     
     def without_first(self):
+        """
+        Returns a new Tree instance representing this tree with its first item
+        removed.
+        
+        Time complexity: amortized O(1).
+        """
+        # If we have more than one value in the left digit, just return a tree
+        # with the leftmost value in the digit removed.
         if len(self.left) > 1:
             return Deep(self.measure, self.left[1:], self.spine, self.right)
+        # If we only have one value left but the spine isn't empty, overwrite
+        # the digit with its leftmost value (thereby dropping the single item
+        # contained within the digit).
         elif not self.spine.is_empty:
             return Deep(self.measure, Digit(self.measure, *self.spine.get_first()), self.spine.without_first(), self.right)
+        # If the spine's empty and the right digit only has one item, return a
+        # Single instance containing that item.
         elif len(self.right) == 1:
             return Single(self.measure, self.right[0])
-        elif len(self.right) == 2:
-            return Deep(self.measure, self.right[0:1], self.spine, self.right[1:2])
-        elif len(self.right) == 3:
-            return Deep(self.measure, self.right[0:2], self.spine, self.right[2:3])
-        elif len(self.right) == 4:
-            return Deep(self.measure, self.right[0:2], self.spine, self.right[2:4])
+        # If the spine's empty but the right digit contains two or more items,
+        # move its first item into the leftmost digit, dropping the single item
+        # that was already there.
+        else:
+            return Deep(self.measure, self.right[0:1], self.spine, self.right[1:])
     
     def add_first(self, new_item):
+        """
+        Returns a new Tree instance representing this tree with the specified
+        item at the beginning.
+        
+        Time complexity: amortized O(1).
+        """
+        # If we have less than four items in our leftmost digit, just add this
+        # item to it.
         if len(self.left) < 4:
             return Deep(self.measure, Digit(self.measure, new_item) + self.left, self.spine, self.right)
+        # Otherwise, pop three items off of the digit and shove a Node
+        # containing them onto our spine, then add this item. TODO: It'd
+        # probably be possible to get rid of the second line of this else
+        # statement by having the first line be enclosed in an if statement
+        # and have the bit that appends to the digit be outside of the if
+        # statement.
         else:
             node = Node(self.measure, self.left[1], self.left[2], self.left[3])
             return Deep(self.measure, Digit(self.measure, new_item, self.left[0]), self.spine.add_first(node), self.right)
     
+    # get_last, without_last, and add_last are symmetrical to get_first,
+    # without_first, and add_first.
+    
     def get_last(self):
+        """
+        Returns this tree's last value.
+        
+        Time complexity: O(1).
+        """
         return self.right[-1]
     
     def without_last(self):
+        """
+        Returns a new Tree instance representing this tree with its last item
+        removed.
+        
+        Time complexity: amortized O(1).
+        """
         if len(self.right) > 1:
             return Deep(self.measure, self.left, self.spine, self.right[:-1])
         elif not self.spine.is_empty:
             return Deep(self.measure, self.left, self.spine.without_last(), Digit(self.measure, *self.spine.get_last()))
         elif len(self.left) == 1:
             return Single(self.measure, self.left[0])
-        elif len(self.left) == 2:
-            return Deep(self.measure, self.left[0:1], self.spine, self.left[1:2])
-        elif len(self.left) == 3:
-            return Deep(self.measure, self.left[0:1], self.spine, self.left[1:3])
-        elif len(self.left) == 4:
-            return Deep(self.measure, self.left[0:2], self.spine, self.left[2:4])
+        else:
+            return Deep(self.measure, self.left[0:-1], self.spine, self.left[-1:])
     
     def add_last(self, new_item):
+        """
+        Returns a new Tree instance representing this tree with the specified
+        item at the end.
+        
+        Time complexity: amortized O(1).
+        """
         if len(self.right) < 4:
             return Deep(self.measure, self.left, self.spine, self.right + Digit(self.measure, new_item))
         else:
@@ -313,22 +512,35 @@ class Deep(Tree):
             return Deep(self.measure, self.left, self.spine.add_last(node), Digit(self.measure, self.right[3], new_item))
     
     def prepend(self, other):
+        """
+        Returns a new tree representing the specified tree's items followed by
+        this tree's items. This is just short for other.append(self). 
+        """
         return other.append(self)
     
     def append(self, other):
         """
         Concatenate the specified tree onto the end of this tree.
         
-        Time complexity: O(log min(m, n)), i.e. logarithmically in the size of
-        the smaller of self and other.
+        Time complexity: amortized O(log min(m, n)), where m and n are the
+        number of items stored in self and other, respectively. As a result,
+        appending a tree of length 1 to another tree runs in amortized O(1)
+        time.
         """
         if not isinstance(other, Deep):
             return other.prepend(self)
+        # Use our left digit and the specified tree's right digit, and use
+        # self._fold_up to merge the two other digits into our spine.
         return Deep(self.measure, self.left, self._fold_up(self, other), other.right)
     
     def _fold_up(self, left_tree, right_tree):
+        # Build a list of the left tree's right digit's items and the right
+        # tree's left digit's items. There will be at least 2 and at most 8 of
+        # these items.
         middle_items = list(left_tree.right) + list(right_tree.left)
         spine = left_tree.spine
+        # Then iterate until we're out of items, pushing Nodes of 2 or 3 items
+        # onto the former left spine.
         while middle_items:
             # Could be optimized to not remove items from the front of a list,
             # which is a bit slow; perhaps reverse middle_items and pop from
@@ -344,37 +556,75 @@ class Deep(Tree):
             else:
                 spine = spine.add_last(Node(self.measure, middle_items[0], middle_items[1], middle_items[2]))
                 del middle_items[0:3]
+        # Then append the right spine and we're done!
         return spine.append(right_tree.spine)
     
-    def iterate_values(self):
-        for v in self.left:
-            yield v
-        for node in self.spine.iterate_values():
-            for v in node:
-                yield v
-        for v in self.right:
-            yield v
-    
     def partition(self, initial_annotation, predicate):
+        """
+        Partitions this tree around the specified monotonic predicate function.
+        predicate is a function that takes a value in the monoid under which
+        this tree's measure operates (i.e. a value returned from
+        self.measure.convert(...)) and returns False or True.
+        initial_annotation is a value to be combined (with
+        self.measure.operator) with items before passing them to the predicate.
+        
+        The return value will be a tuple (left, right), where left is a tree
+        containing the items just before the predicate transitioned from False
+        to True and right is a tree containing the items after said transition.
+        If the predicate returns False or True for every value it's passed,
+        then right or left, respectively, will be empty.
+        
+        Note that the predicate need not necessarily be monotonic, but if it
+        isn't, the particular False -> True transition on which the tree will
+        be split is arbitrary. A monotonic predicate will give rise to exactly
+        one such transition, so the location of the split will be
+        deterministic.
+        
+        (For those unfamiliar with the term, a monotonic function is a function
+        from one set of ordered values to another that maintains the relative
+        order of the items given to it. In other words, the predicate function
+        is monotonic if, when called on the monoidal value corresponding to
+        every item in this tree, it returned False for the first m of them and
+        then switched to returning True for the remanining n items.)
+        
+        See MeasureItemCount's docstring for an example of how to use this
+        function.
+        
+        Time complexity: O(log n).
+        """
+        # Compute our left digit's annotation with the initial annotation
+        # factored in
         left_annotation = self.measure.operator(initial_annotation, self.left.annotation)
+        # Do the same for the spine's annotation, tracking it relative to the
+        # left digit's annotation
         spine_annotation = self.measure.operator(left_annotation, self.spine.annotation)
-        # right_annotation = self.measure.operator(spine_annotation, self.right.annotation)
+        # Then see if the split happens in our left digit
         if predicate(left_annotation):
-            # Split is in the left measure
+            # Split is in the left digit. Partition the digit and return a tree
+            # containing the first half of the digit and a tree combining the
+            # last half of the digit and our spine and right digit.
             left_items, right_items = self.left.partition_digit(initial_annotation, predicate)
             return to_tree(self.measure, left_items), deep_left(self.measure, right_items, self.spine, self.right)
         elif predicate(spine_annotation):
-            # Split is somewhere in the spine
+            # Split is somewhere in the spine. Partition the spine itself,
+            # which will result in the node in which the split occurs being the
+            # first node in the right half of the partition.
             left_spine, right_spine = self.spine.partition(left_annotation, predicate)
             # Rightmost node in right_spine is the one where the predicate
             # became true (and note that right_spine will never be empty; if it
             # were, the predicate wouldn't have become true on our spine at
-            # all), so we need to extract it and split it up.
+            # all), so we need to extract it...
             split_node = right_spine.get_first()
             right_spine = right_spine.without_first()
+            # ...and then split it up. We use an intermediate Digit just for
+            # convenience so that I don't have to write the split logic into
+            # the Node class as well.
             before_digit, after_digit = Digit(self.measure, *split_node).partition_digit(self.measure.operator(left_annotation, left_spine.annotation), predicate)
+            # Then we return two new trees constructed from the two halves of the split.
             return deep_right(self.measure, self.left, left_spine, before_digit), deep_left(self.measure, after_digit, right_spine, self.right)
         else:
+            # Split is in the right digit. Do exactly what we did when the
+            # split was in the left digit.
             left_items, right_items = self.right.partition_digit(spine_annotation, predicate)
             return deep_right(self.measure, self.left, self.spine, left_items), to_tree(self.measure, right_items)
     
@@ -387,7 +637,8 @@ def value_iterator(tree):
     A generator function that yields each value from the given tree in
     succession.
     
-    Each item is yielded in amortized constant time.
+    Each item is yielded in amortized O(1) time, so a full iteration requires
+    O(n) time.
     
     The returned iterator only holds references to values that have yet to be
     produced; values earlier on in the tree will not be held on to, and as such
