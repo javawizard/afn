@@ -141,6 +141,9 @@ class MeasureItemCount(Measure):
 
 
 class MeasureLastItem(Measure):
+    """
+    A measure that simply produces the second of the two items it's passed.
+    """
     def __init__(self):
         Measure.__init__(self)
         self.identity = IDENTITY
