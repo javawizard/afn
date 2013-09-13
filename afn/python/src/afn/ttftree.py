@@ -184,7 +184,7 @@ class TranslateMeasure(Measure):
     that compares a certain attribute of its values instead of the values
     themselves. For example, consider a tree with objects that have a
     "priority" attribute. A measure suitable for using this tree as a priority
-    queue could be constructed thus:
+    queue based on this attribute could be constructed thus:
     
     measure = TranslateMeasure(lambda v: v.priority, MeasureMinMax())
     """
