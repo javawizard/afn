@@ -140,6 +140,22 @@ class MeasureItemCount(Measure):
         return a + b
 
 
+class MeasureWithIdentity(Measure):
+    """
+    An abstract subclass of Measure that uses ttftree.IDENTITY as the identity
+    element and automatically handles checking for IDENTITY in its
+    implementation of operator(). It thus allows a semigroup (such as the set
+    of comparable objects under the min or max functions) to be used as a
+    monoid and therefore as a measure.
+    
+    Subclasses must override convert and semigroup_operator. They must not
+    change self.identity or override operator.
+    """
+    def __init__(self):
+        Measure.__init__(self)
+        
+
+
 class MeasureLastItem(Measure):
     """
     A measure that simply produces the second of the two items it's passed.
