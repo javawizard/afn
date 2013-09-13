@@ -28,6 +28,13 @@ class TreeIsEmpty(TTFTreeError):
         return "This tree is empty"
 
 
+class Identity(object):
+    pass
+
+
+IDENTITY = Identity()
+
+
 class Measure(object):
     """
     An object used to compute a tree's annotation.
@@ -124,10 +131,6 @@ class MeasureItemCount(Measure):
     """
     def __init__(self):
         Measure.__init__(self)
-        # Optimization: avoid allocating new memory for bound method objects
-        # every time one of our functions is called
-        self.convert = self.convert
-        self.operator = self.operator
         self.identity = 0
     
     def convert(self, value):
@@ -135,7 +138,66 @@ class MeasureItemCount(Measure):
     
     def operator(self, a, b):
         return a + b
+
+
+class MeasureLastItem(Measure):
+    def __init__(self):
+        Measure.__init__(self)
+        self.identity = IDENTITY
     
+    def convert(self, value):
+        return value
+    
+    def operator(self, a, b):
+        if b is IDENTITY:
+            return a
+        else:
+            return b
+
+
+class MeasureMinMax(Measure):
+    def __init__(self):
+        Measure.__init__(self)
+        self.identity = IDENTITY
+    
+    def convert(self, value):
+        return value
+    
+    def operator(self, a, b):
+        if a is IDENTITY:
+            return b
+        elif b is IDENTITY:
+            return a
+        else:
+            a_min, a_max = a
+            b_min, b_max = b
+            return min(a_min, b_min), max(a_max, b_max)
+
+
+class TranslateMeasure(Measure):
+    """
+    A measure that wraps another measure and behaves identically to it except
+    that it passes all values passed to self.convert() into the specified
+    function and passes the result into the wrapped measure's convert().
+    
+    This can be used to, for example, create a wrapper around MeasureMinMax
+    that compares a certain attribute of its values instead of the values
+    themselves. For example, consider a tree with objects that have a
+    "priority" attribute. A measure suitable for using this tree as a priority
+    queue could be constructed thus:
+    
+    measure = TranslateMeasure(lambda v: v.priority, MeasureMinMax())
+    """
+    def __init__(self, function, measure):
+        Measure.__init__(self)
+        self._function = function
+        self._wrapped_convert = measure.convert
+        self.operator = measure.operator
+        self.identity = measure.identity
+    
+    def convert(self, value):
+        return self._wrapped_convert(self._function(value))
+
 
 class _NodeMeasure(Measure):
     def __init__(self, measure):
