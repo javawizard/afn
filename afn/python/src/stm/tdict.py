@@ -1,15 +1,7 @@
 
-from stm import avl
+from afn import ttftree
 from collections import MutableMapping
 import stm
-
-def _selector(node, key):
-    if key < node.value[0]:
-        return avl.LEFT, key
-    elif key > node.value[0]:
-        return avl.RIGHT, key
-    else:
-        return avl.STOP, key
 
 
 class TDict(MutableMapping):
@@ -32,7 +24,7 @@ class TDict(MutableMapping):
     wrap themselves in a call to stm.atomically() internally. 
     """
     def __init__(self, initial_values=None):
-        self.var = stm.TVar(avl.empty)
+        self.var = stm.TVar(ttftree.Empty(ttftree.MeasureLastItem()))
         if initial_values:
             # Optimize to O(1) if we're cloning another TDict
             if isinstance(initial_values, TDict):
@@ -47,20 +39,31 @@ class TDict(MutableMapping):
                     self[k] = v
     
     def __getitem__(self, key):
-        return avl.get(self.var.get(), _selector, key, lambda: KeyError(key))[1]
+        left, right = self.var.get().partition(lambda (k, v): k >= key)
+        if right.is_empty or right.get_first()[0] != key:
+            raise KeyError(key)
+        return right.get_first()[1]
     
     def __setitem__(self, key, value):
-        self.var.set(avl.insert(self.var.get(), _selector, key, (key, value), lambda: KeyError(key), True, True))
+        left, right = self.var.get().partition(lambda (k, v): k >= key)
+        if not right.is_empty and right.get_first()[0] == key:
+            right = right.without_first()
+        self.var.set(left.add_last((key, value)).append(right))
     
     def __delitem__(self, key):
-        self.var.set(avl.delete(self.var.get(), _selector, key, lambda: KeyError(key)))
+        left, right = self.var.get().partition(lambda (k, v): k >= key)
+        if right.is_empty or right.get_first()[0] != key:
+            raise KeyError(key)
+        self.var.set(left.append(right.without_first()))
     
     def __iter__(self):
-        for k, _ in avl.traverse(self.var.get()):
+        for k, v in ttftree.value_iterator(self.var.get()):
             yield k
     
     def __len__(self):
-        return self.var.get().weight
+        # We'll need to annotate ourselves with a compound measure that adds
+        # MeasureItemCount in order for this to work
+        raise NotImplementedError
     
     def iterkeys(self):
         return iter(self)
@@ -69,14 +72,14 @@ class TDict(MutableMapping):
         return list(self.iterkeys())
     
     def itervalues(self):
-        for _, v in avl.traverse(self.var.get()):
+        for _, v in ttftree.value_iterator(self.var.get()):
             yield v
     
     def values(self):
         return list(self.itervalues())
     
     def iteritems(self):
-        return avl.traverse(self.var.get())
+        return ttftree.value_iterator(self.var.get())
     
     def items(self):
         return list(self.iteritems())
