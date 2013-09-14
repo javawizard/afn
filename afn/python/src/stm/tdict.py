@@ -24,7 +24,7 @@ class TDict(MutableMapping):
     wrap themselves in a call to stm.atomically() internally. 
     """
     def __init__(self, initial_values=None):
-        self.var = stm.TVar(ttftree.Empty(ttftree.CompoundMeasure(ttftree.MeasureItemCount, ttftree.TranslateMeasure(lambda (k, v): k, ttftree.MeasureLastItem()))))
+        self.var = stm.TVar(ttftree.Empty(ttftree.CompoundMeasure(ttftree.MeasureItemCount(), ttftree.TranslateMeasure(lambda (k, v): k, ttftree.MeasureLastItem()))))
         if initial_values:
             # Optimize to O(1) if we're cloning another TDict
             if isinstance(initial_values, TDict):
