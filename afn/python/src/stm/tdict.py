@@ -6,6 +6,8 @@ import stm
 
 class TDict(MutableMapping):
     """
+    UPDATE: This now uses 2-3 finger trees. Update accordingly.
+    
     A transactional dictionary.
     
     Internally, transactional dicts are maintained with a single TVar holding a
