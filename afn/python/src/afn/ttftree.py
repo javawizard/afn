@@ -153,34 +153,7 @@ class MeasureWithIdentity(Measure):
     """
     def __init__(self):
         Measure.__init__(self)
-        
-
-
-class MeasureLastItem(Measure):
-    """
-    A measure that simply produces the second of the two items it's passed.
-    """
-    def __init__(self):
-        Measure.__init__(self)
         self.identity = IDENTITY
-    
-    def convert(self, value):
-        return value
-    
-    def operator(self, a, b):
-        if b is IDENTITY:
-            return a
-        else:
-            return b
-
-
-class MeasureMinMax(Measure):
-    def __init__(self):
-        Measure.__init__(self)
-        self.identity = IDENTITY
-    
-    def convert(self, value):
-        return value
     
     def operator(self, a, b):
         if a is IDENTITY:
@@ -188,6 +161,28 @@ class MeasureMinMax(Measure):
         elif b is IDENTITY:
             return a
         else:
+            return self.semigroup_operator(a, b)
+    
+    def semigroup_operator(self, a, b):
+        raise NotImplementedError
+
+    
+class MeasureLastItem(MeasureWithIdentity):
+    """
+    A measure that simply produces the second of the two items it's passed.
+    """
+    def convert(self, value):
+        return value
+    
+    def semigroup_operator(self, a, b):
+        return b
+
+
+class MeasureMinMax(MeasureWithIdentity):
+    def convert(self, value):
+        return value
+    
+    def operator(self, a, b):
             a_min, a_max = a
             b_min, b_max = b
             return min(a_min, b_min), max(a_max, b_max)
@@ -216,6 +211,23 @@ class TranslateMeasure(Measure):
     
     def convert(self, value):
         return self._wrapped_convert(self._function(value))
+
+
+class CompoundMeasure(Measure):
+    """
+    A measure that combines the specified measures and produces a tuple of
+    their computed values. It can be used to annotate a tree with multiple
+    measures at the same time.
+    """
+    def __init__(self, *measures):
+        self.measures = measures
+        self.identity = tuple(m.identity for m in self.measures)
+    
+    def convert(self, value):
+        return tuple(m.convert(value) for m in self.measures)
+    
+    def operator(self, a_values, b_values):
+        return tuple(m.operator(a, b) for (m, a, b) in zip(self.measures, a_values, b_values))
 
 
 class _NodeMeasure(Measure):
