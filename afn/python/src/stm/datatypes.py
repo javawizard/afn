@@ -324,6 +324,8 @@ class _BroadcastItem(object):
     but they contain a TVar pointing to the next item added to the queue, or
     None if a "next item" hasn't been added yet.
     """
+    __slots__ = ["value", "next"]
+    
     def __init__(self, value):
         self.value = value
         self.next = stm.TVar()
