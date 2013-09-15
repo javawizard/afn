@@ -63,7 +63,7 @@ class TDict(MutableMapping):
             yield k
     
     def __len__(self):
-        _, length = self.var.get().annotation
+        length, _ = self.var.get().annotation
         return length
     
     def iterkeys(self):
