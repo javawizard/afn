@@ -10,9 +10,10 @@ class. Those form the core building blocks of the STM system.
 """
 
 from threading import local as _Local, Lock as _Lock, Thread as _Thread
-from Queue import Queue, Full
+from Queue import Queue, Full, Empty
 import weakref as weakref_module
 from contextlib import contextmanager
+import time
 
 __all__ = ["TVar", "TWeakRef", "atomically", "retry", "or_else"]
 
@@ -74,6 +75,74 @@ _global_lock = _Lock()
 # run will change this to the number 1, the second transaction to the number
 # 2, and so on.
 _last_transaction = 0
+
+
+class _Timer(_Thread):
+    """
+    A timer similar to threading.Timer but with a few differences:
+    
+        This class waits significantly longer (0.5 seconds at present) between
+        checks to see if we've been canceled before we're actually supposed to
+        time out. This isn't visible to transactions themselves (they always
+        respond instantly to any changes that could make them complete sooner),
+        but it 1: saves us a decent bit of CPU time, but 2: means that if a
+        transaction resumes for a reason other than because it timed out, the
+        timeout thread will hang around for up to half a second before dying.
+        
+        This class accepts timeouts specified in terms of the wall clock time
+        (in terms of time.time()) at which the timer should go off rather than
+        the number of seconds after which they should resume.
+        
+        This class accepts a retry queue to notify instead of a function to
+        call, mainly to avoid one layer of unnecessary indirection.
+    
+    The whole reason we're busywaiting here is because Python [versions earlier
+    than 3.n, where n is a number I don't remember at the moment] don't expose
+    any platform independent way of genuinely waiting with a timeout on a
+    condition. I'm considering rewriting this when I get time to use an
+    anonymous pipe and a call to select(), which /would/ allow this sort of
+    proper blocking timeout on all platforms except Windows (and hey, who
+    cares about Windows anyway?).
+    """
+    def __init__(self, queue, resume_at):
+        _Thread.__init__(self, name="Timeout thread expiring at %s" % resume_at)
+        self.queue = queue
+        self.resume_at = resume_at
+        self.cancel_queue = Queue(1)
+    
+    def start(self):
+        # Only start the thread if we've been given a non-None timeout
+        # (allowing resume_at to be None and treating it as an infinite timeout
+        #  makes the retry-related logic in _BaseTransaction simpler)
+        if self.resume_at is not None:
+            _Thread.start(self)
+    
+    def run(self):
+        while True:
+            # Check to see if we've been asked to cancel
+            try:
+                self.cancel_queue.get(block=False)
+                # We got a cancel request, so return.
+                return
+            except Empty:
+                # No cancel request, so proceed
+                pass
+            time_to_sleep = min(0.5, self.resume_at - time.time())
+            if time_to_sleep <= 0:
+                # Timeout's up! Notify the queue, then return.
+                try:
+                    self.queue.put(None)
+                except Full:
+                    pass
+                return
+            # Timeout's not up. Sleep for the specified amount of time.
+            time.sleep(time_to_sleep)
+    
+    def cancel(self):
+        try:
+            self.cancel_queue.put(None)
+        except Full:
+            pass
 
 
 class _Transaction(object):
@@ -153,13 +222,16 @@ class _BaseTransaction(_Transaction):
     so), blocking until vars are modified when a _RetryLater is caught, and so
     forth.
     """
-    def __init__(self, start=None):
+    def __init__(self, overall_start_time, current_start_time, start=None):
         _Transaction.__init__(self)
         self.parent = None
+        self.overall_start_time = overall_start_time
+        self.current_start_time = current_start_time
         self.check_values = set()
         self.retry_values = set()
         self.created_weakrefs = set()
         self.live_weakrefs = set()
+        self.resume_at = None
         # Store off the transaction id we're starting at, so that we know if
         # things have changed since we started.
         if not start:
@@ -226,10 +298,19 @@ class _BaseTransaction(_Transaction):
             q = Queue(1)
             for item in self.retry_values:
                 item._add_retry_queue(q)
+        # Then we create a timer to let us know when our retry timeout (if any
+        # calls made during this transaction indicated one) is up. Note that
+        # _Timer does nothing when given a resume time of None, so we don't
+        # need to worry about that here.
+        timer = _Timer(q, self.resume_at)
+        timer.start()
         # Then we wait.
         q.get()
-        # One of the vars was modified. Now we go remove ourselves from
-        # the vars' queues.
+        # One of the vars was modified or our timeout expired. Now we go cancel
+        # the timer (in case it was a change to one of our watched vars that
+        # woke us up instead of a timeout) and remove ourselves from the vars'
+        # queues.
+        timer.cancel()
         with _global_lock:
             for item in self.retry_values:
                 item._remove_retry_queue(q)
@@ -237,7 +318,18 @@ class _BaseTransaction(_Transaction):
         raise _RetryImmediately
     
     def make_previously(self):
-        return _BaseTransaction(self.start)
+        return _BaseTransaction(self.overall_start_time, self.current_start_time, self.start)
+    
+    def update_resume_at(self, resume_at):
+        if self.resume_at is None:
+            # First timed retry request of the transaction, so just store its
+            # requested resume time.
+            self.resume_at = resume_at
+        else:
+            # Second or later timed retry request of this transaction (the
+            # previous ones were presumably intercepted by or_else), so see
+            # which one wants us to resume sooner and resume then.
+            self.resume_at = min(self.resume_at, resume_at)
 
 
 class _NestedTransaction(_Transaction):
@@ -497,14 +589,19 @@ def atomically(function):
     The return value of atomically() is the return value of the function that
     was passed to it.
     """
+    toplevel = not bool(_stm_state.current)
+    # If we're the outermost transaction, store down the time we're starting
+    if toplevel:
+        overall_start_time = time.time()
+        current_start_time = overall_start_time
     while True:
         # If we have no current transaction, create a _BaseTransaction.
         # Otherwise, create a _NestedTransaction with the current one as its
         # parent.
-        if _stm_state.current:
-            transaction = _NestedTransaction(_stm_state.current)
+        if toplevel:
+            transaction = _BaseTransaction(overall_start_time, current_start_time)
         else:
-            transaction = _BaseTransaction()
+            transaction = _NestedTransaction(_stm_state.current)
         # Then set it as the current transaction
         with _stm_state.with_current(transaction):
             # Then run the transaction. _BaseTransaction's implementation takes care
@@ -516,18 +613,21 @@ def atomically(function):
             # nested transaction, in which case we want it to propagate out, so
             # we don't catch it here.
             except _RetryImmediately:
-                # We were asked to retry immediately. If we're a _BaseTransaction,
+                # We were asked to retry immediately. If we're a toplevel transaction,
                 # just continue. If we're a _NestedTransaction, propagate the
                 # exception up. TODO: Figure out a way to move this logic into
                 # individual methods on _Transaction that _BaseTransaction and
                 # _NestedTransaction can override accordingly.
-                if isinstance(transaction, _BaseTransaction):
+                if toplevel:
+                    # Update our current_start_time in preparation for our next
+                    # run before continuing
+                    current_start_time = time.time()
                     continue
                 else:
                     raise
 
 
-def retry():
+def retry(resume_after=None, resume_at=None):
     """
     Provides support for transactions that block.
     
@@ -549,9 +649,37 @@ def retry():
     Functions making use of retry() can be multiplexed, a la Unix's select
     system call, with the or_else function. See its documentation for more
     information.
+    
+    Either resume_at or resume_after may be specified, and serve to indicate a
+    timeout after which the call to retry() will give up and just return
+    instead of retrying. resume_after indicates a number of seconds from when
+    this transaction was first attempted at which to time out, and resume_at
+    indicates a wall clock time (a la time.time()) at which to time out.
+    
+    Timeouts are highly experimental and a feature shared with only one other
+    STM that I know of (scala-stm), so I'd greatly appreciate feedback on this
+    feature.
     """
     # Make sure we're in a transaction
     _stm_state.get_current()
+    if resume_after is not None and resume_at is not None:
+        raise ValueError("Only one of resume_after and resume_at can be "
+                         "specified")
+    # If resume_after was specified, compute resume_at in terms of it
+    if resume_after is not None:
+        resume_at = _stm_state.get_base().overall_start_time + resume_after
+    # If we're retrying with a timeout (either resume_after or resume_at),
+    # check to see if it's elapsed yet
+    if resume_at is not None:
+        if _stm_state.get_base().current_start_time >= resume_at:
+            # It's elapsed, so just return.
+            return
+        else:
+            # It hasn't elapsed yet, so let our base transaction know when we
+            # want it to resume.
+            _stm_state.get_base().update_resume_at(resume_at)
+    # Either we didn't have a timeout or our timeout hasn't elapsed yet, so
+    # raise _RetryLater.
     raise _RetryLater
 
 
