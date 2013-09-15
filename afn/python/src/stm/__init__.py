@@ -355,12 +355,12 @@ class TWeakRef(object):
     alive. Note that the callback function will only be called if the
     transaction in which this TWeakRef is created commits successfully.
     
-    TWeakRefs fully support the retry() function; that is, a function such as
-    the following works as expected, and blocks until the TWeakRef's referent
-    is garbage collected:
+    TWeakRefs are fully compatible with the retry() function; that is, a
+    function such as the following works as expected, and blocks until the
+    TWeakRef's referent is garbage collected:
     
     def block_until_garbage_collected(some_weak_ref):
-        if some_weak_ref.get():
+        if some_weak_ref.get() is not None:
             retry()
     """
     def __init__(self, value, callback=None):
