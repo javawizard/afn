@@ -8,6 +8,20 @@ primitives provided by the STM module.
 from afn import ttftree
 from collections import MutableSequence, MutableMapping, MutableSet
 import stm
+from stm.timeout import Timeout
+
+
+class Empty(Exception):
+    """
+    Exception thrown from BroadcastEndpoint.get() when block=False is passed
+    in and no items are currently available.
+    """
+    pass
+
+
+class Full(Exception):
+    pass
+
 
 class TList(MutableSequence):
     """
@@ -310,14 +324,6 @@ class TSet(MutableSet):
         self._var.set(new_set)
 
 
-class Empty(Exception):
-    """
-    Exception thrown from BroadcastEndpoint.get() when block=False is passed
-    in and no items are currently available.
-    """
-    pass
-
-
 class _BroadcastItem(object):
     """
     An item that has been added to the queue. Items themselves are immutable,
@@ -387,22 +393,20 @@ class BroadcastEndpoint(TObject):
         TObject.__init__(self)
         self._var = var
     
-    def get(self, block=True):
+    def get(self, block=True, timeout=None):
         """
         Removes and returns the next available item from this endpoint.
         
-        If block is True and there aren't any items currently available on this
-        endpoint, this function retries. If block is False, the Empty exception
-        is raised instead.
-        
-        To only block for up to a specific number of seconds, use the
-        stm.timeout module. For example:
-        
-            item = stm.timeout.with_delay(10, some_endpoint.get)
+        If block is False and there aren't any items currently available on
+        this endpoint, Empty will be raised. If block is True, this function
+        retries. If timeout is specified and there still aren't any items
+        available on this endpoint after that many seconds, Timeout will be
+        raised.
         """
         if self._var.get() is None:
             if block:
-                stm.retry()
+                stm.retry(resume_after=timeout)
+                raise Timeout
             else:
                 raise Empty
         else:
