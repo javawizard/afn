@@ -1,0 +1,21 @@
+
+So I just found out that one of the Scala STMs supports specifying timeouts directly to its retry function, and I'm thinking I'm going to implement that.
+
+So my idea thus far is to have each toplevel transaction keep track of the time at which it first started running (or rather, the time at which the first attempt was made to run it, irrespective of what retries, both immediate and later, have occurred since then). Then there'll be two additional keyword arguments to retry: resume_after and resume_at. The first indicates that the retry is to resume once that many seconds have passed since the transaction was first attempted, and the second indicates that the retry is to resume when the number of seconds since the epoch reaches that number. They are, of course, mutually exclusive and cannot both be specified.
+
+I'm also thinking that a transaction keeps track of the time at which the current attempt started, rather than examining the current time every time a retry is called. Something's telling me that doing the latter would cause consistency issues, although I need to figure out exactly why first...
+
+Anyways, so the idea is that a normal retry, one without arguments, is the same as specifying a resume_at or resume_after of infinity, i.e. it never resumes and nothing after the call to retry ever gets run. With resume_at or resume_after, however, the retry function will just "block" for that many seconds/until that time and then return and let whatever code is after it run.
+
+So the way it works is this: when retry is called with one of those two options, it figures out the time at which the retry is supposed to resume given the time the transaction was first attempted and such. Then it checks that against the time the current attempt started to see if... OH, I KNOW WHAT THE ISSUE IS, if we check the time live then we could unexpectedly give priority to a later transaction in an or_else call that shouldn't have had priority over an earlier one if, because of the few... what, microseconds?... it took us to run the code between the two, the time has changed such that the second transaction doesn't block while retrying when it otherwise would have and the first would have resumed on being re-executed.
+
+Ok, so, retry figures out the time to resume. Then it checks that against the time the current attempt started to see if we're already past when we're supposed to resume (and I think I'll set the current attempt start to be the same as the overall start for the first attempt), and if we are, then it just returns. If, however, we aren't, then it first lets the current transaction (probably the base transaction) know that it needs to resume at a certain time (the time passed as resume_at, or the computed time relative to the overall start if resume_after is specified instead), which the base transaction compares with the last time another retry call (that presumably was caught in an or_else call, if one happened) let it know a time it should resume at, and uses the sooner of the two. Then retry raises _RetryLater.
+
+Eventually, once a _RetryLater makes its way up to the toplevel transaction, it performs all the usual checks and makes sure it doesn't need to resume immediately. Then it creates the retry queue and, in addition to adding it to all of the variables that were accessed during the transaction, it creates a thread (it can probably re-use most of the code in the timeout module, and I'm actually thinking I'll probably rewrite the timeout module in terms of the new logic in the stm module) that waits until the specified time arrives, then notifies the queue, which will cause the transaction to wake up and run again, which will cause the retry that posted the shortest time to fall through and do whatever it's supposed to do.
+
+So that sounds like it'll work.
+
+
+
+
+
