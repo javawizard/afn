@@ -314,6 +314,7 @@ class TVar(object):
         _stm_state.get_current().set_value(self, value)
     
     value = property(get, set)
+    value.__doc__ = "A property wrapper around self.get and self.set."
     
     def _check_clean(self):
         # Check to see if our underlying value has been modified since the
