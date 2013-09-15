@@ -6,7 +6,7 @@ primitives provided by the STM module.
 """
 
 from afn import ttftree
-from collections import MutableSequence, MutableMapping
+from collections import MutableSequence, MutableMapping, MutableSet
 import stm
 
 class TList(MutableSequence):
