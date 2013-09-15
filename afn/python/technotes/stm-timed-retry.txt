@@ -15,6 +15,19 @@ Eventually, once a _RetryLater makes its way up to the toplevel transaction, it 
 
 So that sounds like it'll work.
 
+So, how could I use that in my cron scheduler?
+
+Well, I was thinking of having a queue of tasks to execute sorted by the times at which they needed to be executed. So perhaps I could have a transactional function that's supposed to get a task to run right now or block if there aren't any that need to be run right now. It could just look at the top item on the queue, which is the one that should be run the soonest, and see when it's supposed to be run, then block (using retry) until it's supposed to be run, then return it.
+
+Then we block until the item's supposed to be run, or if a new item that's supposed to be run sooner is added, the transaction retries due to its input changing, and the new top item gets checked and so on.
+
+That'd make implementing a cron-like daemon really, really lovely and simple, and would avoid the two transactions, one after another, that I thought were going to be necessary to implement that.
+
+Anyways, going to bed now. I'll do some more work on this tomorrow after I get my homework done.
+
+
+
+
 
 
 
