@@ -1,0 +1,35 @@
+Implementation ideas using the existing STM library; I've decided I'm not going to rewrite a new one from scratch right now.
+
+So, let's see...
+
+Invariants proposed by a transaction, base or nested, that aborts or retries are discarded.
+
+When a nested transaction commits, all of the invariants proposed during the transaction are checked. Then all of the invariants on all of the variables accessed during the transaction (hm... I need to make sure nested transactions keep track of check values and retry values so that we have a list of the variables accessed during the transaction...) Oh...
+
+Hm wait, ok so...
+
+The entry in each var storing an invariant to run probably needs to mention (perhaps in some sort of weak set) the list of variables that the invariant accessed during its most recent run.
+
+Yeah, I think a weak set will work.
+
+So, perhaps we have an Invariant class that stores a function to run to check the invariant and a weak set of the vars the invariant accessed last time it was run.
+
+Hm, or maybe a list of vars where it's propagated out to the base transaction or something...
+
+Basically, we need a way to know which vars the invariant's been tacked onto so that if it's run again and doesn't access one of them, it can be removed from that var's list of invariants that need to be checked.
+
+Or maybe, as we go to check all of the invariants, and we're iterating through each of the vars we modified, we build up a dict of invariants to vars that had them present... But that won't work, as that doesn't give us vars that the invariant accessed last time but that we didn't modify in this transaction that perhaps the invariant won't access this time...
+
+So I suppose having each invariant track a weak set of vars it's accessed is the best way to go.
+
+But that'd just apply to base transactions...
+
+Maybe we have some sort of set in the nested transaction of invariants that need to be checked at the end of the transaction, which are Invariant objects or something like that.
+
+Or hm... Maybe we have a dictionary of invariants that have been run during this transaction to weak sets (or maybe not weak sets, I need to think about whether they need to be weak or not) of variables that the invariant accessed during this transaction run.
+
+Then each invariant tracks a weak set of the vars that its last run that it made just before a base transaction committed accessed.
+
+So then... hm...
+
+So then, when a var's accessed, its invariants are added to a set of invariants to check at the end of this nested transaction, and the list of vars that it accessed on its last run is imported from the nested transaction's parent transaction... 
