@@ -33,3 +33,56 @@ Then each invariant tracks a weak set of the vars that its last run that it made
 So then... hm...
 
 So then, when a var's accessed, its invariants are added to a set of invariants to check at the end of this nested transaction, and the list of vars that it accessed on its last run is imported from the nested transaction's parent transaction... 
+
+
+
+Hang on, I'm getting into the details too quickly. I should probably think about how things would work in the context of a system where nested transactions aren't allowed first.
+
+So, in such a system, invariants would be represented as Invariant objects, which store the function to call and a weak set of the vars it referenced the last time it ran.
+
+Then each TVar would have a list (a strong one, not a weak one) of invariants that accessed that TVar on their just-before-the-transaction-proposing-them-committed run (and for which the proposing transaction actually did commit), i.e. invariants that would be threatened by changes to this TVar.
+
+So, let's deal with ordinary validation first.
+
+When we start a transaction, we'd... well, we don't need to do much of anything.
+
+When we /write/ a TVar for the first time in a transaction, we get a list of its invariants (and note that we need to check the version clock here to make sure it hasn't been modified since we started and hence its list of threatened invariants changed)... Hm, I'm going to digress for a second...
+
+The STM system doesn't have a distinction between reads and writes in transactions at the moment, and we seem to need one here in order to avoid performing superfluous invariant checks. It'd also be nice to have one for other reasons, namely that several transactions that merely read a common variable but don't actually write it can all run and commit in parallel instead of each preempting the others because, for all the STM system knows, they might all have written it as well.
+
+So, to draw such a distinction, we'd need each transaction to hold a dict of vars and their values as we know them and a set of vars that we've modified. When we're asked for a var's value, we check to see if it's in our map, and if it is, we return its value. Otherwise, we synchronously check that the real var hasn't been modified since we started, and get its current value. Then we stuff that into the map and return the value.
+
+Then, when we're asked to write a var, we just stick its new value in the map (whether or not it was already there), then add it to the set of vars we've modified.
+
+Then, when we're about to commit, we scan all of the variables in the map (this is synchronous, by the way) and make sure that none of their modified versions are greater than when we started. Then we (still synchronously) scan through the set of variables we wrote and, for each of them, update the var's real value and update its modified version. Then we're done!
+
+That way, we don't change the modified versions of vars that we just read but didn't write.
+
+And with nested transactions, they store a map of read/written vars and a set of written vars, and when we commit a nested transaction, we merge the write set into the parent's write set and merge the map into the parent's map, prioritizing our values so that modifications we made are persistent. And for aborted nested transactions we don't do anything, and the vars we accessed will be in the parent's read set and we don't need our write set since we were aborted.
+
+Ok, that sounds good. I'll implement that bit tomorrow.
+
+Oh, and TWeakRefs are... hm, I'm not exactly sure of a good way to keep track of those here...
+
+Ok, scratch that, I'm just going to run invariants for all vars accessed during a transaction, whether or not they were written, and worry about separating the two concepts later.
+
+So, when we first do anything involving a var, whether it's reading it or writing it, and it's not in our map (we're ignoring nested transactions here), we synchronously check that it hasn't been modified and then get the list of invariants that modifying the var threatens, as well as its value if we're reading it, then we unlock. Then we store the value as per usual (or store the new value if we're writing it) and store the invariant (which is an Invariant object, so a function and a weak set of vars that it accessed) in a set of invariants that we store on the transaction that have been threatened by changes we've made.
+
+Then, when we're about to commit, before we obtain the lock, we scan over all of the invariants... hm, these can't be shared objects, or another transaction could have modified them already and screwed things up... Ok, how about Invariant objects are immutable. That's not optimal, but it'll do for now.
+
+Hm, I'm too tired to think this through. I'll revisit tomorrow.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
